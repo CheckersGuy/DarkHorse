@@ -21,7 +21,6 @@ struct WorkerPool {
 
     WorkerPool(int batchSize, int threads, Weights<double> &weights) : batchSize(batchSize), threads(threads),
                                                                weights(&weights),gameCounter(0){
-        results = new Value[batchSize];
     }
 
     ~WorkerPool() {
@@ -34,6 +33,8 @@ struct WorkerPool {
     static void idleLoop(WorkerPool *pool);
 
     void waitAll();
+
+    void setOutput(Value* val);
 
     void startThreads();
 
