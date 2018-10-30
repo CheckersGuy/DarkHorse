@@ -27,6 +27,10 @@ void WorkerPool::addWork(Position pos) {
     this->work.push(pos);
 }
 
+void WorkerPool::setOutput(Value *val) {
+    this->results =val;
+}
+
 void WorkerPool::idleLoop(WorkerPool *pool) {
 
     while(!pool->work.empty()){
