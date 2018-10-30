@@ -14,17 +14,16 @@
 struct WorkerPool {
     Value *results;
     Weights<double> *weights;
-    int threads, batchSize,gameCounter;
+    int threads, batchSize, gameCounter;
     std::vector<std::thread> workers;
     std::queue<Position> work;
     std::mutex myMutex;
 
     WorkerPool(int batchSize, int threads, Weights<double> &weights) : batchSize(batchSize), threads(threads),
-                                                               weights(&weights),gameCounter(0){
+                                                                       weights(&weights), gameCounter(0) {
     }
 
     ~WorkerPool() {
-        delete[] results;
         for (auto &th : workers) {
             th.join();
         }
@@ -34,7 +33,7 @@ struct WorkerPool {
 
     void waitAll();
 
-    void setOutput(Value* val);
+    void setOutput(Value *val);
 
     void startThreads();
 
@@ -56,10 +55,11 @@ private:
 
 public:
 
-    void epoch();
 
     Trainer(Weights<double> &weights, Training::TrainingData &data) : weights(weights), data(data), cValue(1.0),
                                                                       learningRate(0.1), l2Reg(0.01) {}
+
+    void epoch();
 
     void setThreads(int threads);
 

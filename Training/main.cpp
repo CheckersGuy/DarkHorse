@@ -128,6 +128,9 @@ int main(int argc, char *argv[]) {
     Weights<double> myWeights;
     WorkerPool pool(100, 1, myWeights);
 
+    Value data[pool.batchSize];
+    pool.setOutput(data);
+
     std::vector<Position> positions;
 
     Utilities::loadPositions(positions, "Positions/3move.pos");
