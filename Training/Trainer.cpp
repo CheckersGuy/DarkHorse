@@ -11,9 +11,12 @@ Value WorkerPool::operator[](int index) {
 
 
 void WorkerPool::waitAll() {
+    int counter=0;
     while(!work.empty()){
-        std::cout<<work.size()<<"\n";
+        counter++;
+        std::cout<<counter<<"\n";
     }
+
 }
 
 void WorkerPool::startThreads() {
@@ -89,7 +92,7 @@ void Trainer::setLearningRate(double learn) {
     learningRate=learn;
 }
 
-float getWinValue(Score score) {
+double getWinValue(Score score) {
     if (score == BLACK_WIN)
         return 0.0;
     else if (score == WHITE_WIN)
