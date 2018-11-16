@@ -7,7 +7,6 @@
 
 
 #include "Board.h"
-#include "GameEvaluation.h"
 #include "MGenerator.h"
 #include <chrono>
 #include "Transposition.h"
@@ -29,9 +28,9 @@ MAKRO void setHashSize(uint32_t hash);
 
 bool isPVLine(Value alpha, Value beta);
 
-Value quiescene(Board &board, Value alpha, Value beta,Line& pv, int ply) ;
+template<NodeType type>Value quiescene(Board &board, Value alpha, Value beta,Line& pv, int ply) ;
 
-Value alphaBeta(Board &board, Value alpha, Value beta,Line& localPV,bool inPVLine, int ply, int depth, bool prune);
+template<NodeType type>Value alphaBeta(Board &board, Value alpha, Value beta,Line& localPV, int ply, int depth, bool prune);
 
 
 MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print);

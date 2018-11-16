@@ -18,9 +18,6 @@
 namespace Training {
 
 
-
-
-
     struct TrainingData;
 
 
@@ -57,7 +54,7 @@ namespace Training {
 
         TrainingData() = default;
 
-        int length();
+        std::size_t length();
 
         void add(TrainingPos pos);
 
@@ -89,7 +86,20 @@ namespace Training {
     }
 
 
-    Value quiescene(Weights<double> &weights, Board &board, Value alpha, Value beta, int ply,uint64_t endTime);
+    Value quiescene(Weights<double> &weights, Board &board, Value alpha, Value beta, int ply, uint64_t endTime);
+
+    inline double quieDiff(int index, Weights<double> &myWeights, Board &board) {
+        myWeights.weights[index] += 1.0;
+        Value result = Training::quiescene(myWeights, board, -INFINITE, INFINITE, 0, 100000000);
+        myWeights.weights[index] -= 1.0;
+        return static_cast<double>(result.value);
+    }
+
+    inline double quieDiff(int index, Weights<double> &myWeights, Position &pos) {
+        Board board;
+        BoardFactory::setUpPosition(board, pos);
+        return quieDiff(index, myWeights, board);
+    }
 
 
 }

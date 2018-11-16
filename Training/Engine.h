@@ -24,7 +24,7 @@ private:
 
 public:
     Engine(const std::string myPath) : path(myPath), hashSize(DEFAULT_HASH) {
-        handle = dlopen(path.c_str(), RTLD_LAZY );
+        handle = dlopen(path.c_str(), RTLD_LAZY);
         if (!handle) {
             std::cerr << "Engine wasn't found" << "\n";
             exit(EXIT_FAILURE);

@@ -22,8 +22,6 @@ namespace Utilities {
 
     void createNMoveBook(std::vector<Position>&pos, int N, Board &board);
 
-    void createNMoveBook(std::vector<Position>&pos, int N, Board &board);
-
     void loadPositions(std::vector<Position>& positions,const std::string file);
 
     void savePositions(std::vector<Position>&positions,const std::string file);

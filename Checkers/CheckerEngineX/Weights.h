@@ -9,21 +9,23 @@
 #include "Position.h"
 #include <fstream>
 #include <iomanip>
-#include "GameEvaluation.h"
 #include "MGenerator.h"
 #include "GameLogic.h"
 #include <cstring>
+
 constexpr uint32_t region = 13107;
 extern uint64_t nodeCounter;
 
-const int powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
+constexpr int powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
-inline int getIndex(uint32_t region, const Position& pos) {
+constexpr int SIZE = 390625 * 9 * 2;
+
+inline int getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
     int index = 0;
     uint32_t pieces = region & (pos.BP | pos.WP);
     int counter = 0;
-    while (pieces != 0) {
+    while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1));
         pieces &= pieces - 1;
         uint32_t current = 0;
@@ -41,17 +43,15 @@ inline int getIndex(uint32_t region, const Position& pos) {
     return index;
 }
 
-constexpr int SIZE = 390625 * 9 * 2;
-
 template<typename T>
 class Weights {
 
 public:
     T *weights;
 
-    Weights(){
+    Weights() {
         weights = new T[SIZE];
-        std::memset(weights,0, sizeof(T)*SIZE);
+        std::memset(weights, 0, sizeof(T) * SIZE);
     }
 
     ~Weights() {
@@ -111,14 +111,14 @@ public:
         stream.close();
     }
 
-    inline Value evaluate(const Position& pos)const {
+    inline Value evaluate(const Position &pos) const {
         int sum = 0;
         int phase = 0;
         const uint32_t nKings = ~pos.K;
-        const int rightBlack = _popcnt32(pos.BP & nKings & RIGHT_HALF);
-        const int rightWhite = _popcnt32(pos.WP & nKings & RIGHT_HALF);
-        const int leftBlack = _popcnt32(pos.BP & nKings & LEFT_HALF);
-        const int leftWhite = _popcnt32(pos.WP & nKings & LEFT_HALF);
+        const int rightBlack = __builtin_popcount(pos.BP & nKings & RIGHT_HALF);
+        const int rightWhite = __builtin_popcount(pos.WP & nKings & RIGHT_HALF);
+        const int leftBlack = __builtin_popcount(pos.BP & nKings & LEFT_HALF);
+        const int leftWhite = __builtin_popcount(pos.WP & nKings & LEFT_HALF);
 
         const int WP = rightWhite + leftWhite;
         const int BP = rightBlack + leftBlack;
@@ -133,8 +133,8 @@ public:
 
         phase += WP + BP;
         if (pos.K != 0) {
-            const int WK = _popcnt32(pos.K & (pos.WP));
-            const int BK = _popcnt32(pos.K & (pos.BP));
+            const int WK = __builtin_popcount(pos.K & (pos.WP));
+            const int BK = __builtin_popcount(pos.K & (pos.BP));
             phase += WK + BK;
             openingWhite += 150 * (WK);
             openingBlack += 150 * BK;
@@ -146,8 +146,8 @@ public:
             for (int i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8 * j + i);
                 int index = getIndex(curRegion, pos);
-                opening += (int)(weights[index + 390625 * (3 * j + i)]);
-                ending += (int)(weights[index + 390625 * 9 + 390625 * (3 * j + i)]);
+                opening += (int) (weights[index + 390625 * (3 * j + i)]);
+                ending += (int) (weights[index + 390625 * 9 + 390625 * (3 * j + i)]);
             }
         }
 
@@ -186,21 +186,21 @@ public:
         Weights<double> myWeights;
         myWeights.loadWeights(path);
         for (int i = 0; i < SIZE; ++i) {
-            weights[i] = (int)(myWeights.weights[i]);
+            weights[i] = (char) (myWeights.weights[i]);
         }
     }
 
 
-    inline Value evaluate(Position pos)const {
+    inline Value evaluate(Position pos) const {
         int sum = 0;
         int phase = 0;
 
 
         const uint32_t nKings = ~pos.K;
-        const int rightBlack = _popcnt32(pos.BP & nKings & RIGHT_HALF);
-        const int rightWhite = _popcnt32(pos.WP & nKings & RIGHT_HALF);
-        const int leftBlack = _popcnt32(pos.BP & nKings & LEFT_HALF);
-        const int leftWhite = _popcnt32(pos.WP & nKings & LEFT_HALF);
+        const int rightBlack = __builtin_popcount(pos.BP & nKings & RIGHT_HALF);
+        const int rightWhite = __builtin_popcount(pos.WP & nKings & RIGHT_HALF);
+        const int leftBlack = __builtin_popcount(pos.BP & nKings & LEFT_HALF);
+        const int leftWhite = __builtin_popcount(pos.WP & nKings & LEFT_HALF);
 
         const int WP = rightWhite + leftWhite;
         const int BP = rightBlack + leftBlack;
@@ -215,8 +215,8 @@ public:
 
         phase += WP + BP;
         if (pos.K != 0) {
-            const int WK = _popcnt32(pos.K & (pos.WP));
-            const int BK = _popcnt32(pos.K & (pos.BP));
+            const int WK = __builtin_popcount(pos.K & (pos.WP));
+            const int BK = __builtin_popcount(pos.K & (pos.BP));
             phase += WK + BK;
             openingWhite += 150 * (WK);
             openingBlack += 150 * BK;
@@ -229,7 +229,7 @@ public:
                 const uint32_t curRegion = region << (8 * j + i);
                 int index = getIndex(curRegion, pos);
                 opening += weights[index + 390625 * (3 * j + i)];
-                ending +=  weights[index + 390625 * 9 + 390625 * (3 * j + i)];
+                ending += weights[index + 390625 * 9 + 390625 * (3 * j + i)];
             }
         }
 

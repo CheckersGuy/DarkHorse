@@ -9,6 +9,13 @@ Value WorkerPool::operator[](int index) {
     return results[index];
 }
 
+int Trainer::getBatchSize() {
+    return batchSize;
+}
+
+void Trainer::setBatchSize(int batch) {
+    batchSize=batch;
+}
 
 void WorkerPool::waitAll() {
     int counter=0;
@@ -40,9 +47,7 @@ void WorkerPool::idleLoop(WorkerPool *pool) {
         pool->myMutex.lock();
         Position work=pool->work.front();
         pool->work.pop();
-
         pool->myMutex.unlock();
-
         Board current;
         BoardFactory::setUpPosition(current,work);
         Value val = Training::quiescene(*pool->weights,current,-INFINITE,INFINITE,0,100000000);
@@ -103,29 +108,50 @@ double getWinValue(Score score) {
 }
 
 
-void Trainer::epoch() {
-    //Doing one epoch
-    for(Training::TrainingPos position : data.positions){
-        double result =getWinValue(position.result);
-        double color =static_cast<double>(position.pos.color);
-        Board board;
-        BoardFactory::setUpPosition(board,position.pos);
-        double quiesce =static_cast<double>(Training::quiescene(weights,board,-INFINITE,INFINITE,0,100000000).value);
-        double diff =(Training::sigmoid(getCValue(),color*quiesce)-result)*Training::sigmoidDiff(getCValue(),color*quiesce);
+
+void Trainer::epochBatch(){
+    for(int x=0;x<data.positions.size();x+=batchSize){
         for(int p=0;p<2;++p){
             for(int j=0;j<3;++j){
                 for(int i=0;i<3;++i){
+                   //BATCH
+
+                   Value quiesc[batchSize];
+                   Value quieDiff[batchSize];
+
                     const uint32_t curRegion = region << (8*j+i);
                     int index = getIndex(curRegion, position.pos)+390625*(3*j+i)+390625*9*p;
-                    weights.weights[index]+=1.0;
-                    double quieDiff =static_cast<double>(Training::quiescene(weights,board,-INFINITE,INFINITE,0,100000000).value);
-                    weights.weights[index]-=1.0;
-                    quieDiff =color*(quieDiff-quiesce);
-                    double currDiff =diff*quieDiff+l2Reg*weights.weights[index];
+
+                    double batchSum=0;
+                   for(int b=x;b<x+batchSize;++b){
+                       Training::TrainingPos position=data.positions[b];
+                       double result =getWinValue(position.result);
+                       double color =static_cast<double>(position.pos.color);
+
+                       double quiesceDiff=static_cast<double>(quieDiff[b].value);
+                       double quiesce =static_cast<double>(quiesc[b].value);
+                       double diff =color*(quiesceDiff-quiesce)*(Training::sigmoid(getCValue(),quiesce));
+                       diff*=(Training::sigmoid(getCValue(),color*quiesce)-result);
+                       batchSum+=diff;
+                   }
+                   batchSum/=static_cast<double>(batchSize);
+
+                    double currDiff =batchSum+l2Reg*weights.weights[index];
                     weights.weights[index]=weights.weights[index]-learningRate*currDiff;
                 }
             }
         }
+
+
+    }
+
+}
+
+
+void Trainer::epoch() {
+    //Doing one epoch
+    for(Training::TrainingPos position : data.positions){
+
 
     }
 }
@@ -170,6 +196,54 @@ double Trainer::calculateLoss() {
     mse = mse / static_cast<double>(data.length());
     mse = std::sqrt(mse);
     return mse;
+}
+
+double Trainer::calculateLoss(int threads) {
+    std::mutex lockMutex;
+    double mse =0;
+    std::vector<std::thread> myThreads;
+    std::size_t chunk =data.length()/threads;
+    int i=0;
+    for(;i<threads;++i){
+        myThreads.push_back(std::thread([&data,&i](){
+            double localLoss =0;
+            for(int k=i*chunk;k<(i+1)*chunk;++k){
+                Training::TrainingPos pos =data.positions[k];
+                Board board;
+                BoardFactory::setUpPosition(board, pos.pos);
+                double current = getWinValue(pos.result);
+                double color =static_cast<double>(pos.pos.color);
+                double quiesc =color*static_cast<double>(Training::quiescene( this->weights,board, -INFINITE, INFINITE, 0,100000000).value);
+                current = current - Training::sigmoid(cValue, quiesc);
+                current = current * current;
+                localLoss += current;
+            }
+            lockMutex.lock();
+            mse+=localLoss;
+            lockMutex.unlock();
+        }));
+    }
+    double localLoss =0;
+    for(int p=(i+1)*chunk;p<data.length();++p){
+        Training::TrainingPos pos =data.positions[p];
+        Board board;
+        BoardFactory::setUpPosition(board, pos.pos);
+        double current = getWinValue(pos.result);
+        double color =static_cast<double>(pos.pos.color);
+        double quiesc =color*static_cast<double>(Training::quiescene( this->weights,board, -INFINITE, INFINITE, 0,100000000).value);
+        current = current - Training::sigmoid(cValue, quiesc);
+        current = current * current;
+        localLoss += current;
+    }
+
+    for( auto& thread : myThreads){
+        thread.join();
+    }
+    mse+=localLoss;
+
+    mse = mse / static_cast<double>(data.length());
+    mse = std::sqrt(mse);
+
 }
 
 

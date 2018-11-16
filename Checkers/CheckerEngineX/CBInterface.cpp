@@ -21,7 +21,6 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
         sprintf(str, "interupt");
         //Natural course of the game has been interrupted;
         playBoard.pCounter = 0;
-        playBoard.moveCount = 0;
     }
 
 
@@ -32,7 +31,6 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     }
     sprintf(str, "Some testing");
     if (*playnow) {
-        playBoard.moveCount=0;
         playBoard.pCounter=0;
 
     }
@@ -68,7 +66,7 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     }
 
     MoveListe liste;
-    getMoves(playBoard, liste);
+    getMoves(*playBoard.getPosition(), liste);
     Move bestMove;
     Value value = searchValue(playBoard, bestMove, 128, static_cast<uint32_t>(maxtime * 1000), false);
 
@@ -106,7 +104,6 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
                    std::to_string(to / 8)).c_str()));
 
     playBoard.pCounter++;
-    playBoard.moveCount++;
 
     return 3;
 };

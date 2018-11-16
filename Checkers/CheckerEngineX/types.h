@@ -12,12 +12,21 @@
 #include <thread>
 
 
-//Utility function
+//Utility functions and other stuff
 
 inline uint64_t getSystemTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>
             (std::chrono::steady_clock::now().time_since_epoch()).count();
 }
+constexpr uint32_t LEFT_HALF = 3435973836;
+constexpr uint32_t RIGHT_HALF = LEFT_HALF>>2;
+constexpr uint32_t MASK_L3 = 14737632;
+constexpr uint32_t MASK_L5 = 117901063;
+constexpr uint32_t MASK_R3 = 117901056;
+constexpr uint32_t MASK_R5 = 3772834016;
+
+
+enum NodeType{PVNode,NONPV};
 
 enum Score {
     WHITE_WIN = 15500,
@@ -37,7 +46,7 @@ enum Color {
     BLACK = -1, WHITE = 1, NONE
 };
 enum PieceType {
-    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3
+    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
 enum Flag {
     TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3, UNKNOWN = 555
@@ -54,30 +63,30 @@ public:
 
     constexpr Value();
 
-    bool isWinning();
+    bool isWinning() const;
 
-    bool isBlackWin();
+    bool isBlackWin() const;
 
-    bool isWhiteWin();
+    bool isWhiteWin() const;
 
-    bool isEasyMove();
+    bool isEasyMove() const;
 
     Value valueFromTT(int ply);
 
     Value toTT(int ply);
 
-    bool isEval();
+    bool isEval() const;
 
-    bool isInRange(int a, int b);
+    bool isInRange(int a, int b) const;
 
-    bool isInRange(Value a, Value b);
+    bool isInRange(Value a, Value b) const;
 
     constexpr Value operator=(int value);
 
 
 };
 
-inline bool Value::isEval() {
+inline bool Value::isEval() const {
     return isInRange(-INFINITE, INFINITE);
 }
 
@@ -231,11 +240,11 @@ constexpr Value &operator--(Value &val) {
 }
 
 //Value class-functions
-inline bool Value::isEasyMove() {
+inline bool Value::isEasyMove() const {
     return (this->value == EASY_MOVE);
 }
 
-inline bool Value::isWinning() {
+inline bool Value::isWinning() const {
     assert(value >= -INFINITE && value <= INFINITE);
     if (std::abs(this->value) + MAX_PLY >= WHITE_WIN) {
         return true;
@@ -243,7 +252,7 @@ inline bool Value::isWinning() {
     return false;
 }
 
-inline bool Value::isBlackWin() {
+inline bool Value::isBlackWin() const {
     assert(value >= -INFINITE && value <= INFINITE);
     if (this->value - MAX_PLY <= BLACK_WIN) {
         return true;
@@ -251,7 +260,7 @@ inline bool Value::isBlackWin() {
     return false;
 }
 
-inline bool Value::isWhiteWin() {
+inline bool Value::isWhiteWin() const {
     assert(value >= -INFINITE && value <= INFINITE);
     if (this->value + MAX_PLY >= WHITE_WIN) {
         return true;
@@ -260,11 +269,11 @@ inline bool Value::isWhiteWin() {
 }
 
 //inclusive
-inline bool Value::isInRange(int a, int b) {
+inline bool Value::isInRange(int a, int b) const {
     return (this->value >= a && this->value <= b);
 }
 
-inline bool Value::isInRange(Value a, Value b) {
+inline bool Value::isInRange(Value a, Value b) const {
     return (this->value >= a && this->value <= b);
 }
 
@@ -312,6 +321,26 @@ inline Value clampScore(Value val) {
 
 inline Value addSafe(Value val, Value incre) {
     return clampScore(val + incre);
+}
+
+template<Color color>
+inline
+uint32_t defaultShift(const uint32_t maske) {
+    if constexpr(color == BLACK) {
+        return maske << 4;
+    } else {
+        return maske >> 4;
+    }
+}
+
+template<Color color>
+inline
+uint32_t forwardMask(const uint32_t maske) {
+    if constexpr (color == BLACK) {
+        return ((maske & MASK_L3) << 3) | ((maske & MASK_L5) << 5);
+    } else {
+        return ((maske & MASK_R3) >> 3) | ((maske & MASK_R5) >> 5);
+    }
 }
 
 

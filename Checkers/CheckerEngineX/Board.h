@@ -16,7 +16,9 @@
 #include "Position.h"
 #include "Zobrist.h"
 
-extern const uint32_t S[32];
+constexpr uint32_t S[32] = {3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26,
+                            25, 24, 31, 30, 29, 28};
+
 
 class Board {
 
@@ -24,7 +26,6 @@ public:
     Position pStack[MAX_PLY + MAX_MOVE];
     Move history[MAX_PLY + MAX_MOVE];
     int pCounter = 0;
-    int moveCount = 0;
 
     Board() = default;
 
@@ -35,8 +36,6 @@ public:
     void makeMove(Move move);
 
     void undoMove();
-
-    int getMoveCount();
 
     bool isSilentPosition();
 
@@ -68,11 +67,6 @@ inline bool Board::hasJumps() {
 
 inline uint64_t Board::getCurrentKey() {
     return this->pStack[pCounter].key;
-}
-
-
-inline int Board::getMoveCount() {
-    return moveCount;
 }
 
 inline bool Board::isRepetition() {

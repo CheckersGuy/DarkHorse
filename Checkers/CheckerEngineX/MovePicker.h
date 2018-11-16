@@ -14,8 +14,8 @@ namespace Statistics {
 
     class MovePicker {
     private:
-        int history[32 * 32 * 2] = {-10};
-        int bfScore[32 * 32 * 2] = {-10};
+        int history[32 * 32 * 2] = {0};
+        int bfScore[32 * 32 * 2] = {0};
     public:
         int getMoveScore(Move move, Color color);
 
@@ -37,7 +37,6 @@ namespace Statistics {
 #else
     extern MovePicker mPicker;
 #endif
-
 
 
 }
