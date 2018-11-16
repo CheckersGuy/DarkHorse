@@ -3,18 +3,20 @@
 #include <iostream>
 #include "Perft.h"
 #include "GameLogic.h"
-#include "BoardFactory.h"
-
-
 
 
 int main(int argLength, char **arguments) {
 
-    initialize();
-    setHashSize(25);
-    Board test;
-    BoardFactory::setUpStartingPosition(test);
-    searchValue(test, 25, 200000, true);
+
+    using namespace Perft;
+
+
+
+    for(int i=1;i<=14;++i){
+        uint64_t startingTime = getSystemTime();
+        std::cout <<"Depth: "<<i<<" "<< Perft::perftCount(i,16) << std::endl;
+    }
+
 
 /*
     for(int i=0;i<32;++i){

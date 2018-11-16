@@ -48,6 +48,7 @@ class Trainer {
 private:
     int epochs;
     int threads;
+    int batchSize;
     Weights<double> &weights;
     Training::TrainingData &data;
     double learningRate, l2Reg, cValue;
@@ -57,9 +58,14 @@ public:
 
 
     Trainer(Weights<double> &weights, Training::TrainingData &data) : weights(weights), data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01) {}
+                                                                      learningRate(0.1), l2Reg(0.01),batchSize(1) {}
+
 
     void epoch();
+
+    void epochBatch();
+
+    void setBatchSize(int batch);
 
     void setThreads(int threads);
 
@@ -75,6 +81,8 @@ public:
 
     int getThreads();
 
+    int getBatchSize();
+
     int getEpochs();
 
     double getLearningRate();
@@ -84,6 +92,8 @@ public:
     void startTune();
 
     double calculateLoss();
+
+    double calculateLoss(int threads);
 
 };
 

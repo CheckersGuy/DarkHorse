@@ -12,11 +12,11 @@ namespace Zobrist{
 
      void initializeZobrisKeys(){
          uint64_t seed =312231231;
-#ifdef TRAIN
-         std::cout<<"TRAINING-MODE"<<"\n";
+#ifdef GENERATE
+         std::cout<<"GENERATION-MODE"<<"\n";
       seed=getSystemTime();
 #endif
-        std::mt19937_64 generator(312231231);
+        std::mt19937_64 generator(seed);
         std::uniform_int_distribution<uint64_t>distrib;
         for(int i=0;i<32;++i){
             for(int j=0;j<4;++j){
@@ -30,7 +30,7 @@ namespace Zobrist{
         const uint32_t BK =pos.K&pos.BP;
         const uint32_t WK =pos.K&pos.WP;
         uint64_t nextKey=0;
-        for(uint8_t i=0;i<32;++i){
+        for(int i=0;i<32;++i){
             const uint32_t maske =1<<i;
             if((maske&BK)==maske){
                 nextKey^=ZOBRIST_KEYS[i][BKING];
@@ -67,7 +67,7 @@ void Zobrist::doUpdateZobristKey(Position& pos,Move move) {
         uint32_t captures =move.captures;
         while(captures){
             const uint32_t index =__tzcnt_u32(captures);
-            captures&=captures-1;
+            captures = __blsr_u32(captures);
             if(((1<<index)&move.captures& pos.K)!=0){
                 pos.key^=Zobrist::ZOBRIST_KEYS[index][BKING];
             }else{

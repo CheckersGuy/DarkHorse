@@ -11,28 +11,6 @@
 #include "types.h"
 #include "MovePicker.h"
 
-struct Sorter{
-    Move ttMove;
-    Color mover;
-
-    Sorter(Move ttMove, Color mover):ttMove(ttMove),mover(mover){};
-
-    Sorter(Color mover):mover(mover){};
-
-    bool operator()(Move&a, Move &b){
-
-        int aScore =Statistics::mPicker.getMoveScore(a,mover);
-        int bScore =Statistics::mPicker.getMoveScore(b,mover);
-        if (a== ttMove && a.getMoveIndex() == ttMove.getMoveIndex()) {
-            aScore+= 2000000;
-        }
-        if (b== ttMove && b.getMoveIndex() == ttMove.getMoveIndex()) {
-            bScore+= 2000000;
-        }
-        return aScore>bScore;
-    }
-};
-
 
 class MoveListIterator {
 
@@ -167,7 +145,7 @@ public:
 
     int length();
 
-    void addMove(Move next);
+    void addMove(Move& next);
 
     void swap(int a, int b);
 
@@ -196,7 +174,7 @@ inline Move MoveListe::operator[](int index) {
     return liste[index];
 }
 
-inline void MoveListe::addMove(Move next) {
+inline void MoveListe::addMove(Move&next) {
     assert(!next.isEmpty());
     next.setMoveIndex(moveCounter);
     this->liste[this->moveCounter++] = next;

@@ -91,12 +91,12 @@ namespace Training {
     }
 
 
-    int TrainingData::length() {
+    std::size_t TrainingData::length() {
         return positions.size();
     }
 
     void saveGames(std::vector<TrainingGame> &games, const std::string file) {
-        std::ofstream stream(file,  std::ios::binary);
+        std::ofstream stream(file, std::ios::binary);
         if (!stream.good()) {
             throw std::string("could not find the file");
         }
@@ -160,7 +160,7 @@ namespace Training {
     }
 
 
-    Value  quiescene(Weights<double>&weights, Board &board, Value alpha, Value beta, int ply, uint64_t endTime) {
+    Value quiescene(Weights<double> &weights, Board &board, Value alpha, Value beta, int ply, uint64_t endTime) {
 
         if (ply >= MAX_PLY) {
             return board.getMover() * weights.evaluate(*board.getPosition());
@@ -169,27 +169,27 @@ namespace Training {
         MoveListe moves;
         getCaptures(board, moves);
         nodeCounter++;
-        Value bestValue= -INFINITE;
+        Value bestValue = -INFINITE;
 
         if (moves.length() == 0) {
             Line localPV;
-            if(board.getPosition()->hasThreat()){
-                return alphaBeta(board,alpha,beta,localPV,alpha!=beta-1,ply+1,1,false);
+            if (board.getPosition()->hasThreat()) {
+                return alphaBeta(board, alpha, beta, localPV, alpha != beta - 1, ply + 1, 1, false);
             }
 
-            if(board.getPosition()->isWipe()){
+            if (board.getPosition()->isWipe()) {
                 return Value::loss(board.getMover(), ply);
             }
 
-            bestValue =board.getMover()*weights.evaluate(*board.getPosition());
-            if(bestValue>=beta){
+            bestValue = board.getMover() * weights.evaluate(*board.getPosition());
+            if (bestValue >= beta) {
                 return bestValue;
             }
         }
 
         for (int i = 0; i < moves.length(); ++i) {
             board.makeMove(moves.liste[i]);
-            Value value = ~quiescene(weights,board, ~beta, ~alpha, ply + 1,endTime);
+            Value value = ~quiescene(weights, board, ~beta, ~alpha, ply + 1, endTime);
             board.undoMove();
 
             if (value > bestValue) {
@@ -197,17 +197,14 @@ namespace Training {
                 if (value >= beta) {
                     break;
                 }
-                if(value>alpha){
-                    alpha=value;
+                if (value > alpha) {
+                    alpha = value;
                 }
 
             }
         }
         return bestValue;
     }
-
-
-
 
 
 }

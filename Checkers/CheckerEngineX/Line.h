@@ -20,27 +20,27 @@ public:
 
     Line(const Line &other);
 
-    int length();
+    int length()const;
 
     void addMove(Move move);
 
     void concat(Move best, Line &line);
 
-    std::string toString();
+    std::string toString()const;
 
-    Move getFirstMove();
+    Move getFirstMove()const;
 
     void clear();
 
-    bool operator==(Line &other);
+    bool operator==(Line &other)const;
 
-    bool operator!=(Line &other);
+    bool operator!=(Line &other)const;
 
-    Move operator[](int index);
+    Move operator[](int index)const;
 
 };
 
-inline Move Line::operator[](int index) {
+inline Move Line::operator[](int index)const {
     return this->myArray[index];
 }
 

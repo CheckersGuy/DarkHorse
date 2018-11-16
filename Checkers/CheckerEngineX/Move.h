@@ -8,57 +8,54 @@
 #include <iostream>
 #include <stdint.h>
 
-
-extern "C" void testing();
-
-
 class Move {
 
 public:
     uint16_t encoding = 0;
     uint32_t captures = 0;
 
-
     Move(uint16_t from, uint16_t to);
 
-    Move(uint16_t from, uint16_t to, uint16_t pieceType);
+    Move(uint16_t from, uint16_t to, uint32_t captures);
 
     Move(uint16_t from, uint16_t to, uint16_t pieceType, uint32_t captures);
 
-    Move() = default;
+    Move()=default;
 
-    bool isCapture();
+    bool isCapture() const;
 
-    bool isPromotion();
+    bool isPromotion() const;
 
-    bool isEmpty();
+    bool isEmpty() const;
 
-    uint16_t getFrom();
+    uint16_t getFrom() const;
 
-    uint16_t getTo();
+    uint16_t getTo() const;
 
     void setFrom(const uint16_t from);
 
     void setTo(const uint16_t to);
 
-    uint8_t getPieceType();
+    uint16_t getPieceType() const;
 
     void setMoveIndex(const uint16_t index);
 
-    uint16_t getMoveIndex();
+    uint16_t getMoveIndex() const;
 
     void setPieceType(const uint16_t type);
 
-    bool operator==(Move other);
+    bool operator==(Move other) const;
 
-    bool operator!=(Move other);
+    bool operator!=(Move other) const;
 };
 
-inline bool Move::operator==(Move other) {
-    return (this->captures == other.captures) && (this->getFrom() == other.getFrom() && this->getTo() == other.getTo()&& this->getPieceType() == other.getPieceType());
+inline bool Move::operator==(Move other) const {
+    return (this->captures == other.captures) &&
+           (this->getFrom() == other.getFrom() && this->getTo() == other.getTo() &&
+            this->getPieceType() == other.getPieceType());
 }
 
-inline bool Move::operator!=(Move other) {
+inline bool Move::operator!=(Move other) const {
     return !((*this) == other);
 }
 
@@ -67,10 +64,10 @@ inline Move::Move(uint16_t from, uint16_t to) {
     this->setTo(to);
 }
 
-inline Move::Move(uint16_t from, uint16_t to, uint16_t pieceType) {
+inline Move::Move(uint16_t from, uint16_t to, uint32_t captures) {
     this->setFrom(from);
     this->setTo(to);
-    this->setPieceType(pieceType);
+    this->captures=captures;
 }
 
 inline Move::Move(uint16_t from, uint16_t to, uint16_t pieceType, uint32_t captures) {
@@ -81,23 +78,23 @@ inline Move::Move(uint16_t from, uint16_t to, uint16_t pieceType, uint32_t captu
 
 }
 
-inline bool Move::isCapture() {
+inline bool Move::isCapture() const {
     return (this->captures != 0);
 }
 
-inline bool Move::isPromotion() {
+inline bool Move::isPromotion() const {
     return (getPieceType() == 0 && ((getTo() >> 2) == 0 || (getTo() >> 2) == 7));
 }
 
-inline uint16_t Move::getFrom() {
+inline uint16_t Move::getFrom() const {
     return (31 & this->encoding);
 }
 
-inline uint16_t Move::getTo() {
+inline uint16_t Move::getTo() const {
     return (this->encoding & 992) >> 5;
 }
 
-inline uint8_t Move::getPieceType() {
+inline uint16_t Move::getPieceType() const {
     return (1024 & this->encoding) >> 10;
 }
 
@@ -116,11 +113,11 @@ inline void Move::setMoveIndex(uint16_t index) {
     this->encoding |= index << 11;
 }
 
-inline bool Move::isEmpty() {
+inline bool Move::isEmpty() const {
     return (encoding == 0 && captures == 0);
 }
 
-inline uint16_t Move::getMoveIndex() {
+inline uint16_t Move::getMoveIndex() const {
     return (this->encoding & (63488)) >> 11;
 }
 

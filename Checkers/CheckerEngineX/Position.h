@@ -10,11 +10,6 @@
 #ifndef CHECKERENGINEX_POSITION_H
 #define CHECKERENGINEX_POSITION_H
 
-constexpr uint32_t MASK_L3 = 14737632;
-constexpr uint32_t MASK_L5 = 117901063;
-constexpr uint32_t MASK_R3 = 117901056;
-constexpr uint32_t MASK_R5 = 3772834016;
-
 
 class Position {
 public:
@@ -35,6 +30,54 @@ public:
     uint32_t getMoversWhite();
 
     uint32_t getMoversBlack();
+
+    template<Color color> uint32_t getCurrent(){
+        if constexpr (color ==BLACK)
+            return BP;
+        else
+            return WP;
+    }
+
+    template <Color color> uint32_t getMovers(){
+        const uint32_t nocc = ~(BP | WP);
+        const uint32_t current =getCurrent<color>();
+        const uint32_t kings =current&K;
+
+        uint32_t movers = (defaultShift<~color>(nocc)|forwardMask<~color>(nocc))&current;
+        if (kings) {
+            movers|=(defaultShift<color>(nocc)|forwardMask<color>(nocc))&kings;
+        }
+        return movers;
+    }
+
+    template<Color color>uint32_t getJumpers() {
+        const uint32_t nocc = ~(BP | WP);
+        const uint32_t current =getCurrent<color>();
+        const uint32_t opp=getCurrent<~color>();
+        const uint32_t kings =current&K;
+
+        uint32_t movers = 0;
+        uint32_t temp = defaultShift<~color>(nocc) & opp;
+        if (temp != 0) {
+            movers |= forwardMask<~color>(temp)& current;
+        }
+        temp = forwardMask<~color>(nocc) & opp;
+        if (temp != 0) {
+            movers |= defaultShift<~color>(temp)&current;
+        }
+        if (kings != 0) {
+            temp = defaultShift<color>(nocc) & opp;
+            if (temp != 0) {
+                movers |= forwardMask<color>(temp) & kings;
+            }
+            temp = forwardMask<color>(nocc) & opp;
+
+            if (temp != 0) {
+                movers |= defaultShift<color>(temp) & kings;
+            }
+        }
+        return movers;
+    }
 
     Color getColor();
 
@@ -59,8 +102,6 @@ public:
     inline bool operator==(Position &pos) {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color && pos.key == key);
     }
-
-
 };
 
 

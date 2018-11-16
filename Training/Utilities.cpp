@@ -53,7 +53,6 @@ namespace Utilities {
                 Position currentPos = *board.getPosition();
                 data.emplace_back(currentPos);
                 std::cout << "Added position" << std::endl;
-
             }
             return;
         }

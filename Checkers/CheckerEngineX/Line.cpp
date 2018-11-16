@@ -14,7 +14,7 @@ Line::Line(const Line &other) {
     }
 }
 
-int Line::length() {
+int Line::length()const {
     return counter;
 }
 
@@ -31,7 +31,7 @@ void Line::concat(Move best, Line& line) {
     this->counter =line.counter+1;
 }
 
-std::string Line::toString() {
+std::string Line::toString() const {
     std::string current;
     for (int k = 0; k <length(); ++k) {
         current+=" ("+ std::to_string(k) + ") " + "[" + std::to_string(myArray[k].getFrom()) +"|";
@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& stream, Line& line){
 }
 
 
-Move Line::getFirstMove() {
+Move Line::getFirstMove() const {
     return myArray[0];
 }
 
@@ -55,7 +55,7 @@ void Line::clear() {
 }
 
 
-bool Line::operator==(Line &other) {
+bool Line::operator==(Line &other)const {
     if (other.length() != this->length())
         return false;
 
@@ -68,7 +68,7 @@ bool Line::operator==(Line &other) {
 }
 
 
-bool Line::operator!=(Line &other) {
+bool Line::operator!=(Line &other)const  {
 
     return *this != other;
 }

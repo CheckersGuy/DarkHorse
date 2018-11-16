@@ -97,7 +97,6 @@ void Position::printPosition() {
     }
 }
 
-
 void Position::makeMove(Move move) {
     assert(!move.isEmpty());
     //setting the piece type
@@ -195,7 +194,6 @@ uint32_t Position::getMoversBlack() {
 
 uint32_t Position::getJumpersBlack() {
     const uint32_t nocc = ~(BP | WP);
-
     const uint32_t BK = (BP & K);
     uint32_t movers = 0;
     uint32_t temp = (nocc >> 4) & WP;
@@ -223,7 +221,6 @@ uint32_t Position::getJumpersBlack() {
 
 uint32_t Position::getJumpersWhite() {
     const uint32_t nocc = ~(BP | WP);
-
     const uint32_t WK = WP & K;
     uint32_t movers = 0;
     uint32_t temp = (nocc << 4) & BP;
@@ -246,4 +243,3 @@ uint32_t Position::getJumpersWhite() {
     }
     return movers;
 }
-
