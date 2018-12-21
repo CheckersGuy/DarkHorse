@@ -26,7 +26,6 @@ void Entry::printEncoding() {
 }
 
 Transposition::Transposition(uint32_t capacity) {
-    //dynamically allocating HashTableSize
     entries = new Cluster[1 << capacity];
     this->capacity = 1 << (capacity);
     memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
@@ -59,6 +58,15 @@ void Transposition::clear() {
     memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
 }
 
+void Transposition::incrementAgeCounter() {
+    ageCounter++;
+    ageCounter=ageCounter%Transposition::AGE_LIMIT;
+}
+
+uint32_t Transposition::getAgeCounter() {
+    return ageCounter;
+}
+
 
 double Transposition::getFillRate() {
     return ((double) length) / capacity;
@@ -70,9 +78,10 @@ void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint16_t dep
     assert(value.isEval());
     const uint32_t index = (key) & (this->capacity - 1);
     Cluster *cluster = &this->entries[index];
-    if (depth > cluster->entries[1].getDepth()) {
+    if (depth > cluster->entries[1].getDepth() || ageCounter !=cluster->entries[1].getAgeCounter()) {
         cluster->entries[1].setDepth(depth);
         cluster->entries[1].setFlag(flag);
+        cluster->entries[1].setAgeCounter(ageCounter);
         cluster->entries[1].bestMove = move;
         cluster->entries[1].value = value;
         cluster->entries[1].key = static_cast<uint32_t >(key >> 32);
@@ -80,6 +89,7 @@ void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint16_t dep
     }
     cluster->entries[0].setDepth(depth);
     cluster->entries[0].setFlag(flag);
+    cluster->entries[0].setAgeCounter(ageCounter);
     cluster->entries[0].value = value;
     cluster->entries[0].key = static_cast<uint32_t >(key >> 32);
     cluster->entries[0].bestMove = move;

@@ -68,8 +68,8 @@ namespace Training {
         stream.close();
     }
 
-    int TrainingData::find(TrainingPos pos) {
-        int counter = 0;
+    size_t TrainingData::find(TrainingPos pos) {
+        size_t counter = 0;
         for (TrainingPos current : positions) {
             if (current.pos == pos.pos && current.result == pos.result) {
                 counter++;
@@ -160,51 +160,7 @@ namespace Training {
     }
 
 
-    Value quiescene(Weights<double> &weights, Board &board, Value alpha, Value beta, int ply, uint64_t endTime) {
 
-        if (ply >= MAX_PLY) {
-            return board.getMover() * weights.evaluate(*board.getPosition());
-        }
-
-        MoveListe moves;
-        getCaptures(board, moves);
-        nodeCounter++;
-        Value bestValue = -INFINITE;
-
-        if (moves.length() == 0) {
-            Line localPV;
-            if (board.getPosition()->hasThreat()) {
-                return alphaBeta(board, alpha, beta, localPV, alpha != beta - 1, ply + 1, 1, false);
-            }
-
-            if (board.getPosition()->isWipe()) {
-                return Value::loss(board.getMover(), ply);
-            }
-
-            bestValue = board.getMover() * weights.evaluate(*board.getPosition());
-            if (bestValue >= beta) {
-                return bestValue;
-            }
-        }
-
-        for (int i = 0; i < moves.length(); ++i) {
-            board.makeMove(moves.liste[i]);
-            Value value = ~quiescene(weights, board, ~beta, ~alpha, ply + 1, endTime);
-            board.undoMove();
-
-            if (value > bestValue) {
-                bestValue = value;
-                if (value >= beta) {
-                    break;
-                }
-                if (value > alpha) {
-                    alpha = value;
-                }
-
-            }
-        }
-        return bestValue;
-    }
 
 
 }

@@ -18,15 +18,20 @@ inline uint64_t getSystemTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>
             (std::chrono::steady_clock::now().time_since_epoch()).count();
 }
+
+
+constexpr uint32_t MASK_ROW =0xf;
 constexpr uint32_t LEFT_HALF = 3435973836;
-constexpr uint32_t RIGHT_HALF = LEFT_HALF>>2;
+constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2;
 constexpr uint32_t MASK_L3 = 14737632;
 constexpr uint32_t MASK_L5 = 117901063;
 constexpr uint32_t MASK_R3 = 117901056;
 constexpr uint32_t MASK_R5 = 3772834016;
 
 
-enum NodeType{PVNode,NONPV};
+enum NodeType {
+    PVNode, NONPV
+};
 
 enum Score {
     WHITE_WIN = 15500,
@@ -48,7 +53,7 @@ enum Color {
 enum PieceType {
     BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
-enum Flag {
+enum Flag : uint16_t {
     TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3, UNKNOWN = 555
 };
 
@@ -83,8 +88,86 @@ public:
 
     constexpr Value operator=(int value);
 
+    Value &operator+=(Value other);
 
+    Value &operator+=(int other);
+
+    Value &operator-=(Value other);
+
+    Value &operator-=(int other);
+
+    Value &operator*=(Value other);
+
+    Value &operator*=(int other);
+
+    //pre increment
+    Value &operator++();
+
+    //postincrement
+    Value operator++(int);
+
+    //pre increment
+    Value &operator--();
+
+    //post increment
+    Value operator--(int);
+
+    template<typename T> T as(){
+        return static_cast<T>(value);
+    }
 };
+
+inline Value &Value::operator++() {
+    this->value++;
+    return *this;
+}
+
+inline Value Value::operator++(int) {
+    Value copy(this->value);
+    this->value++;
+    return copy;
+}
+
+inline Value &Value::operator--() {
+    this->value--;
+    return *this;
+}
+
+inline Value Value::operator--(int) {
+    Value copy(this->value);
+    this->value--;
+    return copy;
+}
+
+inline Value &Value::operator+=(Value other) {
+    this->value += other.value;
+    return *this;
+}
+
+inline Value &Value::operator+=(int other) {
+    this->value += other;
+    return *this;
+}
+
+inline Value &Value::operator-=(Value other) {
+    this->value -= other.value;
+    return *this;
+}
+
+inline Value &Value::operator-=(int other) {
+    this->value -= other;
+    return *this;
+}
+
+inline Value &Value::operator*=(Value other) {
+    this->value *= other.value;
+    return *this;
+}
+
+inline Value &Value::operator*=(int other) {
+    this->value *= other;
+    return *this;
+}
 
 inline bool Value::isEval() const {
     return isInRange(-INFINITE, INFINITE);
@@ -166,37 +249,6 @@ constexpr Value operator-(Value val, int val2) {
     return next;
 }
 
-constexpr Value &operator+=(Value &val, Value val2) {
-    val = Value(val.value + val2.value);
-    return val;
-}
-
-constexpr Value &operator+=(Value &val, int val2) {
-    val = Value(val.value + val2);
-    return val;
-}
-
-constexpr Value &operator*=(Value &val, Value val2) {
-    val = Value(val.value * val2.value);
-    return val;
-}
-
-
-constexpr Value &operator*=(Value &val, int val2) {
-    val = Value(val.value * val2);
-    return val;
-}
-
-constexpr Value &operator-=(Value &val, Value val2) {
-    val = Value(val.value - val2.value);
-    return val;
-}
-
-constexpr Value &operator-=(Value &val, int val2) {
-    val = Value(val.value - val2);
-    return val;
-}
-
 constexpr bool operator>(Value val1, Value val2) {
     return val1.value > val2.value;
 }
@@ -230,14 +282,6 @@ constexpr bool operator<=(Value val1, int val2) {
     return val1.value <= val2;
 }
 
-
-constexpr Value &operator++(Value &val) {
-    return val = val + 1;
-}
-
-constexpr Value &operator--(Value &val) {
-    return val = val - 1;
-}
 
 //Value class-functions
 inline bool Value::isEasyMove() const {

@@ -71,7 +71,7 @@ namespace Perft {
     }
 
     void PerftPool::idleLoop(Perft::PerftPool *pool) {
-
+        std::cout<<"Entered the loop"<<std::endl;
         while (!pool->work.empty()) {
             pool->myMutex.lock();
             Work current;
@@ -98,6 +98,38 @@ namespace Perft {
         for (int i = 0; i < threads; ++i) {
             myThreads.emplace_back(std::thread(idleLoop, this));
         }
+    }
+    Entry* PerftTable::findEntry(const Position pos,int depth,uint64_t key) {
+        std::size_t index =key&(capacity-1);
+        Bucket& buck =entries[index];
+        buck.lock.lock();
+        Entry& fill =buck.entries[Entry::FILL_ENTRY];
+        if(fill.pos==pos && fill.depth == depth){
+            return &fill;
+        }
+        Entry& depthFirst=buck.entries[Entry::DEPTH_ENTRY];
+        if(depthFirst.pos==pos && depthFirst.depth == depth){
+            return &depthFirst;
+        }
+        buck.lock.unlock();
+        return nullptr;
+    }
+
+    void PerftTable::storeEntry(Position pos, int depth,uint64_t nodes,const uint64_t key) {
+        std::size_t index =key&(capacity-1);
+        Bucket& buck =entries[index];
+        buck.lock.lock();
+        Entry& depthFirst=buck.entries[Entry::DEPTH_ENTRY];
+        if(depth>depthFirst.depth){
+            depthFirst.depth=depth;
+            depthFirst.pos=pos;
+            depthFirst.nodes=nodes;
+        }
+        Entry& fill =buck.entries[Entry::FILL_ENTRY];
+        fill.depth=depth;
+        fill.pos=pos;
+        fill.nodes=nodes;
+        buck.lock.unlock();
     }
 
 

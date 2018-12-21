@@ -11,6 +11,7 @@
 #include <vector>
 #include <queue>
 #include <iostream>
+#include <SMPLock.h>
 #include "Training.h"
 
 
@@ -22,21 +23,23 @@ class SimplePool {
 
 private:
     float threshHold;
-    std::vector<Training::TrainingGame>&games;
-    std::vector<Training::TrainingGame>&removed;
+    std::vector<Training::TrainingGame> &games;
+    std::vector<Training::TrainingGame> &removed;
     std::vector<std::thread> workThreads;
-    std::mutex myMutex;
+    SMPLock myMutex;
     std::atomic<int> workCounter;
 
 public:
 
-    void init();
 
-    SimplePool(int threads,std::vector<Training::TrainingGame>&games,std::vector<Training::TrainingGame>&removed,float threshHold);
+    SimplePool(int threads, std::vector<Training::TrainingGame> &games, std::vector<Training::TrainingGame> &removed,
+               float threshHold);
 
-    SimplePool(int threads,std::vector<Training::TrainingGame>&games,std::vector<Training::TrainingGame>&removed);
+    SimplePool(int threads, std::vector<Training::TrainingGame> &games, std::vector<Training::TrainingGame> &removed);
 
     ~SimplePool();
+
+    void init();
 
     void joinAll();
 

@@ -32,11 +32,9 @@ namespace Statistics {
         void updateBFScore(Move *liste, int moveIndex, Color color, int depth);
     };
 
-#ifdef TRAIN
-    extern thread_local MovePicker mPicker;
-#else
+
     extern MovePicker mPicker;
-#endif
+
 
 
 }

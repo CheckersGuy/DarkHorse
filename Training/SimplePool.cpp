@@ -32,12 +32,7 @@ std::mutex myMutex;
 void SimplePool::init() {
 
     while (workCounter < games.size()) {
-
-        myMutex.lock();
-        int index = workCounter;
-        std::cout << "ID: " << workCounter << "\n";
-        workCounter++;
-        myMutex.unlock();
+        int index = workCounter.fetch_add(1);
         bool add = true;
         for (int k = index + 1; k < games.size(); ++k) {
             if (simGame(games[index], games[k], threshHold)) {

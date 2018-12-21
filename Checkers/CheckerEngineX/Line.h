@@ -40,9 +40,7 @@ public:
 
 };
 
-inline Move Line::operator[](int index)const {
-    return this->myArray[index];
-}
+
 
 std::ostream& operator<<(std::ostream& stream, Line& line);
 

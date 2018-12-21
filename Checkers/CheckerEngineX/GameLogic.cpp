@@ -17,10 +17,17 @@ MAKRO void setHashSize(uint32_t hash) {
     TT.resize(hash);
 }
 
-GameWeights gameWeights;
+
+#ifdef TRAIN
+    Weights<double> gameWeights;
+#else
+    Weights<char> gameWeights;
+#endif
+
+
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("Weights/test.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Checkers/CheckerEngineX/cmake-build-debug/compressed.weights");
     TT.resize(21);
     Zobrist::initializeZobrisKeys();
 }
@@ -31,7 +38,9 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     return searchValue(board, best, depth, time, print);
 }
 
+
 MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+
 
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
@@ -47,19 +56,37 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         board.makeMove(best);
         return EASY_MOVE;
     }
+    TT.incrementAgeCounter();
     TT.clear();
+    //Testing aging of TT entries
+
     timeOut = false;
     endTime = getSystemTime() + time;
-    for (int i = 1; i <= depth && i <= MAX_PLY; ++i) {
+    int i=1;
+    while (i<=depth && i<=MAX_PLY) {
+
         Line currentPV;
         Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
-
         mainPV = currentPV;
+        if(!timeOut && (value<=alpha || value>=beta)){
+            //failed the window
+            alpha=-INFINITE;
+            beta=INFINITE;
+            continue;
+        }
+
+        alpha=value-100;
+        beta=value+100;
         if (timeOut)
             break;
 
-        best = mainPV[0];
+        if(!mainPV[0].isEmpty())
+            best =mainPV[0];
+
         gameValue = value;
+
+        alpha=value-50;
+        beta=value+50;
         uint64_t currentValue = getSystemTime();
         if (print) {
             std::string temp = std::to_string(gameValue.value) + "  ";
@@ -71,6 +98,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             temp += "\n";
             std::cout << temp;
         }
+        ++i;
     }
     if (print) {
 
@@ -143,9 +171,9 @@ return bestValue;
 template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
-    constexpr bool inPVLine = type == PVNode;
+    constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
-    if ((nodeCounter & 4095) == 0 && getSystemTime() >= endTime) {
+    if ((nodeCounter & 2047) == 0 && getSystemTime() >= endTime) {
         timeOut = true;
         return 0;
     }
@@ -191,7 +219,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         Value margin = std::min(10 * depth, 250);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;;
-        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, pv, ply, newDepth, false);
+        Line local;
+        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
         if (value >= newBeta) {
             return addSafe(value, ~margin);
         }

@@ -21,7 +21,7 @@
 #endif
 
 
-extern uint64_t nodeCounter;
+
 
 
 MAKRO void setHashSize(uint32_t hash);

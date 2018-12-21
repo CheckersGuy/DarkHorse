@@ -14,6 +14,7 @@
 #include <MGenerator.h>
 #include "Weights.h"
 #include <algorithm>
+#include <functional>
 
 namespace Training {
 
@@ -58,7 +59,7 @@ namespace Training {
 
         void add(TrainingPos pos);
 
-        int find(TrainingPos pos);
+        size_t find(TrainingPos pos);
 
         void save(const std::string file);
 
@@ -76,30 +77,14 @@ namespace Training {
     void loadGames(std::vector<TrainingGame> &games, const std::string file);
 
 
-    inline double sigmoid(double c, Value value) {
-        const float temp = static_cast<double>(value.value);
-        return 1.0 / (1.0 + std::exp(c * temp));
+    inline double sigmoid(double c, double value) {
+        return 1.0 / (1.0 + std::exp(c * value));
     }
 
-    inline double sigmoidDiff(double c, Value value) {
+    inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
 
-
-    Value quiescene(Weights<double> &weights, Board &board, Value alpha, Value beta, int ply, uint64_t endTime);
-
-    inline double quieDiff(int index, Weights<double> &myWeights, Board &board) {
-        myWeights.weights[index] += 1.0;
-        Value result = Training::quiescene(myWeights, board, -INFINITE, INFINITE, 0, 100000000);
-        myWeights.weights[index] -= 1.0;
-        return static_cast<double>(result.value);
-    }
-
-    inline double quieDiff(int index, Weights<double> &myWeights, Position &pos) {
-        Board board;
-        BoardFactory::setUpPosition(board, pos);
-        return quieDiff(index, myWeights, board);
-    }
 
 
 }

@@ -23,14 +23,6 @@ public:
 
     Position(uint32_t wp, uint32_t bp, uint32_t k) : Position(wp, bp, k, 0) {}
 
-    uint32_t getJumpersBlack();
-
-    uint32_t getJumpersWhite();
-
-    uint32_t getMoversWhite();
-
-    uint32_t getMoversBlack();
-
     template<Color color> uint32_t getCurrent(){
         if constexpr (color ==BLACK)
             return BP;
@@ -99,7 +91,7 @@ public:
 
     Position getColorFlip();
 
-    inline bool operator==(Position &pos) {
+    inline bool operator==(const Position &pos) {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color && pos.key == key);
     }
 };
