@@ -15,7 +15,8 @@
 
 struct NodeInfo {
     Value value = 0;
-    int depth = 0, flag = 0;
+    int depth = 0;
+    uint16_t flag = 0;
     Move move;
 };
 
@@ -31,6 +32,8 @@ struct Entry {
 
     void setFlag(const uint16_t flag);
 
+    void setAgeCounter(uint16_t flag);
+
     uint32_t getKey();
 
     Value getValue();
@@ -39,6 +42,8 @@ struct Entry {
 
     uint16_t getFlag();
 
+    uint16_t getAgeCounter();
+
     uint16_t getDepth();
 
     void printEncoding();
@@ -46,6 +51,8 @@ struct Entry {
     bool isEmpty();
 
 };
+
+
 
 inline bool Entry::isEmpty() {
     return encoding==0;
@@ -57,6 +64,15 @@ inline uint16_t Entry::getEncoding() {
 
 inline uint32_t Entry::getKey() {
     return this->key;
+}
+
+inline void Entry::setAgeCounter(uint16_t flag) {
+    this->encoding &= ~12;
+    this->encoding |= flag<<2;
+}
+
+inline uint16_t Entry::getAgeCounter() {
+    return (encoding & (12)) >> 2;
 }
 
 inline void Entry::setFlag(const uint16_t flag) {
@@ -90,7 +106,10 @@ struct Cluster {
 
 class Transposition {
 
+    static constexpr uint16_t AGE_LIMIT=4;
+
 private:
+    uint16_t ageCounter=0;
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
@@ -111,9 +130,13 @@ public:
 
     uint32_t getHashHits();
 
+    uint32_t getAgeCounter();
+
     void clear();
 
     void resize(uint32_t capa);
+
+    void incrementAgeCounter();
 
     void storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move);
 

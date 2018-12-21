@@ -47,9 +47,9 @@ Color Position::getColor() {
 
 bool Position::hasJumps(Color color) {
     if (color == BLACK) {
-        return getJumpersBlack() != 0;
+        return getJumpers<BLACK>() != 0;
     } else if (color == WHITE) {
-        return getJumpersWhite() != 0;
+        return getJumpers<WHITE>() != 0;
     }
 }
 
@@ -59,11 +59,11 @@ bool Position::hasThreat() {
 }
 
 bool Position::isLoss() {
-    return ((getJumpersWhite() == 0 && getMoversWhite() == 0) || (getJumpersBlack() == 0 && getMoversBlack() == 0));
+    return ((getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0) || (getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0));
 }
 
 bool Position::isWipe() {
-    return ((getColor() == BLACK && getMoversBlack() == 0) || (getColor() == WHITE && getMoversWhite() == 0));
+    return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
 }
 
 void Position::printPosition() {
@@ -159,87 +159,4 @@ void Position::undoMove(Move move) {
         K &= ~(1 << move.getTo());
     }
 
-}
-
-
-uint32_t Position::getMoversWhite() {
-    const uint32_t nocc = ~(BP | WP);
-    const uint32_t WK = (WP & K);
-    uint32_t movers = (nocc << 4) & WP;
-    movers |= ((nocc & MASK_L3) << 3) & WP;
-    movers |= ((nocc & MASK_L5) << 5) & WP;
-    if (WK) {
-        movers |= (nocc >> 4) & WK;
-        movers |= ((nocc & MASK_R3) >> 3) & WK;
-        movers |= ((nocc & MASK_R5) >> 5) & WK;
-    }
-    return movers;
-}
-
-
-uint32_t Position::getMoversBlack() {
-    const uint32_t nocc = ~(BP | WP);
-    const uint32_t BK = BP & K;
-    uint32_t movers = (nocc >> 4) & BP;
-    movers |= ((nocc & MASK_R3) >> 3) & BP;
-    movers |= ((nocc & MASK_R5) >> 5) & BP;
-    if (BK != 0) {
-        movers |= (nocc << 4) & BK;
-        movers |= ((nocc & MASK_L3) << 3) & BK;
-        movers |= ((nocc & MASK_L5) << 5) & BK;
-    }
-    return movers;
-}
-
-
-uint32_t Position::getJumpersBlack() {
-    const uint32_t nocc = ~(BP | WP);
-    const uint32_t BK = (BP & K);
-    uint32_t movers = 0;
-    uint32_t temp = (nocc >> 4) & WP;
-    if (temp != 0) {
-        movers |= (((temp & MASK_R3) >> 3) | ((temp & MASK_R5) >> 5)) & BP;
-    }
-    temp = (((nocc & MASK_R3) >> 3) | ((nocc & MASK_R5) >> 5)) & WP;
-    if (temp != 0) {
-        movers |= ((temp >> 4)) & BP;
-    }
-
-    if (BK != 0) {
-        temp = (nocc << 4) & WP;
-        if (temp != 0) {
-            movers |= (((temp & MASK_L3) << 3) | ((temp & MASK_L5) << 5)) & BK;
-        }
-        temp = (((nocc & MASK_L3) << 3) | ((nocc & MASK_L5) << 5)) & WP;
-
-        if (temp != 0) {
-            movers |= ((temp << 4)) & BK;
-        }
-    }
-    return movers;
-}
-
-uint32_t Position::getJumpersWhite() {
-    const uint32_t nocc = ~(BP | WP);
-    const uint32_t WK = WP & K;
-    uint32_t movers = 0;
-    uint32_t temp = (nocc << 4) & BP;
-    if (temp != 0) {
-        movers |= (((temp & MASK_L3) << 3) | ((temp & MASK_L5) << 5)) & WP;
-    }
-    temp = (((nocc & MASK_L3) << 3) | ((nocc & MASK_L5) << 5)) & BP;
-    if (temp != 0) {
-        movers |= ((temp << 4)) & WP;
-    }
-    if (WK != 0) {
-        temp = (nocc >> 4) & BP;
-        if (temp != 0) {
-            movers |= (((temp & MASK_R3) >> 3) | ((temp & MASK_R5) >> 5)) & WK;
-        }
-        temp = (((nocc & MASK_R3) >> 3) | ((nocc & MASK_R5) >> 5)) & BP;
-        if (temp != 0) {
-            movers |= ((temp >> 4)) & WK;
-        }
-    }
-    return movers;
 }

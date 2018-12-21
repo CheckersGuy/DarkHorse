@@ -14,17 +14,15 @@
 #include <cstring>
 
 constexpr uint32_t region = 13107;
-extern uint64_t nodeCounter;
+constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
-constexpr int powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
+constexpr size_t SIZE = 390625 * 9  * 2 * 2;
 
-constexpr int SIZE = 390625 * 9 * 2;
-
-inline int getIndex(uint32_t region, const Position &pos) {
+inline size_t getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
-    int index = 0;
+    size_t index = 0;
     uint32_t pieces = region & (pos.BP | pos.WP);
-    int counter = 0;
+    size_t counter = 0;
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1));
         pieces &= pieces - 1;
@@ -49,9 +47,19 @@ class Weights {
 public:
     T *weights;
 
-    Weights() {
+    Weights(){
         weights = new T[SIZE];
         std::memset(weights, 0, sizeof(T) * SIZE);
+    }
+
+    Weights(const Weights& other){
+        weights = new T[SIZE];
+        std::memcpy(this->weights,other.weights,sizeof(T)*SIZE);
+    }
+
+    Weights(Weights&& other){
+        this->weights=other.weights;
+        other.weights= nullptr;
     }
 
     ~Weights() {
@@ -60,8 +68,8 @@ public:
 
     int numNonZeroValues() {
         int counter = 0;
-        for (int i = 0; i < SIZE; ++i) {
-            if (weights[i] != 0) {
+        for (size_t i = 0; i < SIZE; ++i) {
+            if (((char)(round(weights[i]))) != 0) {
                 counter++;
             }
         }
@@ -69,8 +77,8 @@ public:
     }
 
     T getMaxValue() {
-        T tempValue = -1000;
-        for (int i = 0; i < SIZE; ++i) {
+        T tempValue = -10000;
+        for (size_t i = 0; i < SIZE; ++i) {
             if (weights[i] > tempValue) {
                 tempValue = weights[i];
             }
@@ -79,8 +87,8 @@ public:
     }
 
     T getMinValue() {
-        T tempValue = 1000;
-        for (int i = 0; i < SIZE; ++i) {
+        T tempValue = 10000;
+        for (size_t i = 0; i < SIZE; ++i) {
             if (weights[i] < tempValue) {
                 tempValue = weights[i];
             }
@@ -93,7 +101,19 @@ public:
         if (!stream.good()) {
             std::cerr << "Error: Couldn't find weights, default init" << std::endl;;
         } else {
-            stream.read((char *) &weights[0], sizeof(T) * SIZE);
+            size_t counter=0;
+            while(!stream.eof()){
+                uint32_t runLength=0;
+                stream.read((char*)&runLength,sizeof(uint32_t));
+
+
+                char value;
+                stream.read(&value,sizeof(char));
+                for(size_t i=0;i<runLength;++i){
+                    weights[counter]=(T)(value);
+                    counter++;
+                }
+            }
         }
         stream.close();
     }
@@ -105,9 +125,16 @@ public:
             std::cerr << "Error" << std::endl;
             exit(0);
         }
-        std::cout << "Size: " << SIZE << std::endl;
-        std::cout << "Test: " << sizeof(T) << std::endl;
-        stream.write((char *) &weights[0], sizeof(T) * SIZE);
+        for(size_t i=0;i<SIZE;++i){
+            uint32_t runLength=1;
+            char value =(char)round(weights[i]);
+            while(i<SIZE && ((char)round(weights[i]))==((char)round(weights[i+1]))){
+                ++i;
+                ++runLength;
+            }
+            stream.write((char*)&runLength,sizeof(uint32_t));
+            stream.write(&value,sizeof(char));
+        }
         stream.close();
     }
 
@@ -136,119 +163,54 @@ public:
             const int WK = __builtin_popcount(pos.K & (pos.WP));
             const int BK = __builtin_popcount(pos.K & (pos.BP));
             phase += WK + BK;
-            openingWhite += 150 * (WK);
-            openingBlack += 150 * BK;
-            endingWhite += 110 * (WK);
-            endingBlack += 110 * BK;
+                openingWhite += 150 * (WK);
+                openingBlack += 150 * BK;
+                endingWhite += 110 * (WK);
+                endingBlack += 110 * BK;
+
         }
 
-        for (int j = 0; j < 3; ++j) {
-            for (int i = 0; i < 3; ++i) {
+        size_t colorIndex = 0;
+        if (pos.color == WHITE) {
+            colorIndex = 390625 * 9 * 2;
+        }
+
+        for (size_t j = 0; j < 3; ++j) {
+            for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8 * j + i);
-                int index = getIndex(curRegion, pos);
-                opening += (int) (weights[index + 390625 * (3 * j + i)]);
-                ending += (int) (weights[index + 390625 * 9 + 390625 * (3 * j + i)]);
+                size_t index = getIndex(curRegion, pos)+colorIndex;
+                if constexpr(std::is_same<char,T>::value){
+                    opening +=  (weights[index + 390625 * (3 * j + i)]);
+                    ending +=  (weights[index + 390625 * 9 + 390625 * (3 * j + i)]);
+                }else{
+                    opening +=  (int)(weights[index + 390625 * (3 * j + i)]);
+                    ending +=  (int)(weights[index + 390625 * 9 + 390625 * (3 * j + i)]);
+                }
             }
         }
-
-
-        const int scoreWhite = std::abs(leftWhite - rightWhite);
-        const int scoreBlack = std::abs(leftBlack - rightBlack);
-        sum += (scoreWhite - scoreBlack) * -2;;
 
         int phasedScore = 0;
         phasedScore += ((phase * opening + (24 - phase) * ending));
         phasedScore += ((phase * openingWhite + (24 - phase) * endingWhite));
         phasedScore /= 24;
         phasedScore -= ((phase * openingBlack + (24 - phase) * endingBlack)) / 24;
-
         sum += phasedScore;
+
+        int balanceWhite =std::abs(leftWhite-rightWhite);
+        int balanceBlack =std::abs(leftBlack-rightBlack);
+        sum+=2*(balanceBlack-balanceWhite);
+
+
 
         return sum;
     }
 
-    int getSize() {
-        return SIZE + 2;
+    size_t getSize() {
+        return SIZE ;
     }
 
 };
 
-
-//GameWeights is not correct atm
-
-class GameWeights : public Weights<char> {
-
-
-public:
-
-
-    void loadWeights(std::string path) {
-        Weights<double> myWeights;
-        myWeights.loadWeights(path);
-        for (int i = 0; i < SIZE; ++i) {
-            weights[i] = (char) (myWeights.weights[i]);
-        }
-    }
-
-
-    inline Value evaluate(Position pos) const {
-        int sum = 0;
-        int phase = 0;
-
-
-        const uint32_t nKings = ~pos.K;
-        const int rightBlack = __builtin_popcount(pos.BP & nKings & RIGHT_HALF);
-        const int rightWhite = __builtin_popcount(pos.WP & nKings & RIGHT_HALF);
-        const int leftBlack = __builtin_popcount(pos.BP & nKings & LEFT_HALF);
-        const int leftWhite = __builtin_popcount(pos.WP & nKings & LEFT_HALF);
-
-        const int WP = rightWhite + leftWhite;
-        const int BP = rightBlack + leftBlack;
-
-
-        int openingWhite = 0, openingBlack = 0,
-                endingWhite = 0, endingBlack = 0,
-                opening = 0, ending = 0;
-
-        sum += 100 * (WP - BP);
-
-
-        phase += WP + BP;
-        if (pos.K != 0) {
-            const int WK = __builtin_popcount(pos.K & (pos.WP));
-            const int BK = __builtin_popcount(pos.K & (pos.BP));
-            phase += WK + BK;
-            openingWhite += 150 * (WK);
-            openingBlack += 150 * BK;
-            endingWhite += 110 * (WK);
-            endingBlack += 110 * BK;
-        }
-
-        for (int j = 0; j < 3; ++j) {
-            for (int i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8 * j + i);
-                int index = getIndex(curRegion, pos);
-                opening += weights[index + 390625 * (3 * j + i)];
-                ending += weights[index + 390625 * 9 + 390625 * (3 * j + i)];
-            }
-        }
-
-        const int scoreWhite = std::abs(leftWhite - rightWhite);
-        const int scoreBlack = std::abs(leftBlack - rightBlack);
-        sum += (scoreWhite - scoreBlack) * -2;
-
-        int phasedScore = 0;
-        phasedScore += ((phase * opening + (24 - phase) * ending));
-        phasedScore += ((phase * openingWhite + (24 - phase) * endingWhite));
-        phasedScore /= 24;
-        phasedScore -= ((phase * openingBlack + (24 - phase) * endingBlack)) / 24;
-
-        sum += phasedScore;
-        return sum;
-    }
-
-
-};
 
 
 #endif //CHECKERENGINEX_WEIGHTS_H

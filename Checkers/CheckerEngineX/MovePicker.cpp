@@ -6,11 +6,9 @@
 
 namespace Statistics {
 
-#ifdef TRAIN
-    thread_local MovePicker mPicker;
-#else
+
     MovePicker mPicker;
-#endif
+
 
 
     void MovePicker::clearScores() {

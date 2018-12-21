@@ -4,6 +4,15 @@
 
 #ifndef TRAINING_UTILITIES_H
 #define TRAINING_UTILITIES_H
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/filter/bzip2.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/filter/zlib.hpp>
+#include <filesystem>
+
+#include <boost/iostreams/copy.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include "Utilities.h"
 
 #include <fstream>
 #include "Board.h"
@@ -12,11 +21,16 @@
 #include "Training.h"
 #include "BoardFactory.h"
 #include "Training.h"
-
+#include <boost/interprocess/streams/bufferstream.hpp>
 #include <unordered_set>
 
 namespace Utilities {
 
+    namespace bio =boost::iostreams;
+
+    std::stringstream readData(const std::string path);
+
+    void compressFile(const std::string file);
 
     void createNMoveBook(std::vector<Position> &data, int N, Board &board, Value lowerBound, Value upperBound);
 
@@ -29,6 +43,8 @@ namespace Utilities {
     Score playGame(Engine&engine,Engine& second,Position position,int time, bool print);
 
     Score playGame(Training::TrainingGame& game,Engine&engine,Engine& second,Position position,int time, bool print);
+
+
 
 }
 

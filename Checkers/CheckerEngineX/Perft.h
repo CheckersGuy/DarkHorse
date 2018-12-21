@@ -11,6 +11,7 @@
 #include <atomic>
 #include "Board.h"
 #include "BoardFactory.h"
+#include "SMPLock.h"
 
 
 namespace Perft {
@@ -24,6 +25,55 @@ namespace Perft {
         Position pos;
         int depth = 0;
     };
+
+    struct Entry{
+        constexpr static int DEPTH_ENTRY=1;
+        constexpr static int FILL_ENTRY=0;
+        int depth=0;
+        Position pos;
+        uint64_t nodes=0;
+
+        bool operator ==(const Entry& other);
+    };
+
+    inline bool Entry::operator==(const Perft::Entry &other) {
+        return this->pos==other.pos;
+    }
+
+    struct Bucket{
+        Entry entries[2];
+        SMPLock lock;
+    };
+
+    class PerftTable{
+
+    private:
+        Bucket* entries;
+        std::size_t  capacity;
+    public:
+
+        PerftTable(uint64_t capa):capacity(capa){
+            entries = new Bucket[capacity];
+            this->capacity=capa;
+            for(std::size_t i =0;i<capa;++i){
+                Position empty;
+                entries[0].entries[0].pos=empty;
+                entries[0].entries[1].pos=empty;
+            }
+        }
+
+        ~PerftTable(){
+            delete[] entries;
+        }
+
+        Entry* findEntry(const Position pos,int depth,uint64_t key);
+
+
+
+        void storeEntry(Position pos, int depth,uint64_t nodes,const uint64_t key);
+
+    };
+
 
     class PerftPool {
     private:

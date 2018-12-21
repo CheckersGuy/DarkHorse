@@ -73,4 +73,6 @@ bool Line::operator!=(Line &other)const  {
     return *this != other;
 }
 
-
+Move Line::operator[](int index)const {
+    return this->myArray[index];
+}

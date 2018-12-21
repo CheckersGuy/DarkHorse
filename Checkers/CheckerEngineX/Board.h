@@ -56,8 +56,8 @@ inline Color Board::getMover() {
 }
 
 inline bool Board::isSilentPosition() {
-    const uint32_t wjumpers = pStack[pCounter].getJumpersWhite();
-    const uint32_t bjumpers = pStack[pCounter].getJumpersBlack();
+    const uint32_t wjumpers = pStack[pCounter].getJumpers<WHITE>();
+    const uint32_t bjumpers = pStack[pCounter].getJumpers<BLACK>();
     return (wjumpers == 0 && bjumpers == 0);
 }
 

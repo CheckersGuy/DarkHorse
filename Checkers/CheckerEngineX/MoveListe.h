@@ -153,7 +153,7 @@ public:
 
     void sort(Move ttMove, bool inPVLine, Color color);
 
-    Move operator[](int index);
+    Move operator[](size_t index);
 
     int findIndex(Move move);
 
@@ -170,7 +170,7 @@ inline bool MoveListe::isInList(Move move) {
     return findIndex(move)>=0;
 }
 
-inline Move MoveListe::operator[](int index) {
+inline Move MoveListe::operator[](size_t index) {
     return liste[index];
 }
 

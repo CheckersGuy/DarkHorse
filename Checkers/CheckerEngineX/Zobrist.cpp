@@ -16,8 +16,9 @@ namespace Zobrist{
          std::cout<<"GENERATION-MODE"<<"\n";
       seed=getSystemTime();
 #endif
+        constexpr uint64_t limit =std::numeric_limits<uint64_t>::max()-1;
         std::mt19937_64 generator(seed);
-        std::uniform_int_distribution<uint64_t>distrib;
+        std::uniform_int_distribution<uint64_t>distrib(0,limit);
         for(int i=0;i<32;++i){
             for(int j=0;j<4;++j){
                 ZOBRIST_KEYS[i][j]=distrib(generator);

@@ -3,9 +3,38 @@
 //
 
 #include "Utilities.h"
-
 namespace Utilities {
 
+
+ /*   void compressFile(const std::string file) {
+        std::ifstream stream(file, std::ios_base::in);
+        if (!stream.good()) {
+            std::cerr << "Couldn't find the file" << std::endl;
+            return;
+        }
+        std::ofstream stream2(file + ".bzip2", std::ios_base::out|std::ios::binary);
+        boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
+        in.push(boost::iostreams::bzip2_compressor());
+        in.push(stream);
+        boost::iostreams::copy(in, stream2);
+        stream.close();
+        stream2.close();
+    }
+
+
+
+    std::stringstream readData(const std::string path) {
+        std::stringstream myStream;
+        std::ifstream input(path,std::ios_base::in|std::ios::binary);
+
+        boost::iostreams::filtering_streambuf<boost::iostreams::input>in;
+        in.push(boost::iostreams::bzip2_decompressor());
+        in.push(input);
+
+
+        return myStream;
+    }
+*/
 
     void loadPositions(std::vector<Position> &positions, const std::string file) {
         std::ifstream stream;
@@ -57,7 +86,7 @@ namespace Utilities {
             return;
         }
         MoveListe liste;
-        getMoves(board, liste);
+        getMoves(*board.getPosition(), liste);
         for (int i = 0; i < liste.length(); ++i) {
             board.makeMove(liste.liste[i]);
             createNMoveBook(data, N - 1, board, lowerBound, upperBound);
@@ -78,7 +107,7 @@ namespace Utilities {
                 return DRAW;
 
             MoveListe liste;
-            getMoves(board, liste);
+            getMoves(*board.getPosition(), liste);
             if (liste.length() == 0) {
                 if (board.getMover() == BLACK) {
                     return WHITE_WIN;
@@ -117,7 +146,7 @@ namespace Utilities {
             if (board.isRepetition())
                 return DRAW;
             MoveListe liste;
-            getMoves(board, liste);
+            getMoves(*board.getPosition(), liste);
             if (liste.length() == 0) {
                 if (board.getMover() == BLACK) {
                     return WHITE_WIN;
