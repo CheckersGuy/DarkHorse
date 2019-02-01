@@ -6,106 +6,105 @@
 #ifndef CHECKERENGINEX_PERFT_H
 #define CHECKERENGINEX_PERFT_H
 
+#include "Position.h"
 #include <mutex>
-#include <queue>
 #include <atomic>
-#include "Board.h"
-#include "BoardFactory.h"
+#include <deque>
+#include "MGenerator.h"
 #include "SMPLock.h"
-
+#include <optional>
+#include <vector>
+#include <deque>
+#include <thread>
+#include <cstring>
 
 namespace Perft {
 
-    uint64_t perftCount(int depth, int threads);
-
-    uint64_t perftCount(int depth);
-
-
-    struct Work {
-        Position pos;
-        int depth = 0;
-    };
-
     struct Entry{
-        constexpr static int DEPTH_ENTRY=1;
-        constexpr static int FILL_ENTRY=0;
-        int depth=0;
         Position pos;
-        uint64_t nodes=0;
+        int depth;
+        uint64_t nodes;
 
-        bool operator ==(const Entry& other);
+        Entry()=default;
+        Entry(Position pos, int depth, uint64_t nodes):pos(pos),depth(depth),nodes(nodes){}
     };
 
-    inline bool Entry::operator==(const Perft::Entry &other) {
-        return this->pos==other.pos;
-    }
-
-    struct Bucket{
+    struct Cluster{
         Entry entries[2];
         SMPLock lock;
     };
 
-    class PerftTable{
+
+    class Table{
 
     private:
-        Bucket* entries;
-        std::size_t  capacity;
+        uint32_t capacity;
+        std::unique_ptr<Cluster[]>entries;
+
     public:
-
-        PerftTable(uint64_t capa):capacity(capa){
-            entries = new Bucket[capacity];
-            this->capacity=capa;
-            for(std::size_t i =0;i<capa;++i){
-                Position empty;
-                entries[0].entries[0].pos=empty;
-                entries[0].entries[1].pos=empty;
-            }
+        Table(uint32_t capacity):capacity(capacity),entries(std::make_unique<Cluster[]>(capacity)){
+            std::memset(entries.get(),0,sizeof(Entry)*2*capacity);
         }
 
-        ~PerftTable(){
-            delete[] entries;
-        }
+        Table()=default;
 
-        Entry* findEntry(const Position pos,int depth,uint64_t key);
+        uint64_t getCapacity();
 
+        void setCapacity(uint32_t capacity);
 
+        std::optional<uint64_t >probe(Position pos,int depth);
 
-        void storeEntry(Position pos, int depth,uint64_t nodes,const uint64_t key);
+        void store(Position pos, int depth, uint64_t nodes);
 
     };
 
 
-    class PerftPool {
-    private:
-        std::atomic<uint64_t> nodeCounter;
-        std::mutex myMutex;
-        std::vector<std::thread> myThreads;
-        std::queue<Work> work;
-        int threads;
+    struct SplitPoint {
+        Position pos;
         int depth;
+        SplitPoint(Position pos, int depth) : pos(pos), depth(depth) {}
+        SplitPoint()=default;
+    };
+
+
+
+    uint64_t perftCheck(Board& board, int depth);
+
+    class ThreadPool {
+        using node_ptr=std::shared_ptr<SplitPoint>;
 
     public:
+         int splitDepth=10;
+        std::mutex myMutex;
+        size_t numThreads;
+        std::atomic<bool> search;
+        std::deque<SplitPoint>splitPoints;
+        std::vector<std::thread>workers;
+        uint64_t nodeCounter=0;
+        std::atomic<int>workCounter;
+    public:
 
-        PerftPool(int threads) : threads(threads), nodeCounter(0), depth(0) {
 
-        }
+        ThreadPool(size_t numThreads) : numThreads(numThreads), search(false),workCounter(0) {}
 
-        ~PerftPool();
+        static void idleLoop(ThreadPool *pool);
 
         void startThreads();
 
-        void join();
+        void waitAll();
 
-        static void idleLoop(PerftPool *pool);
+        void setSplitDepth(int splitDepth);
 
-        uint64_t perftCount(Board &board, int depth);
+        uint64_t perftCount(Board&board, int depth);
 
-        uint64_t getPerftCount();
+        void splitLoop(Board& board, int depth,int startDepth);
 
-        void setDepth(int depth);
-
+        uint64_t getNodeCounter();
 
     };
+
+    extern Table table;
+
 }
 #endif //CHECKERENGINEX_PERFT_H
 

@@ -19,17 +19,13 @@ class Engine {
 private:
     constexpr static int DEFAULT_HASH = 21;
     const std::string path;
+    int timePerMove;
     int hashSize;
     void *handle;
 
 public:
-    Engine(const std::string myPath) : path(myPath), hashSize(DEFAULT_HASH) {
-        handle = dlopen(path.c_str(), RTLD_LAZY);
-        if (!handle) {
-            std::cerr << "Engine wasn't found" << "\n";
-            exit(EXIT_FAILURE);
-        }
-    };
+
+    Engine(const std::string path);
 
     ~Engine();
 
@@ -38,6 +34,10 @@ public:
     void initialize();
 
     void setHashSize(int hash);
+
+    void setTimePerMove(int time);
+
+    int getTimePerMove();
 
 };
 

@@ -55,12 +55,12 @@ void Line::clear() {
 }
 
 
-bool Line::operator==(Line &other)const {
+bool Line::operator==(const Line &other)const {
     if (other.length() != this->length())
         return false;
 
     for (int i = 0; i < other.length(); ++i) {
-        if ((*this)[i] != other[i])
+        if (myArray[i] != other.myArray[i])
             return false;
     }
 
@@ -68,11 +68,23 @@ bool Line::operator==(Line &other)const {
 }
 
 
-bool Line::operator!=(Line &other)const  {
+bool Line::operator!=(const Line &other)const  {
 
     return *this != other;
 }
 
+Line& Line::operator=(const Line &other) {
+    for(int i=0;i<other.length();++i){
+        this->myArray[i]=other.myArray[i];
+    }
+    this->counter=other.counter;
+    return *this;
+}
+
 Move Line::operator[](int index)const {
+    return this->myArray[index];
+}
+
+Move& Line::operator[](int index) {
     return this->myArray[index];
 }

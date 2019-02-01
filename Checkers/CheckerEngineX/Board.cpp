@@ -40,3 +40,7 @@ void Board::undoMove() {
     this->pCounter--;
 }
 
+Board& Board::operator=(const Position pos) {
+    BoardFactory::setUpPosition(*this,pos);
+}
+

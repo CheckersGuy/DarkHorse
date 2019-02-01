@@ -8,23 +8,6 @@
 
 Transposition TT;
 
-void Entry::printEncoding() {
-    short copy = encoding;
-    std::string output;
-    while (encoding) {
-        if (copy & 1 == 0) {
-            output += "0";
-        } else {
-            output += "1";
-        }
-        copy = copy >> 1;
-    }
-    for (char i = output.length() - 1; i >= 0; i--) {
-        std::cout << (int) output.at(i);
-    }
-    std::cout << std::endl;
-}
-
 Transposition::Transposition(uint32_t capacity) {
     entries = new Cluster[1 << capacity];
     this->capacity = 1 << (capacity);
@@ -39,6 +22,7 @@ void Transposition::resize(uint32_t capa) {
     delete[] this->entries;
     this->entries = new Cluster[1 << capa];
     this->capacity = 1 << capa;
+    memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
 }
 
 uint32_t Transposition::getLength() {

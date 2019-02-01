@@ -23,10 +23,8 @@
 
 
 
-
 MAKRO void setHashSize(uint32_t hash);
 
-bool isPVLine(Value alpha, Value beta);
 
 template<NodeType type>Value quiescene(Board &board, Value alpha, Value beta,Line& pv, int ply) ;
 

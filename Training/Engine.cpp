@@ -4,6 +4,15 @@
 
 #include "Engine.h"
 
+Engine::Engine(const std::string myPath) : path(myPath), hashSize(DEFAULT_HASH) {
+    handle = dlopen(path.c_str(), RTLD_LAZY);
+    if (!handle) {
+        std::cerr << "Engine wasn't found" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+};
+
+
 Engine::~Engine() {
     dlclose(handle);
 }
@@ -11,7 +20,8 @@ Engine::~Engine() {
 Value Engine::searchEngine(Board &board, Move &best, int depth, int time, bool flag) {
     //searches
     Search myfunc = (Search) (dlsym(handle, "searchValue"));
-    Value value = myfunc(board, best, depth, time, flag);
+    Board other=board;
+    Value value = myfunc(other, best, depth, time, flag);
     return value;
 }
 
@@ -34,5 +44,13 @@ void Engine::setHashSize(int hash) {
     }
     func(hash);
 
+}
+
+void Engine::setTimePerMove(int time) {
+    this->timePerMove=time;
+}
+
+int Engine::getTimePerMove() {
+    return this->timePerMove;
 }
 

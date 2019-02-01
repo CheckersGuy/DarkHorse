@@ -19,16 +19,15 @@ MAKRO void setHashSize(uint32_t hash) {
 
 
 #ifdef TRAIN
-    Weights<double> gameWeights;
+Weights<double> gameWeights;
 #else
-    Weights<char> gameWeights;
+
+Weights<FixPoint<short, 4>> gameWeights;
 #endif
 
 
-
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Checkers/CheckerEngineX/cmake-build-debug/compressed.weights");
-    TT.resize(21);
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/popel.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -40,17 +39,10 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 
 MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-
-
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;
     getMoves(*board.getPosition(), easyMoves);
-    Value gameValue;
-
-    Value alpha = -INFINITE;
-    Value beta = INFINITE;
-
     if (easyMoves.length() == 1) {
         best = easyMoves.liste[0];
         board.makeMove(best);
@@ -62,36 +54,29 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
     timeOut = false;
     endTime = getSystemTime() + time;
-    int i=1;
-    while (i<=depth && i<=MAX_PLY) {
+    int i = 1;
+    Value alpha = -INFINITE;
+    Value beta = INFINITE;
+    Value gameValue;
+
+    while (i <= depth && i <= MAX_PLY) {
 
         Line currentPV;
         Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
-        mainPV = currentPV;
-        if(!timeOut && (value<=alpha || value>=beta)){
-            //failed the window
-            alpha=-INFINITE;
-            beta=INFINITE;
-            continue;
-        }
 
-        alpha=value-100;
-        beta=value+100;
         if (timeOut)
             break;
 
-        if(!mainPV[0].isEmpty())
-            best =mainPV[0];
 
+
+        mainPV = currentPV;
+        best = mainPV[0];
         gameValue = value;
 
-        alpha=value-50;
-        beta=value+50;
-        uint64_t currentValue = getSystemTime();
         if (print) {
-            std::string temp = std::to_string(gameValue.value) + "  ";
-            temp += " Depth:" + std::to_string(i) + " ";
-            temp += " Time: " + std::to_string(((((time + currentValue - endTime)) / 1000.0))) + "s  ";
+            std::string temp = std::to_string(value.value) + "  ";
+            temp += " Depth:" + std::to_string(i) + " | ";
+            temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
             temp += mainPV.toString();
             temp += "\n";
@@ -99,19 +84,20 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             std::cout << temp;
         }
         ++i;
-    }
-    if (print) {
 
-        std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
+        if (print) {
+
+            std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
+        }
     }
     board.makeMove(best);
 
     return gameValue;
 }
 
-
 template<NodeType type>
 Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
+    constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
     if (ply >= MAX_PLY) {
@@ -122,7 +108,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     getCaptures(*board.getPosition(), moves);
     Value bestValue = -INFINITE;
 
-    if (moves.length() == 0) {
+    if (moves.isEmpty()) {
 
         if (board.getPosition()->hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply, 1, false);
@@ -138,6 +124,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         }
     }
 
+    if (inPVLine && ply < mainPV.length()) {
+        auto val = std::find(moves.begin(), moves.end(), mainPV[ply]);
+        if (val != moves.end()) {
+            std::swap(moves[0], *val);
+        }
+    }
 
     for (int i = 0; i < moves.length(); ++i) {
         Line localPV;
@@ -153,18 +145,20 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 
         if (value > bestValue) {
             bestValue = value;
+
             if (value >= beta) {
                 break;
             }
             if (value > alpha) {
-                alpha = value;
+                pv.clear();
                 pv.concat(moves[i], localPV);
+                alpha = value;
             }
 
         }
     }
 
-return bestValue;
+    return bestValue;
 }
 
 
@@ -172,6 +166,7 @@ template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
     constexpr bool inPVLine = (type == PVNode);
+    const bool isRoot = (ply == 0);
     assert(alpha.isEval() && beta.isEval());
     if ((nodeCounter & 2047) == 0 && getSystemTime() >= endTime) {
         timeOut = true;
@@ -181,44 +176,47 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return board.getMover() * gameWeights.evaluate(*board.getPosition());
     }
 
+    if (ply > 0 && board.isRepetition()) {
+        return 0;
+    }
 
     if (depth <= 0) {
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
 
-    if (ply > 0 && board.isRepetition()) {
-        return -board.getMover();
-    }
-
 
     MoveListe sucessors;
     getMoves(*board.getPosition(), sucessors);
-    if (sucessors.length() == 0) {
+    if (sucessors.isEmpty()) {
         return Value::loss(board.getMover(), ply);
     }
+
 
 #ifdef GENERATE
     //Randomly sorting the root moves
     if (ply == 0) {
-    std::mt19937 generator(getSystemTime());
+    static std::mt19937 generator(getSystemTime());
     std::shuffle(sucessors.begin(),sucessors.end(),generator);
+    }
 #endif
 
 
     NodeInfo info;
-
+#ifndef TRAIN
     TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
     info.value = info.value.valueFromTT(ply);
+#endif
+
 
     if (!inPVLine && ply > 0 && alpha >= beta) {
         return info.value;
     }
 
 
-    if (!inPVLine && prune && ply > 0 && depth >= 5) {
-        Value margin = std::min(10 * depth, 250);
+    if (!inPVLine && prune && ply > 0 && depth >= 3 && beta <= INFINITE) {
+        Value margin = 10 * depth;
         Value newBeta = addSafe(beta, margin);
-        int newDepth = (depth * 40) / 100;;
+        int newDepth = (depth * 40) / 100;
         Line local;
         Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
         if (value >= newBeta) {
@@ -228,18 +226,21 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 
     if (inPVLine && ply < mainPV.length()) {
-        int index = sucessors.findIndex(mainPV[ply]);
-        if (index > 0) {
-            sucessors.swap(0, index);
+        auto val = std::find(sucessors.begin(), sucessors.end(), mainPV[ply]);
+        if (val != sucessors.end()) {
+            std::swap(sucessors[0], *val);
         }
     }
+
     sucessors.sort(info.move, inPVLine, board.getMover());
 
     Value bestValue = -INFINITE;
     Move bestMove;
     Value alphaOrig = alpha;
 
-    int newDepth = depth - 1;
+    const int extension =0;
+
+    int newDepth = depth - 1 + extension;
 
     for (int i = 0; i < sucessors.length(); ++i) {
         board.makeMove(sucessors[i]);
@@ -249,9 +250,9 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth >= 2 && i > ((inPVLine) ? 1 : 0) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
+            if (depth >= 2 && i >= ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
                 reduce = 1;
-                if (i > 4) {
+                if (i >= 4) {
                     reduce = 2;
                 }
             }
@@ -264,15 +265,17 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         if (value > bestValue) {
             bestValue = value;
             bestMove = sucessors.liste[i];
+
             if (value >= beta) {
                 Statistics::mPicker.updateHHScore(sucessors.liste[i], board.getMover(), depth);
                 Statistics::mPicker.updateBFScore(sucessors.liste, i, board.getMover(), depth);
                 break;
             }
+
             if (value > alpha) {
                 pv.clear();
-                alpha = value;
                 pv.concat(bestMove, localPV);
+                alpha = value;
             }
         }
     }

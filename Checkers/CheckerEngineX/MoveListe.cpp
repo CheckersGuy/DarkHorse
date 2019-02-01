@@ -25,17 +25,6 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
 
 }
-
-
-int MoveListe::findIndex(Move move) {
-    for (int i = 0; i < moveCounter; ++i) {
-        if (liste[i] == move) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 MoveListIterator MoveListe::begin() {
     MoveListIterator iter;
     iter.p = &liste[0];

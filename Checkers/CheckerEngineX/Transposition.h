@@ -53,9 +53,8 @@ struct Entry {
 };
 
 
-
 inline bool Entry::isEmpty() {
-    return encoding==0;
+    return encoding == 0;
 }
 
 inline uint16_t Entry::getEncoding() {
@@ -68,7 +67,7 @@ inline uint32_t Entry::getKey() {
 
 inline void Entry::setAgeCounter(uint16_t flag) {
     this->encoding &= ~12;
-    this->encoding |= flag<<2;
+    this->encoding |= flag << 2;
 }
 
 inline uint16_t Entry::getAgeCounter() {
@@ -106,10 +105,10 @@ struct Cluster {
 
 class Transposition {
 
-    static constexpr uint16_t AGE_LIMIT=4;
+    static constexpr uint16_t AGE_LIMIT = 3;
 
 private:
-    uint16_t ageCounter=0;
+    uint16_t ageCounter = 0;
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
@@ -140,7 +139,7 @@ public:
 
     void storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move);
 
-    void findHash(uint64_t key, int depth, int *alpha, int *beta,NodeInfo &info);
+    void findHash(uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info);
 };
 
 
