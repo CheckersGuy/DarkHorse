@@ -9,137 +9,20 @@
 #include "boost/algorithm/string/predicate.hpp"
 
 namespace Training {
-    std::mt19937 generator(123123123);
-
-    void TrainingData::shuffle() {
-        std::shuffle(positions.begin(), positions.end(), generator);
-    }
-
-    void TrainingGame::extract(Training::TrainingData &data) {
-        for (Position pos : positions) {
-            data.add(TrainingPos(pos, this->result));
-        }
-    }
-
-    void TrainingGame::print() {
-        for (Position pos : positions) {
-            pos.printPosition();
-            std::cout << "##########################" << std::endl;
-        }
-        std::cout << std::endl;
-    }
+    std::mt19937_64 generator(getSystemTime());
 
     void TrainingGame::add(Position position) {
         this->positions.emplace_back(position);
     }
 
-    void TrainingPos::print() {
-        pos.printPosition();
+
+    bool TrainingGame::operator==(const Training::TrainingGame &other) {
+        return (other.result==result)&&std::equal(positions.begin(),positions.end(),other.positions.begin());
     }
 
-    void TrainingData::add(Training::TrainingPos pos) {
-        positions.emplace_back(pos);
+    bool TrainingGame::operator!=(const Training::TrainingGame &other) {
+        return !(other.result==result)&&std::equal(positions.begin(),positions.end(),other.positions.begin());
     }
-
-    TrainingData::TrainingData(TrainingData &data, std::function<bool(TrainingPos)> func) {
-        for (TrainingPos pos : data.positions) {
-            if (func(pos)) {
-                add(pos);
-            }
-        }
-    }
-
-    TrainingData::TrainingData(const TrainingData &data) {
-        for (TrainingPos position : data.positions) {
-            add(position);
-        }
-    }
-
-    TrainingData::TrainingData(const std::string file) {
-        std::ifstream stream(file, std::ios::binary);
-        if (!stream.good())
-            exit(EXIT_FAILURE);
-
-        while (!stream.eof()) {
-            TrainingPos current;
-            stream.read((char *) &current, sizeof(TrainingPos));
-            add(current);
-        }
-        stream.close();
-    }
-
-    size_t TrainingData::find(TrainingPos pos) {
-        size_t counter = 0;
-        for (TrainingPos current : positions) {
-            if (current.pos == pos.pos && current.result == pos.result) {
-                counter++;
-            }
-        }
-        return counter;
-    }
-
-    void TrainingData::save(const std::string file) {
-        std::string path = "TrainData/" + file;
-        std::ofstream stream(path, std::ios::binary | std::ios::app);
-
-        if (!stream.good()) {
-            return exit(EXIT_FAILURE);
-        }
-        stream.write((char *) (&positions[0]), sizeof(TrainingPos) * positions.size());
-        stream.close();
-
-    }
-
-
-    std::size_t TrainingData::length() {
-        return positions.size();
-    }
-
-    void saveGames(std::vector<TrainingGame> &games, const std::string file) {
-        std::ofstream stream(file, std::ios::binary);
-        if (!stream.good()) {
-            throw std::string("could not find the file");
-        }
-        for (TrainingGame &game : games) {
-            stream.write((char *) (&game.result), sizeof(Score));
-            int length = game.positions.size();
-            stream.write((char *) &length, sizeof(int));
-            stream.write((char *) &game.positions[0], sizeof(Position) * length);
-        }
-        stream.close();
-
-    }
-
-    void loadGames(std::vector<TrainingGame> &games, const std::string file) {
-        std::ifstream stream(file, std::ios::binary);
-
-        if (!boost::iends_with(file, ".game")) {
-            throw std::string("isn't a game file");
-        }
-
-        if (!stream.good()) {
-            std::cerr << "Error" << std::endl;
-            throw std::string("Could not find the file");
-        }
-
-
-        while (!stream.eof()) {
-            TrainingGame current;
-            Score result;
-            stream.read((char *) &result, sizeof(Score));
-            current.result = result;
-            int length;
-            stream.read((char *) &length, sizeof(int));
-            for (int i = 0; i < length; ++i) {
-                Position pos;
-                stream.read((char *) &pos, sizeof(Position));
-                current.add(pos);
-            }
-            games.emplace_back(current);
-        }
-        stream.close();
-    }
-
 
     bool simGame(TrainingGame &one, TrainingGame &two, float threshHold) {
         float counter = 0;
@@ -161,6 +44,39 @@ namespace Training {
 
 
 
+    std::istream& operator>>(std::istream& stream,TrainingGame& current){
+        Score result;
+        stream.read((char *) &result, sizeof(Score));
+        current.result = result;
+        int length;
+        stream.read((char *) &length, sizeof(int));
+        for (int i = 0; i < length; ++i) {
+            Position pos;
+            stream.read((char *) &pos, sizeof(Position));
+            current.add(pos);
+        }
+        return stream;
+    }
 
+    std::ostream& operator<<(std::ostream&stream, TrainingGame game){
+        stream.write((char *) (&game.result), sizeof(Score));
+        int length = game.positions.size();
+        stream.write((char *) &length, sizeof(int));
+        stream.write((char *) &game.positions[0], sizeof(Position) * length);
+        return stream;
+    }
+
+
+    void saveGames(std::vector<TrainingGame> &games, const std::string file) {
+        std::ofstream stream(file);
+        std::copy(games.begin(),games.end(),std::ostream_iterator<TrainingGame>(stream));
+    }
+
+    TrainingPos seekPosition(const std::ifstream& stream, size_t index){
+
+        size_t position=0;
+        size_t counter=0;
+
+    }
 
 }

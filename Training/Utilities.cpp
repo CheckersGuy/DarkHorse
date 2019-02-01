@@ -3,68 +3,19 @@
 //
 
 #include "Utilities.h"
+
 namespace Utilities {
 
-
- /*   void compressFile(const std::string file) {
-        std::ifstream stream(file, std::ios_base::in);
-        if (!stream.good()) {
-            std::cerr << "Couldn't find the file" << std::endl;
-            return;
-        }
-        std::ofstream stream2(file + ".bzip2", std::ios_base::out|std::ios::binary);
-        boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
-        in.push(boost::iostreams::bzip2_compressor());
-        in.push(stream);
-        boost::iostreams::copy(in, stream2);
-        stream.close();
-        stream2.close();
-    }
-
-
-
-    std::stringstream readData(const std::string path) {
-        std::stringstream myStream;
-        std::ifstream input(path,std::ios_base::in|std::ios::binary);
-
-        boost::iostreams::filtering_streambuf<boost::iostreams::input>in;
-        in.push(boost::iostreams::bzip2_decompressor());
-        in.push(input);
-
-
-        return myStream;
-    }
-*/
-
     void loadPositions(std::vector<Position> &positions, const std::string file) {
-        std::ifstream stream;
-        stream.open(file);
-        if (!stream.good())
-            return exit(EXIT_FAILURE);
-
-        while (!stream.eof()) {
-            Position current;
-            stream.read((char *) &current, sizeof(Position));
-            if (current.isEmpty())
-                continue;
-            positions.push_back(current);
-        }
-        stream.close();
-
+        std::ifstream stream(file);
+        std::istream_iterator<Position> begin(stream);
+        std::istream_iterator<Position> end;
+        std::copy(begin, end, std::back_inserter(positions));
     }
 
     void savePositions(std::vector<Position> &positions, const std::string file) {
-        std::ofstream stream;
-        stream.open(file);
-        if (!stream.good())
-            exit(0);
-
-        for (Position pos : positions) {
-            if (pos.isEmpty())
-                continue;
-            stream.write((char *) &pos, sizeof(Position));
-        }
-        stream.close();
+        std::ofstream stream(file);
+        std::copy(positions.begin(), positions.end(), std::ostream_iterator<Position>(stream));
     }
 
     std::unordered_set<uint64_t> hashes;
@@ -98,53 +49,14 @@ namespace Utilities {
         createNMoveBook(pos, N, board, -50, 50);
     }
 
-
-    Score playGame(Engine &one, Engine &two, Position position, int time, bool print) {
+    Score playGame(Training::TrainingGame &game, Engine &one, Engine &two, Position position, bool print) {
         Board board;
         BoardFactory::setUpPosition(board, position);
         for (int i = 0; i < MAX_MOVE; ++i) {
-            if (board.isRepetition())
+            if(board.isRepetition()){
                 return DRAW;
-
-            MoveListe liste;
-            getMoves(*board.getPosition(), liste);
-            if (liste.length() == 0) {
-                if (board.getMover() == BLACK) {
-                    return WHITE_WIN;
-                } else if (board.getMover() == WHITE) {
-                    return BLACK_WIN;
-                }
             }
 
-            if (print) {
-                board.printBoard();
-                std::cout << "\n";
-            }
-            Value val;
-            Move bestMove;
-
-
-            if (board.getMover() == BLACK) {
-                val = one.searchEngine(board, bestMove, MAX_PLY, time, print);
-            } else {
-                val = two.searchEngine(board, bestMove, MAX_PLY, time, print);
-            }
-            if (bestMove.isEmpty()) {
-                std::cerr << "ERROR-Empty" << std::endl;
-                return INVALID;
-            }
-        }
-
-        return DRAW;
-    }
-
-    Score playGame(Training::TrainingGame &game, Engine &one, Engine &two, Position position, int time, bool print) {
-        Board board;
-        BoardFactory::setUpPosition(board, position);
-        std::cerr << "GameStart" << std::endl;
-        for (int i = 0; i < MAX_MOVE; ++i) {
-            if (board.isRepetition())
-                return DRAW;
             MoveListe liste;
             getMoves(*board.getPosition(), liste);
             if (liste.length() == 0) {
@@ -167,15 +79,15 @@ namespace Utilities {
             Move bestMove;
 
             if (board.getMover() == BLACK) {
-
-                val = one.searchEngine(board, bestMove, MAX_PLY, time, print);
+                val = one.searchEngine(board, bestMove, MAX_PLY, one.getTimePerMove(), print);
             } else {
-                val = two.searchEngine(board, bestMove, MAX_PLY, time, print);
+                val = two.searchEngine(board, bestMove, MAX_PLY, two.getTimePerMove(), print);
             }
             if (bestMove.isEmpty()) {
                 std::cerr << "ERROR" << std::endl;
                 return INVALID;
             }
+            board.makeMove(bestMove);
         }
 
         return DRAW;

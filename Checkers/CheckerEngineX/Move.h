@@ -127,7 +127,7 @@ inline void Move::setPieceType(const uint16_t type) {
     this->encoding |= type << 10;
 }
 
-inline std::ostream &operator<<(std::ostream &stream, Move move) {
+inline std::ostream &operator<<(std::ostream &stream, const Move move) {
     stream << "From: " << move.getFrom() << " To: " << move.getTo();
     return stream;
 }

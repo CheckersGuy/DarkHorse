@@ -13,28 +13,43 @@ int Match::getMaxGames() {
     return maxGames;
 }
 
-int Match::getTime() {
-    return time;
-}
-
 void Match::setMaxGames(int games) {
     this->maxGames=games;
 }
 
-void Match::setTime(int time) {
-    this->time=time;
+
+int Match::getDraws() {
+    return draws;
 }
 
-int Match::getDraw() {
-    return draw;
+int Match::getLosses() {
+    return losses;
 }
 
-int Match::getLoss() {
-    return loss;
+int Match::getWins() {
+    return wins;
 }
 
-int Match::getWin() {
-    return win;
+
+int Match::getElo() {
+    //Calculating the elo based on wins,losses,draws
+    return 0;
+}
+
+void Match::setOpeningBook(std::string book) {
+    this->openingBook=book;
+}
+
+std::string& Match::getOpeningBook() {
+    return openingBook;
+}
+
+void Match::setNumThreads(int threads) {
+    this->threads=threads;
+}
+
+int Match::getNumThreads() {
+    return threads;
 }
 
 void Match::start() {
@@ -49,6 +64,7 @@ void Match::start() {
             exit(EXIT_FAILURE);
         }else if(pid==0){
             //childProcess
+            Zobrist::initializeZobrisKeys();
             initializeEngines();
             first.setHashSize(21);
             second.setHashSize(21);
@@ -63,7 +79,8 @@ void Match::start() {
                 }
                 int id=3;
                 bool print= false;
-                Score result=Utilities::playGame(first,second,current,time,print);
+                Training::TrainingGame dummy;
+                Score result=Utilities::playGame(dummy,first,second,current,print);
                 if(result==BLACK_WIN){
                     id=1;
                 }else if(result==WHITE_WIN){
@@ -72,7 +89,8 @@ void Match::start() {
                 write(inStream[i][1],(char*)(&id),sizeof(int));
 
                 int id2=3;
-                Score result2=Utilities::playGame(second,first,current,time,false);
+                Training::TrainingGame dummy2;
+                Score result2=Utilities::playGame(dummy2,second,first,current,false);
                 if(result2==BLACK_WIN){
                     id2=2;
                 }else if(result2==WHITE_WIN){
@@ -112,14 +130,14 @@ void Match::start() {
                 if(buf!=-1){
                     totalGame++;
                     if(id==1){
-                        win++;
+                        wins++;
                     }else if(id==2){
-                        loss++;
+                        losses++;
                     }else{
-                        draw++;
+                        draws++;
                     }
                     busy[p]--;
-                    printf("%d-%d=%d \n",win,loss,draw);
+                    printf("%d-%d=%d \n",wins,losses,draws);
                 }
             }
         }
@@ -138,25 +156,4 @@ void Match::start() {
         std::cout<<"Child stopped with status: "<<status<<std::endl;
         n--;
     }
-}
-
-int Match::getElo() {
-    //Calculating the elo based on win,loss,draw
-    return 0;
-}
-
-void Match::setOpeningBook(std::string book) {
-    this->openingBook=book;
-}
-
-std::string& Match::getOpeningBook() {
-    return openingBook;
-}
-
-void Match::setNumThreads(int threads) {
-    this->threads=threads;
-}
-
-int Match::getNumThreads() {
-    return threads;
 }

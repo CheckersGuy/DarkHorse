@@ -21,10 +21,6 @@ namespace Statistics {
 
         int getMoveScore(Move move, Color color, Move ttMove);
 
-        int getHHScore(Move move, Color color);
-
-        int getBFScore(Move move, Color color);
-
         void clearScores();
 
         void updateHHScore(Move move, Color color, int depth);

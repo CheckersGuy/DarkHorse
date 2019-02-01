@@ -2,6 +2,7 @@
 // Created by robin on 8/1/18.
 //
 
+#include <future>
 #include "Trainer.h"
 
 
@@ -37,6 +38,7 @@ void Trainer::setLearningRate(double learn) {
     learningRate = learn;
 }
 
+
 double getWinValue(Score score) {
     if (score == BLACK_WIN)
         return 0.0;
@@ -47,91 +49,108 @@ double getWinValue(Score score) {
     return 0.5;
 }
 
+void Trainer::gradientUpdate(TrainingPos position) {
+    //pretty much one step of stochastic gradient descent
+    Board board;
+    BoardFactory::setUpPosition(board, position.pos);
+    Line local;
+    Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
+    double result = getWinValue(position.result);
 
-void Trainer::epoch() {
-    for (Training::TrainingPos position : data.positions) {
-        Board board;
-        BoardFactory::setUpPosition(board, position.pos);
-        Line local;
-        Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE,local, 0);
-       if (qStatic.isWinning()) {
-            continue;
+    double c = getCValue();
+    double mover = static_cast<double>(board.getMover());
+    for (size_t p = 0; p < 2; ++p) {
+        for (size_t j = 0; j < 3; ++j) {
+            for (size_t i = 0; i < 3; ++i) {
+                const uint32_t curRegion = region << (8 * j + i);
+                size_t index = 18 * getIndex(curRegion, position.pos) + 9 * p + 3 * j + i;
 
-        }
+                double qValue = qStatic.as<double>();
+                gameWeights.weights[index] += 2.0;
+                Line local;
+                Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
+                gameWeights.weights[index] -= 2.0;
+                double qDiffValue = qDiff.as<double>();
+                double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
+                                       Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) / 2.0;
 
-        double result = getWinValue(position.result);
-        size_t colorIndex = 0;
-        if (board.getMover() == WHITE) {
-            colorIndex = 390625 * 9 * 2;
-        }
-       double c =getCValue();
-       double mover =static_cast<double>(board.getMover());
-        for (size_t p = 0; p < 2; ++p) {
-            for (size_t j = 0; j < 3; ++j) {
-                for (size_t  i = 0; i < 3; ++i) {
-                    const uint32_t curRegion = region << (8 * j + i);
-                    size_t index = getIndex(curRegion, position.pos) + 390625 * (3 * j + i) + 390625 * 9 * p+colorIndex;
-                    double qValue= qStatic.as<double>();
-                    gameWeights.weights[index]+=50.0;
-                    Line local;
-                    Value qDiff = quiescene<NONPV>( board, -INFINITE, INFINITE,local, 0);
-                    gameWeights.weights[index]-=50.0;
-                    double qDiffValue= qDiff.as<double>();
-                    double diff =mover*((Training::sigmoid(c,mover*qValue)-result)*Training::sigmoidDiff(c,mover*qValue)*(qDiffValue-qValue))/50.0;
+                diff += gameWeights.weights[index] * getL2Reg();
+                gameWeights.weights[index] = gameWeights.weights[index] - getLearningRate() * diff;
 
-                    diff+=gameWeights.weights[index]*getL2Reg();
-                    gameWeights.weights[index]=gameWeights.weights[index]-getLearningRate()*diff;
-
-                }
             }
         }
     }
 }
 
+void Trainer::epoch() {
+    std::cout << "Start shuffling" << std::endl;
+    std::shuffle(data.begin(), data.end(), generator);
+    std::cout << "Done shuffling" << std::endl;
+    std::for_each(data.begin(), data.end(), [this](TrainingPos pos) { gradientUpdate(pos); });
+}
+
 void Trainer::startTune() {
 
-    int counter = 0;
+    int counter = 1;
 
     while (counter < getEpochs()) {
-        data.shuffle();
-        std::cout << "Epoch ";
-        std::cout << "MaxValue: " << gameWeights.getMaxValue() << "\n";
-        std::cout << "MinValue: " << gameWeights.getMinValue() << "\n";
-        std::cout << "NonZero: " << gameWeights.numNonZeroValues() << "\n";
 
+        std::cout << "Epoch ";
+        std::cout << "MaxValue: " << gameWeights.getMaxValue() << std::endl;
+        std::cout << "MinValue: " << gameWeights.getMinValue() << std::endl;
+        std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
+        std::cout << "L2Reg: " << gameWeights.getNorm() << std::endl;
+        double loss = calculateLoss();
+        std::cout << "Loss: " << loss << std::endl;
         epoch();
-        if ((counter % 4) == 0) {
-            double loss = calculateLoss();
-            std::cout << "Loss: " << loss << std::endl;
-        }
-        std::string name = "a" + std::to_string(counter) + ".weights";
+
+
+        std::string name = "T" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
+        std::cout << "Stored weights" << std::endl;
         counter++;
-        std::cout << "\n";
-        std::cout << "\n";
+        std::cout << std::endl;
+        std::cout << std::endl;
 
     }
 }
 
-double Trainer::calculateLoss() {
-    double mse = 0;
 
-    for (Training::TrainingPos pos : data.positions) {
+double Trainer::calculateLoss(int threads) {
+    double mse = 0;
+    auto evalLambda = [this](TrainingPos pos) {
         Board board;
         BoardFactory::setUpPosition(board, pos.pos);
         double current = getWinValue(pos.result);
         double color = static_cast<double>(pos.pos.color);
         Line local;
-        double quiesc = color * static_cast<double>(quiescene<NONPV>( board, -INFINITE, INFINITE,local, 0).value);
+        double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value);
         current = current - Training::sigmoid(cValue, quiesc);
         current = current * current;
-        mse += current;
+        return current;
+    };
+
+    std::vector<std::future<double>> workers;
+
+    size_t chunk = data.size() / threads;
+    size_t i = 0;
+    for (; i < data.size(); i += chunk) {
+        workers.emplace_back(std::async([=]() {
+            double local = 0;
+            for (size_t k = i; k < i + chunk; ++k) {
+                local += evalLambda(data[k]);
+            }
+            return local;
+        }));
     }
-    mse = mse / static_cast<double>(data.length());
-    mse = std::sqrt(mse);
-    return mse;
+    for (; i < data.size(); ++i) {
+        mse += evalLambda(data[i]);
+    }
+    for (auto &th : workers)
+        th.wait();
+
+    for (auto &th : workers) {
+        mse += th.get();
+    }
+    return std::sqrt(mse / static_cast<double>(data.size()));
 }
-
-
-
-

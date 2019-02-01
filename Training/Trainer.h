@@ -15,26 +15,26 @@
 
 
 extern Weights<double> gameWeights;
-
+using namespace Training;
 class Trainer {
+
+    static constexpr uint64_t MAX_BUFFER_SIZE=10000;
 
 private:
     int epochs;
-    int batchSize;
     int threads;
-    Training::TrainingData &data;
+    uint64_t bufferCounter;
+    std::vector<TrainingPos> &data;
     double learningRate, l2Reg, cValue;
 
 public:
 
 
-    Trainer(Weights<double> &weights, Training::TrainingData &data) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01),threads(1) {
-
-
-    }
-
+    Trainer(std::vector<TrainingPos> &data) :data(data), cValue(1.0),
+                                                                      learningRate(0.1), l2Reg(0.01),threads(1),bufferCounter(0) {}
     void epoch();
+
+    void gradientUpdate(TrainingPos position);
 
     void setEpochs(int epoch);
 
@@ -46,8 +46,6 @@ public:
 
     double getCValue();
 
-    int getThreads();
-
     int getEpochs();
 
     double getLearningRate();
@@ -56,9 +54,12 @@ public:
 
     void startTune();
 
-    double calculateLoss();
+    double calculateLoss(int threads=std::thread::hardware_concurrency());
+
+    std::string getPath() const;
 
 };
+TrainingPos seekPosition(std::ifstream& stream,size_t index);
 
 
 #endif //TRAINING_TRAINER_H

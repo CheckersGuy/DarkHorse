@@ -19,7 +19,7 @@ private:
     Engine &second;
     int time;
     int maxGames;
-    int win, loss, draw;
+    int wins, losses, draws;
     int threads;
     std::string openingBook;
 
@@ -27,26 +27,22 @@ public:
 
     Match() = default;
 
-    Match(Engine &first, Engine &second) : first(first), second(second), win(0), loss(0), draw(0), maxGames(1000),
+    Match(Engine &first, Engine &second) : first(first), second(second), wins(0), losses(0), draws(0), maxGames(1000),
                                            time(100), threads(1), openingBook("Positions/3move.pos") {};
 
     void setMaxGames(int games);
 
-    void setTime(int time);
-
     int getMaxGames();
-
-    int getTime();
 
     void initializeEngines();
 
     void start();
 
-    int getWin();
+    int getWins();
 
-    int getLoss();
+    int getLosses();
 
-    int getDraw();
+    int getDraws();
 
     int getElo();
 

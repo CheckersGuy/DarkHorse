@@ -57,7 +57,6 @@ void Generator::setTime(int time) {
 void Generator::start() {
     int outStream[threads][2];
     int inStream[threads][2];
-
     for (int i = 0; i < threads; ++i) {
         pipe(outStream[i]);
         pipe(inStream[i]);
@@ -65,6 +64,7 @@ void Generator::start() {
         if (pid < 0) {
             exit(EXIT_FAILURE);
         } else if (pid == 0) {
+            Zobrist::initializeZobrisKeys();
             engine.initialize();
             engine.setHashSize(18);
             close(outStream[i][1]);
@@ -77,7 +77,7 @@ void Generator::start() {
                     break;
                 }
                 TrainingGame game;
-                Score result = Utilities::playGame(game, engine, engine, current, time, false);
+                Score result = Utilities::playGame(game, engine, engine, current, false);
                 game.result = result;
                 int length = game.positions.size();
                 if(result==INVALID)

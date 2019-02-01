@@ -4,133 +4,164 @@
 //
 
 #include "Perft.h"
-#include "GameLogic.h"
+#include "BoardFactory.h"
 
 namespace Perft {
 
-    uint64_t perftCount(int depth,int threads) {
-        PerftPool pool(threads-1);
-        pool.setDepth(depth);
-        pool.startThreads();
-        PerftPool::idleLoop(&pool);
-        pool.join();
-        return pool.getPerftCount();
+    Table table;
+
+    uint64_t Table::getCapacity() {
+        return capacity;
     }
 
-    uint64_t perftCount(int depth) {
-        return perftCount(depth,1);
+    void Table::setCapacity(uint32_t capacity) {
+        this->capacity = capacity;
+        entries = std::make_unique<Cluster[]>(capacity);
+        std::memset(entries.get(), 0, sizeof(Entry) * 2 * capacity);
     }
 
-    uint64_t PerftPool::perftCount(Board &board, int depth) {
-        uint64_t nodes = 0;
-        MoveListe myListe;
-        getMoves(*board.getPosition(), myListe);
-        if (depth == 1) {
-            return myListe.length();
+    std::optional<uint64_t> Table::probe(Position pos, int depth) {
+        std::optional<uint64_t> returnValue;
+        uint32_t key = static_cast<uint32_t >(pos.key >> 32);
+        const uint32_t index = (key) & (this->capacity - 1);
+        entries[index].lock.lock();
+        if (entries[index].entries[1].pos == pos && entries[index].entries[1].depth == depth) {
+            returnValue = entries[index].entries[1].nodes;
+        } else if (entries[index].entries[0].pos == pos && entries[index].entries[0].depth == depth) {
+            returnValue = entries[index].entries[0].nodes;
         }
-        for (int i = 0; i < myListe.length(); ++i) {
-            if(depth>=10 && work.size()<=2*threads){
-                myMutex.lock();
-                board.makeMove(myListe[i]);
-                Work next;
-                next.depth=depth-1;
-                next.pos=*board.getPosition();
-                work.push(next);
-                board.undoMove();
-                myMutex.unlock();
-                continue;
-            }
-            board.makeMove(myListe.liste[i]);
-            nodes += perftCount(board, depth - 1);
+        entries[index].lock.unlock();
+        return returnValue;
+    }
+
+    void Table::store(Position pos, int depth, uint64_t nodes) {
+        uint32_t key = static_cast<uint32_t >(pos.key >> 32);
+        const uint32_t index = (key) & (this->capacity - 1);
+        entries[index].lock.lock();
+        if (depth>entries[index].entries[0].depth ) {
+            entries[index].entries[0].pos = pos;
+            entries[index].entries[0].depth = depth;
+            entries[index].entries[0].nodes = nodes;
+        } else {
+            entries[index].entries[1].pos = pos;
+            entries[index].entries[1].depth = depth;
+            entries[index].entries[1].nodes = nodes;
+        };
+        entries[index].lock.unlock();
+    }
+
+    uint64_t perftCheck(Board &board, int depth) {
+        MoveListe liste;
+        getMoves(*board.getPosition(), liste);
+        if (depth == 1) {
+            return liste.length();
+        }
+        uint64_t counter = 0;
+        for (Move m : liste) {
+            board.makeMove(m);
+            counter += perftCheck(board, depth - 1);
+            board.undoMove();
+        }
+        return counter;
+    }
+
+    uint64_t ThreadPool::perftCount(Board &board, int depth) {
+        MoveListe liste;
+        getMoves(*board.getPosition(), liste);
+        if (depth == 1) {
+            return liste.length();
+        }
+        std::optional<uint64_t> nodes = table.probe(*board.getPosition(), depth);
+        if (nodes.has_value()) {
+            return nodes.value();
+        }
+
+        uint64_t counter = 0;
+        for (Move m : liste) {
+            board.makeMove(m);
+            counter += perftCount(board, depth - 1);
             board.undoMove();
         }
 
-        return nodes;
+        table.store(*board.getPosition(), depth, counter);
+
+        return counter;
+
     }
 
-    void PerftPool::join() {
-        for (auto &th : myThreads) {
-            if (!th.joinable())
-                continue;
+    void ThreadPool::waitAll() {
+        for (auto &th : workers)
             th.join();
-        }
     }
 
-    PerftPool::~PerftPool() {
-        join();
-    }
-
-    void PerftPool::setDepth(int depth) {
-        this->depth = depth;
-        Board board;
-        BoardFactory::setUpStartingPosition(board);
-        Work current;
-        current.depth = depth;
-        current.pos = *board.getPosition();
-        work.push(current);
-    }
-
-    void PerftPool::idleLoop(Perft::PerftPool *pool) {
-        std::cout<<"Entered the loop"<<std::endl;
-        while (!pool->work.empty()) {
-            pool->myMutex.lock();
-            Work current;
-            if (!pool->work.empty()) {
-                current = pool->work.front();
-                pool->work.pop();
-            }
-            pool->myMutex.unlock();
-            if (current.depth == 0)
-                continue;
-            Board board;
-            BoardFactory::setUpPosition(board, current.pos);
-            const uint64_t counter = pool->perftCount(board, current.depth);
-            pool->nodeCounter += counter;
-        }
-
-    }
-
-    uint64_t PerftPool::getPerftCount() {
+    uint64_t ThreadPool::getNodeCounter() {
         return nodeCounter;
     }
 
-    void PerftPool::startThreads() {
-        for (int i = 0; i < threads; ++i) {
-            myThreads.emplace_back(std::thread(idleLoop, this));
+    void ThreadPool::splitLoop(Board &board, int depth, int startDepth) {
+
+        MoveListe liste;
+        getMoves(*board.getPosition(), liste);
+
+        for (size_t i = 0; i < liste.length(); ++i) {
+            if (workCounter >= 200) {
+                i--;
+                continue;
+            }
+            board.makeMove(liste[i]);
+            if (depth == splitDepth) {
+                Position copy = *board.getPosition();
+                SplitPoint point;
+                point.depth = depth - 1;
+                point.pos = copy;
+                myMutex.lock();
+                splitPoints.emplace_back(point);
+                workCounter++;
+                myMutex.unlock();
+                board.undoMove();
+                continue;
+
+            }
+            splitLoop(board, depth - 1, startDepth);
+            board.undoMove();
         }
-    }
-    Entry* PerftTable::findEntry(const Position pos,int depth,uint64_t key) {
-        std::size_t index =key&(capacity-1);
-        Bucket& buck =entries[index];
-        buck.lock.lock();
-        Entry& fill =buck.entries[Entry::FILL_ENTRY];
-        if(fill.pos==pos && fill.depth == depth){
-            return &fill;
-        }
-        Entry& depthFirst=buck.entries[Entry::DEPTH_ENTRY];
-        if(depthFirst.pos==pos && depthFirst.depth == depth){
-            return &depthFirst;
-        }
-        buck.lock.unlock();
-        return nullptr;
+        if (depth == startDepth)
+            search = !search;
+
     }
 
-    void PerftTable::storeEntry(Position pos, int depth,uint64_t nodes,const uint64_t key) {
-        std::size_t index =key&(capacity-1);
-        Bucket& buck =entries[index];
-        buck.lock.lock();
-        Entry& depthFirst=buck.entries[Entry::DEPTH_ENTRY];
-        if(depth>depthFirst.depth){
-            depthFirst.depth=depth;
-            depthFirst.pos=pos;
-            depthFirst.nodes=nodes;
+    void ThreadPool::startThreads() {
+        for (size_t i = 0; i < numThreads; ++i) {
+            workers.emplace_back(std::thread(idleLoop, this));
         }
-        Entry& fill =buck.entries[Entry::FILL_ENTRY];
-        fill.depth=depth;
-        fill.pos=pos;
-        fill.nodes=nodes;
-        buck.lock.unlock();
     }
 
+    void ThreadPool::setSplitDepth(int splitDepth) {
+        this->splitDepth=splitDepth;
+    }
+
+    void ThreadPool::idleLoop(ThreadPool *pool) {
+        while (!pool->search || pool->workCounter > 0) {
+            pool->myMutex.lock();
+            std::optional<SplitPoint> splitPoint;
+            if (!pool->splitPoints.empty()) {
+                splitPoint = pool->splitPoints.front();
+                pool->splitPoints.pop_front();
+            }
+            pool->myMutex.unlock();
+
+            if (splitPoint.has_value()) {
+                const int depth = splitPoint.value().depth;
+                const Position pos = splitPoint.value().pos;
+                Board board;
+                BoardFactory::setUpPosition(board, pos);
+                uint64_t nodes = pool->perftCount(board, depth);
+                pool->workCounter--;
+                pool->myMutex.lock();
+                pool->nodeCounter += nodes;
+                pool->myMutex.unlock();
+            }
+        }
+    }
 
 }

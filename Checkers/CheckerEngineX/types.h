@@ -20,16 +20,26 @@ inline uint64_t getSystemTime() {
 }
 
 
-constexpr uint32_t MASK_ROW =0xf;
-constexpr uint32_t LEFT_HALF = 3435973836;
+
+constexpr uint32_t LEFT_HALF = 3435973836ull;
 constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2;
-constexpr uint32_t MASK_L3 = 14737632;
-constexpr uint32_t MASK_L5 = 117901063;
-constexpr uint32_t MASK_R3 = 117901056;
-constexpr uint32_t MASK_R5 = 3772834016;
+constexpr uint32_t MASK_L3 = 14737632ull;
+constexpr uint32_t MASK_L5 = 117901063ull;
+constexpr uint32_t MASK_R3 = 117901056ull;
+constexpr uint32_t MASK_R5 = 3772834016ull;
+constexpr uint32_t MASK_COL_1=286331153ull;
+constexpr uint32_t MASK_COL_2=572662306ull;
+constexpr uint32_t MASK_COL_3=1145324612ull;
+constexpr uint32_t MASK_COL_4=2290649224ull;
 
 
-enum NodeType {
+
+
+using Depth =int;
+
+
+
+enum  NodeType {
     PVNode, NONPV
 };
 
@@ -44,7 +54,7 @@ enum Score {
     INVALID = 100000000
 
 };
-enum SEARCH {
+enum  SEARCH {
     MAX_PLY = 128, MAX_MOVE = 320, DRAW_RULE = 50, ONE_PLY = 1000
 };
 enum Color {
@@ -64,7 +74,7 @@ public:
 
     static Value loss(Color color, int ply);
 
-    constexpr Value(int value);
+    constexpr Value(int value):value(value){};
 
     constexpr Value();
 
@@ -84,7 +94,7 @@ public:
 
     bool isInRange(int a, int b) const;
 
-    bool isInRange(Value a, Value b) const;
+    template<class T>bool isInRange(T a, T b) const;
 
     constexpr Value operator=(int value);
 
@@ -220,12 +230,14 @@ constexpr Value Value::operator=(int value) {
 }
 
 constexpr Value operator+(const Value val, const Value val2) {
-    Value next = Value(val.value + val2.value);
+    Value next;
+    next.value=val.value + val2.value;
     return next;
 }
 
 constexpr Value operator+(Value val, int val2) {
-    Value next = Value(val.value + val2);
+    Value next ;
+    next.value=val.value+val2;
     return next;
 }
 
@@ -313,17 +325,10 @@ inline bool Value::isWhiteWin() const {
 }
 
 //inclusive
-inline bool Value::isInRange(int a, int b) const {
+template<class T>inline bool Value::isInRange(T a,  T b) const {
     return (this->value >= a && this->value <= b);
 }
 
-inline bool Value::isInRange(Value a, Value b) const {
-    return (this->value >= a && this->value <= b);
-}
-
-constexpr Value::Value(int value) {
-    this->value = value;
-}
 
 inline Value Value::valueFromTT(int ply) {
     Value result = this->value;

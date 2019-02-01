@@ -15,13 +15,11 @@
 #include "Weights.h"
 #include <algorithm>
 #include <functional>
+#include <iterator>
 
 namespace Training {
 
-
-    struct TrainingData;
-
-
+    extern std::mt19937_64 generator;
     struct TrainingPos {
         Position pos;
         Score result;
@@ -30,51 +28,45 @@ namespace Training {
 
         TrainingPos(Position pos, Score result) : pos(pos), result(result) {};
 
-        void print();
     };
 
     struct TrainingGame {
         std::vector<Position> positions;
         Score result = DRAW;
 
-        void extract(TrainingData &data);
-
         void add(Position position);
-
-        void print();
+        bool operator==(const TrainingGame& other);
+        bool operator!=(const TrainingGame& other);
     };
 
-    struct TrainingData {
-        std::vector<TrainingPos> positions;
+    std::istream &operator>>(std::istream &stream, TrainingGame &game);
 
-        TrainingData(TrainingData &data, std::function<bool(TrainingPos)> func);
-
-        TrainingData(const TrainingData &data);
-
-        TrainingData(const std::string file);
-
-        TrainingData() = default;
-
-        std::size_t length();
-
-        void add(TrainingPos pos);
-
-        size_t find(TrainingPos pos);
-
-        void save(const std::string file);
-
-        void shuffle();
-
-        inline TrainingPos operator[](int index) {
-            return positions[index];
-        }
-    };
+    std::ostream &operator<<(std::ostream &stream, TrainingGame game);
 
 
     void saveGames(std::vector<TrainingGame> &games, const std::string file);
 
 
-    void loadGames(std::vector<TrainingGame> &games, const std::string file);
+    template<class T=TrainingGame> void loadGames(std::vector<T> &games, const std::string file) {
+        static_assert(std::is_same<T,TrainingGame>::value||std::is_same<T,TrainingPos>::value);
+        std::ifstream stream(file, std::ios::binary);
+        if (!stream.good()) {
+            std::cerr << "Error" << std::endl;
+            throw std::string("Could not find the file");
+        }
+        while (!stream.eof()) {
+            TrainingGame current;
+            stream >> current;
+            if constexpr(std::is_same<T,TrainingGame>::value){
+                games.emplace_back(current);
+            }else if constexpr(std::is_same<T,TrainingPos>::value){
+                std::for_each(current.positions.begin(),current.positions.end(),[&games,&current](Position pos){games.push_back(TrainingPos(pos,current.result));});
+            }
+        }
+        stream.close();
+    }
+
+    TrainingPos seekPosition(const std::ifstream& stream,size_t index);
 
 
     inline double sigmoid(double c, double value) {
@@ -84,7 +76,6 @@ namespace Training {
     inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
-
 
 
 }

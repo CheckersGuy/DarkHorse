@@ -3,11 +3,12 @@
 //
 
 #include "Position.h"
+#include "Zobrist.h"
 
 
 Position Position::getColorFlip() {
     Position pos;
-    pos.color =~color;
+    pos.color = ~color;
 
     for (int index = 0; index < 16; ++index) {
         int col = index % 4;
@@ -30,11 +31,22 @@ Position Position::getColorFlip() {
         pos.K |= (1 << newIndex) * upValue;
     }
     //finally swapping the pieces
-     uint32_t temp =pos.BP;
-     pos.BP=pos.WP;
-     pos.WP=temp;
+    uint32_t temp = pos.BP;
+    pos.BP = pos.WP;
+    pos.WP = temp;
+    pos.key = key ^ Zobrist::colorBlack;
 
     return pos;
+}
+
+Position Position::getColorFlip2() {
+    Position next;
+    next.BP = getMirrored(WP);
+    next.WP = getMirrored(BP);
+    next.K = getMirrored(K);
+    next.color = ~color;
+    next.key = key ^ Zobrist::colorBlack;
+    return next;
 }
 
 bool Position::isEmpty() {
@@ -59,7 +71,8 @@ bool Position::hasThreat() {
 }
 
 bool Position::isLoss() {
-    return ((getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0) || (getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0));
+    return ((getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0) ||
+            (getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0));
 }
 
 bool Position::isWipe() {
@@ -159,4 +172,15 @@ void Position::undoMove(Move move) {
         K &= ~(1 << move.getTo());
     }
 
+
+}
+
+std::istream &operator>>(std::istream &stream, const Position &pos) {
+    stream.read((char *) &pos, sizeof(Position));
+    return stream;
+}
+
+std::ostream &operator<<(std::ostream &stream, const Position &pos) {
+    stream.write((char *) &pos, sizeof(Position));
+    return stream;
 }

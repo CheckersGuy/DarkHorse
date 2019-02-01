@@ -32,7 +32,7 @@ add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp E
         ../Checkers/CheckerEngineX/MGenerator.h
         ../Checkers/CheckerEngineX/CBInterface.h ../Checkers/CheckerEngineX/Line.h
         ../Checkers/CheckerEngineX/CBInterface.cpp ../Checkers/CheckerEngineX/Line.cpp
-        ../Checkers/CheckerEngineX/SMPLock.h)
+        ../Checkers/CheckerEngineX/SMPLock.h Cache.h)
 
 target_link_libraries( Training ${Boost_PROGRAM_OPTIONS_LIBRARY}
         ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} )

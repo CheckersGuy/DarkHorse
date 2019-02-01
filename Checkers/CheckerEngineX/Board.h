@@ -48,6 +48,8 @@ public:
     bool isRepetition();
 
     Color getMover();
+
+    Board& operator=(const Position pos);
 };
 
 

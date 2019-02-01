@@ -132,9 +132,6 @@ private:
     pointer p;
 };
 
-
-
-
 class MoveListe {
 
 public:
@@ -147,17 +144,13 @@ public:
 
     void addMove(Move& next);
 
-    void swap(int a, int b);
-
-    void swap(Move &a, Move &b);
-
     void sort(Move ttMove, bool inPVLine, Color color);
 
-    Move operator[](size_t index);
+    bool isEmpty() const;
 
-    int findIndex(Move move);
+    Move& operator[](size_t index);
 
-    bool isInList(Move move);
+    Move operator[](size_t index)const;
 
     MoveListIterator begin();
 
@@ -166,11 +159,15 @@ public:
 };
 
 
-inline bool MoveListe::isInList(Move move) {
-    return findIndex(move)>=0;
+inline bool MoveListe::isEmpty() const {
+    return this->moveCounter==0;
 }
 
-inline Move MoveListe::operator[](size_t index) {
+inline Move& MoveListe::operator[](size_t index) {
+    return liste[index];
+}
+
+inline Move MoveListe::operator[](size_t index)const {
     return liste[index];
 }
 
@@ -182,18 +179,6 @@ inline void MoveListe::addMove(Move&next) {
 
 inline int MoveListe::length() {
     return moveCounter;
-}
-
-inline void MoveListe::swap(int a, int b) {
-    const Move temp = liste[a];
-    liste[a] = liste[b];
-    liste[b] = temp;
-}
-
-inline void MoveListe::swap(Move &a, Move &b) {
-    Move temp = a;
-    a = b;
-    b = temp;
 }
 
 

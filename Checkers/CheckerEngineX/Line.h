@@ -14,34 +14,36 @@ class Line {
 public:
 
     Move myArray[MAX_PLY];
-    int counter=0;
+    int counter = 0;
 
-    Line()=default;
+    Line() = default;
 
     Line(const Line &other);
 
-    int length()const;
+    int length() const;
 
     void addMove(Move move);
 
     void concat(Move best, Line &line);
 
-    std::string toString()const;
+    std::string toString() const;
 
-    Move getFirstMove()const;
+    Move getFirstMove() const;
 
     void clear();
 
-    bool operator==(Line &other)const;
+    bool operator==(const Line &other) const;
 
-    bool operator!=(Line &other)const;
+    bool operator!=(const Line &other) const;
 
-    Move operator[](int index)const;
+    Line& operator=(const Line& other);
 
+    Move operator[](int index) const;
+
+    Move &operator[](int index);
 };
 
 
-
-std::ostream& operator<<(std::ostream& stream, Line& line);
+std::ostream &operator<<(std::ostream &stream, Line &line);
 
 #endif //CHECKERENGINEX_LINE_H

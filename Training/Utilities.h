@@ -26,12 +26,6 @@
 
 namespace Utilities {
 
-    namespace bio =boost::iostreams;
-
-    std::stringstream readData(const std::string path);
-
-    void compressFile(const std::string file);
-
     void createNMoveBook(std::vector<Position> &data, int N, Board &board, Value lowerBound, Value upperBound);
 
     void createNMoveBook(std::vector<Position>&pos, int N, Board &board);
@@ -40,9 +34,7 @@ namespace Utilities {
 
     void savePositions(std::vector<Position>&positions,const std::string file);
 
-    Score playGame(Engine&engine,Engine& second,Position position,int time, bool print);
-
-    Score playGame(Training::TrainingGame& game,Engine&engine,Engine& second,Position position,int time, bool print);
+    Score playGame(Training::TrainingGame& game,Engine&engine,Engine& second,Position position, bool print);
 
 
 
