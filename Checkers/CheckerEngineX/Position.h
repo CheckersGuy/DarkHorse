@@ -119,8 +119,6 @@ public:
 
     Position getColorFlip();
 
-    Position getColorFlip2();
-
 
 
     inline bool operator==(const Position &pos) {

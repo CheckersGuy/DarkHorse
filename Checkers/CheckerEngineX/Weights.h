@@ -20,8 +20,6 @@ constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 constexpr size_t SIZE = 390625 * 9 * 2;
 using Eval =FixPoint<short,4>;
 
-
-
 inline size_t getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
     size_t index = 0;
@@ -160,9 +158,8 @@ public:
         }
 
         if (pos.getColor() == BLACK) {
-            pos = pos.getColorFlip2();
+            pos = pos.getColorFlip();
         }
-        //trying out a different way once again
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8 * j + i);

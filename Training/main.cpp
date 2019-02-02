@@ -305,8 +305,7 @@ int main(int argc, char *argv[]) {
     std::vector<Position>openings;
     Utilities::loadPositions(openings,"Positions/3move.pos");
     TrainingGame game;
-    Utilities::playGame(game,one,two,openings[3],true);
-
+    Utilities::playGame(game,one,two,openings[15],true);
 
 
 
