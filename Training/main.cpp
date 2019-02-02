@@ -291,9 +291,9 @@ int main(int argc, char *argv[]) {
 
 
     Zobrist::initializeZobrisKeys();
-    Engine two("Engines/test.so");
+    Engine two("Engines/test2.so");
     two.initialize();
-    Engine one("Engines/normal.so");
+    Engine one("Engines/test2.so");
     one.initialize();
 
     one.setHashSize(25);
