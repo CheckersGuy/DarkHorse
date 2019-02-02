@@ -5,41 +5,7 @@
 #include "Position.h"
 #include "Zobrist.h"
 
-
 Position Position::getColorFlip() {
-    Position pos;
-    pos.color = ~color;
-
-    for (int index = 0; index < 16; ++index) {
-        int col = index % 4;
-        int row = index / 4;
-        int newIndex = 3 - col + (7 - row) * 4;
-        //BP
-        uint32_t upValue = (BP & (1 << index)) >> index;
-        uint32_t downValue = (BP & (1 << newIndex)) >> newIndex;
-        pos.BP |= (1 << index) * downValue;
-        pos.BP |= (1 << newIndex) * upValue;
-
-        upValue = (WP & (1 << index)) >> index;
-        downValue = (WP & (1 << newIndex)) >> newIndex;
-        pos.WP |= (1 << index) * downValue;
-        pos.WP |= (1 << newIndex) * upValue;
-
-        upValue = (K & (1 << index)) >> index;
-        downValue = (K & (1 << newIndex)) >> newIndex;
-        pos.K |= (1 << index) * downValue;
-        pos.K |= (1 << newIndex) * upValue;
-    }
-    //finally swapping the pieces
-    uint32_t temp = pos.BP;
-    pos.BP = pos.WP;
-    pos.WP = temp;
-    pos.key = key ^ Zobrist::colorBlack;
-
-    return pos;
-}
-
-Position Position::getColorFlip2() {
     Position next;
     next.BP = getMirrored(WP);
     next.WP = getMirrored(BP);
@@ -144,6 +110,8 @@ void Position::makeMove(Move move) {
 }
 
 void Position::undoMove(Move move) {
+    //there might be a small bug discovered
+    //by switching to make unmake temporarily
     this->color = ~this->color;
     assert(!move.isEmpty());
     if (color == BLACK) {
