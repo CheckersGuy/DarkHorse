@@ -290,24 +290,25 @@ int main(int argc, char *argv[]) {
 
 
 
-   /* Zobrist::initializeZobrisKeys();
-    Engine two("Engines/test2.so");
+    Zobrist::initializeZobrisKeys();
+    Engine two("Engines/asp.so");
     two.initialize();
-    Engine one("Engines/test2.so");
+    Engine one("Engines/normal.so");
     one.initialize();
 
     one.setHashSize(25);
     two.setHashSize(25);
 
-    one.setTimePerMove(1000);
-    two.setTimePerMove(1000);
+    one.setTimePerMove(5000);
+    two.setTimePerMove(5000);
 
     std::vector<Position>openings;
     Utilities::loadPositions(openings,"Positions/3move.pos");
     TrainingGame game;
-    Utilities::playGame(game,one,two,openings[15],true);
+    Utilities::playGame(game,one,two,openings[36],true);
 
-*/
+
 
     return 0;
 }
+asp.so

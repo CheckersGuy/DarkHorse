@@ -64,7 +64,7 @@ enum Color {
 enum PieceType {
     BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
-enum Flag : uint32_t {
+enum Flag : uint8_t {
     TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3
 };
 

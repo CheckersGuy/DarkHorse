@@ -22,92 +22,56 @@
 
 struct NodeInfo {
     Value value = 0;
-    uint32_t depth = 0;
-    uint32_t flag = 0;
+    uint8_t depth = 0;
+    uint8_t  flag = 0;
     Move move;
 };
 
 
 struct Entry {
-    uint32_t encoding = 0;
-    Value value = 0;
-    uint32_t key = 0;
+    uint8_t flag=0;
+    uint8_t age=0;
+    uint8_t depth=0;
+    Value value=0 ;
+    uint32_t key=0 ;
     Move bestMove;
 
-
-    void setDepth(const uint32_t depth);
-
-    void setFlag(const uint32_t flag);
-
-    void setAgeCounter(uint32_t flag);
 
     uint32_t getKey();
 
     Value getValue();
 
-    uint32_t getEncoding();
+    uint8_t getFlag();
 
-    uint32_t getFlag();
+    uint8_t getAgeCounter();
 
-    uint32_t getAgeCounter();
-
-    uint32_t getDepth();
-
-    void printEncoding();
-
-    bool isEmpty();
+    uint8_t getDepth();
 
 };
 
 
-inline bool Entry::isEmpty() {
-    return encoding == 0;
-}
 
-inline uint32_t Entry::getEncoding() {
-    return encoding;
-}
 
 inline uint32_t Entry::getKey() {
     return this->key;
 }
 
-inline void Entry::setAgeCounter(uint32_t flag) {
-    constexpr uint32_t maske =3u<<30;
-    this->encoding &= ~maske;
-    this->encoding |= flag << 30;
-}
 
-inline uint32_t Entry::getAgeCounter() {
-    constexpr uint32_t maske =3u<<30;
-    return (encoding & (maske)) >> 30;
-}
-
-inline void Entry::setDepth(const uint32_t depth) {
-    assert(depth < MAX_PLY);
-    constexpr uint32_t maske =0xfffffff;
-    this->encoding &= ~maske;
-    this->encoding |= depth;
+inline uint8_t Entry::getAgeCounter() {
+    return age;
 }
 
 inline Value Entry::getValue() {
     return this->value;
 }
 
-inline void Entry::setFlag(const uint32_t flag) {
-    this->encoding &=~ (3u<<28);
-    this->encoding |= flag<<28;
-}
-
-inline uint32_t Entry::getFlag() {
-    constexpr uint32_t maske =3u<<28;
-    return (encoding & maske)>>28;
+inline uint8_t Entry::getFlag() {
+    return flag;
 }
 
 
-inline uint32_t Entry::getDepth() {
-    constexpr uint32_t maske =0xfffffff;
-    return encoding & (maske);
+inline uint8_t Entry::getDepth() {
+    return depth;
 }
 
 struct Cluster{
@@ -116,10 +80,10 @@ struct Cluster{
 
 class Transposition {
 
-    static constexpr uint32_t AGE_LIMIT = 3;
+    static constexpr uint8_t AGE_LIMIT = 250;
 
-private:
-    uint16_t ageCounter = 0;
+public:
+    uint8_t ageCounter = 0;
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
@@ -140,7 +104,7 @@ public:
 
     uint32_t getHashHits();
 
-    uint32_t getAgeCounter();
+    uint8_t getAgeCounter();
 
     void clear();
 
@@ -148,7 +112,7 @@ public:
 
     void incrementAgeCounter();
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint32_t depth, Move move);
+    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move move);
 
     void findHash(uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info);
 };
