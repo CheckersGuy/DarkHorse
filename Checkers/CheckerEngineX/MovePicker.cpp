@@ -29,7 +29,7 @@ namespace Statistics {
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         int score = getMoveScore(move, color);
         if (move == ttMove && move.getMoveIndex() == ttMove.getMoveIndex()) {
-            score += 200000;
+            score += 20000000;
         }
 
         return score;
