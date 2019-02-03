@@ -290,7 +290,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    Zobrist::initializeZobrisKeys();
+   /* Zobrist::initializeZobrisKeys();
     Engine two("Engines/test2.so");
     two.initialize();
     Engine one("Engines/test2.so");
@@ -307,8 +307,9 @@ int main(int argc, char *argv[]) {
     TrainingGame game;
     Utilities::playGame(game,one,two,openings[15],true);
 
+*/
 
-
+   std::cout<<std::numeric_limits<uint16_t>::max()<<std::endl;
 
     return 0;
 }

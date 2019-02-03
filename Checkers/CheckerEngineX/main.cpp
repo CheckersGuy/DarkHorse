@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <future>
+#include <bitset>
 #include "Transposition.h"
 #include "GameLogic.h"
 #include "BoardFactory.h"
@@ -33,7 +34,7 @@ int main(int argLength, char **arguments) {
     std::cout<<eval<<std::endl;
 */
     initialize();
-    using namespace Perft;
+   /* using namespace Perft;
     table.setCapacity(1<<25);
     Board board;
     BoardFactory::setUpStartingPosition(board);
@@ -46,6 +47,7 @@ int main(int argLength, char **arguments) {
 
     pool.waitAll();
     std::cout<<"PERFT: "<<pool.getNodeCounter()<<std::endl;
+*/
 
 
 
