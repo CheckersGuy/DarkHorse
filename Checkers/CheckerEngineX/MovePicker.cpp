@@ -37,13 +37,13 @@ namespace Statistics {
 
     void MovePicker::updateHHScore(Move move, Color color, int depth) {
         const int colorIndex = (color == BLACK) ? 0 : 1;
-        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += depth * depth;
+        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += (depth/ONE_PLY) * (depth/ONE_PLY);
     }
 
     void MovePicker::updateBFScore(Move *liste, int moveIndex, Color color, int depth) {
         const int colorIndex = (color == BLACK) ? 0 : 1;
         for (int i = 0; i < moveIndex; ++i) {
-            bfScore[32 * 32 * colorIndex + 32 * liste[i].getTo() + liste[i].getFrom()] += depth;
+            bfScore[32 * 32 * colorIndex + 32 * liste[i].getTo() + liste[i].getFrom()] += depth/ONE_PLY;
         }
     }
 

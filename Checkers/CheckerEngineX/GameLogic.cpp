@@ -51,7 +51,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     TT.incrementAgeCounter();
     TT.clear();
     //Testing aging of TT entries
-
     timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
@@ -60,21 +59,11 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Value gameValue;
 
     while (i <= depth && i <= MAX_PLY) {
-
         Line currentPV;
-        Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
-
-        if (timeOut)
-            break;
-
-
-
-        mainPV = currentPV;
-        best = mainPV[0];
-        gameValue = value;
+        Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i*ONE_PLY, true);
 
         if (print) {
-            std::string temp = std::to_string(value.value) + "  ";
+            std::string temp = std::to_string(gameValue.value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
@@ -83,6 +72,14 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             temp += "\n";
             std::cout << temp;
         }
+        if (timeOut)
+            break;
+
+
+        mainPV = currentPV;
+        best = mainPV[0];
+        gameValue = value;
+
         ++i;
 
         if (print) {
@@ -111,7 +108,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     if (moves.isEmpty()) {
 
         if (board.getPosition()->hasThreat()) {
-            return alphaBeta<type>(board, alpha, beta, pv, ply, 1, false);
+            return alphaBeta<type>(board, alpha, beta, pv, ply, ONE_PLY, false);
         }
 
         if (board.getPosition()->isWipe()) {
@@ -165,6 +162,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
+
     constexpr bool inPVLine = (type == PVNode);
     const bool isRoot = (ply == 0);
     assert(alpha.isEval() && beta.isEval());
@@ -201,8 +199,9 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 #endif
 
 
-    NodeInfo info;
+
 #ifndef TRAIN
+    NodeInfo info;
     TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
     info.value = info.value.valueFromTT(ply);
 #endif
@@ -213,8 +212,10 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && ply > 0 && depth >= 3 && beta <= INFINITE) {
-        Value margin = 10 * depth;
+
+
+    if (!inPVLine && prune && ply > 0 && depth >= 3*ONE_PLY) {
+        Value margin = (10 * depth)/ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
@@ -238,7 +239,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     Move bestMove;
     Value alphaOrig = alpha;
 
-    const int extension =0;
+     const int extension =(sucessors.length()==1 && sucessors[0].isCapture())?300:0;
 
     int newDepth = depth - ONE_PLY + extension;
 
@@ -250,7 +251,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth >= 2 && i >= ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
+            if (depth >= 2*ONE_PLY && i >= ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
                 reduce = 1;
                 if (i >= 4) {
                     reduce = 2;

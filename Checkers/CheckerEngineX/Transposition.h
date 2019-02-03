@@ -148,7 +148,7 @@ public:
 
     void incrementAgeCounter();
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move);
+    void storeHash(Value value, uint64_t key, Flag flag, uint32_t depth, Move move);
 
     void findHash(uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info);
 };

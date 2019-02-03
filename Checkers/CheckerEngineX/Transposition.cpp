@@ -57,7 +57,7 @@ double Transposition::getFillRate() {
 }
 
 
-void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move) {
+void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint32_t depth, Move move) {
     this->length++;
     assert(value.isEval());
     const uint32_t index = (key) & (this->capacity - 1);
