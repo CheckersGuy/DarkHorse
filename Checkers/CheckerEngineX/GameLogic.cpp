@@ -212,7 +212,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && ply > 0 && depth >= 3 ) {
+    if (!inPVLine && prune && ply > 0 && depth >= 5 ) {
         Value margin = 10 * depth;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
@@ -270,7 +270,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
                 Statistics::mPicker.updateBFScore(sucessors.liste, i, board.getMover(), depth);
                 break;
             }
-
             if (value > alpha) {
                 pv.clear();
                 pv.concat(bestMove, localPV);
