@@ -13,26 +13,6 @@
 int main(int argLength, char **arguments) {
 
 
-  /*  FixPoint<short,4> test;
-    test=600;
-*/
-
-
-    /*
-    int phase =8;
-    FixPoint<short,4>opening =2;
-    FixPoint<short,4>ending =0;
-
-    FixPoint<short,4>opFactor=(phase);
-    opFactor/=24;
-
-    FixPoint<short,4>endFactor=(24-phase);
-    endFactor/=24;
-
-    FixPoint<short,4>eval =opFactor*opening+ending*endFactor;
-
-    std::cout<<eval<<std::endl;
-*/
     initialize();
    /* using namespace Perft;
     table.setCapacity(1<<25);
@@ -49,6 +29,11 @@ int main(int argLength, char **arguments) {
     std::cout<<"PERFT: "<<pool.getNodeCounter()<<std::endl;
 */
 
+    setHashSize(25);
+    Board test;
+    BoardFactory::setUpStartingPosition(test);
+
+    searchValue(test,MAX_PLY,100000,true);
 
 
     return 0;

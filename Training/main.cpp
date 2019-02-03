@@ -309,7 +309,5 @@ int main(int argc, char *argv[]) {
 
 */
 
-   std::cout<<std::numeric_limits<uint16_t>::max()<<std::endl;
-
     return 0;
 }
