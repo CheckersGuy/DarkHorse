@@ -33,7 +33,8 @@ int main(int argLength, char **arguments) {
     std::cout<<eval<<std::endl;
 */
     initialize();
-    using namespace Perft;
+    setHashSize(23);
+    /*using namespace Perft;
     table.setCapacity(1<<25);
     Board board;
     BoardFactory::setUpStartingPosition(board);
@@ -45,8 +46,11 @@ int main(int argLength, char **arguments) {
     pool.splitLoop(board,20,20);
 
     pool.waitAll();
-    std::cout<<"PERFT: "<<pool.getNodeCounter()<<std::endl;
+    std::cout<<"PERFT: "<<pool.getNodeCounter()<<std::endl;*/
 
+    Board test;
+    BoardFactory::setUpStartingPosition(test);
+    searchValue(test,MAX_PLY,10000,false);
 
 
     return 0;
