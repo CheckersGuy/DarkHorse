@@ -67,10 +67,9 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         if (timeOut)
             break;
 
-
-
         mainPV = currentPV;
         best = mainPV[0];
+
         gameValue = value;
 
         if (print) {
@@ -208,12 +207,12 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 #endif
 
 
-    if (!inPVLine && ply > 0 && alpha >= beta) {
+    if (!inPVLine  && ply>0 && alpha >= beta) {
         return info.value;
     }
 
 
-    if (!inPVLine && prune && ply > 0 && depth >= 3 && beta <= INFINITE) {
+    if (!inPVLine && prune && ply > 0 && depth >= 3 ) {
         Value margin = 10 * depth;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
