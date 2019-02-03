@@ -19,7 +19,7 @@ namespace Statistics {
     }
 
     int MovePicker::getMoveScore(Move move, Color color) {
-        const int colorIndex = (color == BLACK) ? 0 : 1;
+        const int colorIndex = (color+1)/2;
         const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
         const int score = (bScore == 0) ? -100 : ((10 * hhScore / bScore));
@@ -29,19 +29,19 @@ namespace Statistics {
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         int score = getMoveScore(move, color);
         if (move == ttMove && move.getMoveIndex() == ttMove.getMoveIndex()) {
-            score += 200000;
+            score += 20000000;
         }
 
         return score;
     }
 
     void MovePicker::updateHHScore(Move move, Color color, int depth) {
-        const int colorIndex = (color == BLACK) ? 0 : 1;
+        const int colorIndex = (color+1)/2;
         history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += (depth/ONE_PLY) * (depth/ONE_PLY);
     }
 
     void MovePicker::updateBFScore(Move *liste, int moveIndex, Color color, int depth) {
-        const int colorIndex = (color == BLACK) ? 0 : 1;
+        const int colorIndex = (color+1)/2;
         for (int i = 0; i < moveIndex; ++i) {
             bfScore[32 * 32 * colorIndex + 32 * liste[i].getTo() + liste[i].getFrom()] += depth/ONE_PLY;
         }

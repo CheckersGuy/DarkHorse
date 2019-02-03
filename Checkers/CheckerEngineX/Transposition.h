@@ -116,7 +116,7 @@ struct Cluster{
 
 class Transposition {
 
-    static constexpr uint16_t AGE_LIMIT = 3;
+    static constexpr uint32_t AGE_LIMIT = 3;
 
 private:
     uint16_t ageCounter = 0;
