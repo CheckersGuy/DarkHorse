@@ -180,7 +180,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return 0;
     }
 
-    if (depth <= 0) {
+    if (depth < ONE_PLY) {
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
 
@@ -240,7 +240,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     const int extension =0;
 
-    int newDepth = depth - 1 + extension;
+    int newDepth = depth - ONE_PLY + extension;
 
     for (int i = 0; i < sucessors.length(); ++i) {
         board.makeMove(sucessors[i]);
@@ -256,7 +256,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
                     reduce = 2;
                 }
             }
-            value = ~alphaBeta<NONPV>(board, ~alpha - 1, ~alpha, localPV, ply + 1, newDepth - reduce, prune);
+            value = ~alphaBeta<NONPV>(board, ~alpha - 1, ~alpha, localPV, ply + 1, newDepth - reduce*ONE_PLY, prune);
             if (value > alpha && value < beta) {
                 value = ~alphaBeta<NONPV>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
             }

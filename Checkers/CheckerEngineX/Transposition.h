@@ -22,36 +22,36 @@
 
 struct NodeInfo {
     Value value = 0;
-    int depth = 0;
-    uint16_t flag = 0;
+    uint32_t depth = 0;
+    uint32_t flag = 0;
     Move move;
 };
 
 
 struct Entry {
-    uint16_t encoding = 0;
+    uint32_t encoding = 0;
     Value value = 0;
     uint32_t key = 0;
     Move bestMove;
 
 
-    void setDepth(const uint16_t depth);
+    void setDepth(const uint32_t depth);
 
-    void setFlag(const uint16_t flag);
+    void setFlag(const uint32_t flag);
 
-    void setAgeCounter(uint16_t flag);
+    void setAgeCounter(uint32_t flag);
 
     uint32_t getKey();
 
     Value getValue();
 
-    uint16_t getEncoding();
+    uint32_t getEncoding();
 
-    uint16_t getFlag();
+    uint32_t getFlag();
 
-    uint16_t getAgeCounter();
+    uint32_t getAgeCounter();
 
-    uint16_t getDepth();
+    uint32_t getDepth();
 
     void printEncoding();
 
@@ -64,7 +64,7 @@ inline bool Entry::isEmpty() {
     return encoding == 0;
 }
 
-inline uint16_t Entry::getEncoding() {
+inline uint32_t Entry::getEncoding() {
     return encoding;
 }
 
@@ -72,43 +72,47 @@ inline uint32_t Entry::getKey() {
     return this->key;
 }
 
-inline void Entry::setAgeCounter(uint16_t flag) {
-    this->encoding &= ~12;
-    this->encoding |= flag << 2;
+inline void Entry::setAgeCounter(uint32_t flag) {
+    constexpr uint32_t maske =3u<<30;
+    this->encoding &= ~maske;
+    this->encoding |= flag << 30;
 }
 
-inline uint16_t Entry::getAgeCounter() {
-    return (encoding & (12)) >> 2;
+inline uint32_t Entry::getAgeCounter() {
+    constexpr uint32_t maske =3u<<30;
+    return (encoding & (maske)) >> 30;
 }
 
-inline void Entry::setFlag(const uint16_t flag) {
-    this->encoding &= ~3;
-    this->encoding |= flag;
-}
-
-inline void Entry::setDepth(const uint16_t depth) {
+inline void Entry::setDepth(const uint32_t depth) {
     assert(depth < MAX_PLY);
-    this->encoding &= ~16256;
-    this->encoding |= depth << 7;
+    constexpr uint32_t maske =0xfffffff;
+    this->encoding &= ~maske;
+    this->encoding |= depth;
 }
 
 inline Value Entry::getValue() {
     return this->value;
 }
 
-inline uint16_t Entry::getFlag() {
-    return encoding & 3;
+inline void Entry::setFlag(const uint32_t flag) {
+    this->encoding &=~ (3u<<28);
+    this->encoding |= flag<<28;
+}
+
+inline uint32_t Entry::getFlag() {
+    constexpr uint32_t maske =3u<<28;
+    return (encoding & maske)>>28;
 }
 
 
-inline uint16_t Entry::getDepth() {
-    return (encoding & (16256)) >> 7;
+inline uint32_t Entry::getDepth() {
+    constexpr uint32_t maske =0xfffffff;
+    return encoding & (maske);
 }
 
-struct Cluster {
+struct Cluster{
     Entry entries[2];
 };
-
 
 class Transposition {
 
