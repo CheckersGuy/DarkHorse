@@ -239,7 +239,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     Move bestMove;
     Value alphaOrig = alpha;
 
-     const int extension =(sucessors.length()==1 && sucessors[0].isCapture())?300:0;
+     const int extension =(sucessors.length()==1)?300:0;
 
     int newDepth = depth - ONE_PLY + extension;
 
@@ -265,15 +265,16 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         board.undoMove();
         if (value > bestValue) {
             bestValue = value;
-            bestMove = sucessors.liste[i];
 
             if (value >= beta) {
+                bestMove = sucessors.liste[i];
                 Statistics::mPicker.updateHHScore(sucessors.liste[i], board.getMover(), depth);
                 Statistics::mPicker.updateBFScore(sucessors.liste, i, board.getMover(), depth);
                 break;
             }
 
             if (value > alpha) {
+                bestMove = sucessors.liste[i];
                 pv.clear();
                 pv.concat(bestMove, localPV);
                 alpha = value;

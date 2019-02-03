@@ -3,7 +3,7 @@ project(CheckerEngineX)
 set(CMAKE_CXX_STANDARD 17)
 
 #find_package(Threads REQUIRED)
-set(CMAKE_CXX_FLAGS "-O3 -ffast-math -fprofile-use -pthread -DNDEBUG -march=native   -flto -ffat-lto-objects -fuse-linker-plugin ")
+set(CMAKE_CXX_FLAGS "-O3 -ffast-math  -pthread -DNDEBUG -march=native   -flto -ffat-lto-objects -fuse-linker-plugin ")
 set(SOURCE_FILES main.cpp Perft.cpp Perft.h Board.cpp Board.h BoardFactory.cpp BoardFactory.h Move.h MGenerator.h GameLogic.cpp GameLogic.h Transposition.cpp Transposition.h types.h MoveListe.cpp MoveListe.h  Position.cpp Position.h MovePicker.cpp MovePicker.h CBInterface.cpp CBInterface.h Zobrist.h Zobrist.cpp Weights.h Line.cpp Line.h SMPLock.h FixPoint.h )
 
 add_executable(CheckerEngineX  ${SOURCE_FILES})
