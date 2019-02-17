@@ -15,7 +15,8 @@ int main(int argLength, char **arguments) {
 
     initialize();
 
-
+    //This is still the search branch
+    //parallel serach will be next here
 
 
     return 0;
