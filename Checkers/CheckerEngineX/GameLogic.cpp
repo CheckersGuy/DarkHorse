@@ -66,12 +66,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         if (timeOut)
             break;
 
-<<<<<<< HEAD
-        mainPV = currentPV;
-        best = mainPV[0];
 
-        gameValue = value;
-=======
         if(value<=alpha || value>=beta){
             alpha=-INFINITE;
             beta=INFINITE;
@@ -82,8 +77,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             alpha=value-100;
             beta=value+100;
         }
->>>>>>> search
-
         if (print) {
             std::string temp = std::to_string(gameValue.value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
