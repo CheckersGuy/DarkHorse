@@ -29,11 +29,10 @@ int main(int argLength, char **arguments) {
     std::cout<<"PERFT: "<<pool.getNodeCounter()<<std::endl;
 */
 
-    setHashSize(26);
-    Board test;
-    BoardFactory::setUpStartingPosition(test);
+      system("echo  ' \e[1;31m Thats another test \e[0m '");
 
-    searchValue(test,MAX_PLY,1500000,true);
+
+
 
 
     return 0;

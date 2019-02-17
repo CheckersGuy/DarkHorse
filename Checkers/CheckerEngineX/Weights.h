@@ -17,8 +17,12 @@
 constexpr uint32_t region = 13107;
 constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
-constexpr size_t SIZE = 390625 * 9 * 2;
-using Eval =FixPoint<short,4>;
+constexpr size_t SIZE = 390625*9*2;
+
+using Eval =FixPoint<short, 4>;
+
+
+
 
 inline size_t getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
@@ -39,17 +43,21 @@ inline size_t getIndex(uint32_t region, const Position &pos) {
             current = 2;
         }
         index += powers[counter++] * current;
+
     }
     return index;
 }
-
 template<typename T>
 class Weights {
 
 public:
+
+    T kingOp, kingEnd;
+    T balanceOp, balanceEnd;
+
     std::unique_ptr<T[]> weights;
 
-    Weights() {
+    Weights() : kingOp(50), kingEnd(10), balanceOp(2), balanceEnd(2) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::memset(weights.get(), 0, sizeof(T) * SIZE);
     }
@@ -60,7 +68,7 @@ public:
     }
 
     Weights(Weights &&other) {
-        this->weights = std::move(other.weights);
+        this->weights = other.weights;
         other.weights = nullptr;
     }
 
@@ -91,7 +99,7 @@ public:
             std::cerr << "Error: Couldn't find weights, default init" << std::endl;;
         } else {
             size_t counter = 0;
-            while (!stream.eof()) {
+            while (!stream.eof() && counter<SIZE) {
                 uint32_t runLength = 0;
                 stream.read((char *) &runLength, sizeof(uint32_t));
                 double value;
@@ -101,6 +109,12 @@ public:
                     counter++;
                 }
             }
+            for(size_t i=SIZE;i<SIZE+4;++i){
+                double current;
+                stream.read((char*)&current,sizeof(double));
+                (*this)[i]=current;
+            }
+
         }
         stream.close();
     }
@@ -122,6 +136,12 @@ public:
             stream.write((char *) &runLength, sizeof(uint32_t));
             stream.write((char *) &value, sizeof(double));
         }
+
+        stream.write((char*)&kingOp,sizeof(T));
+        stream.write((char*)&kingEnd,sizeof(T));
+        stream.write((char*)&balanceOp,sizeof(T));
+        stream.write((char*)&balanceEnd,sizeof(T));
+
         stream.close();
     }
 
@@ -136,73 +156,88 @@ public:
         const int WP = rightWhite + leftWhite;
         const int BP = rightBlack + leftBlack;
 
-
-        int openingWhite = 0, openingBlack = 0,
-                endingWhite = 0, endingBlack = 0;
-
-        Eval opening=0,ending=0;
-
         int sum = 100 * (WP - BP);
-
-
         int phase = WP + BP;
+        int WK = 0;
+        int BK = 0;
         if (pos.K != 0) {
-            const int WK = __builtin_popcount(pos.K & (pos.WP));
-            const int BK = __builtin_popcount(pos.K & (pos.BP));
+            WK = __builtin_popcount(pos.K & (pos.WP));
+            BK = __builtin_popcount(pos.K & (pos.BP));
             phase += WK + BK;
-            openingWhite += 150 * (WK);
-            openingBlack += 150 * BK;
-            endingWhite += 110 * (WK);
-            endingBlack += 110 * BK;
-
         }
+
+        int kingEval = 0;
+        int balanceScore = std::abs(leftBlack - rightBlack) - std::abs(leftWhite - rightWhite);
+
+        T factorOp = phase;
+        T factorEnd = 24 - phase;
+        factorOp /= 24;
+        factorEnd /= 24;
+        T temp = factorOp*kingOp  + factorEnd*kingEnd;
+        T temp2 = factorOp*balanceOp + factorEnd*balanceEnd ;
+        if constexpr(std::is_same<T, double>::value) {
+            kingEval += (static_cast<int>(temp) + 100) * (WK - BK) + static_cast<int>(temp2)*balanceScore;
+        } else if constexpr(std::is_same<T, Eval>::value) {
+            kingEval += (temp.round() + 100) * (WK - BK) + temp2.round()*balanceScore;
+        }
+
 
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
-        for (size_t j = 0; j < 3; ++j) {
-            for (size_t i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8 * j + i);
-                size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
-                size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
-                opening +=   weights[indexOpening]*static_cast<int>(color);
-                ending +=  weights[indexEnding]*static_cast<int>(color);
-            }
+        Eval opening = 0, ending = 0;
+
+        for(size_t j=0;j<3;++j){
+
+        for (size_t i = 0; i < 3; ++i) {
+            const uint32_t curRegion = region << (8 * j + i);
+            size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
+            size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
+            opening += (weights[indexOpening]) * static_cast<int>(color);
+            ending += (weights[indexEnding] ) * static_cast<int>(color);
+        }
         }
 
+        Eval opFactor = phase;
+        Eval endFactor = 24 - phase;
         Eval phasedPatterns;
-        Eval phaseTemp =phase;
-        Eval opFactor =phase;
-        Eval endFactor=24-phase;
-        opFactor/=24;
-        endFactor/=24;
+        Eval phaseTemp = phase;
+        opFactor /= 24;
+        endFactor /= 24;
 
-        phasedPatterns =opFactor*opening+endFactor*ending;
-
-        int phasedScore = 0;
-
-        phasedScore += ((phase * openingWhite + (24 - phase) * endingWhite));
-        phasedScore /= 24;
-        phasedScore -= ((phase * openingBlack + (24 - phase) * endingBlack)) / 24;
-        sum += phasedScore;
-
-        int balanceWhite = std::abs(leftWhite - rightWhite);
-        int balanceBlack = std::abs(leftBlack - rightBlack);
-        sum += 2 * (balanceBlack - balanceWhite);
-        sum+=phasedPatterns.round();
-
+        phasedPatterns = opFactor * opening + endFactor * ending;
+        sum += phasedPatterns.round();
+        sum += kingEval;
 
         return sum;
     }
 
     T &operator[](size_t index) {
+        if (index == SIZE) {
+            return kingOp;
+        } else if (index == SIZE + 1) {
+            return kingEnd;
+        } else if (index == SIZE + 2) {
+            return balanceOp;
+        } else if (index == SIZE + 3) {
+            return balanceEnd;
+        }
         return weights[index];
     }
 
-    T operator[](size_t index)const {
+    T operator[](size_t index) const {
+        if (index == SIZE) {
+            return kingOp;
+        } else if (index == SIZE + 1) {
+            return kingEnd;
+        } else if (index == SIZE + 2) {
+            return balanceOp;
+        } else if (index == SIZE + 3) {
+            return balanceEnd;
+        }
+
         return weights[index];
     }
-
 
 
     size_t getSize() {

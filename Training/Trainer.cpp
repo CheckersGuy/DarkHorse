@@ -49,6 +49,8 @@ double getWinValue(Score score) {
     return 0.5;
 }
 
+
+
 void Trainer::gradientUpdate(TrainingPos position) {
     //pretty much one step of stochastic gradient descent
     Board board;
@@ -63,7 +65,7 @@ void Trainer::gradientUpdate(TrainingPos position) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8 * j + i);
-                size_t index = 18 * getIndex(curRegion, position.pos) + 9 * p + 3 * j + i;
+                size_t index= 18 * getIndex(curRegion, position.pos) + 9 * p + 3 * j + i;
 
                 double qValue = qStatic.as<double>();
                 gameWeights.weights[index] += 2.0;
@@ -80,6 +82,21 @@ void Trainer::gradientUpdate(TrainingPos position) {
             }
         }
     }
+    for(size_t index=SIZE;index<SIZE+4;++index){
+        double qValue = qStatic.as<double>();
+        gameWeights[index] += 2.0;
+        Line local;
+        Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
+        gameWeights[index] -= 2.0;
+        double qDiffValue = qDiff.as<double>();
+        double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
+                               Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) / 2.0;
+
+        diff += gameWeights[index] * getL2Reg();
+        gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
+    }
+
+
 }
 
 void Trainer::epoch() {
@@ -100,12 +117,17 @@ void Trainer::startTune() {
         std::cout << "MinValue: " << gameWeights.getMinValue() << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "L2Reg: " << gameWeights.getNorm() << std::endl;
+        std::cout<<"KingOP: "<<gameWeights.kingOp<<std::endl;
+        std::cout<<"KingEnd: "<<gameWeights.kingEnd<<std::endl;
+        std::cout<<"BalanceOP: "<<gameWeights.balanceOp<<std::endl;
+        std::cout<<"BalanceEnd: "<<gameWeights.balanceEnd<<std::endl;
+
         double loss = calculateLoss();
         std::cout << "Loss: " << loss << std::endl;
         epoch();
 
 
-        std::string name = "T" + std::to_string(counter) + ".weights";
+        std::string name = "F" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
         std::cout << "Stored weights" << std::endl;
         counter++;
@@ -135,7 +157,7 @@ double Trainer::calculateLoss(int threads) {
     size_t chunk = data.size() / threads;
     size_t i = 0;
     for (; i < data.size(); i += chunk) {
-        workers.emplace_back(std::async([=]() {
+        workers.emplace_back(std::async(std::launch::async, [=]() {
             double local = 0;
             for (size_t k = i; k < i + chunk; ++k) {
                 local += evalLambda(data[k]);
@@ -146,8 +168,6 @@ double Trainer::calculateLoss(int threads) {
     for (; i < data.size(); ++i) {
         mse += evalLambda(data[i]);
     }
-    for (auto &th : workers)
-        th.wait();
 
     for (auto &th : workers) {
         mse += th.get();
