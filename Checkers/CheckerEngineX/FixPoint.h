@@ -204,6 +204,9 @@ public:
         stream << other.as<double>();
         return stream;
     }
+
+
+
 };
 
 #endif //CHECKERENGINEX_FIXPOINT_H

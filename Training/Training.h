@@ -30,6 +30,8 @@ namespace Training {
 
     };
 
+
+
     struct TrainingGame {
         std::vector<Position> positions;
         Score result = DRAW;
@@ -37,6 +39,41 @@ namespace Training {
         void add(Position position);
         bool operator==(const TrainingGame& other);
         bool operator!=(const TrainingGame& other);
+
+        auto begin(){
+            return positions.begin();
+        }
+
+        auto end(){
+            return positions.end();
+        }
+    };
+
+    struct TrainingHash{
+    public:
+
+        TrainingHash()=default;
+
+        uint64_t operator()(TrainingGame& game){
+            uint64_t key=0;
+            int length= std::min(game.positions.size(),static_cast<size_t>(40));
+            for(int i=0;i<length;++i){
+                key^=Zobrist::generateKey(game.positions[i],game.positions[i].getColor());
+            }
+        }
+    };
+
+    struct TrainingComp{
+
+        bool operator()(TrainingGame& one, TrainingGame& two){
+            int length=one.positions.size();
+            if(two.positions.size()<length)
+                length=two.positions.size();
+            if(40<length)
+                length=40;
+
+            return std::equal(one.begin(),one.begin()+length,two.begin());
+        }
     };
 
     std::istream &operator>>(std::istream &stream, TrainingGame &game);

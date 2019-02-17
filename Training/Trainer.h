@@ -54,12 +54,12 @@ public:
 
     void startTune();
 
+
     double calculateLoss(int threads=std::thread::hardware_concurrency());
 
     std::string getPath() const;
 
 };
-TrainingPos seekPosition(std::ifstream& stream,size_t index);
 
 
 #endif //TRAINING_TRAINER_H
