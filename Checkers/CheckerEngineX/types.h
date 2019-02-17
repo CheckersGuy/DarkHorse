@@ -21,21 +21,22 @@ inline uint64_t getSystemTime() {
 
 
 
-constexpr uint32_t LEFT_HALF = 3435973836ull;
+constexpr uint32_t LEFT_HALF = 3435973836u;
 constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2;
-constexpr uint32_t MASK_L3 = 14737632ull;
-constexpr uint32_t MASK_L5 = 117901063ull;
-constexpr uint32_t MASK_R3 = 117901056ull;
-constexpr uint32_t MASK_R5 = 3772834016ull;
-constexpr uint32_t MASK_COL_1=286331153ull;
-constexpr uint32_t MASK_COL_2=572662306ull;
-constexpr uint32_t MASK_COL_3=1145324612ull;
-constexpr uint32_t MASK_COL_4=2290649224ull;
+constexpr uint32_t MASK_L3 = 14737632u;
+constexpr uint32_t MASK_L5 = 117901063u;
+constexpr uint32_t MASK_R3 = 117901056u;
+constexpr uint32_t MASK_R5 = 3772834016u;
+constexpr uint32_t MASK_COL_1=286331153u;
+constexpr uint32_t MASK_COL_2=572662306u;
+constexpr uint32_t MASK_COL_3=1145324612u;
+constexpr uint32_t MASK_COL_4=2290649224u;
 
 
 
 
 using Depth =int;
+using Ply =int;
 
 
 
@@ -63,8 +64,8 @@ enum Color {
 enum PieceType {
     BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
-enum Flag : uint16_t {
-    TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3, UNKNOWN = 555
+enum Flag : uint8_t {
+    TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3
 };
 
 

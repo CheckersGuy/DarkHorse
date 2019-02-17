@@ -47,7 +47,7 @@ void Transposition::incrementAgeCounter() {
     ageCounter=ageCounter%Transposition::AGE_LIMIT;
 }
 
-uint32_t Transposition::getAgeCounter() {
+uint8_t Transposition::getAgeCounter() {
     return ageCounter;
 }
 
@@ -57,29 +57,29 @@ double Transposition::getFillRate() {
 }
 
 
-void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move) {
+void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move move) {
     this->length++;
     assert(value.isEval());
     const uint32_t index = (key) & (this->capacity - 1);
     Cluster *cluster = &this->entries[index];
-    if (depth > cluster->entries[1].getDepth() || ageCounter !=cluster->entries[1].getAgeCounter()) {
-        cluster->entries[1].setDepth(depth);
-        cluster->entries[1].setFlag(flag);
-        cluster->entries[1].setAgeCounter(ageCounter);
+    if (depth > cluster->entries[1].getDepth() || ageCounter!=cluster->entries[1].getAgeCounter()) {
+        cluster->entries[1].depth=depth;
+        cluster->entries[1].flag=flag;
+        cluster->entries[1].age=ageCounter;
         cluster->entries[1].bestMove = move;
         cluster->entries[1].value = value;
         cluster->entries[1].key = static_cast<uint32_t >(key >> 32);
         return;
     }
-    cluster->entries[0].setDepth(depth);
-    cluster->entries[0].setFlag(flag);
-    cluster->entries[0].setAgeCounter(ageCounter);
+    cluster->entries[0].depth=depth;
+    cluster->entries[0].flag=flag;
+    cluster->entries[0].age=ageCounter;
     cluster->entries[0].value = value;
     cluster->entries[0].key = static_cast<uint32_t >(key >> 32);
     cluster->entries[0].bestMove = move;
 }
 
-void Transposition::findHash(const uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info) {
+void Transposition::findHash(const uint64_t key, int depth, int *alpha, int *beta, NodeInfo& info) {
 
     assert(info.value.isInRange(-INFINITE, INFINITE));
     const uint32_t index = key & (this->capacity - 1);

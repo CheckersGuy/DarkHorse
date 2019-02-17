@@ -13,102 +13,77 @@
 #include <cstdint>
 
 
+//Here will be some changes for the search branch
+// in particular fractional Depth !!!
+// if it doesnt have a huge performance penality
+// I will keep it regardless
+
+
+
 struct NodeInfo {
     Value value = 0;
-    int depth = 0;
-    uint16_t flag = 0;
+    uint8_t depth = 0;
+    uint8_t  flag = 0;
     Move move;
 };
 
 
 struct Entry {
-    uint16_t encoding = 0;
-    Value value = 0;
-    uint32_t key = 0;
     Move bestMove;
+    Value value ;
+    uint32_t key ;
+    uint8_t flag;
+    uint8_t age;
+    uint8_t depth;
 
-
-    void setDepth(const uint16_t depth);
-
-    void setFlag(const uint16_t flag);
-
-    void setAgeCounter(uint16_t flag);
 
     uint32_t getKey();
 
     Value getValue();
 
-    uint16_t getEncoding();
+    uint8_t getFlag();
 
-    uint16_t getFlag();
+    uint8_t getAgeCounter();
 
-    uint16_t getAgeCounter();
-
-    uint16_t getDepth();
-
-    void printEncoding();
-
-    bool isEmpty();
+    uint8_t getDepth();
 
 };
 
 
-inline bool Entry::isEmpty() {
-    return encoding == 0;
-}
 
-inline uint16_t Entry::getEncoding() {
-    return encoding;
-}
 
 inline uint32_t Entry::getKey() {
     return this->key;
 }
 
-inline void Entry::setAgeCounter(uint16_t flag) {
-    this->encoding &= ~12;
-    this->encoding |= flag << 2;
-}
 
-inline uint16_t Entry::getAgeCounter() {
-    return (encoding & (12)) >> 2;
-}
-
-inline void Entry::setFlag(const uint16_t flag) {
-    this->encoding &= ~3;
-    this->encoding |= flag;
-}
-
-inline void Entry::setDepth(const uint16_t depth) {
-    assert(depth < MAX_PLY);
-    this->encoding &= ~16256;
-    this->encoding |= depth << 7;
+inline uint8_t Entry::getAgeCounter() {
+    return age;
 }
 
 inline Value Entry::getValue() {
     return this->value;
 }
 
-inline uint16_t Entry::getFlag() {
-    return encoding & 3;
+inline uint8_t Entry::getFlag() {
+    return flag;
 }
 
 
-inline uint16_t Entry::getDepth() {
-    return (encoding & (16256)) >> 7;
+inline uint8_t Entry::getDepth() {
+    return depth;
 }
 
-struct Cluster {
+struct Cluster{
     Entry entries[2];
 };
 
-
 class Transposition {
 
-    static constexpr uint16_t AGE_LIMIT = 3;
+    static constexpr uint8_t AGE_LIMIT = 250;
 
-private:
-    uint16_t ageCounter = 0;
+public:
+    uint8_t ageCounter = 0;
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
@@ -129,7 +104,7 @@ public:
 
     uint32_t getHashHits();
 
-    uint32_t getAgeCounter();
+    uint8_t getAgeCounter();
 
     void clear();
 
@@ -137,7 +112,7 @@ public:
 
     void incrementAgeCounter();
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint16_t depth, Move move);
+    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move move);
 
     void findHash(uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info);
 };

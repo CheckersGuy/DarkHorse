@@ -8,6 +8,8 @@
 #include "boost/filesystem.hpp"
 #include "boost/foreach.hpp"
 #include "Cache.h"
+#include "Training.h"
+
 namespace fs =boost::filesystem;
 namespace opt =boost::program_options;
 
@@ -202,12 +204,18 @@ int main(int argc, char *argv[]) {
 
    using namespace Training;
     initialize();
-   setHashSize(1);
     std::vector<TrainingPos> data;
-    loadGames(data,"TrainData/test5comp.game");*/
+    loadGames(data,"TrainData/test5comp.game");
+    //loadGames(data,"TrainData/compressed.game");
+    std::cout<<"Length: "<<data.size()<<std::endl;
 
 
+
+
+*/
 /*
+
+
  std::vector<TrainingGame>remPos;
   std::vector<TrainingGame>data;
 
@@ -222,15 +230,10 @@ int main(int argc, char *argv[]) {
 
     saveGames(remPos,"TrainData/test6comp.game");
     std::cout<<"Saved Data: "<<remPos.size()<<std::endl;
-*/
+*//*
 
 
 
-
-
-
-
-/*
 
 
    auto removeCl=[](TrainingPos pos){
@@ -250,10 +253,9 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Starting " << std::endl;
 
+
+
     Trainer trainer(data);
-
-
-
 
 
 
@@ -261,30 +263,9 @@ int main(int argc, char *argv[]) {
     trainer.setEpochs(100000);
     trainer.setl2Reg(0.0000001);
     trainer.setCValue(-0.01);
+
+
     trainer.startTune();
-*/
-
-
-
-
-
-/*
-
-    Cache<CacheMode::LRU,int, int> cache(5);
-
-    cache.put(1,1);
-    cache.put(2,2);
-    cache.put(3,3);
-    cache.put(4,4);
-    for(auto& element : cache){
-        std::cout<<"Value: "<<element.second<<std::endl;
-    }
-    cache.get(2);
-    std::cout<<std::endl;
-
-    for(auto& element : cache){
-        std::cout<<"Value: "<<element.second<<std::endl;
-    }test.so
 */
 
 
@@ -296,17 +277,20 @@ int main(int argc, char *argv[]) {
     Engine one("Engines/normal.so");
     one.initialize();
 
-    one.setHashSize(25);
-    two.setHashSize(25);
+    one.setHashSize(23);
+    two.setHashSize(23);
 
-    one.setTimePerMove(1000);
-    two.setTimePerMove(1000);
+    one.setTimePerMove(15000);
+    two.setTimePerMove(15000);
 
     std::vector<Position>openings;
     Utilities::loadPositions(openings,"Positions/3move.pos");
     TrainingGame game;
-    Utilities::playGame(game,one,two,openings[15],true);
-
+    Board test;
+    BoardFactory::setUpPosition(test,openings[4]);
+    //Utilities::playGame(game,one,two,openings[41],true);
+    Move bla;
+    two.searchEngine(test,bla,MAX_PLY,15000,true);
 
 
 
