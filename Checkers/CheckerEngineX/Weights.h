@@ -14,7 +14,7 @@
 #include <cstring>
 #include "FixPoint.h"
 
-constexpr uint32_t region = 13107;
+constexpr uint32_t region = 13107u;
 constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
 constexpr size_t SIZE = 390625*9*2;
