@@ -29,12 +29,12 @@ struct NodeInfo {
 
 
 struct Entry {
-    uint8_t flag=0;
-    uint8_t age=0;
-    uint8_t depth=0;
-    Value value=0 ;
-    uint32_t key=0 ;
     Move bestMove;
+    Value value ;
+    uint32_t key ;
+    uint8_t flag;
+    uint8_t age;
+    uint8_t depth;
 
 
     uint32_t getKey();

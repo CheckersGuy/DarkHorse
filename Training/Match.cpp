@@ -107,7 +107,11 @@ void Match::start() {
         close(inStream[i][1]);
         fcntl(inStream[i][0],F_SETFL,O_NONBLOCK|O_RDONLY);
     }
-
+    std::cout<<std::endl;
+    system("echo ' \e[1;31m Engine Match \e[0m' ");
+    std::cout<<std::endl;
+    printf("%-5s %-5s %-5s","Win", "Loss","Draw");
+    printf("\n");
     std::vector<Position>positions;
 
     Utilities::loadPositions(positions,openingBook);
@@ -137,7 +141,10 @@ void Match::start() {
                         draws++;
                     }
                     busy[p]--;
-                    printf("%d-%d=%d \n",wins,losses,draws);
+
+                    printf("\r");
+                    printf("%-5d %-5d %-5d",wins, losses,draws);
+                    fflush(stdout);
                 }
             }
         }
@@ -148,12 +155,11 @@ void Match::start() {
         write(outStream[i][1],(char*)(&empty),sizeof(Position));
     }
 
-
     int n=threads;
     while(n>0){
         int status;
         wait(&status);
-        std::cout<<"Child stopped with status: "<<status<<std::endl;
         n--;
     }
+    std::cout<<"\n \n Match ended"<<std::endl;
 }

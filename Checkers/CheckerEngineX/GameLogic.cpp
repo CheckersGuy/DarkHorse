@@ -27,7 +27,7 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/popel.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/test.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -58,6 +58,8 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Value beta = INFINITE;
     Value gameValue;
 
+    int counter=1;
+
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
         Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i*ONE_PLY, true);
@@ -70,8 +72,10 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             continue;
         }
 
-        alpha=value-100;
-        beta=value+100;
+        if(i>=3){
+            alpha=value-100;
+            beta=value+100;
+        }
 
         if (print) {
             std::string temp = std::to_string(gameValue.value) + "  ";
@@ -184,14 +188,14 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-
+    if (ply > 0 && board.isRepetition()) {
+        return 0;
+    }
 
     if (depth < ONE_PLY) {
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
-    if (ply > 0 && board.isRepetition()) {
-        return 0;
-    }
+
     MoveListe sucessors;
     getMoves(*board.getPosition(), sucessors);
     if (sucessors.isEmpty()) {
@@ -249,8 +253,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     Value alphaOrig = alpha;
 
     int extension=0;
-     if(sucessors.length()==1)
-         extension+=350;
+     if(sucessors.length()==1 && sucessors[0].isCapture())
+         extension+=590;
 
     int newDepth = depth - ONE_PLY + extension;
 
@@ -262,7 +266,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth >=2*ONE_PLY && i >= ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
+            if (depth >=2*ONE_PLY && i > ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
                 reduce = ONE_PLY;
                 if (i >=4) {
                     reduce = 2*ONE_PLY;
@@ -289,6 +293,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             }
         }
     }
+#ifndef TRAIN
     if (bestValue <= alphaOrig) {
         TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_UPPER, depth/ONE_PLY, bestMove);
     } else if (bestValue >= beta) {
@@ -296,5 +301,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     } else {
         TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_EXACT, depth/ONE_PLY, bestMove);
     }
+#endif
     return bestValue;
 }
