@@ -3,7 +3,6 @@
 #include "boost/program_options.hpp"
 #include "Match.h"
 #include "Generator.h"
-#include "SimplePool.h"
 #include "Trainer.h"
 #include "boost/filesystem.hpp"
 #include "boost/foreach.hpp"
@@ -193,46 +192,20 @@ int main(int argc, char *argv[]) {
         std::vector<T::TrainingGame> removed;
 
         T::loadGames(games,"TrainData/"+path);
-        SimplePool pool(vm["threads"].as<int>(),games,removed);
-        pool.waitAll();
+        Training::removeDuplicates(games);
         T::saveGames(removed,path);
     }
 
 
 
-/*
+
 
    using namespace Training;
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data,"TrainData/test5comp.game");
+    loadGames(data,"TrainData/newCompTest.game");
     //loadGames(data,"TrainData/compressed.game");
     std::cout<<"Length: "<<data.size()<<std::endl;
-
-
-
-
-*/
-/*
-
-
- std::vector<TrainingGame>remPos;
-  std::vector<TrainingGame>data;
-
-
-
-    Training::loadGames(data,"TrainData/test5comp.game");
-
-
-    SimplePool pool(95,data,remPos,0.90);
-    pool.waitAll();
-    std::cout<<"Removed: "<<remPos.size()<<std::endl;
-
-    saveGames(remPos,"TrainData/test6comp.game");
-    std::cout<<"Saved Data: "<<remPos.size()<<std::endl;
-*//*
-
-
 
 
 
@@ -266,13 +239,14 @@ int main(int argc, char *argv[]) {
 
 
     trainer.startTune();
-*/
 
 
 
+
+/*
 
     Zobrist::initializeZobrisKeys();
-    Engine two("Engines/test.so");
+    Engine two("Engines/master.so");
     two.initialize();
     Engine one("Engines/normal.so");
     one.initialize();
@@ -287,10 +261,36 @@ int main(int argc, char *argv[]) {
     Utilities::loadPositions(openings,"Positions/3move.pos");
     TrainingGame game;
     Board test;
-    BoardFactory::setUpPosition(test,openings[4]);
+    BoardFactory::setUpPosition(test,openings[7]);
     //Utilities::playGame(game,one,two,openings[41],true);
     Move bla;
-    two.searchEngine(test,bla,MAX_PLY,15000,true);
+    two.searchEngine(test,bla,MAX_PLY,150000,true);
+*/
+
+/*
+    Zobrist::initializeZobrisKeys();
+
+    std::vector<TrainingGame>positions;
+    std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>mySet;
+
+    Training::loadGames<TrainingGame>(positions,"TrainData/test5comp.game");
+    std::cout<<"Positions: "<<positions.size()<<std::endl;
+
+    int counter=0;
+    std::for_each(positions.begin(),positions.end(),[&](TrainingGame& game){
+       if(mySet.find(game)!=mySet.end()){
+           return;
+       }
+       mySet.insert(game);
+       counter++;
+    });
+
+    std::cout<<"Counter: "<<counter<<std::endl;
+    std::ofstream myStream("TrainData/newCompTest.game");
+    std::copy(mySet.begin(),mySet.end(),std::ostream_iterator<TrainingGame>(myStream));
+    myStream.close();
+*/
+
 
 
 

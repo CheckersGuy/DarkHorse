@@ -32,7 +32,7 @@ namespace Zobrist {
         colorBlack = rand64();
     }
 
-    uint64_t generateKey(Position &pos, Color color) {
+    uint64_t generateKey(const Position &pos, Color color) {
         const uint32_t BK = pos.K & pos.BP;
         const uint32_t WK = pos.K & pos.WP;
         uint64_t nextKey = 0;

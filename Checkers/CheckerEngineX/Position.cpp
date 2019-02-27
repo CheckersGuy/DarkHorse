@@ -5,7 +5,7 @@
 #include "Position.h"
 #include "Zobrist.h"
 
-Position Position::getColorFlip() {
+Position Position::getColorFlip() const {
     Position next;
     next.BP = getMirrored(WP);
     next.WP = getMirrored(BP);
@@ -15,15 +15,15 @@ Position Position::getColorFlip() {
     return next;
 }
 
-bool Position::isEmpty() {
+bool Position::isEmpty() const {
     return (BP == 0 && WP == 0 && K == 0);
 }
 
-Color Position::getColor() {
+Color Position::getColor() const {
     return color;
 }
 
-bool Position::hasJumps(Color color) {
+bool Position::hasJumps(Color color) const {
     if (color == BLACK) {
         return getJumpers<BLACK>() != 0;
     } else if (color == WHITE) {
@@ -31,21 +31,21 @@ bool Position::hasJumps(Color color) {
     }
 }
 
-bool Position::hasThreat() {
+bool Position::hasThreat() const {
     //if the other play can jump
     return hasJumps(~getColor());
 }
 
-bool Position::isLoss() {
+bool Position::isLoss() const {
     return ((getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0) ||
             (getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0));
 }
 
-bool Position::isWipe() {
+bool Position::isWipe() const {
     return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
 }
 
-void Position::printPosition() {
+void Position::printPosition() const {
     std::string output;
     int counter = 32;
     for (int i = 0; i < 64; i++) {
