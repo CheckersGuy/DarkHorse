@@ -20,6 +20,7 @@
 namespace Training {
 
     extern std::mt19937_64 generator;
+
     struct TrainingPos {
         Position pos;
         Score result;
@@ -31,48 +32,57 @@ namespace Training {
     };
 
 
-
     struct TrainingGame {
         std::vector<Position> positions;
         Score result = DRAW;
 
         void add(Position position);
-        bool operator==(const TrainingGame& other);
-        bool operator!=(const TrainingGame& other);
 
-        auto begin(){
+        bool operator==(const TrainingGame &other);
+
+        bool operator!=(const TrainingGame &other);
+
+        auto begin() {
             return positions.begin();
         }
 
-        auto end(){
+        auto end() {
             return positions.end();
         }
-    };
 
-    struct TrainingHash{
-    public:
+        auto begin() const {
+            return positions.cbegin();
+        }
 
-        TrainingHash()=default;
+        auto end() const {
+            return positions.cend();
+        }
 
-        uint64_t operator()(TrainingGame& game){
-            uint64_t key=0;
-            int length= std::min(game.positions.size(),static_cast<size_t>(40));
-            for(int i=0;i<length;++i){
-                key^=Zobrist::generateKey(game.positions[i],game.positions[i].getColor());
-            }
+        size_t length() const {
+            return positions.size();
         }
     };
 
-    struct TrainingComp{
+    inline size_t minValue(size_t val1, size_t val2) {
+        return (val1 <= val2) ? val1 : val2;
+    }
 
-        bool operator()(TrainingGame& one, TrainingGame& two){
-            int length=one.positions.size();
-            if(two.positions.size()<length)
-                length=two.positions.size();
-            if(40<length)
-                length=40;
+    struct TrainingHash {
+        uint64_t operator()(const TrainingGame &game) const {
+            uint64_t key = 0;
+            size_t finalLength = minValue(game.length(), 80u);
 
-            return std::equal(one.begin(),one.begin()+length,two.begin());
+            for (int i = 0; i < finalLength; ++i) {
+                key ^= Zobrist::generateKey(game.positions[i], game.positions[i].getColor());
+            }
+            return key;
+        }
+    };
+
+    struct TrainingComp {
+        bool operator()(const TrainingGame &one, const TrainingGame &two) const {
+            size_t finalLength = minValue(minValue(one.length(), two.length()), 80u);
+            return std::equal(one.begin(), one.begin() + finalLength, two.begin());
         }
     };
 
@@ -84,8 +94,9 @@ namespace Training {
     void saveGames(std::vector<TrainingGame> &games, const std::string file);
 
 
-    template<class T=TrainingGame> void loadGames(std::vector<T> &games, const std::string file) {
-        static_assert(std::is_same<T,TrainingGame>::value||std::is_same<T,TrainingPos>::value);
+    template<class T=TrainingGame>
+    void loadGames(std::vector<T> &games, const std::string file) {
+        static_assert(std::is_same<T, TrainingGame>::value || std::is_same<T, TrainingPos>::value);
         std::ifstream stream(file, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Error" << std::endl;
@@ -94,16 +105,17 @@ namespace Training {
         while (!stream.eof()) {
             TrainingGame current;
             stream >> current;
-            if constexpr(std::is_same<T,TrainingGame>::value){
+            if constexpr(std::is_same<T, TrainingGame>::value) {
                 games.emplace_back(current);
-            }else if constexpr(std::is_same<T,TrainingPos>::value){
-                std::for_each(current.positions.begin(),current.positions.end(),[&games,&current](Position pos){games.push_back(TrainingPos(pos,current.result));});
+            } else if constexpr(std::is_same<T, TrainingPos>::value) {
+                std::for_each(current.positions.begin(), current.positions.end(),
+                              [&games, &current](Position pos) { games.push_back(TrainingPos(pos, current.result)); });
             }
         }
         stream.close();
     }
 
-    TrainingPos seekPosition(const std::ifstream& stream,size_t index);
+    TrainingPos seekPosition(const std::ifstream &stream, size_t index);
 
 
     inline double sigmoid(double c, double value) {
@@ -113,6 +125,8 @@ namespace Training {
     inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
+
+    void removeDuplicates(std::vector<TrainingGame>& games,int dupF=80);
 
 
 }

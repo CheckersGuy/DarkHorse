@@ -27,7 +27,7 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/test.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/13213.weights");
     Zobrist::initializeZobrisKeys();
 }
 

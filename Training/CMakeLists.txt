@@ -17,7 +17,7 @@ include_directories(../Checkers/CheckerEngineX)
 
 
 add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp Engine.cpp Engine.h Match.cpp Match.h Generator.cpp Generator.h
-       SimplePool.h SimplePool.cpp Utilities.cpp Utilities.h
+       Utilities.cpp Utilities.h
         ../Checkers/CheckerEngineX/types.h
         ../Checkers/CheckerEngineX/Position.cpp ../Checkers/CheckerEngineX/Position.h
         ../Checkers/CheckerEngineX/Move.h

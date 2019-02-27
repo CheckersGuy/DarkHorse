@@ -5,6 +5,7 @@
 #include <BoardFactory.h>
 #include <mutex>
 #include <atomic>
+#include <unordered_set>
 #include "Training.h"
 #include "boost/algorithm/string/predicate.hpp"
 
@@ -23,25 +24,6 @@ namespace Training {
     bool TrainingGame::operator!=(const Training::TrainingGame &other) {
         return !(other.result==result)&&std::equal(positions.begin(),positions.end(),other.positions.begin());
     }
-
-    bool simGame(TrainingGame &one, TrainingGame &two, float threshHold) {
-        float counter = 0;
-        float size = std::min(one.positions.size(), two.positions.size());
-        if (one.result != two.result) {
-            return false;
-        }
-        for (int i = 0; i < size; ++i) {
-            if (one.positions[i] == two.positions[i]) {
-                counter++;
-            }
-            if ((counter / size) >= threshHold) {
-                return true;
-            }
-
-        }
-        return false;
-    }
-
 
 
     std::istream& operator>>(std::istream& stream,TrainingGame& current){
@@ -78,5 +60,19 @@ namespace Training {
         size_t counter=0;
 
     }
+
+    void removeDuplicates(std::vector<TrainingGame>& games,int dupF){
+        std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>mySet;
+        std::for_each(games.begin(),games.end(),[&](TrainingGame& game){
+            if(mySet.find(game)!=mySet.end()){
+                return;
+            }
+            mySet.insert(game);
+        });
+        games.clear();
+        std::copy(mySet.begin(),mySet.end(),std::back_inserter(games));
+    }
+
+
 
 }

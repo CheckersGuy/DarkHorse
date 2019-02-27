@@ -20,7 +20,7 @@ namespace Zobrist {
 
     void initializeZobrisKeys();
 
-    uint64_t generateKey(Position &pos, Color color);
+    uint64_t generateKey(const Position &pos, Color color);
 
     void doUpdateZobristKey(Position& pos,Move move);
 }
