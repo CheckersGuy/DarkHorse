@@ -6,8 +6,6 @@
 #include "Trainer.h"
 #include "boost/filesystem.hpp"
 #include "boost/foreach.hpp"
-#include "Cache.h"
-#include "Training.h"
 
 namespace fs =boost::filesystem;
 namespace opt =boost::program_options;
@@ -62,7 +60,7 @@ int main(int argc, char *argv[]) {
             ("maxGames", opt::value<int>()->default_value(10000000), "number of games")
             ("threads", opt::value<int>()->default_value(1), "number of threads")
             ("hashSize", opt::value<int>()->default_value(18), "hashSize to be used")
-             ("output", opt::value<std::string>(), "output file");
+            ("output", opt::value<std::string>(), "output file");
 
     match.add_options()
             ("match", opt::value<std::vector<std::string>>()->required()->multitoken(), "Engines");
@@ -133,19 +131,18 @@ int main(int argc, char *argv[]) {
         two.setHashSize(vm["hashSize"].as<int>());
 
 
-
         if (vm.count("book")) {
             match.setOpeningBook("Positions/" + vm["book"].as<std::string>());
         }
         if (vm.count("time")) {
-            const std::vector<int>&timeVector =vm["time"].as<std::vector<int>>();
-            if(timeVector.size()==1){
+            const std::vector<int> &timeVector = vm["time"].as<std::vector<int>>();
+            if (timeVector.size() == 1) {
                 one.setTimePerMove(timeVector[0]);
                 two.setTimePerMove(timeVector[0]);
-            }else if(timeVector.size()==2){
+            } else if (timeVector.size() == 2) {
                 one.setTimePerMove(timeVector[0]);
                 two.setTimePerMove(timeVector[1]);
-            }else{
+            } else {
                 one.setTimePerMove(50);
                 two.setTimePerMove(50);
             }
@@ -158,7 +155,7 @@ int main(int argc, char *argv[]) {
         }
 
         std::cout << "Book: " << match.getOpeningBook() << std::endl;
-        std::cout << "Time: " << one.getTimePerMove()<<" | "<<two.getTimePerMove()<< std::endl;
+        std::cout << "Time: " << one.getTimePerMove() << " | " << two.getTimePerMove() << std::endl;
         std::cout << "Threads: " << match.getNumThreads() << std::endl;
         std::cout << "MaxGames: " << match.getMaxGames() << std::endl;
         std::cout << "HashSize: " << vm["hashSize"].as<int>() << std::endl;
@@ -169,9 +166,11 @@ int main(int argc, char *argv[]) {
 
     if (vm.count("generate")) {
 
+
+        Zobrist::initializeZobrisKeys();
         std::string engine = vm["generate"].as<std::string>();
         std::string path = "Engines/" + engine;
-        const std::vector<int>&timeVector =vm["time"].as<std::vector<int>>();
+        const std::vector<int> &timeVector = vm["time"].as<std::vector<int>>();
         int time = timeVector[0];
 
         Engine myEngine(path);
@@ -180,119 +179,100 @@ int main(int argc, char *argv[]) {
         generator.setThreads(vm["threads"].as<int>());
         generator.setMaxGames(vm["maxGames"].as<int>());
         generator.setTime(time);
+
         generator.start();
     }
 
-    if(vm.count("remDup")){
+    if (vm.count("remDup")) {
+
+        Zobrist::initializeZobrisKeys();
         //removing duplicates of a game File;
         namespace T =Training;
-        const std::string path =vm["remDup"].as<std::string>();
+        const std::string path = vm["remDup"].as<std::string>();
 
         std::vector<T::TrainingGame> games;
         std::vector<T::TrainingGame> removed;
 
-        T::loadGames(games,"TrainData/"+path);
+        T::loadGames(games, "TrainData/" + path);
         Training::removeDuplicates(games);
-        T::saveGames(removed,path);
+        T::saveGames(removed, path);
     }
 
 
+/*
+
+    std::vector<TrainingGame>games;
+    Training::loadGames(games,"TrainData/another.game");
+    Training::removeDuplicates(games);
+    Training::saveGames(games,"TrainData/another.game");
+    std::cout<<"saved after removing duplicates"<<std::endl;
+
+*/
 
 
 
-   using namespace Training;
+
+    using namespace Training;
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data,"TrainData/newCompTest.game");
-    //loadGames(data,"TrainData/compressed.game");
-    std::cout<<"Length: "<<data.size()<<std::endl;
+    loadGames(data, "TrainData/final.game");
+    std::cout << "Length: " << data.size() << std::endl;
 
 
-
-   auto removeCl=[](TrainingPos pos){
+    auto removeCl = [](TrainingPos pos) {
         Board board;
         BoardFactory::setUpPosition(board, pos.pos);
         Line local;
-        Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE,local, 0);
+        Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
         if (qStatic.isWinning())
             return true;
 
-        return pos.result==INVALID||(__builtin_popcount(pos.pos.WP|pos.pos.BP)<=5);
+        return pos.result == INVALID || (__builtin_popcount(pos.pos.WP | pos.pos.BP) <= 5);
     };
 
-    data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
+    data.erase(std::remove_if(data.begin(), data.end(), removeCl), data.end());
 
-    std::cout<<"Positions after erase: "<<data.size()<<std::endl;
+    std::cout << "Positions after erase: " << data.size() << std::endl;
 
     std::cout << "Starting " << std::endl;
-
 
 
     Trainer trainer(data);
 
 
-
     trainer.setLearningRate(1);
     trainer.setEpochs(100000);
     trainer.setl2Reg(0.0000001);
-    trainer.setCValue(-0.01);
-
-
+    trainer.setCValue(-0.004);
     trainer.startTune();
 
 
 
 
-/*
 
-    Zobrist::initializeZobrisKeys();
-    Engine two("Engines/master.so");
-    two.initialize();
-    Engine one("Engines/normal.so");
-    one.initialize();
+    /*  using namespace Training;
+      std::vector<TrainingGame> games;
+      Training::loadGames<TrainingGame>(games,"TrainData/newYearcomp.game");
 
-    one.setHashSize(23);
-    two.setHashSize(23);
 
-    one.setTimePerMove(15000);
-    two.setTimePerMove(15000);
 
-    std::vector<Position>openings;
-    Utilities::loadPositions(openings,"Positions/3move.pos");
-    TrainingGame game;
-    Board test;
-    BoardFactory::setUpPosition(test,openings[7]);
-    //Utilities::playGame(game,one,two,openings[41],true);
-    Move bla;
-    two.searchEngine(test,bla,MAX_PLY,150000,true);
-*/
+      std::cout<<"Length prior: "<<games.size()<<std::endl;
+      Training::removeDuplicates(games);
+      std::cout<<"Length after: "<<games.size()<<std::endl;
+      Training::saveGames(games,"TrainData/newYearcomp.game");
+  */
+
 
 /*
-    Zobrist::initializeZobrisKeys();
+    uint64_t totalLength =0;
 
-    std::vector<TrainingGame>positions;
-    std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>mySet;
-
-    Training::loadGames<TrainingGame>(positions,"TrainData/test5comp.game");
-    std::cout<<"Positions: "<<positions.size()<<std::endl;
-
-    int counter=0;
-    std::for_each(positions.begin(),positions.end(),[&](TrainingGame& game){
-       if(mySet.find(game)!=mySet.end()){
-           return;
-       }
-       mySet.insert(game);
-       counter++;
+    std::for_each(games.begin(),games.end(),[&](const TrainingGame& game){
+       totalLength+=game.length();
     });
-
-    std::cout<<"Counter: "<<counter<<std::endl;
-    std::ofstream myStream("TrainData/newCompTest.game");
-    std::copy(mySet.begin(),mySet.end(),std::ostream_iterator<TrainingGame>(myStream));
-    myStream.close();
+    totalLength/=games.size();
+    std::cout<<"average length: "<<totalLength<<std::endl;
+    games[11529].print();
 */
-
-
-
 
     return 0;
 }

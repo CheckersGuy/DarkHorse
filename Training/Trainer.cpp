@@ -127,7 +127,7 @@ void Trainer::startTune() {
         epoch();
 
 
-        std::string name = "F" + std::to_string(counter) + ".weights";
+        std::string name = "D" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
         std::cout << "Stored weights" << std::endl;
         counter++;
@@ -135,6 +135,10 @@ void Trainer::startTune() {
         std::cout << std::endl;
 
     }
+}
+
+void Trainer::startTuneC() {
+
 }
 
 

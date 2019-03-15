@@ -53,9 +53,6 @@ namespace Utilities {
         Board board;
         BoardFactory::setUpPosition(board, position);
         for (int i = 0; i < MAX_MOVE; ++i) {
-            if(board.isRepetition()){
-                return DRAW;
-            }
 
             MoveListe liste;
             getMoves(*board.getPosition(), liste);
@@ -88,6 +85,11 @@ namespace Utilities {
                 return INVALID;
             }
             board.makeMove(bestMove);
+
+            if (board.isRepetition()) {
+                return DRAW;
+            }
+
         }
 
         return DRAW;

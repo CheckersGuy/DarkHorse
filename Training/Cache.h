@@ -58,6 +58,14 @@ public:
         return liste.begin();
     }
 
+    auto begin()const{
+        return liste.cbegin();
+    }
+
+    auto end()const{
+        return liste.cend();
+    }
+
     auto end(){
         return liste.end();
     }
