@@ -21,20 +21,11 @@ void Generator::setThreads(int threads) {
 }
 
 void Generator::clearBuffer() {
-    std::ofstream stream(output, std::ios::binary | std::ios::app);
-    if (!stream.good()) {
-        std::cerr << "Error file error" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    for (TrainingGame &game : buffer) {
-        stream.write((char *) (&game.result), sizeof(Score));
-        int length = game.positions.size();
-        stream.write((char *) (&length), sizeof(int));
-        stream.write((char *) &game.positions[0], sizeof(Position) * length);
-    }
-    stream.close();
+    std::ofstream stream(output,std::ios::app);
+    std::ostream_iterator<TrainingGame> oIterator(stream);
+    std::copy(buffer.begin(),buffer.end(),oIterator);
     buffer.clear();
+    stream.close();
 }
 
 int Generator::getMaxGames() {
@@ -52,6 +43,8 @@ int Generator::getThreads() {
 void Generator::setTime(int time) {
     this->time = time;
 }
+
+
 
 
 void Generator::start() {
@@ -102,6 +95,7 @@ void Generator::start() {
     Utilities::loadPositions(positions, book);
 
     int totalGame = 0;
+    uint64_t totalGameLengths =0;
 
     bool busy[threads] = {false};
     int idx = 0;
@@ -117,7 +111,8 @@ void Generator::start() {
                 Score result;
                 int buf = read(inStream[p][0], (char *) (&result), sizeof(Score));
                 if (buf != -1) {
-                    std::cout << "Counter: " << totalGame << std::endl;
+                    std::cout << " \r Counter: " << totalGame << " UniqueCounter:" << buffer.size()<<" average length: "<<((totalGame>0)?((totalGameLengths/totalGame)):0)<<std::flush;
+
                     TrainingGame game;
                     int length;
                     while (read(inStream[p][0], (char *) (&length), sizeof(int)) == -1);
@@ -128,13 +123,10 @@ void Generator::start() {
                         game.add(current);
                     }
                     game.result = result;
+                    totalGameLengths+=game.positions.size();
                     busy[p] = false;
                     totalGame++;
-                    buffer.emplace_back(game);
-                    if ((buffer.size() + 1) % 1000 == 0) {
-                        clearBuffer();
-                        std::cout << "Buffer cleared" << std::endl;
-                    }
+                    buffer.insert(game);
                 }
             }
         }

@@ -27,7 +27,7 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/13213.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/F1.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -73,10 +73,13 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             continue;
         }
 
+#ifndef GENERATE
+
         if(i>=3){
             alpha=value-100;
             beta=value+100;
         }
+#endif
         if (print) {
             std::string temp = std::to_string(gameValue.value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";

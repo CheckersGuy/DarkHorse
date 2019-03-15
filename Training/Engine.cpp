@@ -20,7 +20,7 @@ Engine::~Engine() {
 Value Engine::searchEngine(Board &board, Move &best, int depth, int time, bool flag) {
     //searches
     Search myfunc = (Search) (dlsym(handle, "searchValue"));
-    Board other=board;
+    Board other(board);
     Value value = myfunc(other, best, depth, time, flag);
     return value;
 }

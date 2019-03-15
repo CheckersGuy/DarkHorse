@@ -7,6 +7,7 @@
 
 #include <string>
 #include <fstream>
+#include <unordered_set>
 #include "Engine.h"
 #include "Training.h"
 #include "BoardFactory.h"
@@ -17,10 +18,10 @@ class Generator {
 
 private:
 
+    std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>buffer;
     const std::string book;
     const std::string output;
     Engine &engine;
-    std::vector<TrainingGame> buffer;
     int threads, maxGames, time;
 public:
 

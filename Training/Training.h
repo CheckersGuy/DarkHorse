@@ -4,7 +4,7 @@
 
 #ifndef TRAINING_TRAINING_H
 #define TRAINING_TRAINING_H
-
+#include <unordered_set>
 #include "Position.h"
 #include "types.h"
 #include <vector>
@@ -16,6 +16,8 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
+
+
 
 namespace Training {
 
@@ -61,6 +63,13 @@ namespace Training {
         size_t length() const {
             return positions.size();
         }
+
+        void print(){
+            std::for_each(begin(),end(),[](Position pos){
+                pos.printPosition();
+                std::cout<<std::endl;
+            });
+        }
     };
 
     inline size_t minValue(size_t val1, size_t val2) {
@@ -70,18 +79,19 @@ namespace Training {
     struct TrainingHash {
         uint64_t operator()(const TrainingGame &game) const {
             uint64_t key = 0;
-            size_t finalLength = minValue(game.length(), 80u);
+            size_t finalLength = minValue(game.length(), 25u);
 
-            for (int i = 0; i < finalLength; ++i) {
+            for (size_t i = 0; i < finalLength; ++i) {
                 key ^= Zobrist::generateKey(game.positions[i], game.positions[i].getColor());
             }
             return key;
         }
     };
 
-    struct TrainingComp {
+  struct TrainingComp {
+
         bool operator()(const TrainingGame &one, const TrainingGame &two) const {
-            size_t finalLength = minValue(minValue(one.length(), two.length()), 80u);
+            size_t finalLength = minValue(minValue(one.length(), two.length()), 25u);
             return std::equal(one.begin(), one.begin() + finalLength, two.begin());
         }
     };
@@ -115,9 +125,6 @@ namespace Training {
         stream.close();
     }
 
-    TrainingPos seekPosition(const std::ifstream &stream, size_t index);
-
-
     inline double sigmoid(double c, double value) {
         return 1.0 / (1.0 + std::exp(c * value));
     }
@@ -126,7 +133,7 @@ namespace Training {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
 
-    void removeDuplicates(std::vector<TrainingGame>& games,int dupF=80);
+    void removeDuplicates(std::vector<TrainingGame>& games);
 
 
 }

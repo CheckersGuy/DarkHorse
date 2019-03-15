@@ -54,6 +54,8 @@ public:
 
     void startTune();
 
+    void startTuneC();
+
 
     double calculateLoss(int threads=std::thread::hardware_concurrency());
 
