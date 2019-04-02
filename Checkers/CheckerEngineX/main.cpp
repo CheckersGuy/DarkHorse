@@ -14,7 +14,7 @@
 
 
 int main(int argLength, char **arguments) {
-
+    std::cout<<"Main Branch"<<std::endl;
 
     initialize();
     setHashSize(22);
