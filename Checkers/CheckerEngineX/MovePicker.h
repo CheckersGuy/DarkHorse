@@ -32,6 +32,5 @@ namespace Statistics {
     extern MovePicker mPicker;
 
 
-
 }
 #endif //CHECKERENGINEX_MOVEPICKER_H

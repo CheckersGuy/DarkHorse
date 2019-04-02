@@ -18,11 +18,8 @@ extern Weights<double> gameWeights;
 using namespace Training;
 class Trainer {
 
-    static constexpr uint64_t MAX_BUFFER_SIZE=10000;
-
 private:
     int epochs;
-    int threads;
     uint64_t bufferCounter;
     std::vector<TrainingPos> &data;
     double learningRate, l2Reg, cValue;
@@ -31,8 +28,10 @@ public:
 
 
     Trainer(std::vector<TrainingPos> &data) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01),threads(1),bufferCounter(0) {}
+                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0) {}
     void epoch();
+
+    void epochC();
 
     void gradientUpdate(TrainingPos position);
 

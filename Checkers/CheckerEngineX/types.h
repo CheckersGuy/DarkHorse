@@ -56,7 +56,7 @@ enum Score {
 
 };
 enum  SEARCH {
-    MAX_PLY = 128, MAX_MOVE = 320, DRAW_RULE = 50, ONE_PLY = 1000
+    MAX_PLY = 128, MAX_MOVE = 320, ONE_PLY = 1000
 };
 enum Color {
     BLACK = -1, WHITE = 1, NONE
@@ -93,11 +93,13 @@ public:
 
     bool isEval() const;
 
-    bool isInRange(int a, int b) const;
-
-    template<class T>bool isInRange(T a, T b) const;
+    template<class T,class E>bool isInRange(T a, E b) const{
+        return this->value>=a && this->value<=b;
+    }
 
     constexpr Value operator=(int value);
+
+    constexpr Value operator=(const Value& other);
 
     Value &operator+=(Value other);
 
@@ -229,6 +231,11 @@ constexpr Value Value::operator=(int value) {
     this->value = value;
     return *this;
 }
+constexpr Value Value::operator=(const Value& other) {
+    this->value = other.value;
+    return *this;
+}
+
 
 constexpr Value operator+(const Value val, const Value val2) {
     Value next;
@@ -325,10 +332,6 @@ inline bool Value::isWhiteWin() const {
     return false;
 }
 
-//inclusive
-template<class T>inline bool Value::isInRange(T a,  T b) const {
-    return (this->value >= a && this->value <= b);
-}
 
 
 inline Value Value::valueFromTT(int ply) {
