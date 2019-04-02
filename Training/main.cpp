@@ -46,7 +46,7 @@ void listDirectory(fs::path &myPath) {
 }
 
 int main(int argc, char *argv[]) {
-
+    std::cout<<"Master Branch"<<std::endl;
 
     opt::options_description all("All options");
     opt::options_description match("Match");
