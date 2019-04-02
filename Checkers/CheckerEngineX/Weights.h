@@ -57,7 +57,7 @@ public:
 
     std::unique_ptr<T[]> weights;
 
-    Weights() : kingOp(0), kingEnd(0), balanceOp(2), balanceEnd(2) {
+    Weights() : kingOp(0), kingEnd(0), balanceOp(0), balanceEnd(0) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::memset(weights.get(), 0, sizeof(T) * SIZE);
     }

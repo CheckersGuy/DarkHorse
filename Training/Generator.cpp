@@ -59,7 +59,7 @@ void Generator::start() {
         } else if (pid == 0) {
             Zobrist::initializeZobrisKeys();
             engine.initialize();
-            engine.setHashSize(18);
+            engine.setTimePerMove(time);
             close(outStream[i][1]);
             close(inStream[i][0]);
 

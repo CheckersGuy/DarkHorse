@@ -53,14 +53,37 @@ namespace Training {
     }
 
 
-    void removeDuplicates(std::vector<TrainingGame>& games){
+    bool isSimiliar(const TrainingGame& one, const TrainingGame& two){
+        constexpr float cutoff=0.8f;
         int counter=0;
+        auto size =std::max(one.positions.size(),two.positions.size());
+        for(size_t i=0;i<size;++i){
+            if(one.positions[i]==two.positions[i]){
+                counter++;
+            }
+            if((static_cast<float>(counter)/static_cast<float>(size))>=cutoff){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::vector<TrainingGame> removeDuplicates(std::vector<TrainingGame>& games){
+        std::vector<TrainingGame>removed;
         std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>mySet;
+        int counter=0;
         std::for_each(games.begin(),games.end(),[&](const TrainingGame& game){
             mySet.insert(game);
+            if((counter%100)==0){
+                std::cout<<"\r Counter: "<<counter<<std::flush;
+            }
+            counter++;
         });
-        games.clear();
-        std::copy(mySet.begin(),mySet.end(),std::back_inserter(games));
+        std::copy(mySet.begin(),mySet.end(),std::back_inserter(removed));
+
+
+
+        return removed;
     }
 
 

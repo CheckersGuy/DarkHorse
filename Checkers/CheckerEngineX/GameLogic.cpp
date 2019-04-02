@@ -27,7 +27,9 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/F1.weights");
+    //gameWeights.loadWeights("Weights/xtra4.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/xtra4.weights");
+
     Zobrist::initializeZobrisKeys();
 }
 
@@ -73,13 +75,11 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             continue;
         }
 
-#ifndef GENERATE
-
         if(i>=3){
             alpha=value-100;
             beta=value+100;
         }
-#endif
+
         if (print) {
             std::string temp = std::to_string(gameValue.value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
@@ -91,9 +91,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             std::cout << temp;
             std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
         }
-
-
-
 
         mainPV = currentPV;
         best = mainPV[0];
@@ -206,13 +203,16 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-#ifdef GENERATE
+
     //Randomly sorting the root moves
-    if (isRoot) {
+/*
+
+   if (isRoot) {
     static std::mt19937 generator(getSystemTime());
     std::shuffle(sucessors.begin(),sucessors.end(),generator);
     }
-#endif
+*/
+
 
 
     NodeInfo info;

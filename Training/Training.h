@@ -91,6 +91,10 @@ namespace Training {
   struct TrainingComp {
 
         bool operator()(const TrainingGame &one, const TrainingGame &two) const {
+            if(one.result!=two.result)
+                return false;
+
+
             size_t finalLength = minValue(minValue(one.length(), two.length()), 25u);
             return std::equal(one.begin(), one.begin() + finalLength, two.begin());
         }
@@ -133,7 +137,7 @@ namespace Training {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
 
-    void removeDuplicates(std::vector<TrainingGame>& games);
+    std::vector<TrainingGame> removeDuplicates(std::vector<TrainingGame>& games);
 
 
 }

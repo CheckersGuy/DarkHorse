@@ -178,25 +178,19 @@ int main(int argc, char *argv[]) {
         Generator generator(myEngine, "Positions/genBook6.pos", "TrainData/" + vm["output"].as<std::string>());
         generator.setThreads(vm["threads"].as<int>());
         generator.setMaxGames(vm["maxGames"].as<int>());
-        generator.setTime(time);
+        generator.setTime(100);
+
+
+        std::cout << "Time: " << myEngine.getTimePerMove() << std::endl;
+        std::cout << "Threads: " << generator.getThreads() << std::endl;
+        std::cout << "MaxGames: " << generator.getMaxGames()<< std::endl;
+        std::cout << "HashSize: " << vm["hashSize"].as<int>() << std::endl;
+        std::cout<<std::endl;
+        std::cout<<std::endl;
 
         generator.start();
     }
 
-    if (vm.count("remDup")) {
-
-        Zobrist::initializeZobrisKeys();
-        //removing duplicates of a game File;
-        namespace T =Training;
-        const std::string path = vm["remDup"].as<std::string>();
-
-        std::vector<T::TrainingGame> games;
-        std::vector<T::TrainingGame> removed;
-
-        T::loadGames(games, "TrainData/" + path);
-        Training::removeDuplicates(games);
-        T::saveGames(removed, path);
-    }
 
 
 /*
@@ -209,13 +203,20 @@ int main(int argc, char *argv[]) {
 
 */
 
+   /* std::vector<TrainingGame>games;
+    Training::loadGames(games,"TrainData/final.game");
+    std::cout<<"Size: "<<games.size()<<std::endl;
+    games =Training::removeDuplicates(games);
+    std::cout<<"Size: "<<games.size()<<std::endl;
+*/
+
 
 
 
     using namespace Training;
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/final.game");
+    loadGames(data, "TrainData/test.game");
     std::cout << "Length: " << data.size() << std::endl;
 
 
@@ -240,14 +241,17 @@ int main(int argc, char *argv[]) {
     Trainer trainer(data);
 
 
-    trainer.setLearningRate(1);
+    trainer.setLearningRate(5);
     trainer.setEpochs(100000);
-    trainer.setl2Reg(0.0000001);
-    trainer.setCValue(-0.004);
+    trainer.setl2Reg(0.00000001);
+    trainer.setCValue(-0.0060);
     trainer.startTune();
 
+  /*  std::vector<TrainingGame>games;
+    Training::loadGames(games,"TrainData/test.game");
+    games=Training::removeDuplicates(games);
 
-
+    Training::saveGames(games,"TrainData/test.game");*/
 
 
     /*  using namespace Training;
@@ -273,6 +277,7 @@ int main(int argc, char *argv[]) {
     std::cout<<"average length: "<<totalLength<<std::endl;
     games[11529].print();
 */
+
 
     return 0;
 }

@@ -12,9 +12,6 @@ namespace Zobrist {
     uint64_t rand64() {
 
         static uint64_t seed = 1070372ull;
-#ifdef GENERATE
-        seed=getSystemTime();
-#endif
         seed ^= seed >> 12;
         seed ^= seed << 25;
         seed ^= seed >> 27;
