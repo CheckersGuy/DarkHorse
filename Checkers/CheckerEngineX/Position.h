@@ -36,8 +36,7 @@ inline uint32_t getMirrored(uint32_t b) {
     return getHorizontalFlip(getVerticalFlip(b));
 }
 
-class Position {
-public:
+struct Position {
     Color color;
     uint32_t WP, BP, K;
     uint64_t key;

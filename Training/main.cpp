@@ -190,33 +190,28 @@ int main(int argc, char *argv[]) {
 
         generator.start();
     }
-
-
+    using namespace Training;
 
 /*
+    std::vector<TrainingGame>positions;
+    Training::loadGames<TrainingGame>(positions,"TrainData/test.game");
+    Training::loadGames<TrainingGame>(positions,"TrainData/test2.game");
 
-    std::vector<TrainingGame>games;
-    Training::loadGames(games,"TrainData/another.game");
-    Training::removeDuplicates(games);
-    Training::saveGames(games,"TrainData/another.game");
-    std::cout<<"saved after removing duplicates"<<std::endl;
+    std::cout<<"Totalpositions: "<<positions.size()<<std::endl;
 
-*/
-
-   /* std::vector<TrainingGame>games;
-    Training::loadGames(games,"TrainData/final.game");
-    std::cout<<"Size: "<<games.size()<<std::endl;
-    games =Training::removeDuplicates(games);
-    std::cout<<"Size: "<<games.size()<<std::endl;
+    Training::saveGames(positions,"TrainData/test3.game");
 */
 
 
 
 
-    using namespace Training;
+
+
+
+
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/test.game");
+    loadGames(data, "TrainData/test3.game");
     std::cout << "Length: " << data.size() << std::endl;
 
 
@@ -267,16 +262,7 @@ int main(int argc, char *argv[]) {
   */
 
 
-/*
-    uint64_t totalLength =0;
 
-    std::for_each(games.begin(),games.end(),[&](const TrainingGame& game){
-       totalLength+=game.length();
-    });
-    totalLength/=games.size();
-    std::cout<<"average length: "<<totalLength<<std::endl;
-    games[11529].print();
-*/
 
 
     return 0;

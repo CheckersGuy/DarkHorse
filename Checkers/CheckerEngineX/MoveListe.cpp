@@ -11,10 +11,11 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
         scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
     }
 
-    int j;
+
     for (int i = (inPVLine) ? 2 : 1; i < moveCounter; i++) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
+        int j;
         for (j = i; j > ((inPVLine) ? 1 : 0) && scores[j - 1] < tmp; j--) {
             liste[j] = liste[j - 1];
             scores[j] = scores[j - 1];

@@ -13,17 +13,22 @@
 #include <iterator>
 
 
-int main(int argLength, char **arguments) {
-    std::cout<<"Eval"<<std::endl;
+
+
+
+
+
+int main(int argl, const char ** argc){
+
 
     initialize();
-    setHashSize(22);
+    setHashSize(23);
     Board board;
     BoardFactory::setUpStartingPosition(board);
 
     board.printBoard();
-    std::cout<<std::endl;
-    searchValue(board,MAX_PLY,1000000,true);
+    searchValue(board,MAX_PLY,200000,true);
 
-    return 0;
+
+
 }

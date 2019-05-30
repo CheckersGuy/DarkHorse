@@ -8,11 +8,12 @@
 #include <iostream>
 #include <stdint.h>
 
-class Move {
+struct Move {
 
-public:
-    uint16_t encoding = 0;
-    uint32_t captures = 0;
+    uint16_t encoding=0;
+    uint32_t captures=0;
+
+
 
     Move(uint16_t from, uint16_t to);
 

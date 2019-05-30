@@ -69,6 +69,7 @@ namespace Training {
     }
 
     std::vector<TrainingGame> removeDuplicates(std::vector<TrainingGame>& games){
+        std::cout<<"Begin: "<<games.size()<<std::endl;
         std::vector<TrainingGame>removed;
         std::unordered_set<TrainingGame,Training::TrainingHash,Training::TrainingComp>mySet;
         int counter=0;
@@ -79,6 +80,7 @@ namespace Training {
             }
             counter++;
         });
+        std::cout<<"Begin: "<<mySet.size()<<std::endl;
         std::copy(mySet.begin(),mySet.end(),std::back_inserter(removed));
 
 
