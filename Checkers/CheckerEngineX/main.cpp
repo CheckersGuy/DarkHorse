@@ -20,6 +20,7 @@
 
 int main(int argl, const char ** argc){
 
+    std::cout<<"some small changes"<<std::endl;
 
     initialize();
     setHashSize(23);
