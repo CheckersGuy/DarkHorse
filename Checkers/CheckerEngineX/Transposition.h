@@ -13,13 +13,6 @@
 #include <cstdint>
 
 
-//Here will be some changes for the search branch
-// in particular fractional Depth !!!
-// if it doesnt have a huge performance penality
-// I will keep it regardless
-
-
-
 struct NodeInfo {
     Value value = 0;
     uint8_t depth = 0;

@@ -106,12 +106,15 @@ void Generator::start() {
                 write(outStream[p][1], (char *) (&positions[idx]), sizeof(Position));
                 busy[p] = true;
                 idx++;
-                idx = idx % positions.size();
+                if(idx>=positions.size()){
+                    idx=0;
+                }
+
             } else {
                 Score result;
                 int buf = read(inStream[p][0], (char *) (&result), sizeof(Score));
                 if (buf != -1) {
-                    std::cout << " \r Counter: " << totalGame << " UniqueCounter:" << buffer.size()<<" average length: "<<((totalGame>0)?((totalGameLengths/totalGame)):0)<<std::flush;
+                    std::cout <<"\r" <<" Counter: " << totalGame << " UniqueCounter:" << buffer.size()<<std::flush;
 
                     TrainingGame game;
                     int length;

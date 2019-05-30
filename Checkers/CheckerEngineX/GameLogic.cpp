@@ -27,8 +27,8 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 
 MAKRO void initialize() {
-    //gameWeights.loadWeights("Weights/xtra4.weights");
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/xtra4.weights");
+   // gameWeights.loadWeights("/home/Robin/Weights/newYear.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/newYear.weights");
 
     Zobrist::initializeZobrisKeys();
 }
@@ -56,11 +56,11 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
+
     Value alpha = -INFINITE;
     Value beta = INFINITE;
     Value gameValue;
 
-    int counter=1;
 
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
@@ -74,6 +74,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             beta=INFINITE;
             continue;
         }
+
 
         if(i>=3){
             alpha=value-100;
@@ -179,7 +180,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     constexpr bool inPVLine = (type == PVNode);
     const bool isRoot = (ply == 0);
     assert(alpha.isEval() && beta.isEval());
-    if ((nodeCounter & 2047) == 0 && getSystemTime() >= endTime) {
+    if ((nodeCounter & 8191) == 0 && getSystemTime() >= endTime) {
         timeOut = true;
         return 0;
     }
@@ -204,13 +205,11 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 
 
-    //Randomly sorting the root moves
-/*
-
-   if (isRoot) {
+  /* if (isRoot) {
     static std::mt19937 generator(getSystemTime());
     std::shuffle(sucessors.begin(),sucessors.end(),generator);
     }
+
 */
 
 
@@ -270,7 +269,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth >=2*ONE_PLY && i > ((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
+            if (depth >=2*ONE_PLY && i >((inPVLine) ? 3 : 1) && !sucessors[i].isPromotion() && !sucessors[i].isCapture()) {
                 reduce = ONE_PLY;
                 if (i >=4) {
                     reduce = 2*ONE_PLY;

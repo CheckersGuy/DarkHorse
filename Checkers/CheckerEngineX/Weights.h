@@ -187,9 +187,9 @@ public:
         }
         Eval opening = 0, ending = 0;
 
-        for(size_t j=0;j<3;++j){
+        for(int j=0;j<3;++j){
 
-        for (size_t i = 0; i < 3; ++i) {
+        for (int i = 0; i < 3; ++i) {
             const uint32_t curRegion = region << (8 * j + i);
             size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
             size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;

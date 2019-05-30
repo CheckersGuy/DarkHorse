@@ -74,12 +74,13 @@ inline uint64_t Board::getCurrentKey() {
 inline bool Board::isRepetition() {
     //checking for repetitions
     for (int i = pCounter - 2; i >= 0; i -= 2) {
-        if (history[i].getPieceType() == 0 || history[i].isCapture() || history[i].isPromotion()) {
-            return false;
-        }
         if (getCurrentKey() == pStack[i].key) {
             return true;
         }
+        if (history[i].getPieceType() == 0 || history[i].isCapture() || history[i].isPromotion()) {
+            return false;
+        }
+
     }
 
     return false;

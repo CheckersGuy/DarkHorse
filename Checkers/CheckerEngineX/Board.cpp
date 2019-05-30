@@ -32,7 +32,7 @@ void Board::makeMove(Move move) {
 
     pStack[pCounter].makeMove(move);
     Zobrist::doUpdateZobristKey(pStack[pCounter], move);
-    assert(moveCount <= MAX_MOVE);
+
 
 }
 
