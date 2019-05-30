@@ -19,9 +19,6 @@ constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
 constexpr size_t SIZE = 390625*9*2;
 
-using Eval =FixPoint<short, 4>;
-
-
 
 
 inline size_t getIndex(uint32_t region, const Position &pos) {
@@ -76,7 +73,7 @@ public:
         return std::count_if(weights.get(), weights.get() + SIZE, [](T val) { return static_cast<int>(val) != 0; });
     }
 
-    T getNorm() {
+    T getNorm() const {
         T current = 0;
         for (size_t i = 0; i < SIZE; ++i) {
             current += weights[i] * weights[i];
@@ -85,11 +82,11 @@ public:
         return current;
     }
 
-    T getMaxValue() {
+    T getMaxValue()const {
         return *std::max_element(weights.get(), weights.get() + SIZE);
     }
 
-    T getMinValue() {
+    T getMinValue() const {
         return *std::min_element(weights.get(), weights.get() + SIZE);
     }
 
@@ -177,15 +174,15 @@ public:
         T temp2 = factorOp*balanceOp + factorEnd*balanceEnd ;
         if constexpr(std::is_same<T, double>::value) {
             kingEval += (static_cast<int>(temp) + 100) * (WK - BK) + static_cast<int>(temp2)*balanceScore;
-        } else if constexpr(std::is_same<T, Eval>::value) {
-            kingEval += (temp.round() + 100) * (WK - BK) + temp2.round()*balanceScore;
+        } else if constexpr(std::is_same<T, short>::value) {
+            kingEval += (temp + 100) * (WK - BK) + temp2*balanceScore;
         }
 
 
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
-        Eval opening = 0, ending = 0;
+        int opening = 0, ending = 0;
 
         for(int j=0;j<3;++j){
 
@@ -198,15 +195,15 @@ public:
         }
         }
 
-        Eval opFactor = phase;
-        Eval endFactor = 24 - phase;
-        Eval phasedPatterns;
-        Eval phaseTemp = phase;
+        int opFactor = phase;
+        int endFactor = 24 - phase;
+        int phasedPatterns;
+        int phaseTemp = phase;
         opFactor /= 24;
         endFactor /= 24;
 
         phasedPatterns = opFactor * opening + endFactor * ending;
-        sum += phasedPatterns.round();
+        sum += phasedPatterns;
         sum += kingEval;
 
         return sum;
@@ -240,7 +237,7 @@ public:
     }
 
 
-    size_t getSize() {
+    size_t getSize() const {
         return SIZE;
     }
 
