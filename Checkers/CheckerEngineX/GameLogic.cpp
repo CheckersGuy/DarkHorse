@@ -22,7 +22,7 @@ MAKRO void setHashSize(uint32_t hash) {
 Weights<double> gameWeights;
 #else
 
-Weights<FixPoint<short, 4>> gameWeights;
+Weights<int> gameWeights;
 #endif
 
 
@@ -77,8 +77,8 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
 
         if(i>=3){
-            alpha=value-100;
-            beta=value+100;
+            alpha=value-100*scalFac;
+            beta=value+100*scalFac;
         }
 
         if (print) {
@@ -231,7 +231,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 
     if (!inPVLine && prune && depth >= 5*ONE_PLY) {
-        Value margin = (10 * depth)/ONE_PLY;
+        Value margin = (10*scalFac * depth)/ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;

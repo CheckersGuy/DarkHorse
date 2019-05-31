@@ -46,8 +46,6 @@ void listDirectory(fs::path &myPath) {
 }
 
 int main(int argc, char *argv[]) {
-    std::cout<<"Master Branch"<<std::endl;
-
     opt::options_description all("All options");
     opt::options_description match("Match");
     opt::options_description utility("Utility");
@@ -211,7 +209,7 @@ int main(int argc, char *argv[]) {
 
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/test3.game");
+    loadGames(data, "TrainData/compressed.game");
     std::cout << "Length: " << data.size() << std::endl;
 
 
@@ -239,7 +237,7 @@ int main(int argc, char *argv[]) {
     trainer.setLearningRate(5);
     trainer.setEpochs(100000);
     trainer.setl2Reg(0.00000001);
-    trainer.setCValue(-0.0060);
+    trainer.setCValue(-0.60);
     trainer.startTune();
 
   /*  std::vector<TrainingGame>games;

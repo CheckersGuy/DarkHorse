@@ -38,6 +38,8 @@ constexpr uint32_t MASK_COL_4=2290649224u;
 using Depth =int;
 using Ply =int;
 
+constexpr int scalFac=128;
+
 
 
 enum  NodeType {
@@ -45,12 +47,12 @@ enum  NodeType {
 };
 
 enum Score {
-    WHITE_WIN = 15500,
-    WHITE_LOSS = -15500,
-    BLACK_WIN = -15500,
-    BLACK_LOSS = 15500,
+    WHITE_WIN = 155000,
+    WHITE_LOSS = -155000,
+    BLACK_WIN = -155000,
+    BLACK_LOSS = 155000,
     DRAW = 0,
-    INFINITE = 1500000,
+    INFINITE = 15000000,
     EASY_MOVE = 99999999,
     INVALID = 100000000
 
