@@ -21,13 +21,15 @@
 int main(int argl, const char ** argc){
 
 
+
     initialize();
     setHashSize(23);
-    Board board;
-    BoardFactory::setUpStartingPosition(board);
 
-    board.printBoard();
-    searchValue(board,MAX_PLY,200000,true);
+    Board test;
+    BoardFactory::setUpStartingPosition(test);
+
+    searchValue(test,MAX_PLY,10000,true);
+
 
 
 
