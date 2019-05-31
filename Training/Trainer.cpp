@@ -68,10 +68,10 @@ void Trainer::gradientUpdate(TrainingPos position) {
                 size_t index= 18 * getIndex(curRegion, position.pos) + 9 * p + 3 * j + i;
 
                 double qValue = qStatic.as<double>();
-                gameWeights.weights[index] += 1.0;
+                gameWeights.weights[index] += scalFac;
                 Line local;
                 Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-                gameWeights.weights[index] -= 1.0;
+                gameWeights.weights[index] -= scalFac;
                 double qDiffValue = qDiff.as<double>();
                 double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
                                        Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) ;
@@ -84,10 +84,10 @@ void Trainer::gradientUpdate(TrainingPos position) {
     }
     for(size_t index=SIZE;index<SIZE+4;++index){
         double qValue = qStatic.as<double>();
-        gameWeights[index] += 1.0;
+        gameWeights[index] += scalFac;
         Line local;
         Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        gameWeights[index] -= 1.0;
+        gameWeights[index] -= scalFac;
         double qDiffValue = qDiff.as<double>();
         double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
                                Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) ;
@@ -131,7 +131,7 @@ void Trainer::startTune() {
     while (counter < getEpochs()) {
 
         std::cout<<"CValue: "<<getCValue()<<std::endl;
-        double loss = calculateLoss();
+        double loss = 0;
         std::cout << "Loss: " << loss << std::endl;
         epoch();
 

@@ -12,7 +12,7 @@
 #include "MGenerator.h"
 #include "GameLogic.h"
 #include <cstring>
-#include "FixPoint.h"
+
 
 constexpr uint32_t region = 13107u;
 constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
@@ -45,9 +45,9 @@ inline size_t getIndex(uint32_t region, const Position &pos) {
     return index;
 }
 template<typename T>
-class Weights {
+struct Weights {
 
-public:
+    //scalFac is used to scale the evalTerms pieceEval and maybe others
 
     T kingOp, kingEnd;
     T balanceOp, balanceEnd;
@@ -102,14 +102,15 @@ public:
                 double value;
                 stream.read((char *) &value, sizeof(double));
                 for (size_t i = 0; i < runLength; ++i) {
-                    weights[counter] = value;
+                    weights[counter] = value*scalFac;
                     counter++;
                 }
             }
             for(size_t i=SIZE;i<SIZE+4;++i){
                 double current;
                 stream.read((char*)&current,sizeof(double));
-                (*this)[i]=current;
+                (*this)[i]=current*scalFac;
+
             }
 
         }
@@ -134,6 +135,7 @@ public:
             stream.write((char *) &value, sizeof(double));
         }
 
+
         stream.write((char*)&kingOp,sizeof(T));
         stream.write((char*)&kingEnd,sizeof(T));
         stream.write((char*)&balanceOp,sizeof(T));
@@ -153,7 +155,7 @@ public:
         const int WP = rightWhite + leftWhite;
         const int BP = rightBlack + leftBlack;
 
-        int sum = 100 * (WP - BP);
+        int sum = 100*scalFac * (WP - BP);
         int phase = WP + BP;
         int WK = 0;
         int BK = 0;
@@ -163,26 +165,26 @@ public:
             phase += WK + BK;
         }
 
-        int kingEval = 0;
+        T kingEval = 0;
         int balanceScore = std::abs(leftBlack - rightBlack) - std::abs(leftWhite - rightWhite);
 
+        constexpr T div= static_cast<T>(24);
+
         T factorOp = phase;
-        T factorEnd = 24 - phase;
-        factorOp /= 24;
-        factorEnd /= 24;
-        T temp = factorOp*kingOp  + factorEnd*kingEnd;
-        T temp2 = factorOp*balanceOp + factorEnd*balanceEnd ;
+        T factorEnd = div - phase;
+        T temp = (factorOp*static_cast<T>(100*scalFac+kingOp)+factorEnd*static_cast<T>(100*scalFac+kingEnd ))/div;
+        T temp2 = (factorOp*balanceOp + factorEnd*balanceEnd)/div ;
         if constexpr(std::is_same<T, double>::value) {
-            kingEval += (static_cast<int>(temp) + 100) * (WK - BK) + static_cast<int>(temp2)*balanceScore;
-        } else if constexpr(std::is_same<T, short>::value) {
-            kingEval += (temp + 100) * (WK - BK) + temp2*balanceScore;
+            kingEval += (temp* (WK - BK) + temp2*balanceScore);
+        } else if constexpr(std::is_same<T, int>::value) {
+            kingEval += temp  * (WK - BK) + temp2*balanceScore;
         }
 
 
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
-        int opening = 0, ending = 0;
+        T opening = 0, ending = 0;
 
         for(int j=0;j<3;++j){
 
@@ -190,19 +192,17 @@ public:
             const uint32_t curRegion = region << (8 * j + i);
             size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
             size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
-            opening += (weights[indexOpening]) * static_cast<int>(color);
-            ending += (weights[indexEnding] ) * static_cast<int>(color);
+            opening += (weights[indexOpening]) * static_cast<T>(color);
+            ending += (weights[indexEnding] ) * static_cast<T>(color);
         }
         }
 
-        int opFactor = phase;
-        int endFactor = 24 - phase;
-        int phasedPatterns;
-        int phaseTemp = phase;
-        opFactor /= 24;
-        endFactor /= 24;
+        T opFactor = phase;
+        T endFactor = div - phase;
+        T phaseTemp = phase;
 
-        phasedPatterns = opFactor * opening + endFactor * ending;
+
+        T phasedPatterns = (opFactor * opening + endFactor * ending)/div;
         sum += phasedPatterns;
         sum += kingEval;
 
