@@ -233,11 +233,11 @@ int main(int argc, char *argv[]) {
 
     Trainer trainer(data);
 
-
+    //Loss: 0.00259728
     trainer.setLearningRate(5);
     trainer.setEpochs(100000);
     trainer.setl2Reg(0.00000001);
-    trainer.setCValue(-0.60);
+    trainer.setCValue(-0.05);
     trainer.startTune();
 
   /*  std::vector<TrainingGame>games;
