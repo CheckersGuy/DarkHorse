@@ -165,7 +165,7 @@ struct Weights {
             phase += WK + BK;
         }
 
-        T kingEval = 0;
+        int kingEval = 0;
         int balanceScore = std::abs(leftBlack - rightBlack) - std::abs(leftWhite - rightWhite);
 
         constexpr T div= static_cast<T>(24);
@@ -175,7 +175,7 @@ struct Weights {
         T temp = (factorOp*static_cast<T>(100*scalFac+kingOp)+factorEnd*static_cast<T>(100*scalFac+kingEnd ))/div;
         T temp2 = (factorOp*balanceOp + factorEnd*balanceEnd)/div ;
         if constexpr(std::is_same<T, double>::value) {
-            kingEval += (temp* (WK - BK) + temp2*balanceScore);
+            kingEval += static_cast<int>(temp)* (WK - BK) + temp2*balanceScore;
         } else if constexpr(std::is_same<T, int>::value) {
             kingEval += temp  * (WK - BK) + temp2*balanceScore;
         }
