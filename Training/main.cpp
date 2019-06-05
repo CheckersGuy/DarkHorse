@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
 
     initialize();
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/test3.game");
+    loadGames(data, "TrainData/compressed.game");
     std::cout << "Length: " << data.size() << std::endl;
 
 

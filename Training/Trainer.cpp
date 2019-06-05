@@ -131,7 +131,7 @@ void Trainer::startTune() {
     while (counter < getEpochs()) {
 
         std::cout<<"CValue: "<<getCValue()<<std::endl;
-        double loss = calculateLoss();
+        double loss = 0;
         std::cout << "Loss: " << loss << std::endl;
         epoch();
 
