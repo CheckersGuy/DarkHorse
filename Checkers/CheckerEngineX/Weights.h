@@ -102,14 +102,14 @@ struct Weights {
                 double value;
                 stream.read((char *) &value, sizeof(double));
                 for (size_t i = 0; i < runLength; ++i) {
-                    weights[counter] = value*scalFac;
+                    weights[counter] = value;
                     counter++;
                 }
             }
             for(size_t i=SIZE;i<SIZE+4;++i){
                 double current;
                 stream.read((char*)&current,sizeof(double));
-                (*this)[i]=current*scalFac;
+                (*this)[i]=current;
 
             }
 
@@ -155,7 +155,7 @@ struct Weights {
         const int WP = rightWhite + leftWhite;
         const int BP = rightBlack + leftBlack;
 
-        int sum = 100*scalFac * (WP - BP);
+        int sum = 0;
         int phase = WP + BP;
         int WK = 0;
         int BK = 0;
@@ -165,29 +165,27 @@ struct Weights {
             phase += WK + BK;
         }
 
-        int kingEval = 0;
+
         int balanceScore = std::abs(leftBlack - rightBlack) - std::abs(leftWhite - rightWhite);
 
-        constexpr T div= static_cast<T>(24);
 
-        T factorOp = phase;
-        T factorEnd = div - phase;
-        T temp = (factorOp*static_cast<T>(100*scalFac+kingOp)+factorEnd*static_cast<T>(100*scalFac+kingEnd ))/div;
-        T temp2 = (factorOp*balanceOp + factorEnd*balanceEnd)/div ;
-        if constexpr(std::is_same<T, double>::value) {
-            kingEval += static_cast<int>(temp)* (WK - BK) + temp2*balanceScore;
-        } else if constexpr(std::is_same<T, int>::value) {
-            kingEval += temp  * (WK - BK) + temp2*balanceScore;
-        }
+
+        int factorOp = phase;
+        int factorEnd = 24 - phase;
+        int temp = (factorOp*(100*scalFac+kingOp)+factorEnd*(100*scalFac+kingEnd ))/24;
+
+        int temp2 = (factorOp*balanceOp + factorEnd*balanceEnd)/24 ;
+        int kingEval = temp  * (WK - BK) + temp2*balanceScore;
+        int pieceEval =(factorOp*(100*scalFac)+factorEnd*(100*scalFac))/24;
+        pieceEval*=(WP-BP);
 
 
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
-        T opening = 0, ending = 0;
+        int opening = 0, ending = 0;
 
         for(int j=0;j<3;++j){
-
         for (int i = 0; i < 3; ++i) {
             const uint32_t curRegion = region << (8 * j + i);
             size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
@@ -197,14 +195,11 @@ struct Weights {
         }
         }
 
-        T opFactor = phase;
-        T endFactor = div - phase;
-        T phaseTemp = phase;
 
-
-        T phasedPatterns = (opFactor * opening + endFactor * ending)/div;
+        int phasedPatterns = (factorOp * opening + factorEnd * ending)/24;
         sum += phasedPatterns;
         sum += kingEval;
+        sum+=pieceEval;
 
         return sum;
     }

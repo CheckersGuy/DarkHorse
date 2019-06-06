@@ -68,10 +68,10 @@ void Trainer::gradientUpdate(TrainingPos position) {
                 size_t index= 18 * getIndex(curRegion, position.pos) + 9 * p + 3 * j + i;
 
                 double qValue = qStatic.as<double>();
-                gameWeights.weights[index] += scalFac;
+                gameWeights.weights[index] += 1;
                 Line local;
                 Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-                gameWeights.weights[index] -= scalFac;
+                gameWeights.weights[index] -= 1;
                 double qDiffValue = qDiff.as<double>();
                 double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
                                        Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) ;
@@ -84,10 +84,10 @@ void Trainer::gradientUpdate(TrainingPos position) {
     }
     for(size_t index=SIZE;index<SIZE+4;++index){
         double qValue = qStatic.as<double>();
-        gameWeights[index] += scalFac;
+        gameWeights[index] += 1;
         Line local;
         Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        gameWeights[index] -= scalFac;
+        gameWeights[index] -= 1;
         double qDiffValue = qDiff.as<double>();
         double diff = mover * ((Training::sigmoid(c, mover * qValue) - result) *
                                Training::sigmoidDiff(c, mover * qValue) * (qDiffValue - qValue)) ;

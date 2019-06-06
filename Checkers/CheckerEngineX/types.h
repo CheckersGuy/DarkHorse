@@ -38,7 +38,7 @@ constexpr uint32_t MASK_COL_4=2290649224u;
 using Depth =int;
 using Ply =int;
 
-constexpr int scalFac=1;
+constexpr int scalFac=128;
 
 
 

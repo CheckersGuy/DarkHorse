@@ -190,26 +190,31 @@ int main(int argc, char *argv[]) {
     }
     using namespace Training;
 
-/*
-    std::vector<TrainingGame>positions;
-    Training::loadGames<TrainingGame>(positions,"TrainData/test.game");
-    Training::loadGames<TrainingGame>(positions,"TrainData/test2.game");
+   /* Engine engine("Engines/newLife2.so");
+    Engine engineTwo("Engines/normal.so");
+    engine.initialize();
+    engineTwo.initialize();
+    engine.setHashSize(23);
+    engineTwo.setHashSize(23);
+    engine.setTimePerMove(2000);
+    engineTwo.setTimePerMove(2000);
 
-    std::cout<<"Totalpositions: "<<positions.size()<<std::endl;
-
-    Training::saveGames(positions,"TrainData/test3.game");
-*/
-
-
+    std::vector<Position> positions;
+    Utilities::loadPositions(positions,"Positions/3move.pos");
+    TrainingGame current;
+    Utilities::playGame(current,engine,engineTwo,positions[4],true);*/
 
 
 
 
+
+    //test
 
 
     initialize();
+
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/compressed.game");
+    loadGames(data, "TrainData/test.game");
     std::cout << "Length: " << data.size() << std::endl;
 
 
@@ -237,7 +242,7 @@ int main(int argc, char *argv[]) {
     trainer.setLearningRate(5);
     trainer.setEpochs(100000);
     trainer.setl2Reg(0.00000001);
-    trainer.setCValue(-0.05);
+    trainer.setCValue(-0.00005);
     trainer.startTune();
 
   /*  std::vector<TrainingGame>games;
