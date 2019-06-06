@@ -22,13 +22,14 @@ MAKRO void setHashSize(uint32_t hash) {
 Weights<double> gameWeights;
 #else
 
-Weights<int> gameWeights;
+Weights<short> gameWeights;
 #endif
 
 
 MAKRO void initialize() {
    // gameWeights.loadWeights("/home/Robin/Weights/newYear.weights");
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/newYear12312.weights");
+    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/D6.weights");
+
 
     Zobrist::initializeZobrisKeys();
 }

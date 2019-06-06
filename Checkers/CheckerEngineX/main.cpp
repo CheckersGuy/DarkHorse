@@ -26,7 +26,7 @@ int main(int argl, const char **argc) {
     Board test;
     BoardFactory::setUpStartingPosition(test);
 
-    searchValue(test,MAX_PLY,10000,true);
+    searchValue(test,MAX_PLY,100000,true);
 
 
 
