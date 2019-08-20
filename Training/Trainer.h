@@ -13,8 +13,8 @@
 #include "queue"
 
 
-
 extern Weights<double> gameWeights;
+
 using namespace Training;
 class Trainer {
 
@@ -23,15 +23,16 @@ private:
     uint64_t bufferCounter;
     std::vector<TrainingPos> &data;
     double learningRate, l2Reg, cValue;
+    std::unique_ptr<double[]>adaption;
 
 public:
 
 
     Trainer(std::vector<TrainingPos> &data) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0) {}
+                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0),adaption(std::make_unique<double[]>(SIZE+4)) {
+        std::memset(adaption.get(),0,sizeof(double)*(SIZE+4));
+    }
     void epoch();
-
-    void epochC();
 
     void gradientUpdate(TrainingPos position);
 
@@ -53,12 +54,10 @@ public:
 
     void startTune();
 
-    void startTuneC();
-
 
     double calculateLoss(int threads=std::thread::hardware_concurrency());
 
-    std::string getPath() const;
+    static double evaluatePosition( Board&board,Weights<double>& weights,size_t index,double offset);
 
 };
 

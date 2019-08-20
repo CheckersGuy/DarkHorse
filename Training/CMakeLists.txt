@@ -1,11 +1,8 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.6)
 project(Training)
 
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-O3 -DTRAIN -DNDEBUG -march=native -pthread  -flto -ffat-lto-objects -fuse-linker-plugin")
-set(CMAKE_CXX_STANDARD_LIBRARIES -ldl )
-set(Boost_USE_STATIC_LIBS   ON)
+
 
 find_package( Boost REQUIRED COMPONENTS program_options system iostreams filesystem)
 include_directories( ${Boost_INCLUDE_DIRS} )
@@ -36,4 +33,9 @@ add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp E
 
 target_link_libraries( Training ${Boost_PROGRAM_OPTIONS_LIBRARY}
         ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} )
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-O2 -DTRAIN -DNDEBUG -march=native -pthread  -flto -ffat-lto-objects -fuse-linker-plugin")
+set(CMAKE_CXX_STANDARD_LIBRARIES -ldl )
+set(Boost_USE_STATIC_LIBS   ON)
 

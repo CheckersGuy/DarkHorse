@@ -190,35 +190,26 @@ int main(int argc, char *argv[]) {
     }
     using namespace Training;
 
-   /* Engine engine("Engines/newLife2.so");
-    Engine engineTwo("Engines/normal.so");
-    engine.initialize();
-    engineTwo.initialize();
-    engine.setHashSize(23);
-    engineTwo.setHashSize(23);
-    engine.setTimePerMove(2000);
-    engineTwo.setTimePerMove(2000);
-
-    std::vector<Position> positions;
-    Utilities::loadPositions(positions,"Positions/3move.pos");
-    TrainingGame current;
-    Utilities::playGame(current,engine,engineTwo,positions[4],true);*/
-
-
-
-
-
     //test
+
+    std::cout<<"Final Run"<<std::endl;
 
 
     initialize();
 
     std::vector<TrainingPos> data;
-    loadGames(data, "TrainData/test.game");
+
+    loadGames(data, "TrainData/test3.game");
+
+
     std::cout << "Length: " << data.size() << std::endl;
 
 
     auto removeCl = [](TrainingPos pos) {
+
+        if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
+            return true;
+
         Board board;
         BoardFactory::setUpPosition(board, pos.pos);
         Line local;
@@ -226,10 +217,13 @@ int main(int argc, char *argv[]) {
         if (qStatic.isWinning())
             return true;
 
-        return pos.result == INVALID || (__builtin_popcount(pos.pos.WP | pos.pos.BP) <= 5);
+
+        return false;
+
     };
 
-    data.erase(std::remove_if(data.begin(), data.end(), removeCl), data.end());
+    data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
+
 
     std::cout << "Positions after erase: " << data.size() << std::endl;
 
@@ -237,12 +231,11 @@ int main(int argc, char *argv[]) {
 
 
     Trainer trainer(data);
-
-    //Loss: 0.00259728
-    trainer.setLearningRate(5);
-    trainer.setEpochs(100000);
-    trainer.setl2Reg(0.00000001);
-    trainer.setCValue(-0.00005);
+    // 0.0399091
+    trainer.setLearningRate(40000);
+    trainer.setEpochs(100);
+    trainer.setl2Reg(0.000000000000);
+    trainer.setCValue(-6e-5);
     trainer.startTune();
 
   /*  std::vector<TrainingGame>games;
