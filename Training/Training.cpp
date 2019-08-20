@@ -7,6 +7,8 @@
 #include "Training.h"
 
 namespace Training {
+
+
     std::mt19937_64 generator(getSystemTime());
 
     void TrainingGame::add(Position position) {
@@ -87,6 +89,8 @@ namespace Training {
 
         return removed;
     }
+
+
 
 
 

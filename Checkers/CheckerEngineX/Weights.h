@@ -17,8 +17,7 @@
 constexpr uint32_t region = 13107u;
 constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
-constexpr size_t SIZE = 390625*9*2;
-
+constexpr size_t SIZE = 390625 * 9 * 2;
 
 
 inline size_t getIndex(uint32_t region, const Position &pos) {
@@ -44,17 +43,19 @@ inline size_t getIndex(uint32_t region, const Position &pos) {
     }
     return index;
 }
+
 template<typename T>
 struct Weights {
 
-    //scalFac is used to scale the evalTerms pieceEval and maybe others
 
     T kingOp, kingEnd;
     T balanceOp, balanceEnd;
+    T balanceKingOp, balanceKingEnd;
+
 
     std::unique_ptr<T[]> weights;
 
-    Weights() : kingOp(0), kingEnd(0), balanceOp(0), balanceEnd(0) {
+    Weights() : kingOp(0), kingEnd(0), balanceOp(0), balanceEnd(0), balanceKingOp(0), balanceKingEnd(0) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::memset(weights.get(), 0, sizeof(T) * SIZE);
     }
@@ -82,7 +83,7 @@ struct Weights {
         return current;
     }
 
-    T getMaxValue()const {
+    T getMaxValue() const {
         return *std::max_element(weights.get(), weights.get() + SIZE);
     }
 
@@ -96,7 +97,7 @@ struct Weights {
             std::cerr << "Error: Couldn't find weights, default init" << std::endl;;
         } else {
             size_t counter = 0;
-            while (!stream.eof() && counter<SIZE) {
+            while (!stream.eof() && counter < SIZE) {
                 uint32_t runLength = 0;
                 stream.read((char *) &runLength, sizeof(uint32_t));
                 double value;
@@ -106,10 +107,10 @@ struct Weights {
                     counter++;
                 }
             }
-            for(size_t i=SIZE;i<SIZE+4;++i){
+            for (size_t i = SIZE; i < SIZE + 6; ++i) {
                 double current;
-                stream.read((char*)&current,sizeof(double));
-                (*this)[i]=current;
+                stream.read((char *) &current, sizeof(double));
+                (*this)[i] = current;
 
             }
 
@@ -136,10 +137,12 @@ struct Weights {
         }
 
 
-        stream.write((char*)&kingOp,sizeof(T));
-        stream.write((char*)&kingEnd,sizeof(T));
-        stream.write((char*)&balanceOp,sizeof(T));
-        stream.write((char*)&balanceEnd,sizeof(T));
+        stream.write((char *) &kingOp, sizeof(T));
+        stream.write((char *) &kingEnd, sizeof(T));
+        stream.write((char *) &balanceOp, sizeof(T));
+        stream.write((char *) &balanceEnd, sizeof(T));
+        stream.write((char *) &balanceKingOp, sizeof(T));
+        stream.write((char *) &balanceKingEnd, sizeof(T));
 
         stream.close();
     }
@@ -147,37 +150,19 @@ struct Weights {
     inline Value evaluate(Position pos) const {
         const Color color = pos.getColor();
         const uint32_t nKings = ~pos.K;
-        const int rightBlack = __builtin_popcount(pos.BP & nKings & RIGHT_HALF);
-        const int rightWhite = __builtin_popcount(pos.WP & nKings & RIGHT_HALF);
-        const int leftBlack = __builtin_popcount(pos.BP & nKings & LEFT_HALF);
-        const int leftWhite = __builtin_popcount(pos.WP & nKings & LEFT_HALF);
 
-        const int WP = rightWhite + leftWhite;
-        const int BP = rightBlack + leftBlack;
+        const int WP = __builtin_popcount(pos.WP & (~pos.K));
+        const int BP = __builtin_popcount(pos.BP & (~pos.K));
 
-        int sum = 0;
+
         int phase = WP + BP;
         int WK = 0;
         int BK = 0;
         if (pos.K != 0) {
-            WK = __builtin_popcount(pos.K & (pos.WP));
-            BK = __builtin_popcount(pos.K & (pos.BP));
+            WK = __builtin_popcount(pos.WP & pos.K);
+            BK = __builtin_popcount(pos.BP & pos.K);
             phase += WK + BK;
         }
-
-
-        int balanceScore = std::abs(leftBlack - rightBlack) - std::abs(leftWhite - rightWhite);
-
-
-
-        int factorOp = phase;
-        int factorEnd = 24 - phase;
-        int temp = (factorOp*(100*scalFac+kingOp)+factorEnd*(100*scalFac+kingEnd ))/24;
-
-        int temp2 = (factorOp*balanceOp + factorEnd*balanceEnd)/24 ;
-        int kingEval = temp  * (WK - BK) + temp2*balanceScore;
-        int pieceEval =(factorOp*(100*scalFac)+factorEnd*(100*scalFac))/24;
-        pieceEval*=(WP-BP);
 
 
         if (pos.getColor() == BLACK) {
@@ -185,23 +170,36 @@ struct Weights {
         }
         int opening = 0, ending = 0;
 
-        for(int j=0;j<3;++j){
-        for (int i = 0; i < 3; ++i) {
-            const uint32_t curRegion = region << (8 * j + i);
-            size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
-            size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
-            opening += (weights[indexOpening]) * static_cast<T>(color);
-            ending += (weights[indexEnding] ) * static_cast<T>(color);
+        for (int j = 0; j < 3; ++j) {
+            for (int i = 0; i < 3; ++i) {
+                const uint32_t curRegion = region << (8 * j + i);
+                size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
+                size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
+                opening += (weights[indexOpening]);
+                ending += (weights[indexEnding]);
+            }
         }
-        }
+        opening *= color;
+        ending *= color;
+        const int factorOp = phase;
+        const int factorEnd = 24 - phase;
 
 
-        int phasedPatterns = (factorOp * opening + factorEnd * ending)/24;
-        sum += phasedPatterns;
-        sum += kingEval;
-        sum+=pieceEval;
+        const int pieceEval = (WP - BP) * 100 * scalFac;
+        const int kingEvalOp = (100 * scalFac + kingOp) * (WK - BK);
+        const int kingEvalEnd = (100 * scalFac + kingEnd) * (WK - BK);
 
-        return sum;
+
+        opening += kingEvalOp;
+        opening += pieceEval;
+
+        ending += kingEvalEnd;
+        ending += pieceEval;
+
+        int score = (factorOp * opening + factorEnd * ending) / 24;
+
+
+        return score;
     }
 
     T &operator[](size_t index) {
@@ -211,8 +209,6 @@ struct Weights {
             return kingEnd;
         } else if (index == SIZE + 2) {
             return balanceOp;
-        } else if (index == SIZE + 3) {
-            return balanceEnd;
         }
         return weights[index];
     }
@@ -224,10 +220,7 @@ struct Weights {
             return kingEnd;
         } else if (index == SIZE + 2) {
             return balanceOp;
-        } else if (index == SIZE + 3) {
-            return balanceEnd;
         }
-
         return weights[index];
     }
 

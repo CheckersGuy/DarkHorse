@@ -4,6 +4,7 @@
 
 #ifndef TRAINING_TRAINING_H
 #define TRAINING_TRAINING_H
+
 #include <unordered_set>
 #include "Position.h"
 #include "types.h"
@@ -16,7 +17,6 @@
 #include <algorithm>
 #include <functional>
 #include <iterator>
-
 
 
 namespace Training {
@@ -64,10 +64,10 @@ namespace Training {
             return positions.size();
         }
 
-        void print(){
-            std::for_each(begin(),end(),[](Position pos){
+        void print() {
+            std::for_each(begin(), end(), [](Position pos) {
                 pos.printPosition();
-                std::cout<<std::endl;
+                std::cout << std::endl;
             });
         }
     };
@@ -88,10 +88,10 @@ namespace Training {
         }
     };
 
-  struct TrainingComp {
+    struct TrainingComp {
 
         bool operator()(const TrainingGame &one, const TrainingGame &two) const {
-            if(one.result!=two.result)
+            if (one.result != two.result)
                 return false;
 
 
@@ -109,14 +109,15 @@ namespace Training {
 
 
     template<class T=TrainingGame>
-    void loadGames(std::vector<T> &games, const std::string file) {
+    void loadGames(std::vector<T> &games, const std::string file, int limit = std::numeric_limits<int>::max()) {
         static_assert(std::is_same<T, TrainingGame>::value || std::is_same<T, TrainingPos>::value);
         std::ifstream stream(file, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Error" << std::endl;
             throw std::string("Could not find the file");
         }
-        while (!stream.eof()) {
+        int counter = 0;
+        while (counter < limit && !stream.eof()) {
             TrainingGame current;
             stream >> current;
             if constexpr(std::is_same<T, TrainingGame>::value) {
@@ -125,19 +126,39 @@ namespace Training {
                 std::for_each(current.positions.begin(), current.positions.end(),
                               [&games, &current](Position pos) { games.push_back(TrainingPos(pos, current.result)); });
             }
+            counter++;
         }
         stream.close();
     }
 
     inline double sigmoid(double c, double value) {
-        return 1.0 / (1.0 + std::exp(c * value));
+       double sig= 1.0/(1.0+std::exp(c*value));
+
+        sig=std::min(sig,0.999999);
+        sig=std::max(sig,0.000001);
+        return sig;
     }
 
     inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
+
     }
 
-    std::vector<TrainingGame> removeDuplicates(std::vector<TrainingGame>& games);
+
+
+    inline double signum(double value){
+        if( value==0.0)
+            return 0.0;
+
+        return (value>=0)?1.0:-1.0;
+    }
+
+
+
+
+
+
+    std::vector<TrainingGame> removeDuplicates(std::vector<TrainingGame> &games);
 
 
 }
