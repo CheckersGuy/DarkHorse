@@ -36,7 +36,7 @@ public:
         return iter.p != p;
     }
 
-    value_type& operator*() const {
+    reference operator*() const {
         return *p;
     }
 

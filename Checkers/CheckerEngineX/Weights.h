@@ -26,21 +26,21 @@ using Eval =FixPoint<short, 4>;
 
 inline size_t getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
-    size_t index = 0;
+    size_t index = 0u;
     uint32_t pieces = region & (pos.BP | pos.WP);
-    size_t counter = 0;
+    size_t counter = 0u;
     while (pieces) {
-        uint32_t lsb = (pieces & ~(pieces - 1));
-        pieces &= pieces - 1;
-        uint32_t current = 0;
+        uint32_t lsb = (pieces & ~(pieces - 1u));
+        pieces &= pieces - 1u;
+        uint32_t current = 0u;
         if (((pos.BP & (~pos.K)) & lsb)) {
-            current = 3;
+            current = 3u;
         } else if (((pos.WP & (~pos.K)) & lsb)) {
-            current = 4;
+            current = 4u;
         } else if (((pos.K & pos.BP) & lsb)) {
-            current = 1;
+            current = 1u;
         } else if (((pos.K & pos.WP) & lsb)) {
-            current = 2;
+            current = 2u;
         }
         index += powers[counter++] * current;
 

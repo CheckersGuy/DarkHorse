@@ -12,23 +12,23 @@
 
 
 inline uint32_t getHorizontalFlip(uint32_t b) {
-    uint32_t x = (b & MASK_COL_4) >> 3;
-    x |= (b & MASK_COL_3) >> 1;
-    x |= (b & MASK_COL_1) << 3;
-    x |= (b & MASK_COL_2) << 1;
+    uint32_t x = (b & MASK_COL_4) >> 3u;
+    x |= (b & MASK_COL_3) >> 1u;
+    x |= (b & MASK_COL_1) << 3u;
+    x |= (b & MASK_COL_2) << 1u;
     return x;
 }
 
 inline uint32_t getVerticalFlip(uint32_t b) {
-    uint32_t x = b >> 28;
-    x |= (b >> 20) & 0xf0;
-    x |= (b >> 12) & 0xf00;
-    x |= (b >> 4) & 0xf000;
+    uint32_t x = b >> 28u;
+    x |= (b >> 20u) & 0xf0u;
+    x |= (b >> 12u) & 0xf00u;
+    x |= (b >> 4u) & 0xf000u;
 
-    x |= b << 28;
-    x |= (b << 20) & 0x0f000000;
-    x |= (b << 12) & 0x00f00000;
-    x |= (b << 4) & 0x000f0000;
+    x |= b << 28u;
+    x |= (b << 20u) & 0x0f000000u;
+    x |= (b << 12u) & 0x00f00000u;
+    x |= (b << 4u) & 0x000f0000u;
     return x;
 }
 
@@ -43,7 +43,7 @@ struct Position {
 
     Position(uint32_t wp, uint32_t bp, uint32_t k, uint64_t cKey) : WP(wp), BP(bp), K(k), key(cKey), color(BLACK) {}
 
-    Position() : WP(0), BP(0), K(0), key(0), color(BLACK) {};
+    Position() : WP(0u), BP(0u), K(0u), key(0u), color(BLACK) {};
 
     Position(uint32_t wp, uint32_t bp, uint32_t k) : Position(wp, bp, k, 0) {}
 
@@ -77,21 +77,21 @@ struct Position {
 
         uint32_t movers = 0;
         uint32_t temp = defaultShift<~color>(nocc) & opp;
-        if (temp != 0) {
+        if (temp != 0u) {
             movers |= forwardMask<~color>(temp) & current;
         }
         temp = forwardMask<~color>(nocc) & opp;
-        if (temp != 0) {
+        if (temp != 0u) {
             movers |= defaultShift<~color>(temp) & current;
         }
-        if (kings != 0) {
+        if (kings != 0u) {
             temp = defaultShift<color>(nocc) & opp;
-            if (temp != 0) {
+            if (temp != 0u) {
                 movers |= forwardMask<color>(temp) & kings;
             }
             temp = forwardMask<color>(nocc) & opp;
 
-            if (temp != 0) {
+            if (temp != 0u) {
                 movers |= defaultShift<color>(temp) & kings;
             }
         }

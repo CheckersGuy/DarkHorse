@@ -77,9 +77,9 @@ class Transposition {
 
 public:
     uint8_t ageCounter = 0;
-    uint32_t length = 0;
-    uint32_t capacity = 0;
-    uint32_t hashHit = 0;
+    uint32_t length = 0u;
+    uint32_t capacity = 0u;
+    uint32_t hashHit = 0u;
     Cluster *entries;
 
 public:

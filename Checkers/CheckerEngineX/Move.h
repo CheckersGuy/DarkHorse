@@ -11,7 +11,7 @@
 struct Move {
 
     uint16_t encoding=0;
-    uint32_t captures=0;
+    uint32_t captures=0u;
 
 
 
