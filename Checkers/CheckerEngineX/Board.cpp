@@ -6,8 +6,8 @@
 #include "BoardFactory.h"
 
 
-Position *Board::getPosition() {
-    return &pStack[pCounter];
+Position &Board::getPosition() {
+    return pStack[pCounter];
 }
 
 Board::Board(const Board &board) {
@@ -29,11 +29,8 @@ void Board::makeMove(Move move) {
     pStack[pCounter + 1] = pStack[pCounter];
     history[pCounter] = move;
     this->pCounter++;
-
     pStack[pCounter].makeMove(move);
-    Zobrist::doUpdateZobristKey(pStack[pCounter], move);
-
-
+    pStack[pCounter].key = Zobrist::generateKey(pStack[pCounter]);
 }
 
 void Board::undoMove() {
@@ -41,6 +38,7 @@ void Board::undoMove() {
 }
 
 Board& Board::operator=(const Position pos) {
-    BoardFactory::setUpPosition(*this,pos);
+    BoardFactory::setUpPosition(*this, pos);
+    return *this;
 }
 

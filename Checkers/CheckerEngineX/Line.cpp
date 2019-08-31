@@ -88,3 +88,10 @@ Move Line::operator[](int index)const {
 Move& Line::operator[](int index) {
     return this->myArray[index];
 }
+Move* Line::begin() {
+    return &myArray[0];
+}
+
+Move* Line::end() {
+    return &myArray[counter];
+}

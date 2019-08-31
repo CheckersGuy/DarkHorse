@@ -12,7 +12,7 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
     }
 
 
-    for (int i = (inPVLine) ? 2 : 1; i < moveCounter; i++) {
+    for (int i = (inPVLine) ? 2 : 1; i < moveCounter; ++i) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
         int j;
@@ -26,15 +26,11 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
 
 }
-MoveListIterator MoveListe::begin() {
-    MoveListIterator iter;
-    iter.p = &liste[0];
-    return iter;
+Move* MoveListe::begin() {
+    return &liste[0];
 }
 
 
-MoveListIterator MoveListe::end() {
-    MoveListIterator iter;
-    iter.p = &liste[moveCounter];
-    return iter;
+Move* MoveListe::end() {
+    return &liste[length()];
 }

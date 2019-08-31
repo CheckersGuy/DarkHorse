@@ -13,8 +13,6 @@ struct Move {
     uint16_t encoding=0;
     uint32_t captures=0;
 
-
-
     Move(uint16_t from, uint16_t to);
 
     Move(uint16_t from, uint16_t to, uint32_t captures);
@@ -100,7 +98,7 @@ inline uint16_t Move::getPieceType() const {
 }
 
 inline void Move::setFrom(const uint16_t from) {
-    this->encoding &= ~(31);
+    this->encoding &= ~(31u);
     this->encoding |= from;
 }
 

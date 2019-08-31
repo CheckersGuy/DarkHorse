@@ -16,7 +16,7 @@
 
 inline uint64_t getSystemTime() {
     return std::chrono::duration_cast<std::chrono::milliseconds>
-            (std::chrono::steady_clock::now().time_since_epoch()).count();
+            (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
 
@@ -64,7 +64,7 @@ enum Color {
     BLACK = -1, WHITE = 1, NONE
 };
 enum PieceType {
-    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
+    BPAWN = -1, WPAWN = 1, BKING = -2, WKING = 2, KING = 4, PAWN = 5,
 };
 enum Flag : uint8_t {
     TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3

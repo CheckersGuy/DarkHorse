@@ -5,7 +5,8 @@
 #include "Engine.h"
 
 Engine::Engine(const std::string myPath) : path(myPath), hashSize(DEFAULT_HASH) {
-    handle = dlopen(path.c_str(), RTLD_LAZY);
+
+    handle = dlopen(myPath.c_str(), RTLD_LAZY);
     if (!handle) {
         std::cerr << "Engine wasn't found" << std::endl;
         exit(EXIT_FAILURE);

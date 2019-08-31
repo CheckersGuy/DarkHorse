@@ -22,15 +22,14 @@ namespace Statistics {
         const int colorIndex = (color+1)/2;
         const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
-        const int score = (bScore == 0) ? 0 : ((10* hhScore / bScore));
+        const int score = (bScore == 0) ? 0 : (( hhScore / bScore));
         return score;
     }
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         int score = getMoveScore(move, color);
-
         if (move == ttMove && move.getMoveIndex() == ttMove.getMoveIndex()) {
-            score += 2000000;
+            score += 20000000;
         }
 
         return score;
@@ -38,7 +37,7 @@ namespace Statistics {
 
     void MovePicker::updateHHScore(Move move, Color color, int depth) {
         const int colorIndex = (color+1)/2;
-        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += (depth) * (depth);
+        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += depth* depth;
     }
 
     void MovePicker::updateBFScore(Move *liste, int moveIndex, Color color, int depth) {

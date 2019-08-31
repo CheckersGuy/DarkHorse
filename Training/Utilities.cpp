@@ -30,14 +30,14 @@ namespace Utilities {
             Value value = searchValue(copy, MAX_PLY, 70, false);
             if (value.isInRange(lowerBound, upperBound)) {
                 hashes.insert(board.getCurrentKey());
-                Position currentPos = *board.getPosition();
+                Position currentPos = board.getPosition();
                 data.emplace_back(currentPos);
                 std::cout << "Added position" << std::endl;
             }
             return;
         }
         MoveListe liste;
-        getMoves(*board.getPosition(), liste);
+        getMoves(board.getPosition(), liste);
         for (int i = 0; i < liste.length(); ++i) {
             board.makeMove(liste.liste[i]);
             createNMoveBook(data, N - 1, board, lowerBound, upperBound);
@@ -55,7 +55,7 @@ namespace Utilities {
         for (int i = 0; i < MAX_MOVE; ++i) {
 
             MoveListe liste;
-            getMoves(*board.getPosition(), liste);
+            getMoves(board.getPosition(), liste);
             if (liste.length() == 0) {
                 if (board.getMover() == BLACK) {
                     return WHITE_WIN;
@@ -64,7 +64,7 @@ namespace Utilities {
                 }
             }
 
-            game.add(*board.getPosition());
+            game.add(board.getPosition());
 
             if (print) {
                 board.printBoard();
@@ -87,6 +87,7 @@ namespace Utilities {
             board.makeMove(bestMove);
 
             if (board.isRepetition()) {
+                std::cout<<"Repetition"<<std::endl;
                 return DRAW;
             }
 

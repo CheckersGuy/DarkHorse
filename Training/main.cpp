@@ -95,17 +95,17 @@ int main(int argc, char *argv[]) {
     }
 
     if (vm.count("listEngines")) {
-        fs::path myPath("/home/robin/Checkers/Training/cmake-build-debug/Engines");
+        fs::path myPath("/home/robin/Checkers/Training/Engines");
         listDirectory(myPath);
     }
 
     if (vm.count("listWeights")) {
-        fs::path myPath("/home/robin/Checkers/Training/cmake-build-debug/Weights");
+        fs::path myPath("/home/robin/Checkers/Training/Weights");
         listDirectory(myPath);
     }
 
     if (vm.count("listTrainData")) {
-        fs::path myPath("/home/robin/Checkers/Training/cmake-build-debug/TrainData");
+        fs::path myPath("/home/robin/Checkers/Training/TrainData");
         listDirectory(myPath);
     }
 
@@ -122,8 +122,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        Engine one("Engines/" + engines[0]);
-        Engine two("Engines/" + engines[1]);
+        Engine one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
+        Engine two("/home/robin/DarkHorse/Training/Engines/" + engines[1]);
         Match match(one, two);
         one.setHashSize(vm["hashSize"].as<int>());
         two.setHashSize(vm["hashSize"].as<int>());
@@ -190,8 +190,24 @@ int main(int argc, char *argv[]) {
     }
     using namespace Training;
 
-    //test
+    initialize();
 
+    Engine test("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/test.so");
+    test.initialize();
+    test.setHashSize(25);
+    test.setTimePerMove(1000);
+
+    Engine test2("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/master.so");
+    test2.initialize();
+    test2.setHashSize(25);
+    test2.setTimePerMove(1000);
+    Board board;
+    BoardFactory::setUpStartingPosition(board);
+
+    TrainingGame game;
+    Utilities::playGame(game,test,test2,board.getPosition(),true);
+
+/*
     std::cout<<"Final Run"<<std::endl;
 
 
@@ -236,27 +252,7 @@ int main(int argc, char *argv[]) {
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-6e-5);
-    trainer.startTune();
-
-  /*  std::vector<TrainingGame>games;
-    Training::loadGames(games,"TrainData/test.game");
-    games=Training::removeDuplicates(games);
-
-    Training::saveGames(games,"TrainData/test.game");*/
-
-
-    /*  using namespace Training;
-      std::vector<TrainingGame> games;
-      Training::loadGames<TrainingGame>(games,"TrainData/newYearcomp.game");
-
-
-
-      std::cout<<"Length prior: "<<games.size()<<std::endl;
-      Training::removeDuplicates(games);
-      std::cout<<"Length after: "<<games.size()<<std::endl;
-      Training::saveGames(games,"TrainData/newYearcomp.game");
-  */
-
+    trainer.startTune();*/
 
 
 

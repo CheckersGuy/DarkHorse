@@ -14,9 +14,9 @@
 
 
 struct NodeInfo {
-    Value value = 0;
-    uint8_t depth = 0;
-    uint8_t  flag = 0;
+    Value value ;
+    uint8_t depth ;
+    uint8_t  flag ;
     Move move;
 };
 
@@ -67,9 +67,7 @@ inline uint8_t Entry::getDepth() {
     return depth;
 }
 
-struct Cluster{
-    Entry entries[2];
-};
+using Cluster=Entry[2];
 
 class Transposition {
 
@@ -80,14 +78,12 @@ public:
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
-    Cluster *entries;
+    std::unique_ptr<Cluster[]>entries;
 
 public:
     Transposition(uint32_t length);
 
     Transposition() = default;
-
-    ~Transposition();
 
     uint32_t getLength();
 

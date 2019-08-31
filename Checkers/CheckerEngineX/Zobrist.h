@@ -13,16 +13,14 @@
 #include "types.h"
 
 
-
 namespace Zobrist {
     extern uint64_t ZOBRIST_KEYS[32][4];
     extern uint64_t colorBlack;
 
     void initializeZobrisKeys();
 
-    uint64_t generateKey(const Position &pos, Color color);
+    uint64_t generateKey(const Position &pos);
 
-    void doUpdateZobristKey(Position& pos,Move move);
 }
 
 

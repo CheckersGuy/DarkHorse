@@ -33,8 +33,8 @@ void getSilentMoves(Position &pos, MoveListe &liste) {
     const uint32_t nocc = ~(pos.BP | pos.WP);
     while (movers) {
         const uint32_t index = __tzcnt_u32(movers);
-        movers &= movers - 1;
-        const uint32_t maske = 1 << index;
+        movers &= movers - 1u;
+        const uint32_t maske = 1u << index;
         uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
         uint16_t pieceType = 0;
         if ((maske & pos.K)) {
@@ -44,7 +44,7 @@ void getSilentMoves(Position &pos, MoveListe &liste) {
         squares &= nocc;
         while (squares) {
             const uint32_t next = __tzcnt_u32(squares);
-            squares &= squares - 1;
+            squares &= squares - 1u;
             Move move(index, next);
             move.setPieceType(pieceType);
             liste.addMove(move);
@@ -61,14 +61,14 @@ void addPawnCaptures(Position &pos, uint32_t orig, uint32_t current, uint32_t ca
     uint32_t imed = temp0 | temp1;
     uint32_t dest = (forwardMask<color>(temp0) | defaultShift<color>(temp1)) & nocc;
     imed &= (forwardMask<~color>(dest) | defaultShift<~color>(dest));
-    if (dest == 0) {
+    if (dest == 0u) {
         addMove<PAWN>(orig, __tzcnt_u32(current), captures, liste);
     }
     while (dest) {
         uint32_t destMask = dest & (-dest);
         uint32_t capMask = imed & (-imed);
-        dest &= dest - 1;
-        imed &= imed - 1;
+        dest &= dest - 1u;
+        imed &= imed - 1u;
         addPawnCaptures<color>(pos, orig, destMask, (captures | capMask), liste);
     }
 }
@@ -92,15 +92,15 @@ addKingCaptures(Position &pos, const uint32_t orig, const uint32_t current, cons
 
     uint32_t imed = (forwardMask<~color>(dest0) | defaultShift<~color>(dest1));
     imed |= forwardMask<color>(dest2) | defaultShift<color>(dest3);
-    uint32_t dest = dest0 | dest1|dest2|dest3;
-    if (dest == 0) {
+    uint32_t dest = dest0 | dest1 | dest2 | dest3;
+    if (dest == 0u) {
         addMove<KING>(orig, __tzcnt_u32(current), captures, liste);
     }
     while (dest) {
         const uint32_t destMask = dest & (-dest);
         const uint32_t capMask = imed & (-imed);
-        dest &= dest - 1;
-        imed &= imed - 1;
+        dest &= dest - 1u;
+        imed &= imed - 1u;
         addKingCaptures<color>(pos, orig, destMask, (captures | capMask), liste);
     }
 }
@@ -109,19 +109,24 @@ template<Color color>
 inline
 void loopCaptures(Position &pos, MoveListe &liste) {
     uint32_t movers = pos.getJumpers<color>();
-    while (movers) {
-        const uint32_t index = __tzcnt_u32(movers);
-        const uint32_t maske = 1 << index;
-        movers &= movers - 1;
-        if ((maske & pos.K)) {
-            maskBits<color>(pos, maske);
-            addKingCaptures<color>(pos, index, maske, 0, liste);
-            maskBits<color>(pos, maske);
-        } else {
-            addPawnCaptures<color>(pos, index, maske, 0, liste);
-        }
-
+    uint32_t pawnMovers = movers & (~pos.K);
+    uint32_t kingMovers = movers & pos.K;
+    while (kingMovers) {
+        const uint32_t index = __tzcnt_u32(kingMovers);
+        const uint32_t maske = 1u << index;
+        kingMovers &= kingMovers - 1u;
+        maskBits<color>(pos, maske);
+        addKingCaptures<color>(pos, index, maske, 0, liste);
+        maskBits<color>(pos, maske);
     }
+
+    while (pawnMovers) {
+        const uint32_t index = __tzcnt_u32(pawnMovers);
+        const uint32_t maske = 1u << index;
+        pawnMovers &= pawnMovers - 1u;
+        addPawnCaptures<color>(pos, index, maske, 0, liste);
+    }
+
 }
 
 inline void getMoves(Position &pos, MoveListe &liste) {

@@ -10,8 +10,6 @@
 
 
 namespace Statistics {
-
-
     class MovePicker {
     private:
         int history[32 * 32 * 2] = {0};
