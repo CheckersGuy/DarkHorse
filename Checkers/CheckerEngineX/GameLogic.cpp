@@ -21,15 +21,12 @@ MAKRO void setHashSize(uint32_t hash) {
 #ifdef TRAIN
 Weights<double> gameWeights;
 #else
-
 Weights<int> gameWeights;
 #endif
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/failSave.weights");
-
-
+    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/Weights/test.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -44,7 +41,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;
-    getMoves(*board.getPosition(), easyMoves);
+    getMoves(board.getPosition(), easyMoves);
     if (easyMoves.length() == 1) {
         best = easyMoves.liste[0];
         board.makeMove(best);
@@ -97,11 +94,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         gameValue = value;
 
         ++i;
-
-
     }
-    board.makeMove(best);
-
     return gameValue;
 }
 
@@ -111,23 +104,23 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
     if (ply >= MAX_PLY) {
-        return board.getMover() * gameWeights.evaluate(*board.getPosition());
+        return board.getMover() * gameWeights.evaluate(board.getPosition());
     }
 
     MoveListe moves;
-    getCaptures(*board.getPosition(), moves);
+    getCaptures(board.getPosition(), moves);
     Value bestValue = -INFINITE;
 
     if (moves.isEmpty()) {
-        if (board.getPosition()->hasThreat()) {
+        if (board.getPosition().hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply, ONE_PLY, false);
         }
 
-        if (board.getPosition()->isWipe()) {
+        if (board.getPosition().isWipe()) {
             return Value::loss(board.getMover(), ply);
         }
 
-        bestValue = board.getMover() * gameWeights.evaluate(*board.getPosition());
+        bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
         if (bestValue >= beta) {
             return bestValue;
         }
@@ -183,7 +176,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return 0;
     }
     if (ply > MAX_PLY) {
-        return board.getMover() * gameWeights.evaluate(*board.getPosition());
+        return board.getMover() * gameWeights.evaluate(board.getPosition());
     }
 
 
@@ -196,7 +189,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
     MoveListe sucessors;
-    getMoves(*board.getPosition(), sucessors);
+    getMoves(board.getPosition(), sucessors);
     if (sucessors.isEmpty()) {
         return Value::loss(board.getMover(), ply);
     }
@@ -250,7 +243,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     int extension = 0;
     if (sucessors.length() == 1 && sucessors[0].isCapture()) {
-        extension += 1000;
+        extension += 590;
     }
 
     int newDepth = depth - ONE_PLY + extension;

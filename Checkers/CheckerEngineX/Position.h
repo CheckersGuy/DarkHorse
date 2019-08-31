@@ -119,11 +119,11 @@ struct Position {
     Position getColorFlip() const;
 
 
-    inline bool operator==(const Position &pos) const {
+    inline bool operator==(const Position& pos) const {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color && pos.key == key);
     }
 
-    inline bool operator!=(const Position &other) const {
+    inline bool operator!=(const Position& other) const {
         return !(*this == other);
     }
 

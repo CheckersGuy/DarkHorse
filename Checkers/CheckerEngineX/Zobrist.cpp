@@ -15,7 +15,6 @@ namespace Zobrist {
         seed ^= seed >> 12;
         seed ^= seed << 25;
         seed ^= seed >> 27;
-
         return seed * 2685821657736338717ull;
     }
 
@@ -29,76 +28,30 @@ namespace Zobrist {
         colorBlack = rand64();
     }
 
-    uint64_t generateKey(const Position &pos, Color color) {
+    uint64_t generateKey(const Position &pos) {
         const uint32_t BK = pos.K & pos.BP;
         const uint32_t WK = pos.K & pos.WP;
-        uint64_t nextKey = 0;
-        for (int i = 0; i < 32; ++i) {
-            const uint32_t maske = 1 << i;
-            if ((maske & BK) == maske) {
-                nextKey ^= ZOBRIST_KEYS[i][BKING];
-            } else if ((maske & pos.BP) == maske) {
-                nextKey ^= ZOBRIST_KEYS[i][BPAWN];
+        uint64_t nextKey = 0u;
+        uint32_t allPieces = pos.BP | pos.WP;
+        while (allPieces) {
+            uint32_t index = __tzcnt_u32(allPieces);
+            uint32_t maske = 1u << index;
+            if ((maske & BK)) {
+                nextKey ^= ZOBRIST_KEYS[index][BKING];
+            } else if ((maske & pos.BP)) {
+                nextKey ^= ZOBRIST_KEYS[index][BPAWN];
             }
-
-            if ((maske & WK) == maske) {
-                nextKey ^= ZOBRIST_KEYS[i][WKING];
-            } else if ((maske & pos.WP) == maske) {
-                nextKey ^= ZOBRIST_KEYS[i][WPAWN];
+            if ((maske & WK)) {
+                nextKey ^= ZOBRIST_KEYS[index][WKING];
+            } else if ((maske & pos.WP)) {
+                nextKey ^= ZOBRIST_KEYS[index][WPAWN];
             }
+            allPieces &= allPieces - 1u;
         }
-        if (color == BLACK) {
+        if (pos.color == BLACK) {
             nextKey ^= colorBlack;
         }
         return nextKey;
     }
 
-}
-
-void Zobrist::doUpdateZobristKey(Position &pos, Move move) {
-    if (pos.color == WHITE) {
-        if (move.getPieceType() == 0 && (move.getTo() >> 2) == 0) {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][WKING];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][WPAWN];
-        } else if (move.getPieceType() == 1) {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][WKING];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][WKING];
-        } else {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][WPAWN];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][WPAWN];
-        }
-        uint32_t captures = move.captures;
-        while (captures) {
-            const uint32_t index = __tzcnt_u32(captures);
-            captures = __blsr_u32(captures);
-            if (((1 << index) & move.captures & pos.K) != 0) {
-                pos.key ^= Zobrist::ZOBRIST_KEYS[index][BKING];
-            } else {
-                pos.key ^= Zobrist::ZOBRIST_KEYS[index][BPAWN];
-            }
-        }
-
-    } else {
-        if (move.getPieceType() == 0 && (move.getTo() >> 2) == 7) {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][BKING];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][BPAWN];
-        } else if (move.getPieceType() == 1) {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][BKING];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][BKING];
-        } else {
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getTo()][BPAWN];
-            pos.key ^= Zobrist::ZOBRIST_KEYS[move.getFrom()][BPAWN];
-        }
-        uint32_t captures = move.captures;
-        while (captures) {
-            const uint32_t index = __tzcnt_u32(captures);
-            captures &= captures - 1;
-            if (((1 << index) & move.captures & pos.K) != 0) {
-                pos.key ^= Zobrist::ZOBRIST_KEYS[index][WKING];
-            } else {
-                pos.key ^= Zobrist::ZOBRIST_KEYS[index][WPAWN];
-            }
-        }
-    }
-    pos.key ^= Zobrist::colorBlack;
 }

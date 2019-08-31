@@ -118,7 +118,7 @@ void Match::start() {
 
     int totalGame=0;
 
-    int busy[threads]={0};
+    int busy[128]={0};
     int idx=0;
 
     while(totalGame<maxGames){

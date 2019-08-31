@@ -66,7 +66,7 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     }
 
     MoveListe liste;
-    getMoves(*playBoard.getPosition(), liste);
+    getMoves(playBoard.getPosition(), liste);
     Move bestMove;
     Value value = searchValue(playBoard, bestMove, 128, static_cast<uint32_t>(maxtime * 1000), false);
 

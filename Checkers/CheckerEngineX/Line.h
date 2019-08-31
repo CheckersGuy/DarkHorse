@@ -11,10 +11,12 @@
 
 class Line {
 
-public:
+private:
 
     Move myArray[MAX_PLY];
     int counter = 0;
+
+public:
 
     Line() = default;
 
@@ -41,6 +43,11 @@ public:
     Move operator[](int index) const;
 
     Move &operator[](int index);
+
+    Move* begin();
+
+    Move* end();
+
 };
 
 

@@ -9,20 +9,15 @@
 Transposition TT;
 
 Transposition::Transposition(uint32_t capacity) {
-    entries = new Cluster[1 << capacity];
+    entries = std::make_unique<Cluster[]>(1<<capacity);
     this->capacity = 1 << (capacity);
-    memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
-}
-
-Transposition::~Transposition() {
-    delete[]this->entries;
+    memset(this->entries.get(), 0, 2 * sizeof(Entry) * this->capacity);
 }
 
 void Transposition::resize(uint32_t capa) {
-    delete[] this->entries;
-    this->entries = new Cluster[1 << capa];
+    this->entries =std::make_unique<Cluster[]>(1<<capa);
     this->capacity = 1 << capa;
-    memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
+    memset(this->entries.get(), 0, 2 * sizeof(Entry) * this->capacity);
 }
 
 uint32_t Transposition::getLength() {
@@ -39,12 +34,12 @@ uint32_t Transposition::getHashHits() {
 
 void Transposition::clear() {
     hashHit = 0;
-    memset(this->entries, 0, 2 * sizeof(Entry) * this->capacity);
+    memset(this->entries.get(), 0, 2 * sizeof(Entry) * this->capacity);
 }
 
 void Transposition::incrementAgeCounter() {
     ageCounter++;
-    ageCounter=ageCounter%Transposition::AGE_LIMIT;
+    ageCounter = ageCounter % Transposition::AGE_LIMIT;
 }
 
 uint8_t Transposition::getAgeCounter() {
@@ -61,46 +56,46 @@ void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t dept
     this->length++;
     assert(value.isEval());
     const uint32_t index = (key) & (this->capacity - 1);
-    Cluster *cluster = &this->entries[index];
-    if (depth > cluster->entries[1].getDepth() || ageCounter!=cluster->entries[1].getAgeCounter()) {
-        cluster->entries[1].depth=depth;
-        cluster->entries[1].flag=flag;
-        cluster->entries[1].age=ageCounter;
-        cluster->entries[1].bestMove = move;
-        cluster->entries[1].value = value;
-        cluster->entries[1].key = static_cast<uint32_t >(key >> 32);
+    Cluster &cluster = this->entries[index];
+    if (depth > cluster[1].getDepth() || ageCounter != cluster[1].getAgeCounter()) {
+        cluster[1].depth = depth;
+        cluster[1].flag = flag;
+        cluster[1].age = ageCounter;
+        cluster[1].bestMove = move;
+        cluster[1].value = value;
+        cluster[1].key = static_cast<uint32_t >(key >> 32);
         return;
     }
-    cluster->entries[0].depth=depth;
-    cluster->entries[0].flag=flag;
-    cluster->entries[0].age=ageCounter;
-    cluster->entries[0].value = value;
-    cluster->entries[0].key = static_cast<uint32_t >(key >> 32);
-    cluster->entries[0].bestMove = move;
+    cluster[0].depth = depth;
+    cluster[0].flag = flag;
+    cluster[0].age = ageCounter;
+    cluster[0].value = value;
+    cluster[0].key = static_cast<uint32_t >(key >> 32);
+    cluster[0].bestMove = move;
 }
 
-void Transposition::findHash(const uint64_t key, int depth, int *alpha, int *beta, NodeInfo& info) {
+void Transposition::findHash(const uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info) {
 
     assert(info.value.isInRange(-INFINITE, INFINITE));
     const uint32_t index = key & (this->capacity - 1);
     const uint32_t currKey = static_cast<uint32_t >(key >> 32);
     for (int i = 0; i <= 1; ++i) {
-        if (this->entries[index].entries[i].key == currKey) {
-            if (this->entries[index].entries[i].getDepth() >= depth) {
-                if (this->entries[index].entries[i].getFlag() == TT_EXACT) {
-                    (*alpha) = this->entries[index].entries[i].value.value;
-                    (*beta) = this->entries[index].entries[i].value.value;
-                } else if (this->entries[index].entries[i].getFlag() == TT_LOWER) {
-                    (*alpha) = std::max((*alpha), this->entries[index].entries[i].value.value);
-                } else if (this->entries[index].entries[i].getFlag() == TT_UPPER) {
-                    (*beta) = std::min((*beta), this->entries[index].entries[i].value.value);
+        if (this->entries[index][i].key == currKey) {
+            if (this->entries[index][i].getDepth() >= depth) {
+                if (this->entries[index][i].getFlag() == TT_EXACT) {
+                    (*alpha) = this->entries[index][i].value.value;
+                    (*beta) = this->entries[index][i].value.value;
+                } else if (this->entries[index][i].getFlag() == TT_LOWER) {
+                    (*alpha) = std::max((*alpha), this->entries[index][i].value.value);
+                } else if (this->entries[index][i].getFlag() == TT_UPPER) {
+                    (*beta) = std::min((*beta), this->entries[index][i].value.value);
                 }
                 this->hashHit++;
             }
-            info.move = this->entries[index].entries[i].bestMove;
-            info.value = this->entries[index].entries[i].getValue();
-            info.depth = this->entries[index].entries[i].getDepth();
-            info.flag = this->entries[index].entries[i].getFlag();
+            info.move = this->entries[index][i].bestMove;
+            info.value = this->entries[index][i].getValue();
+            info.depth = this->entries[index][i].getDepth();
+            info.flag = this->entries[index][i].getFlag();
 
             break;
 

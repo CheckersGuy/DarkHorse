@@ -19,24 +19,23 @@ constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
 
 constexpr size_t SIZE = 390625 * 9 * 2;
 
-
 inline size_t getIndex(uint32_t region, const Position &pos) {
     //will return the index for a given position
     size_t index = 0;
     uint32_t pieces = region & (pos.BP | pos.WP);
     size_t counter = 0;
     while (pieces) {
-        uint32_t lsb = (pieces & ~(pieces - 1));
-        pieces &= pieces - 1;
-        uint32_t current = 0;
+        uint32_t lsb = (pieces & ~(pieces - 1u));
+        pieces &= pieces - 1u;
+        size_t current = 0ull;
         if (((pos.BP & (~pos.K)) & lsb)) {
-            current = 3;
+            current = 3ull;
         } else if (((pos.WP & (~pos.K)) & lsb)) {
-            current = 4;
+            current = 4ull;
         } else if (((pos.K & pos.BP) & lsb)) {
-            current = 1;
+            current = 1ull;
         } else if (((pos.K & pos.WP) & lsb)) {
-            current = 2;
+            current = 2ull;
         }
         index += powers[counter++] * current;
 
@@ -49,13 +48,8 @@ struct Weights {
 
 
     T kingOp, kingEnd;
-    T balanceOp, balanceEnd;
-    T balanceKingOp, balanceKingEnd;
-
-
     std::unique_ptr<T[]> weights;
-
-    Weights() : kingOp(0), kingEnd(0), balanceOp(0), balanceEnd(0), balanceKingOp(0), balanceKingEnd(0) {
+    Weights() : kingOp(0), kingEnd(0) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::memset(weights.get(), 0, sizeof(T) * SIZE);
     }
@@ -107,7 +101,7 @@ struct Weights {
                     counter++;
                 }
             }
-            for (size_t i = SIZE; i < SIZE + 6; ++i) {
+            for (size_t i = SIZE; i < SIZE + 2; ++i) {
                 double current;
                 stream.read((char *) &current, sizeof(double));
                 (*this)[i] = current;
@@ -139,15 +133,10 @@ struct Weights {
 
         stream.write((char *) &kingOp, sizeof(T));
         stream.write((char *) &kingEnd, sizeof(T));
-        stream.write((char *) &balanceOp, sizeof(T));
-        stream.write((char *) &balanceEnd, sizeof(T));
-        stream.write((char *) &balanceKingOp, sizeof(T));
-        stream.write((char *) &balanceKingEnd, sizeof(T));
-
         stream.close();
     }
 
-    inline Value evaluate(Position pos) const {
+    Value evaluate(Position pos) const {
         const Color color = pos.getColor();
         const uint32_t nKings = ~pos.K;
 
@@ -207,8 +196,6 @@ struct Weights {
             return kingOp;
         } else if (index == SIZE + 1) {
             return kingEnd;
-        } else if (index == SIZE + 2) {
-            return balanceOp;
         }
         return weights[index];
     }
@@ -218,8 +205,6 @@ struct Weights {
             return kingOp;
         } else if (index == SIZE + 1) {
             return kingEnd;
-        } else if (index == SIZE + 2) {
-            return balanceOp;
         }
         return weights[index];
     }
@@ -228,8 +213,12 @@ struct Weights {
     size_t getSize() const {
         return SIZE;
     }
-
 };
 
+#ifdef TRAIN
+extern Weights<double> gameWeights;
+#else
+extern Weights<int> gameWeights;
+#endif
 
 #endif //CHECKERENGINEX_WEIGHTS_H

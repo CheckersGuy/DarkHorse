@@ -82,7 +82,7 @@ namespace Training {
             size_t finalLength = minValue(game.length(), 25u);
 
             for (size_t i = 0; i < finalLength; ++i) {
-                key ^= Zobrist::generateKey(game.positions[i], game.positions[i].getColor());
+                key ^= Zobrist::generateKey(game.positions[i]);
             }
             return key;
         }

@@ -12,125 +12,7 @@
 #include "MovePicker.h"
 
 
-class MoveListIterator {
 
-friend class MoveListe;
-public:
-    using value_type =Move;
-    using difference_type=std::ptrdiff_t;
-    using pointer=Move *;
-    using reference=Move &;
-    using iterator_category =std::random_access_iterator_tag;
-
-    MoveListIterator() = default;
-
-    MoveListIterator(const MoveListIterator &other) {
-        this->p = other.p;
-    }
-
-    bool operator==(const MoveListIterator &iter) const {
-        return iter.p == p;
-    }
-
-    bool operator!=(const MoveListIterator &iter) const {
-        return iter.p != p;
-    }
-
-    value_type& operator*() const {
-        return *p;
-    }
-
-    pointer operator->(){
-        return p;
-    }
-
-    MoveListIterator &operator++() {
-        p++;
-        return *this;
-    }
-
-    MoveListIterator operator++(int) {
-        MoveListIterator iter;
-        iter.p = p;
-        p++;
-        return iter;
-    }
-
-    MoveListIterator &operator--() {
-        p--;
-        return *this;
-    }
-
-    MoveListIterator operator--(int) {
-        MoveListIterator iter;
-        iter.p = p;
-        p--;
-        return iter;
-    }
-
-    MoveListIterator &operator+=(const difference_type dist) {
-        this->p += dist;
-        return *this;
-    }
-
-    MoveListIterator &operator-=(const difference_type dist) {
-        this->p -= dist;
-        return *this;
-    }
-
-    MoveListIterator operator+(const difference_type dist) const {
-        MoveListIterator iter;
-        iter.p = this->p + dist;
-        return iter;
-    }
-
-    difference_type operator-(const MoveListIterator &iter) const {
-        difference_type dist = this->p - iter.p;
-        return dist;
-    }
-
-    MoveListIterator operator-(const difference_type dist) const {
-        MoveListIterator next;
-        next.p = this->p;
-        next.p -= dist;
-        return next;
-    }
-
-    value_type operator[](const difference_type index) {
-        return *(this->p + index);
-    }
-
-    bool operator<(const MoveListIterator &iter) const {
-        return p < iter.p;
-    }
-
-    bool operator<=(const MoveListIterator &iter) const {
-        return p <= iter.p;
-    }
-
-    bool operator>(const MoveListIterator &iter) const {
-        return p > iter.p;
-    }
-
-    bool operator>=(const MoveListIterator &iter) const {
-        return p >= iter.p;
-    }
-    friend MoveListIterator operator+(difference_type lhs, const MoveListIterator &rhs) {
-        MoveListIterator next;
-        next.p = rhs.p + lhs;
-        return next;
-    }
-
-    friend MoveListIterator operator-(difference_type lhs, const MoveListIterator &rhs) {
-        MoveListIterator next;
-        next.p = rhs.p - lhs;
-        return next;
-    }
-
-
-private:
-    pointer p;
-};
 
 class MoveListe {
 
@@ -142,7 +24,7 @@ public:
 
     int length();
 
-    void addMove(Move& next);
+    void addMove(Move next);
 
     void sort(Move ttMove, bool inPVLine, Color color);
 
@@ -152,9 +34,9 @@ public:
 
     Move operator[](size_t index)const;
 
-    MoveListIterator begin();
+    Move* begin();
 
-    MoveListIterator end();
+    Move* end();
 
 };
 
@@ -171,10 +53,10 @@ inline Move MoveListe::operator[](size_t index)const {
     return liste[index];
 }
 
-inline void MoveListe::addMove(Move&next) {
+inline void MoveListe::addMove(Move next) {
     assert(!next.isEmpty());
     next.setMoveIndex(moveCounter);
-    this->liste[this->moveCounter++] = next;
+    liste[this->moveCounter++] = next;
 }
 
 inline int MoveListe::length() {
