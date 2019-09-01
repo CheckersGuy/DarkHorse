@@ -9,8 +9,6 @@ namespace Statistics {
 
     MovePicker mPicker;
 
-
-
     void MovePicker::clearScores() {
         for (int i = 0; i < 32 * 32 * 2; ++i) {
             this->bfScore[i] = 0;
@@ -19,10 +17,10 @@ namespace Statistics {
     }
 
     int MovePicker::getMoveScore(Move move, Color color) {
-        const int colorIndex = (color+1)/2;
+        const int colorIndex = (color + 1) / 2;
         const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()];
-        const int score = (bScore == 0) ? 0 : (( hhScore / bScore));
+        const int score = (bScore == 0) ? 0 : ((hhScore / bScore));
         return score;
     }
 
@@ -36,12 +34,12 @@ namespace Statistics {
     }
 
     void MovePicker::updateHHScore(Move move, Color color, int depth) {
-        const int colorIndex = (color+1)/2;
-        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += depth* depth;
+        const int colorIndex = (color + 1) / 2;
+        history[32 * 32 * colorIndex + 32 * move.getTo() + move.getFrom()] += depth * depth;
     }
 
     void MovePicker::updateBFScore(Move *liste, int moveIndex, Color color, int depth) {
-        const int colorIndex = (color+1)/2;
+        const int colorIndex = (color + 1) / 2;
         for (int i = 0; i < moveIndex; ++i) {
             bfScore[32 * 32 * colorIndex + 32 * liste[i].getTo() + liste[i].getFrom()] += depth;
         }

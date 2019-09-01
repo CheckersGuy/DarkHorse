@@ -15,6 +15,21 @@ Position Position::getColorFlip() const {
     return next;
 }
 
+Position Position::getStartPosition() {
+    Position pos;
+    pos.BP = 0;
+    pos.WP = 0;
+    pos.K = 0;
+    for (int i = 0; i <= 11; i++) {
+        pos.BP |= 1 << S[i];
+    }
+    for (int i = 20; i <= 31; i++) {
+        pos.WP |= 1 << S[i];
+    }
+    pos.key=Zobrist::generateKey(pos);
+    return pos;
+}
+
 bool Position::isEmpty() const {
     return (BP == 0 && WP == 0 && K == 0);
 }
@@ -32,7 +47,6 @@ bool Position::hasJumps(Color color) const {
 }
 
 bool Position::hasThreat() const {
-    //if the other play can jump
     return hasJumps(~getColor());
 }
 
