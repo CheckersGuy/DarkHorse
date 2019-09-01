@@ -34,6 +34,8 @@ constexpr uint32_t MASK_COL_4=2290649224u;
 
 
 
+constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u, 23u, 22u, 21u, 20u, 27u, 26u,
+                            25u, 24u, 31u, 30u, 29u, 28u};
 
 using Depth =int;
 using Ply =int;
@@ -42,8 +44,13 @@ constexpr int scalFac=128;
 
 
 
+
 enum  NodeType {
     PVNode, NONPV
+};
+
+enum Shift{
+    UP,DOWN
 };
 
 enum Score {
@@ -381,7 +388,7 @@ inline Value addSafe(Value val, Value incre) {
 template<Color color>
 inline
 uint32_t defaultShift(const uint32_t maske) {
-    if constexpr(color == BLACK) {
+    if constexpr(color== BLACK) {
         return maske << 4;
     } else {
         return maske >> 4;
@@ -391,7 +398,7 @@ uint32_t defaultShift(const uint32_t maske) {
 template<Color color>
 inline
 uint32_t forwardMask(const uint32_t maske) {
-    if constexpr (color == BLACK) {
+    if constexpr (color==BLACK) {
         return ((maske & MASK_L3) << 3) | ((maske & MASK_L5) << 5);
     } else {
         return ((maske & MASK_R3) >> 3) | ((maske & MASK_R5) >> 5);

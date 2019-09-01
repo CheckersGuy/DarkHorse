@@ -43,7 +43,7 @@ struct Position {
 
     Position(uint32_t wp, uint32_t bp, uint32_t k, uint64_t cKey) : WP(wp), BP(bp), K(k), key(cKey), color(BLACK) {}
 
-    Position() : WP(0), BP(0), K(0), key(0), color(BLACK) {};
+    Position() : WP(0u), BP(0u), K(0u), key(0u), color(BLACK) {};
 
     Position(uint32_t wp, uint32_t bp, uint32_t k) : Position(wp, bp, k, 0) {}
 
@@ -53,6 +53,13 @@ struct Position {
             return BP;
         else
             return WP;
+    }
+    template<PieceType type> uint32_t getPieces(){
+        if constexpr(type==KING){
+        return K;
+        } else{
+            return (BP|WP)&(~K);
+        }
     }
 
     template<Color color>
@@ -117,6 +124,8 @@ struct Position {
     void printPosition() const;
 
     Position getColorFlip() const;
+
+    static Position getStartPosition();
 
 
     inline bool operator==(const Position& pos) const {

@@ -53,17 +53,17 @@ namespace Perft {
             return liste.length();
         }
         uint64_t counter = 0;
-        auto result=table.probe(board.getPosition(),depth);
-        if(result.has_value()){
+        /*if(result.has_value()){
+         * auto result=table.probe(board.getPosition(),depth);
             return result.value();
-        }
+        }*/
         for (Move m : liste) {
             board.makeMove(m);
             counter += perftCheck(board, depth - 1);
             board.undoMove();
         }
 
-        table.store(board.getPosition(),depth,counter);
+        //table.store(board.getPosition(),depth,counter);
         return counter;
     }
 }

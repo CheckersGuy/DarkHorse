@@ -32,14 +32,14 @@ int main(int argl, const char **argc) {
     Board board;
     BoardFactory::setUpStartingPosition(board);
 
-    Perft::table.setCapacity(1<<26);
+    Perft::table.setCapacity(1<<2);
 
     auto t1=std::chrono::high_resolution_clock::now();
-    uint64_t count = Perft::perftCheck(board,15);
+    uint64_t count = Perft::perftCheck(board,12);
     auto t2=std::chrono::high_resolution_clock::now();
     auto c=t2-t1;
     std::cout<<count<<std::endl;
     std::cout<<"Time passed: "<<c.count()/1000000<<std::endl;
 
-
+    //24934
 }
