@@ -48,7 +48,7 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     for (int i = 0; i < 8; ++i) {
         for (int j = 0; j < 8; ++j) {
             if ((j + i) % 2 == 0) {
-                uint32_t mask = 1 << S[counter];
+                uint32_t mask = 1u << S[counter];
                 if (board[j][i] == CBMAN + CBWHITE) {
                     pos->WP |= mask;
                 } else if (board[j][i] == CBMAN + CBBLACK) {
@@ -78,13 +78,13 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
 
     if (color == CBBLACK) {
 
-        if (bestMove.isPromotion() || bestMove.getPieceType() == 1) {
+        if (bestMove.isPromotion() || ((pos->K & bestMove.getFrom()) != 0)) {
             board[to % 8][to / 8] = CBBLACK + CBKING;
         } else {
             board[to % 8][to / 8] = CBBLACK + CBMAN;
         }
     } else {
-        if (bestMove.isPromotion() || bestMove.getPieceType() == 1) {
+        if (bestMove.isPromotion() || ((pos->K & bestMove.getFrom()) != 0)) {
             board[to % 8][to / 8] = CBWHITE + CBKING;
         } else {
             board[to % 8][to / 8] = CBWHITE + CBMAN;
@@ -127,7 +127,7 @@ int enginecommand(char str[256], char reply[1024]) {
             hashSize=hashSize/2;
             power++;
         }
-        sprintf(reply,std::to_string(1<<power).c_str());
+        sprintf(reply,std::to_string(1u<<power).c_str());
         return 1;
     }
 

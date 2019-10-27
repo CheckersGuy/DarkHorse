@@ -14,10 +14,10 @@
 
 
 struct NodeInfo {
+    Move move;
     Value value ;
     uint8_t depth ;
     uint8_t  flag ;
-    Move move;
 };
 
 
@@ -26,17 +26,12 @@ struct Entry {
     Value value ;
     uint32_t key ;
     uint8_t flag;
-    uint8_t age;
     uint8_t depth;
-
-
     uint32_t getKey();
 
     Value getValue();
 
     uint8_t getFlag();
-
-    uint8_t getAgeCounter();
 
     uint8_t getDepth();
 
@@ -49,10 +44,6 @@ inline uint32_t Entry::getKey() {
     return this->key;
 }
 
-
-inline uint8_t Entry::getAgeCounter() {
-    return age;
-}
 
 inline Value Entry::getValue() {
     return this->value;
@@ -71,17 +62,16 @@ using Cluster=Entry[2];
 
 class Transposition {
 
-    static constexpr uint8_t AGE_LIMIT = 250;
+    static constexpr uint8_t AGE_LIMIT = 8;
 
 public:
-    uint8_t ageCounter = 0;
     uint32_t length = 0;
     uint32_t capacity = 0;
     uint32_t hashHit = 0;
     std::unique_ptr<Cluster[]>entries;
 
 public:
-    Transposition(uint32_t length);
+    explicit Transposition(uint32_t length);
 
     Transposition() = default;
 
@@ -92,8 +82,6 @@ public:
     uint32_t getCapacity();
 
     uint32_t getHashHits();
-
-    uint8_t getAgeCounter();
 
     void clear();
 

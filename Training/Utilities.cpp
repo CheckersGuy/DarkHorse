@@ -39,7 +39,7 @@ namespace Utilities {
         MoveListe liste;
         getMoves(board.getPosition(), liste);
         for (int i = 0; i < liste.length(); ++i) {
-            board.makeMove(liste.liste[i]);
+            board.makeMove(liste[i]);
             createNMoveBook(data, N - 1, board, lowerBound, upperBound);
             board.undoMove();
         }
@@ -51,8 +51,11 @@ namespace Utilities {
 
     Score playGame(Training::TrainingGame &game, Engine &one, Engine &two, Position position, bool print) {
         Board board;
-        BoardFactory::setUpPosition(board, position);
+        board=position;
         for (int i = 0; i < MAX_MOVE; ++i) {
+            if (board.isRepetition()) {
+                return DRAW;
+            }
 
             MoveListe liste;
             getMoves(board.getPosition(), liste);
@@ -85,15 +88,35 @@ namespace Utilities {
                 return INVALID;
             }
             board.makeMove(bestMove);
-
-            if (board.isRepetition()) {
-                std::cout<<"Repetition"<<std::endl;
-                return DRAW;
-            }
-
         }
 
         return DRAW;
+    }
+
+     std::vector<std::string> getWhiteSpaceSeperated(const std::string msg) {
+        std::vector<std::string> result;
+        std::istringstream stream(msg);
+        std::string current;
+        while (stream >> current) {
+            result.emplace_back(current);
+        }
+        return result;
+    }
+
+    std::vector<std::string> getDelimiterSeperated(const std::string message, const std::string delimiter) {
+        size_t counter = 0;
+        std::vector<std::string> result;
+
+        for (size_t i = 0; i < message.size(); i += delimiter.size()) {
+            size_t pos = message.find(delimiter, i);
+            pos = std::min(pos, message.size());
+            size_t length = pos - i;
+            std::string word = message.substr(i, length);
+            i += length;
+            result.emplace_back(word);
+        }
+
+        return result;
     }
 
 }

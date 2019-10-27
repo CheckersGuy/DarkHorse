@@ -26,7 +26,7 @@ Weights<int> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/Weights/test.weights");
+    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/Weights/failSave2.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -43,11 +43,10 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     MoveListe easyMoves;
     getMoves(board.getPosition(), easyMoves);
     if (easyMoves.length() == 1) {
-        best = easyMoves.liste[0];
-        board.makeMove(best);
+        best = easyMoves[0];
         return EASY_MOVE;
     }
-    TT.incrementAgeCounter();
+    mainPV.clear();
     TT.clear();
     timeOut = false;
     endTime = getSystemTime() + time;
@@ -73,8 +72,8 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
 
         if (i >= 5) {
-            alpha = value - 100 * scalFac;
-            beta = value + 100 * scalFac;
+            alpha = value - 50 * scalFac;
+            beta = value + 50 * scalFac;
         }
 
         if (print) {
@@ -82,7 +81,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
-            temp += mainPV.toString();
+            temp += currentPV.toString();
             temp += "\n";
             temp += "\n";
             std::cout << temp;
@@ -103,10 +102,6 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
-    if (ply >= MAX_PLY) {
-        return board.getMover() * gameWeights.evaluate(board.getPosition());
-    }
-
     MoveListe moves;
     getCaptures(board.getPosition(), moves);
     Value bestValue = -INFINITE;
@@ -127,15 +122,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     }
 
     if (inPVLine && ply < mainPV.length()) {
-        auto val = std::find(moves.begin(), moves.end(), mainPV[ply]);
-        if (val != moves.end()) {
-            std::swap(moves[0], *val);
-        }
+        moves.putFront(mainPV[0]);
     }
 
     for (int i = 0; i < moves.length(); ++i) {
         Line localPV;
-        board.makeMove(moves.liste[i]);
+        board.makeMove(moves[i]);
         Value value;
         if (i == 0) {
             value = ~quiescene<type>(board, ~beta, ~alpha, localPV, ply + 1);
@@ -169,19 +161,17 @@ Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
 
     constexpr bool inPVLine = (type == PVNode);
-    const bool isRoot = (ply == 0);
     assert(alpha.isEval() && beta.isEval());
-    if ((nodeCounter & 16383) == 0 && getSystemTime() >=endTime) {
+    if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
         timeOut = true;
         return 0;
     }
-    if (ply > MAX_PLY) {
-        return board.getMover() * gameWeights.evaluate(board.getPosition());
-    }
-
-
     if (ply > 0 && board.isRepetition()) {
         return 0;
+    }
+
+    if (ply > MAX_PLY) {
+        return gameWeights.evaluate(board.getPosition()) * board.getMover();
     }
 
     if (depth < ONE_PLY) {
@@ -204,12 +194,11 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     NodeInfo info;
 #ifndef TRAIN
 
-    TT.findHash(board.getCurrentKey(), depth / ONE_PLY, &alpha.value, &beta.value, info);
-    info.value = info.value.valueFromTT(ply);
+    if (ply > 0) {
+        TT.findHash(board.getCurrentKey(), depth / ONE_PLY, &alpha.value, &beta.value, info);
+        info.value = info.value.valueFromTT(ply);
+    };
 #endif
-
-
-
 
 
     if (!inPVLine && ply > 0 && alpha >= beta) {
@@ -217,8 +206,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && depth >= 5 * ONE_PLY) {
-        Value margin = (10 * scalFac * depth) / ONE_PLY;
+    if (!inPVLine && prune && depth >= 3 * ONE_PLY) {
+        Value margin = (5 * scalFac * depth) / ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
@@ -229,10 +218,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
     if (inPVLine && ply < mainPV.length()) {
-        auto val = std::find(sucessors.begin(), sucessors.end(), mainPV[ply]);
-        if (val != sucessors.end()) {
-            std::swap(sucessors[0], *val);
-        }
+        sucessors.putFront(mainPV[ply]);
     }
 
     sucessors.sort(info.move, inPVLine, board.getMover());
@@ -243,7 +229,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     int extension = 0;
     if (sucessors.length() == 1 && sucessors[0].isCapture()) {
-        extension += 590;
+        extension += 500;
     }
 
     int newDepth = depth - ONE_PLY + extension;
@@ -256,10 +242,10 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth > 2 * ONE_PLY && i > ((inPVLine) ? 3 : 1) && !sucessors[i].isCapture() && !sucessors[i].isPromotion()) {
+            if (depth > 2 * ONE_PLY && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
+                !sucessors[i].isPromotion()) {
                 reduce = ONE_PLY;
-
-                if (i>3) {
+                if (i > 3) {
                     reduce = 2000;
                 }
             }
@@ -271,10 +257,10 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         board.undoMove();
         if (value > bestValue) {
             bestValue = value;
-            bestMove = sucessors.liste[i];
+            bestMove = sucessors[i];
             if (value >= beta) {
-                Statistics::mPicker.updateHHScore(sucessors.liste[i], board.getMover(), depth / ONE_PLY);
-                Statistics::mPicker.updateBFScore(sucessors.liste, i, board.getMover(), depth / ONE_PLY);
+                Statistics::mPicker.updateHHScore(sucessors[i], board.getMover(), depth / ONE_PLY);
+                Statistics::mPicker.updateBFScore(sucessors.begin(), i, board.getMover(), depth / ONE_PLY);
                 break;
             }
             if (value > alpha) {

@@ -4,7 +4,7 @@
 //
 
 #include "Perft.h"
-#include "BoardFactory.h"
+
 
 namespace Perft {
 
@@ -22,7 +22,7 @@ namespace Perft {
 
     std::optional<uint64_t> Table::probe(Position pos, int depth) {
         std::optional<uint64_t> returnValue;
-        uint32_t key = static_cast<uint32_t >(pos.key >> 32);
+        auto key = static_cast<uint32_t >(pos.key >> 32u);
         const uint32_t index = (key) & (this->capacity - 1);
         if (entries[index].entries[1].pos == pos && entries[index].entries[1].depth == depth) {
             returnValue = entries[index].entries[1].nodes;
@@ -33,9 +33,9 @@ namespace Perft {
     }
 
     void Table::store(Position pos, int depth, uint64_t nodes) {
-        uint32_t key = static_cast<uint32_t >(pos.key >> 32);
-        const uint32_t index = (key) & (this->capacity - 1);
-        if (depth>entries[index].entries[0].depth ) {
+        auto key = static_cast<uint32_t >(pos.key >> 32u);
+        const uint32_t index = (key) & (this->capacity - 1u);
+        if (depth > entries[index].entries[0].depth) {
             entries[index].entries[0].pos = pos;
             entries[index].entries[0].depth = depth;
             entries[index].entries[0].nodes = nodes;
@@ -53,17 +53,17 @@ namespace Perft {
             return liste.length();
         }
         uint64_t counter = 0;
-        /*if(result.has_value()){
-         * auto result=table.probe(board.getPosition(),depth);
+        auto result = table.probe(board.getPosition(), depth);
+        if (result.has_value()) {
             return result.value();
-        }*/
-        for (Move m : liste) {
+        }
+        for (const auto & m : liste) {
             board.makeMove(m);
             counter += perftCheck(board, depth - 1);
             board.undoMove();
         }
 
-        //table.store(board.getPosition(),depth,counter);
+        table.store(board.getPosition(), depth, counter);
         return counter;
     }
 }

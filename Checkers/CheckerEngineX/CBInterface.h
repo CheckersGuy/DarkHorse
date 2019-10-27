@@ -21,8 +21,8 @@ struct CBmove {
     int notUsed;
 };
 
-inline bool isBitSet(int var, int bit) {
-    const uint32_t maske = 1 << bit;
+inline bool isBitSet(int var, uint32_t bit) {
+    const uint32_t maske = 1u << bit;
     return ((maske & static_cast<uint32_t >(var)) != 0);
 }
 

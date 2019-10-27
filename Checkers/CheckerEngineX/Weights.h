@@ -15,28 +15,23 @@
 
 
 constexpr uint32_t region = 13107u;
-constexpr size_t powers[] = {1, 5, 25, 125, 625, 3125, 15625, 78125};
+constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
+constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
-constexpr size_t SIZE = 390625 * 9 * 2;
-
-inline size_t getIndex(uint32_t region, const Position &pos) {
+inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
-    size_t index = 0;
-    uint32_t pieces = region & (pos.BP | pos.WP);
-    size_t counter = 0;
+    size_t index = 0ull;
+    uint32_t pieces = reg & (pos.BP | pos.WP);
+    size_t counter = 0ull;
+    uint32_t BP = pos.BP & (~pos.K);
+    uint32_t WP = pos.WP & (~pos.K);
+    uint32_t BK = pos.BP & pos.K;
+    uint32_t WK = pos.WP & pos.K;
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
         pieces &= pieces - 1u;
-        size_t current = 0ull;
-        if (((pos.BP & (~pos.K)) & lsb)) {
-            current = 3ull;
-        } else if (((pos.WP & (~pos.K)) & lsb)) {
-            current = 4ull;
-        } else if (((pos.K & pos.BP) & lsb)) {
-            current = 1ull;
-        } else if (((pos.K & pos.WP) & lsb)) {
-            current = 2ull;
-        }
+        size_t current;
+        current = ((BP & lsb) != 0) * 3 + ((WP & lsb) != 0) * 4 + ((BK & lsb) != 0) * 1 + ((WK & lsb) != 0) * 2;
         index += powers[counter++] * current;
 
     }
@@ -49,6 +44,7 @@ struct Weights {
 
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
+
     Weights() : kingOp(0), kingEnd(0) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::memset(weights.get(), 0, sizeof(T) * SIZE);
@@ -59,10 +55,6 @@ struct Weights {
         std::memcpy(this->weights.get(), other.weights.get(), sizeof(T) * SIZE);
     }
 
-    Weights(Weights &&other) {
-        this->weights = other.weights;
-        other.weights = nullptr;
-    }
 
     size_t numNonZeroValues() {
         return std::count_if(weights.get(), weights.get() + SIZE, [](T val) { return static_cast<int>(val) != 0; });
@@ -137,6 +129,7 @@ struct Weights {
     }
 
     Value evaluate(Position pos) const {
+        constexpr int pawnEval = 100 * scalFac;
         const Color color = pos.getColor();
         const uint32_t nKings = ~pos.K;
 
@@ -161,7 +154,7 @@ struct Weights {
 
         for (int j = 0; j < 3; ++j) {
             for (int i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8 * j + i);
+                const uint32_t curRegion = region << (8u * j + i);
                 size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
                 size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
                 opening += (weights[indexOpening]);
@@ -174,9 +167,9 @@ struct Weights {
         const int factorEnd = 24 - phase;
 
 
-        const int pieceEval = (WP - BP) * 100 * scalFac;
-        const int kingEvalOp = (100 * scalFac + kingOp) * (WK - BK);
-        const int kingEvalEnd = (100 * scalFac + kingEnd) * (WK - BK);
+        const int pieceEval = (WP - BP) * pawnEval;
+        const int kingEvalOp = (pawnEval + kingOp) * (WK - BK);
+        const int kingEvalEnd = (pawnEval + kingEnd) * (WK - BK);
 
 
         opening += kingEvalOp;
@@ -200,7 +193,7 @@ struct Weights {
         return weights[index];
     }
 
-    T operator[](size_t index) const {
+    const T &operator[](size_t index) const {
         if (index == SIZE) {
             return kingOp;
         } else if (index == SIZE + 1) {

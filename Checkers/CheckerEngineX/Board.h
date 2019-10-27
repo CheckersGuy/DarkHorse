@@ -19,13 +19,13 @@
 class Board {
 
 public:
-    Position pStack[MAX_PLY + MAX_MOVE];
-    Move history[MAX_PLY + MAX_MOVE];
+    std::array<Position,MAX_PLY + MAX_MOVE>pStack;
+    std::array<Move,MAX_PLY + MAX_MOVE> history;
     int pCounter = 0;
 
     Board() = default;
 
-    Board(const Board &board);
+    Board(const Board& board);
 
     void printBoard();
 
@@ -45,41 +45,8 @@ public:
 
     Color getMover();
 
-    Board& operator=(const Position pos);
+    Board& operator=(Position pos);
 };
 
-
-inline Color Board::getMover() {
-    return pStack[pCounter].color;
-}
-
-inline bool Board::isSilentPosition() {
-    const uint32_t wjumpers = pStack[pCounter].getJumpers<WHITE>();
-    const uint32_t bjumpers = pStack[pCounter].getJumpers<BLACK>();
-    return (wjumpers == 0u && bjumpers == 00);
-}
-
-inline bool Board::hasJumps() {
-    return !isSilentPosition();
-}
-
-inline uint64_t Board::getCurrentKey() {
-    return this->pStack[pCounter].key;
-}
-
-inline bool Board::isRepetition() {
-    //checking for repetitions
-    for (int i = pCounter - 2; i >= 0; i -= 2) {
-        if (getCurrentKey() == pStack[i].key) {
-            return true;
-        }
-        if (history[i].getPieceType() == 0 || history[i].isCapture() || history[i].isPromotion()) {
-            return false;
-        }
-
-    }
-
-    return false;
-}
 
 #endif //CHECKERSTEST_BOARD_H

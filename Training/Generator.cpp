@@ -3,13 +3,6 @@
 //
 
 #include "Generator.h"
-#include "Engine.h"
-#include  <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include  <sys/types.h>
-#include "fcntl.h"
-#include "Utilities.h"
 
 
 void Generator::setMaxGames(int games) {
@@ -97,7 +90,7 @@ void Generator::start() {
     int totalGame = 0;
     uint64_t totalGameLengths =0;
 
-    bool busy[threads] = {false};
+    bool busy[256] = {false};
     int idx = 0;
 
     while (totalGame < maxGames) {

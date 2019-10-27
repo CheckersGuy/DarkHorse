@@ -5,6 +5,7 @@
 #include "Position.h"
 #include "Zobrist.h"
 
+
 Position Position::getColorFlip() const {
     Position next;
     next.BP = getMirrored(WP);
@@ -17,32 +18,32 @@ Position Position::getColorFlip() const {
 
 Position Position::getStartPosition() {
     Position pos;
-    pos.BP = 0;
-    pos.WP = 0;
-    pos.K = 0;
+    pos.BP = 0u;
+    pos.WP = 0u;
+    pos.K = 0u;
     for (int i = 0; i <= 11; i++) {
-        pos.BP |= 1 << S[i];
+        pos.BP |= 1u << S[i];
     }
     for (int i = 20; i <= 31; i++) {
-        pos.WP |= 1 << S[i];
+        pos.WP |= 1u << S[i];
     }
-    pos.key=Zobrist::generateKey(pos);
+    pos.key = Zobrist::generateKey(pos);
     return pos;
 }
 
 bool Position::isEmpty() const {
-    return (BP == 0 && WP == 0 && K == 0);
+    return (BP == 0u && WP == 0u);
 }
 
 Color Position::getColor() const {
     return color;
 }
 
-bool Position::hasJumps(Color color) const {
-    if (color == BLACK) {
-        return getJumpers<BLACK>() != 0;
-    } else if (color == WHITE) {
-        return getJumpers<WHITE>() != 0;
+bool Position::hasJumps(Color col) const {
+    if (col == BLACK) {
+        return getJumpers<BLACK>() != 0u;
+    } else {
+        return getJumpers<WHITE>() != 0u;
     }
 }
 
@@ -51,17 +52,17 @@ bool Position::hasThreat() const {
 }
 
 bool Position::isLoss() const {
-    return ((getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0) ||
-            (getJumpers<WHITE>() == 0 && getMovers<WHITE>() == 0));
+    return ((getJumpers<WHITE>() == 0u && getMovers<WHITE>() == 0u) ||
+            (getJumpers<WHITE>() == 0u && getMovers<WHITE>() == 0u));
 }
 
 bool Position::isWipe() const {
-    return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
+    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u)) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)));
 }
 
 void Position::printPosition() const {
     std::string output;
-    int counter = 32;
+    uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
         int row = i / 8;
         int col = i % 8;
@@ -71,7 +72,7 @@ void Position::printPosition() const {
             if ((row + col + 1) % 2 == 0) {
                 counter--;
             }
-            int maske = 1 << (counter);
+            uint32_t maske = 1u << (counter);
             if (((BP & K) & maske) == maske) {
                 std::cout << "[B]";
             } else if (((BP) & maske) == maske) {
@@ -90,71 +91,37 @@ void Position::printPosition() const {
     }
 }
 
-void Position::makeMove(Move move) {
+void Position::makeMove(Move &move) {
     assert(!move.isEmpty());
     //setting the piece type
     if (color == BLACK) {
-        if (move.isCapture()) {
+        if(move.isCapture()){
             WP &= ~move.captures;
             K &= ~move.captures;
         }
-        BP &= ~(1 << move.getFrom());
-        BP |= 1 << move.getTo();
+        BP &= ~move.from;
+        BP |= move.to;
 
-        if (move.getPieceType() == 0 && move.getTo() >> 2 == 7)
-            K |= 1 << move.getTo();
+        if (((move.to & PROMO_SQUARES_BLACK) != 0u) && ((move.from & K) == 0))
+            K |= move.to;
 
     } else {
-        if (move.isCapture()) {
+        if(move.isCapture()){
             BP &= ~move.captures;
             K &= ~move.captures;
         }
-        WP &= ~(1 << move.getFrom());
-        WP |= 1 << move.getTo();
+        WP &= ~move.from;
+        WP |= move.to;
 
-        if (move.getPieceType() == 0 && move.getTo() >> 2 == 0)
-            K |= 1 << move.getTo();
+        if (((move.to & PROMO_SQUARES_WHITE) != 0u) && ((move.from & K) == 0))
+            K |= move.to;
 
     }
-    if (move.getPieceType() == 1) {
-        K &= ~((1 << move.getFrom()));
-        K |= (1 << move.getTo());
+    if ((move.from & K) != 0) {
+        K &= ~move.from;
+        K |= move.to;
     }
     this->color = ~this->color;
-}
-
-void Position::undoMove(Move move) {
-    //there might be a small bug discovered
-    //by switching to make unmake temporarily
-    this->color = ~this->color;
-    assert(!move.isEmpty());
-    if (color == BLACK) {
-        BP &= ~(1 << move.getTo());
-        BP |= (1 << move.getFrom());
-
-        if (move.isCapture()) {
-            WP |= move.captures;
-        }
-
-        if (move.getPieceType() == 0 && (move.getTo() >> 2) == 7)
-            K &= ~(1 << move.getTo());
-
-    } else {
-        WP &= ~(1 << move.getTo());
-        WP |= (1 << move.getFrom());
-        if (move.isCapture()) {
-            BP |= move.captures;
-        }
-        if (move.getPieceType() == 0 && (move.getTo() >> 2) == 0)
-            K &= ~(1 << move.getTo());
-    }
-
-    if (move.getPieceType() == 1) {
-        K |= ((1 << move.getFrom()));
-        K &= ~(1 << move.getTo());
-    }
-
-
 }
 
 std::istream &operator>>(std::istream &stream, const Position &pos) {
