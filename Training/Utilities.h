@@ -19,7 +19,6 @@
 #include "GameLogic.h"
 #include "MGenerator.h"
 #include "Training.h"
-#include "BoardFactory.h"
 #include "Training.h"
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <unordered_set>
@@ -36,8 +35,9 @@ namespace Utilities {
 
     Score playGame(Training::TrainingGame& game,Engine&engine,Engine& second,Position position, bool print);
 
+    std::vector<std::string> getWhiteSpaceSeperated(const std::string msg);
 
-
+    std::vector<std::string> getDelimiterSeperated(const std::string message, const std::string delimiter);
 }
 
 

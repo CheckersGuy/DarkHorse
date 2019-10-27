@@ -11,7 +11,6 @@
 #include <vector>
 #include <fstream>
 #include "Engine.h"
-#include <BoardFactory.h>
 #include <MGenerator.h>
 #include "Weights.h"
 #include <algorithm>

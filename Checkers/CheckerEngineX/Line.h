@@ -8,29 +8,27 @@
 
 #include "Move.h"
 #include "types.h"
-
 class Line {
 
 private:
-
-    Move myArray[MAX_PLY];
+    std::array<Move, MAX_PLY> myArray;
     int counter = 0;
 
 public:
 
     Line() = default;
 
-    Line(const Line &other);
+    Line(const Line &other) noexcept;
 
     int length() const;
 
-    void addMove(Move move);
+    void addMove(const Move &move);
 
-    void concat(Move best, Line &line);
+    void concat(const Move &best, const Line &line);
 
     std::string toString() const;
 
-    Move getFirstMove() const;
+    Move &getFirstMove();
 
     void clear();
 
@@ -38,18 +36,25 @@ public:
 
     bool operator!=(const Line &other) const;
 
-    Line& operator=(const Line& other);
+    Line &operator=(const Line &other);
 
-    Move operator[](int index) const;
+    const Move &operator[](int index) const;
 
     Move &operator[](int index);
 
-    Move* begin();
+    auto begin();
 
-    Move* end();
+    auto end();
 
 };
 
+inline auto Line::begin() {
+    return myArray.begin();
+}
+
+inline auto Line::end() {
+    return myArray.begin() + counter;
+}
 
 std::ostream &operator<<(std::ostream &stream, Line &line);
 

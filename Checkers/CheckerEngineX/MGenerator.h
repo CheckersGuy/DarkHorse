@@ -9,101 +9,109 @@
 #include "MoveListe.h"
 #include "types.h"
 
-template<PieceType type>
-inline void addMove(const uint32_t from, const uint32_t to, const uint32_t captures, MoveListe &liste) {
-    Move nMove(from, to, captures);
-    if constexpr(type == KING) {
-        nMove.setPieceType(1);
-    }
-    liste.addMove(nMove);
+template<Color color>
+inline void maskBits(Position &pos, const uint32_t maske) {
+    if constexpr (color == BLACK)
+        pos.BP ^= maske;
+    else
+        pos.WP ^= maske;
 }
 
-template<Color color, PieceType type>
+template<Color color>
 inline
-void getSilentMoves(const uint32_t nocc, MoveListe &liste, uint32_t movers) {
+void getSilentMoves(const Position &pos, MoveListe &liste) {
+    uint32_t movers = pos.getMovers<color>();
+    const uint32_t nocc = ~(pos.BP | pos.WP);
     while (movers) {
-        const uint32_t index = __tzcnt_u32(movers);
-        movers &= movers - 1u;
-        const uint32_t maske = 1u << index;
+        const uint32_t maske = movers & ~(movers - 1u);;
         uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
+        if(pos.K&maske){
+            squares |= forwardMask<~color>(maske & pos.K) | defaultShift<~color>(maske & pos.K);
+        }
         squares &= nocc;
         while (squares) {
-            const uint32_t next = __tzcnt_u32(squares);
+            const uint32_t next = squares & ~(squares - 1u);
+            Move move(maske, next);
+            liste.addMove(move);
             squares &= squares - 1u;
-            addMove<type>(index, next, 0u, liste);
         }
+        movers &= movers - 1u;
     }
 }
 
 template<Color color, PieceType type>
 inline
 void
-addCaptures(const uint32_t orig, const uint32_t current, const uint32_t captures, uint32_t opp,
-            const uint32_t movers, const uint32_t pieces, MoveListe &liste) {
-    opp ^= captures;
-    const uint32_t nocc = ~(opp | pieces);
+addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures, MoveListe &liste) {
+    const uint32_t opp = pos.getCurrent<~color>() ^captures;
+    const uint32_t nocc = ~(opp | pos.getCurrent<color>());
     const uint32_t temp0 = defaultShift<color>(current) & opp;
     const uint32_t temp1 = forwardMask<color>(current) & opp;
     const uint32_t dest0 = forwardMask<color>(temp0) & nocc;
     const uint32_t dest1 = defaultShift<color>(temp1) & nocc;
-    uint32_t temp2 = 0u, temp3 = 0u, dest2 = 0u, dest3 = 0u;
+
     uint32_t imed = (forwardMask<~color>(dest0) | defaultShift<~color>(dest1));
-    imed |= forwardMask<color>(dest2) | defaultShift<color>(dest3);
-    uint32_t dest = dest0 | dest1 | dest2 | dest3;
+    uint32_t dest = dest0 | dest1;
+    if constexpr (type == KING) {
+        const uint32_t temp2 = defaultShift<~color>(current) & opp;
+        const uint32_t temp3 = forwardMask<~color>(current) & opp;
+        const uint32_t dest2 = forwardMask<~color>(temp2) & nocc;
+        const uint32_t dest3 = defaultShift<~color>(temp3) & nocc;
+        imed |= forwardMask<color>(dest2) | defaultShift<color>(dest3);
+        dest |= dest2 | dest3;
+    }
     if (dest == 0u) {
-        addMove<type>(orig, __tzcnt_u32(current), captures, liste);
+        liste.addMove(Move{orig, current, captures});
     }
     while (dest) {
-        const uint32_t destMask = dest & (-dest);
-        const uint32_t capMask = imed & (-imed);
+        uint32_t destMask = dest & ~(dest - 1u);
+        uint32_t capMask = imed & ~(imed - 1u);
         dest &= dest - 1u;
         imed &= imed - 1u;
-        addCaptures<color, type>(orig, destMask, (captures | capMask), opp, movers, pieces, liste);
-    }
-}
-
-template<Color color, PieceType type>
-inline
-void loopCaptures(const Position &pos, MoveListe &liste, uint32_t movers) {
-    const uint32_t opp = pos.getCurrent<~color>();
-    while (movers) {
-        const uint32_t index = __tzcnt_u32(movers);
-        const uint32_t maske = 1u << index;
-        movers ^= maske;
-        addCaptures<color, type>(index, maske, 0, opp, movers, (pos.BP | pos.WP), liste);
-        movers ^= maske;
-        movers &= movers - 1u;
+        addKingCaptures<color, type>(pos, orig, destMask, (captures | capMask), liste);
     }
 }
 
 template<Color color>
-inline void getMovesSide(Position &pos, MoveListe &liste) {
-    const uint32_t nocc = ~(pos.BP | pos.WP);
-    loopCaptures<color, KING>(pos, liste, pos.getJumpers<color>() & pos.getPieces<KING>());
-    loopCaptures<color, PAWN>(pos, liste, pos.getJumpers<color>() & pos.getPieces<PAWN>());
-    if (liste.length() > 0)
-        return;
-    getSilentMoves<color, KING>(nocc, liste, pos.getMovers<color>() & pos.getPieces<KING>());
-    getSilentMoves<~color, KING>(nocc, liste, pos.getMovers<color>() & pos.getPieces<KING>());
-    getSilentMoves<color, PAWN>(nocc, liste, pos.getMovers<color>() & pos.getPieces<PAWN>());
-
+inline
+void loopCaptures(Position &pos, MoveListe &liste) {
+    uint32_t movers = pos.getJumpers<color>();
+    uint32_t kingJumpers = movers & pos.K;
+    uint32_t pawnJumpers = movers & (~pos.K);
+    while (kingJumpers) {
+        const uint32_t maske = kingJumpers & ~(kingJumpers - 1u);
+        maskBits<color>(pos, maske);
+        addKingCaptures<color, KING>(pos, maske, maske, 0, liste);
+        maskBits<color>(pos, maske);
+        kingJumpers &= kingJumpers - 1u;
+    }
+    while (pawnJumpers) {
+        const uint32_t maske = pawnJumpers & ~(pawnJumpers - 1u);
+        addKingCaptures<color, PAWN>(pos, maske, maske, 0, liste);
+        pawnJumpers &= pawnJumpers - 1u;
+    }
 }
 
+
 inline void getMoves(Position &pos, MoveListe &liste) {
-    if (pos.getColor() == BLACK) {
-        getMovesSide<BLACK>(pos, liste);
+    if (pos.color == BLACK) {
+        loopCaptures<BLACK>(pos, liste);
+        if (!liste.isEmpty())
+            return;
+        getSilentMoves<BLACK>(pos, liste);
     } else {
-        getMovesSide<WHITE>(pos, liste);
+        loopCaptures<WHITE>(pos, liste);
+        if (!liste.isEmpty())
+            return;
+        getSilentMoves<WHITE>(pos, liste);
     }
 }
 
 inline void getCaptures(Position &pos, MoveListe &liste) {
     if (pos.getColor() == BLACK) {
-        loopCaptures<BLACK, KING>(pos, liste, pos.getJumpers<BLACK>() & pos.getPieces<KING>());
-        loopCaptures<BLACK, PAWN>(pos, liste, pos.getJumpers<BLACK>() & pos.getPieces<PAWN>());
+        loopCaptures<BLACK>(pos, liste);
     } else {
-        loopCaptures<WHITE, KING>(pos, liste, pos.getJumpers<WHITE>() & pos.getPieces<KING>());
-        loopCaptures<WHITE, PAWN>(pos, liste, pos.getJumpers<WHITE>() & pos.getPieces<PAWN>());
+        loopCaptures<WHITE>(pos, liste);
     }
 }
 

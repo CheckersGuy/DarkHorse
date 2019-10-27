@@ -20,54 +20,46 @@ inline uint64_t getSystemTime() {
 }
 
 
-
-constexpr uint32_t LEFT_HALF = 3435973836u;
-constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2;
 constexpr uint32_t MASK_L3 = 14737632u;
 constexpr uint32_t MASK_L5 = 117901063u;
 constexpr uint32_t MASK_R3 = 117901056u;
 constexpr uint32_t MASK_R5 = 3772834016u;
-constexpr uint32_t MASK_COL_1=286331153u;
-constexpr uint32_t MASK_COL_2=572662306u;
-constexpr uint32_t MASK_COL_3=1145324612u;
-constexpr uint32_t MASK_COL_4=2290649224u;
+constexpr uint32_t MASK_COL_1 = 286331153u;
+constexpr uint32_t MASK_COL_2 = 572662306u;
+constexpr uint32_t MASK_COL_3 = 1145324612u;
+constexpr uint32_t MASK_COL_4 = 2290649224u;
+constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
+constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 
-
-
-constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u, 23u, 22u, 21u, 20u, 27u, 26u,
+constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u,
+                            23u, 22u, 21u, 20u, 27u, 26u,
                             25u, 24u, 31u, 30u, 29u, 28u};
 
 using Depth =int;
 using Ply =int;
 
-constexpr int scalFac=128;
+constexpr int scalFac = 128;
 
 
-
-
-enum  NodeType {
+enum NodeType {
     PVNode, NONPV
 };
 
-enum Shift{
-    UP,DOWN
-};
-
-enum Score {
-    WHITE_WIN = 155000,
-    WHITE_LOSS = -155000,
-    BLACK_WIN = -155000,
-    BLACK_LOSS = 155000,
+enum Score : int {
+    WHITE_WIN = 1550000,
+    WHITE_LOSS = -1550000,
+    BLACK_WIN = -1550000,
+    BLACK_LOSS = 1550000,
     DRAW = 0,
     INFINITE = 15000000,
     EASY_MOVE = 99999999,
     INVALID = 100000000
 
 };
-enum  SEARCH {
+enum SEARCH {
     MAX_PLY = 128, MAX_MOVE = 320, ONE_PLY = 1000
 };
-enum Color {
+enum Color : int {
     BLACK = -1, WHITE = 1, NONE
 };
 enum PieceType {
@@ -80,13 +72,13 @@ enum Flag : uint8_t {
 
 class Value {
 public:
-    int value = 0;
+    int value{0};
 
     static Value loss(Color color, int ply);
 
-    constexpr Value(int value):value(value){};
+    constexpr Value(int value) noexcept : value(value) {};
 
-    constexpr Value();
+    constexpr Value() = default;
 
     bool isWinning() const;
 
@@ -102,13 +94,12 @@ public:
 
     bool isEval() const;
 
-    template<class T,class E>bool isInRange(T a, E b) const{
-        return this->value>=a && this->value<=b;
+    template<class T, class E>
+    bool isInRange(T a, E b) const {
+        return this->value >= a && this->value <= b;
     }
 
-    constexpr Value operator=(int value);
-
-    constexpr Value operator=(const Value& other);
+    constexpr Value &operator=(int value);
 
     Value &operator+=(Value other);
 
@@ -134,7 +125,8 @@ public:
     //post increment
     Value operator--(int);
 
-    template<typename T> T as(){
+    template<typename T>
+    T as() {
         return static_cast<T>(value);
     }
 };
@@ -145,9 +137,7 @@ inline Value &Value::operator++() {
 }
 
 inline Value Value::operator++(int) {
-    Value copy(this->value);
-    this->value++;
-    return copy;
+    return this->value+1;;
 }
 
 inline Value &Value::operator--() {
@@ -156,9 +146,7 @@ inline Value &Value::operator--() {
 }
 
 inline Value Value::operator--(int) {
-    Value copy(this->value);
-    this->value--;
-    return copy;
+    return this->value-1;
 }
 
 inline Value &Value::operator+=(Value other) {
@@ -198,12 +186,10 @@ inline bool Value::isEval() const {
 inline Value Value::loss(Color color, int ply) {
     if (color == WHITE) {
         return BLACK_WIN + ply;
-    } else if (color == BLACK) {
+    } else {
         return -(WHITE_WIN - ply);
     }
 }
-
-constexpr Value::Value() {}
 
 //operators
 constexpr Value operator~(Value val) {
@@ -212,7 +198,11 @@ constexpr Value operator~(Value val) {
 }
 
 constexpr Color operator~(Color color) {
-    return (color == BLACK) ? WHITE : BLACK;
+    if(color==BLACK){
+        return WHITE;
+    }else{
+        return BLACK;
+    }
 }
 
 constexpr bool operator!=(Value one, Value two) {
@@ -236,25 +226,21 @@ constexpr bool operator!=(int one, Value two) {
 }
 
 
-constexpr Value Value::operator=(int value) {
-    this->value = value;
-    return *this;
-}
-constexpr Value Value::operator=(const Value& other) {
-    this->value = other.value;
+constexpr Value &Value::operator=(int val) {
+    this->value = val;
     return *this;
 }
 
 
 constexpr Value operator+(const Value val, const Value val2) {
     Value next;
-    next.value=val.value + val2.value;
+    next.value = val.value + val2.value;
     return next;
 }
 
 constexpr Value operator+(Value val, int val2) {
-    Value next ;
-    next.value=val.value+val2;
+    Value next;
+    next.value = val.value + val2;
     return next;
 }
 
@@ -317,52 +303,38 @@ inline bool Value::isEasyMove() const {
     return (this->value == EASY_MOVE);
 }
 
-inline bool Value::isWinning() const {
-    assert(value >= -INFINITE && value <= INFINITE);
-    if (std::abs(this->value) + MAX_PLY >= WHITE_WIN) {
-        return true;
-    }
-    return false;
-}
-
 inline bool Value::isBlackWin() const {
     assert(value >= -INFINITE && value <= INFINITE);
-    if (this->value - MAX_PLY <= BLACK_WIN) {
-        return true;
-    }
-    return false;
+    return this->value - MAX_PLY <= BLACK_WIN;
 }
 
 inline bool Value::isWhiteWin() const {
     assert(value >= -INFINITE && value <= INFINITE);
-    if (this->value + MAX_PLY >= WHITE_WIN) {
-        return true;
-    }
-    return false;
+    return this->value + MAX_PLY >= WHITE_WIN;
 }
 
-
+inline bool Value::isWinning() const {
+    assert(value >= -INFINITE && value <= INFINITE);
+    return isWhiteWin() || isBlackWin();
+}
 
 inline Value Value::valueFromTT(int ply) {
-    Value result = this->value;
-    if (abs(this->value) + MAX_PLY >= WHITE_WIN) {
-        if (this->value < 0) {
-            result += ply;
-        } else {
-            result -= ply;
-        }
+    if (this->value + MAX_PLY >= WHITE_WIN) {
+        return value + ply;
     }
-    return result;
+    if (this->value - MAX_PLY <= BLACK_WIN) {
+        return value - ply;
+    }
+    return *this;
 }
 
 inline Value Value::toTT(int ply) {
-    Value result = this->value;
-    if (result - MAX_PLY <= BLACK_WIN) {
-        result -= ply;
-    } else if (result + MAX_PLY >= WHITE_WIN) {
-        result += ply;
+    if (this->value - MAX_PLY <= BLACK_WIN) {
+        return value - ply;
+    } else if (this->value + MAX_PLY >= WHITE_WIN) {
+        return value + ply;
     }
-    return result;
+    return *this;
 }
 
 inline std::ostream &operator<<(std::ostream &outstream, const Value val) {
@@ -377,7 +349,6 @@ inline Value clampScore(Value val) {
     } else if (val <= BLACK_WIN - MAX_PLY) {
         return Value(BLACK_WIN - MAX_PLY);
     }
-
     return val;
 }
 
@@ -388,20 +359,20 @@ inline Value addSafe(Value val, Value incre) {
 template<Color color>
 inline
 uint32_t defaultShift(const uint32_t maske) {
-    if constexpr(color== BLACK) {
-        return maske << 4;
+    if constexpr(color == BLACK) {
+        return maske << 4u;
     } else {
-        return maske >> 4;
+        return maske >> 4u;
     }
 }
 
 template<Color color>
 inline
 uint32_t forwardMask(const uint32_t maske) {
-    if constexpr (color==BLACK) {
-        return ((maske & MASK_L3) << 3) | ((maske & MASK_L5) << 5);
+    if constexpr (color == BLACK) {
+        return ((maske & MASK_L3) << 3u) | ((maske & MASK_L5) << 5u);
     } else {
-        return ((maske & MASK_R3) >> 3) | ((maske & MASK_R5) >> 5);
+        return ((maske & MASK_R3) >> 3u) | ((maske & MASK_R5) >> 5u);
     }
 }
 

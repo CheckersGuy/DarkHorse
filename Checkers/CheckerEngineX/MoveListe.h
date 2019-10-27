@@ -12,17 +12,16 @@
 #include "MovePicker.h"
 
 
-
-
 class MoveListe {
 
-public:
+private:
     int moveCounter = 0;
-    Move liste[40];
-    int scores[40];
+    std::array<Move, 40> liste;
+public:
+
     MoveListe() = default;
 
-    int length();
+    int length() const;
 
     void addMove(Move next);
 
@@ -30,38 +29,57 @@ public:
 
     bool isEmpty() const;
 
-    Move& operator[](size_t index);
+    auto begin();
 
-    Move operator[](size_t index)const;
+    auto end();
 
-    Move* begin();
+    auto begin() const;
 
-    Move* end();
+    auto end() const;
+
+    const Move &operator[](int index) const;
+
+    Move &operator[](int index);
+
+    void putFront(const Move& other);
 
 };
 
-
 inline bool MoveListe::isEmpty() const {
-    return this->moveCounter==0;
+    return this->moveCounter == 0;
 }
 
-inline Move& MoveListe::operator[](size_t index) {
+inline const Move &MoveListe::operator[](int index) const {
     return liste[index];
 }
 
-inline Move MoveListe::operator[](size_t index)const {
+inline Move &MoveListe::operator[](int index) {
     return liste[index];
 }
 
 inline void MoveListe::addMove(Move next) {
     assert(!next.isEmpty());
-    next.setMoveIndex(moveCounter);
     liste[this->moveCounter++] = next;
 }
 
-inline int MoveListe::length() {
+inline int MoveListe::length() const {
     return moveCounter;
 }
 
+inline auto MoveListe::begin() {
+    return liste.begin();
+}
+
+inline auto MoveListe::end() {
+    return liste.begin() + moveCounter;
+}
+
+inline auto MoveListe::begin() const {
+    return liste.cbegin();
+}
+
+inline auto MoveListe::end() const {
+    return liste.cbegin() + moveCounter;
+}
 
 #endif //CHECKERSTEST_MOVELISTE_H

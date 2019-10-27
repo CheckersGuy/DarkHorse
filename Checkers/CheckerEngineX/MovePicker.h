@@ -15,6 +15,7 @@ namespace Statistics {
         int history[32 * 32 * 2] = {0};
         int bfScore[32 * 32 * 2] = {0};
     public:
+
         int getMoveScore(Move move, Color color);
 
         int getMoveScore(Move move, Color color, Move ttMove);
@@ -24,6 +25,7 @@ namespace Statistics {
         void updateHHScore(Move move, Color color, int depth);
 
         void updateBFScore(Move *liste, int moveIndex, Color color, int depth);
+
     };
 
 

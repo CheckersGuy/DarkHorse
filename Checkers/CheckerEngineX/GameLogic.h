@@ -14,6 +14,7 @@
 #include "Line.h"
 #include <algorithm>
 
+
 #if defined(__GNUC__)
 #define MAKRO extern"C" __attribute__((visibility("default")))
 #else

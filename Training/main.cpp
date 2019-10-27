@@ -122,8 +122,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        Engine one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
-        Engine two("/home/robin/DarkHorse/Training/Engines/" + engines[1]);
+        Engine one("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/" + engines[0]);
+        Engine two("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/"  + engines[1]);
         Match match(one, two);
         one.setHashSize(vm["hashSize"].as<int>());
         two.setHashSize(vm["hashSize"].as<int>());
@@ -168,50 +168,51 @@ int main(int argc, char *argv[]) {
         Zobrist::initializeZobrisKeys();
         std::string engine = vm["generate"].as<std::string>();
         std::string path = "Engines/" + engine;
-        const std::vector<int> &timeVector = vm["time"].as<std::vector<int>>();
+        auto &timeVector = vm["time"].as<std::vector<int>>();
         int time = timeVector[0];
 
         Engine myEngine(path);
         myEngine.setHashSize(vm["hashSize"].as<int>());
-        Generator generator(myEngine, "Positions/genBook6.pos", "TrainData/" + vm["output"].as<std::string>());
-        generator.setThreads(vm["threads"].as<int>());
-        generator.setMaxGames(vm["maxGames"].as<int>());
-        generator.setTime(100);
+        Generator gen(myEngine, "Positions/genBook6.pos", "TrainData/" + vm["output"].as<std::string>());
+        gen.setThreads(vm["threads"].as<int>());
+        gen.setMaxGames(vm["maxGames"].as<int>());
+        gen.setTime(100);
 
 
         std::cout << "Time: " << myEngine.getTimePerMove() << std::endl;
-        std::cout << "Threads: " << generator.getThreads() << std::endl;
-        std::cout << "MaxGames: " << generator.getMaxGames()<< std::endl;
+        std::cout << "Threads: " << gen.getThreads() << std::endl;
+        std::cout << "MaxGames: " << gen.getMaxGames()<< std::endl;
         std::cout << "HashSize: " << vm["hashSize"].as<int>() << std::endl;
         std::cout<<std::endl;
         std::cout<<std::endl;
 
-        generator.start();
+        gen.start();
     }
     using namespace Training;
 
     initialize();
 
-    Engine test("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/test.so");
+
+
+    std::vector<Position>openings;
+    Utilities::loadPositions(openings,"Positions/3move.pos");
+
+    Engine test("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/noob.so");
     test.initialize();
     test.setHashSize(25);
-    test.setTimePerMove(1000);
+    test.setTimePerMove(15000);
 
-    Engine test2("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/master.so");
+    Engine test2("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/test4.so");
     test2.initialize();
     test2.setHashSize(25);
-    test2.setTimePerMove(1000);
-    Board board;
-    BoardFactory::setUpStartingPosition(board);
+    test2.setTimePerMove(250);
+      TrainingGame game;
+    Utilities::playGame(game,test2,test,openings[28],true);
 
-    TrainingGame game;
-    Utilities::playGame(game,test,test2,board.getPosition(),true);
 
-/*
     std::cout<<"Final Run"<<std::endl;
 
 
-    initialize();
 
     std::vector<TrainingPos> data;
 
@@ -223,19 +224,14 @@ int main(int argc, char *argv[]) {
 
     auto removeCl = [](TrainingPos pos) {
 
-        if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
-            return true;
+      /*  if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
+            return true;*/
 
         Board board;
-        BoardFactory::setUpPosition(board, pos.pos);
+        board=pos.pos;
         Line local;
         Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        if (qStatic.isWinning())
-            return true;
-
-
-        return false;
-
+        return qStatic.isWinning();
     };
 
     data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
@@ -248,11 +244,12 @@ int main(int argc, char *argv[]) {
 
     Trainer trainer(data);
     // 0.0399091
-    trainer.setLearningRate(40000);
+    trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-6e-5);
-    trainer.startTune();*/
+    trainer.startTune();
+
 
 
 

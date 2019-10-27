@@ -8,10 +8,18 @@
 //Will continue all the Thread-stuff (including threadpool)
 //Needed for YBWC
 
-struct ThreadBase{
-    //What every thread needs to contain
+#include <memory>
+#include <thread>
+
+struct SplitPoint {
+
 };
 
+
+struct ThreadBase {
+
+    virtual void search();
+};
 
 
 

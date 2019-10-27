@@ -8,9 +8,15 @@
 #include <string>
 #include <fstream>
 #include <unordered_set>
-#include "Engine.h"
 #include "Training.h"
-#include "BoardFactory.h"
+#include "Engine.h"
+#include  <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include  <sys/types.h>
+#include "fcntl.h"
+#include "Utilities.h"
+
 
 using namespace Training;
 
