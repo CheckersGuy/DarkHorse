@@ -8,6 +8,8 @@
 
 #include "Move.h"
 #include "types.h"
+#include <array>
+
 class Line {
 
 private:

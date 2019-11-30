@@ -5,7 +5,6 @@
 #include "Move.h"
 #include <cassert>
 #include "types.h"
-#include "immintrin.h"
 
 #ifndef CHECKERENGINEX_POSITION_H
 #define CHECKERENGINEX_POSITION_H

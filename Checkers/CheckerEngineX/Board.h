@@ -9,7 +9,6 @@
 #include<string>
 #include "Move.h"
 #include<random>
-#include "immintrin.h"
 #include <cassert>
 #include <string>
 #include "types.h"

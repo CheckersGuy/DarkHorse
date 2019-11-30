@@ -5,12 +5,12 @@
 #ifndef CHECKERSTEST_TYPES_H
 #define CHECKERSTEST_TYPES_H
 
+
 #include <iostream>
 #include <cstdint>
 #include <algorithm>
 #include <cassert>
 #include <thread>
-
 
 //Utility functions and other stuff
 
@@ -38,9 +38,7 @@ constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15
 using Depth =int;
 using Ply =int;
 
-constexpr int scalFac = 128;
-
-
+constexpr int scalfac=128;
 enum NodeType {
     PVNode, NONPV
 };
@@ -137,7 +135,7 @@ inline Value &Value::operator++() {
 }
 
 inline Value Value::operator++(int) {
-    return this->value+1;;
+    return this->value + 1;;
 }
 
 inline Value &Value::operator--() {
@@ -146,7 +144,7 @@ inline Value &Value::operator--() {
 }
 
 inline Value Value::operator--(int) {
-    return this->value-1;
+    return this->value - 1;
 }
 
 inline Value &Value::operator+=(Value other) {
@@ -198,9 +196,9 @@ constexpr Value operator~(Value val) {
 }
 
 constexpr Color operator~(Color color) {
-    if(color==BLACK){
+    if (color == BLACK) {
         return WHITE;
-    }else{
+    } else {
         return BLACK;
     }
 }

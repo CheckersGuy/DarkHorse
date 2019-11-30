@@ -34,7 +34,7 @@ namespace Zobrist {
         uint64_t nextKey = 0u;
         uint32_t allPieces = pos.BP | pos.WP;
         while (allPieces) {
-            uint32_t index = __tzcnt_u32(allPieces);
+            uint32_t index = Bits::bitscan_foward(allPieces);
             uint32_t maske = 1u << index;
             if ((maske & BK)) {
                 nextKey ^= ZOBRIST_KEYS[index][BKING];
@@ -69,7 +69,7 @@ namespace Zobrist {
         }
         uint32_t captures = move.captures;
         while (captures) {
-            const uint32_t index = __tzcnt_u32(captures);
+            const uint32_t index = Bits::bitscan_foward(captures);
             captures &= captures - 1u;
             if (((1u << index) & move.captures & pos.K) != 0) {
                 pos.key ^= Zobrist::ZOBRIST_KEYS[index][pos.getColor()*BKING];

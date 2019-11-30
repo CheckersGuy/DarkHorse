@@ -26,7 +26,10 @@ Weights<int> gameWeights;
 
 
 MAKRO void initialize() {
-    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/Weights/failSave2.weights");
+#ifdef __EMSCRIPTEN__
+    Bits::set_up_bitscan();
+#endif
+    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -72,8 +75,8 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
 
         if (i >= 5) {
-            alpha = value - 50 * scalFac;
-            beta = value + 50 * scalFac;
+            alpha = value - 50*scalfac ;
+            beta = value + 50*scalfac ;
         }
 
         if (print) {
@@ -193,7 +196,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     NodeInfo info;
 #ifndef TRAIN
-
     if (ply > 0) {
         TT.findHash(board.getCurrentKey(), depth / ONE_PLY, &alpha.value, &beta.value, info);
         info.value = info.value.valueFromTT(ply);
@@ -207,7 +209,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 
     if (!inPVLine && prune && depth >= 3 * ONE_PLY) {
-        Value margin = (5 * scalFac * depth) / ONE_PLY;
+        Value margin = (5 *scalfac* depth) / ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;

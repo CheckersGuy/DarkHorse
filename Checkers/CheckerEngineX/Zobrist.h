@@ -10,7 +10,8 @@
 #include <iostream>
 #include "Position.h"
 #include "types.h"
-#include "types.h"
+#include <array>
+#include "Bits.h"
 
 
 namespace Zobrist {

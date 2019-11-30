@@ -191,41 +191,21 @@ int main(int argc, char *argv[]) {
     using namespace Training;
 
     initialize();
-
-
-
-    std::vector<Position>openings;
-    Utilities::loadPositions(openings,"Positions/3move.pos");
-
-    Engine test("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/noob.so");
-    test.initialize();
-    test.setHashSize(25);
-    test.setTimePerMove(15000);
-
-    Engine test2("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/test4.so");
-    test2.initialize();
-    test2.setHashSize(25);
-    test2.setTimePerMove(250);
-      TrainingGame game;
-    Utilities::playGame(game,test2,test,openings[28],true);
-
-
     std::cout<<"Final Run"<<std::endl;
-
-
 
     std::vector<TrainingPos> data;
 
-    loadGames(data, "TrainData/test3.game");
+    loadGames(data, "/home/robin/DarkHorse/Training/TrainData/test3.game");
 
 
     std::cout << "Length: " << data.size() << std::endl;
 
 
+/*
     auto removeCl = [](TrainingPos pos) {
 
-      /*  if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
-            return true;*/
+        if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
+            return true;
 
         Board board;
         board=pos.pos;
@@ -235,6 +215,7 @@ int main(int argc, char *argv[]) {
     };
 
     data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
+*/
 
 
     std::cout << "Positions after erase: " << data.size() << std::endl;

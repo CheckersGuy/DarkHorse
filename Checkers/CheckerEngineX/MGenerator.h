@@ -5,9 +5,8 @@
 #define CHECKERSTEST_MGENERATOR_H
 
 #include "Board.h"
-#include "immintrin.h"
 #include "MoveListe.h"
-#include "types.h"
+
 
 template<Color color>
 inline void maskBits(Position &pos, const uint32_t maske) {
@@ -23,15 +22,13 @@ void getSilentMoves(const Position &pos, MoveListe &liste) {
     uint32_t movers = pos.getMovers<color>();
     const uint32_t nocc = ~(pos.BP | pos.WP);
     while (movers) {
-        const uint32_t maske = movers & ~(movers - 1u);;
+        const uint32_t maske = movers & ~(movers - 1u);
         uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
-        if(pos.K&maske){
-            squares |= forwardMask<~color>(maske & pos.K) | defaultShift<~color>(maske & pos.K);
-        }
+        squares |= forwardMask<~color>(maske & pos.K) | defaultShift<~color>(maske & pos.K);
         squares &= nocc;
         while (squares) {
             const uint32_t next = squares & ~(squares - 1u);
-            Move move(maske, next);
+            Move move{maske, next};
             liste.addMove(move);
             squares &= squares - 1u;
         }
@@ -42,7 +39,8 @@ void getSilentMoves(const Position &pos, MoveListe &liste) {
 template<Color color, PieceType type>
 inline
 void
-addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures, MoveListe &liste) {
+addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures,
+                MoveListe &liste) {
     const uint32_t opp = pos.getCurrent<~color>() ^captures;
     const uint32_t nocc = ~(opp | pos.getCurrent<color>());
     const uint32_t temp0 = defaultShift<color>(current) & opp;

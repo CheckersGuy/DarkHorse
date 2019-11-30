@@ -13,7 +13,7 @@
 #include "Weights.h"
 #include "Line.h"
 #include <algorithm>
-
+#include "Bits.h"
 
 #if defined(__GNUC__)
 #define MAKRO extern"C" __attribute__((visibility("default")))
