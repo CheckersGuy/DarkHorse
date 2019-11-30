@@ -143,12 +143,19 @@ int main(int argl, const char **argc) {
 
 
 */
-
-    Board board;
-
-
-
-
+    std::cout<<"Perft 12 timeTest"<<std::endl;
+    auto time=0;
+    for(int i=0;i<10;++i){
+        Board board;
+        board=Position::getStartPosition();
+        auto t1=std::chrono::high_resolution_clock::now();
+        Perft::perftCheck(board,12);
+        auto t2=std::chrono::high_resolution_clock::now();
+        auto c=t2-t1;
+        time+=c.count();
+        std::cout<<"Time: "<<c.count()/1000000<<std::endl;
+    }
+   
 
    /* std::string current;
     Board board;
