@@ -10,7 +10,7 @@
 #include <cassert>
 #include "types.h"
 #include "MovePicker.h"
-
+#include <array>
 
 class MoveListe {
 
@@ -18,8 +18,6 @@ private:
     int moveCounter = 0;
     std::array<Move, 40> liste;
 public:
-
-    MoveListe() = default;
 
     int length() const;
 

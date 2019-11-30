@@ -10,13 +10,13 @@
 #include <list>
 #include <iterator>
 #include <algorithm>
-#include <x86intrin.h>
 #include "Perft.h"
 #include <sys/wait.h>
 #include <unistd.h>
+#include <regex>
 
 std::string getPositionString(Position pos) {
-    std::string position = "";
+    std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
         uint32_t current = 1u << S[i];
         if ((current & pos.BP)) {
@@ -72,7 +72,6 @@ struct Interface {
     void writeMessage(const int &pipe, const std::string &message);
 
 
-
     void processInput(const int &readPipe);
 };
 
@@ -93,8 +92,23 @@ void Interface::processInput(const int &readPipe) {
             message += c;
         }
     }
+    std::regex reg("[0-9]{1,2}[|][0-9]{1,2}([|][0-9]{1,2})*");
+
     if (message == "ready") {
         std::cout << "ReadyEngine" << std::endl;
+    }
+    if (std::regex_match(message, reg)) {
+        //engine send a move back
+        Move move;
+        std::regex reg2("[0-9]{1,2}[^|]");
+        std::sregex_iterator iterator(message.begin(), message.end(), reg2);
+        move.from = 1u << (std::stoi((*iterator++).str()));
+        move.to = 1u << (std::stoi((*iterator++).str()));
+        for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
+            move.captures |= 1u << (std::stoi((*it).str()));
+        }
+        //Later we need to check if its a legal move
+        board.makeMove(move);
     }
 }
 
@@ -102,35 +116,83 @@ void Interface::writeMessage(const int &pipe, const std::string &message) {
     write(pipe, (char *) &message.front(), sizeof(char) * message.size());
 }
 
+#include "Weights.h"
+#include <immintrin.h>
+#include <x86intrin.h>
 
 int main(int argl, const char **argc) {
 
-    /*   std::string current;
-       while (std::cin >> current) {
-           if (current == "init") {
-               initialize();
-               setHashSize(23);
-               std::cout << "ready" << "\n";
-           } else if (current == "hashSize") {
-               std::string hash;
-               std::getline(std::cin, hash);
-               setHashSize(std::stoi(hash));
-           } else if (current == "new_game") {
-               //starting a new game
-               std::string position;
-               std::getline(std::cin, position);
-               Board board;
-               Position pos = posFromString(position);
-               board = pos;
-               std::cerr<<"Setup the position"<<std::endl;
-           } else if (current == "update") {
-               //opponent made a move and we need to update the board
-               std::string move;
-               std::getline(std::cin, move);
-           }else if(current=="search"){
-               //engine is supposed to search the current position
-           }
-       }*/
+    /*std::array<int,4>values{1,1,1,1};
+    compress<uint8_t >(values.begin(),values.end(),"test.compressed");
+
+*/
+
+   /* std::array<int,4>values;
+    decompress<uint8_t,int>("test.compressed",values.begin());
+*/
+
+
+/*
+
+    initialize();
+    setHashSize(23);
+    Board test;
+    test = Position::getStartPosition();
+
+    searchValue(test, MAX_PLY, 700000, true);
+
+
+*/
+
+    Board board;
+
+
+
+
+
+   /* std::string current;
+    Board board;
+    while (std::cin >> current) {
+        if (current == "init") {
+            initialize();
+            setHashSize(23);
+            std::cout << "ready" << "\n";
+        } else if (current == "hashSize") {
+            std::string hash;
+            std::getline(std::cin, hash);
+            setHashSize(std::stoi(hash));
+        } else if (current == "new_game") {
+            //starting a new game
+            std::string position;
+            std::getline(std::cin, position);
+
+            Position pos = posFromString(position);
+            board = pos;
+        } else if (current == "update") {
+            //opponent made a move and we need to update the board
+            std::string move;
+            std::getline(std::cin, move);
+        } else if (current == "search") {
+            //engine is supposed to search the current position
+            Move bestMove;
+            std::string move_string;
+            auto value = searchValue(board, bestMove, MAX_PLY, 1000, false);
+            move_string += std::to_string(bestMove.getFrom());
+            move_string += "|";
+            move_string += std::to_string(bestMove.getTo());
+            move_string += "|";
+            uint32_t lastMove = Bits::bitscan_foward(bestMove.captures);
+            uint32_t temp = bestMove.captures & (~(1u << lastMove));
+            while (temp) {
+                uint32_t mSquare = Bits::bitscan_foward(temp);
+                temp &= temp - 1u;
+                move_string += std::to_string(mSquare);
+                move_string += "|";
+            }
+            move_string += std::to_string(lastMove);
+            std::cout << move_string << "\n";
+        }
+    }
     int numEngines = 2;
     int mainPipe[numEngines][2];
     int enginePipe[numEngines][2];
@@ -152,18 +214,16 @@ int main(int argl, const char **argc) {
         }
     }
     if (pid > 0) {
-        int numGames=0;
-        std::string openingPath="";
-        std::vector<Position>openings;
-
+        int numGames = 0;
+        std::string openingPath = "";
+        std::vector<Position> openings;
 
 
         for (int k = 0; k < numEngines; ++k) {
             close(mainPipe[k][0]);
             close(enginePipe[k][1]);
         }
-        std::string message = "new_game";
-        message+="\n";
+        std::string message = "new_game\n";
         inter.initEngines();
         std::string posString = getPositionString(inter.board.getPosition());
         inter.writeMessage(inter.engineWrite1, message);
@@ -176,6 +236,6 @@ int main(int argl, const char **argc) {
     int status;
     for (int k = 0; k < numEngines; ++k) {
         wait(&status);
-    }
+    }*/
 
 }

@@ -12,8 +12,10 @@
 #include "Training.h"
 #include "queue"
 
-
+#ifdef TRAIN
 extern Weights<double> gameWeights;
+#endif
+
 
 using namespace Training;
 class Trainer {
@@ -23,15 +25,12 @@ private:
     uint64_t bufferCounter;
     std::vector<TrainingPos> &data;
     double learningRate, l2Reg, cValue;
-    std::unique_ptr<double[]>adaption;
 
 public:
 
 
     Trainer(std::vector<TrainingPos> &data) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0),adaption(std::make_unique<double[]>(SIZE+4)) {
-        std::memset(adaption.get(),0,sizeof(double)*(SIZE+4));
-    }
+                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0){};
     void epoch();
 
     void gradientUpdate(TrainingPos position);

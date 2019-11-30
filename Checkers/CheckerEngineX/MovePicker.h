@@ -12,8 +12,8 @@
 namespace Statistics {
     class MovePicker {
     private:
-        int history[32 * 32 * 2] = {0};
-        int bfScore[32 * 32 * 2] = {0};
+        std::array<int,32*32*2> history{};
+        std::array<int,32*32*2> bfScore{};
     public:
 
         int getMoveScore(Move move, Color color);

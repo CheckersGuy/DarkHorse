@@ -6,20 +6,14 @@
 #define CHECKERSTEST_MOVE_H
 
 #include <iostream>
-#include <stdint.h>
-#include "immintrin.h"
+#include <cstdint>
 #include "types.h"
-
+#include "Bits.h"
 
 struct Move {
-    uint32_t captures=0u;
     uint32_t from=0u;
     uint32_t to=0u;
-    Move(uint32_t from, uint32_t to) noexcept ;
-
-    Move(uint32_t from, uint32_t to, uint32_t captures) noexcept ;
-
-    Move() = default;
+    uint32_t captures=0u;
 
     bool isCapture() const;
 

@@ -93,7 +93,7 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     if (bestMove.isCapture()) {
         uint32_t captures = bestMove.captures;
         while (captures) {
-            uint32_t index = convIndex[S[__tzcnt_u32(captures)]];
+            uint32_t index = convIndex[S[Bits::bitscan_foward(captures)]];
             captures &= captures - 1;
             board[index % 8][index / 8] = CBFREE;
         }

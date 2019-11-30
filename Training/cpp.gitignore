@@ -1,3 +1,6 @@
+#GameData
+*.game
+
 # Prerequisites
 *.d
 
@@ -37,6 +40,9 @@
 *.exe
 *.out
 *.app
+
+
+/TrainData
 
 # User-specific stuff:
 **/.idea/workspace.xml

@@ -3,11 +3,6 @@
 //
 #include "Move.h"
 
-Move::Move(uint32_t from, uint32_t to) noexcept  : from(from), to(to) {}
-
-Move::Move(uint32_t from, uint32_t to, uint32_t captures) noexcept  : from(from), to(to), captures(captures) {}
-
-
 bool Move::isCapture() const {
     return captures != 0;
 }
@@ -29,11 +24,11 @@ bool Move::isEmpty() const {
 }
 
 uint32_t Move::getFromIndex() const {
-    return __tzcnt_u32(from);
+    return Bits::bitscan_foward(from);
 }
 
 uint32_t Move::getToIndex() const {
-    return __tzcnt_u32(to);
+    return Bits::bitscan_foward(to);
 }
 
 bool Move::operator==(const Move &other) const {
