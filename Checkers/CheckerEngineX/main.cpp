@@ -149,7 +149,7 @@ int main(int argl, const char **argc) {
         Board board;
         board=Position::getStartPosition();
         auto t1=std::chrono::high_resolution_clock::now();
-        Perft::perftCheck(board,12);
+        Perft::perftCheck(board,14);
         auto t2=std::chrono::high_resolution_clock::now();
         auto c=t2-t1;
         time+=c.count();
