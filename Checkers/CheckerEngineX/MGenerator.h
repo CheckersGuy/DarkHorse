@@ -41,7 +41,6 @@ inline
 void
 addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures,
                 MoveListe &liste) {
-
     const uint32_t opp = pos.getCurrent<~color>() ^captures;
     const uint32_t nocc = ~(opp | pos.getCurrent<color>());
     const uint32_t temp0 = defaultShift<color>(current) & opp;

@@ -138,7 +138,27 @@ int main(int argl, const char **argc) {
 
 
     initialize();
-    setHashSize(23);
+
+    Perft::table.setCapacity(1u<<23);
+
+    Board board;
+    board=Position::getStartPosition();
+    board.printBoard();
+    std::cout<<std::endl;
+
+    auto count = Perft::perftCheck(board,14);
+    std::cout<<"Count: "<<count<<std::endl;
+
+    if(count !=7978439499u){
+        return 1;
+    }
+    return 0;
+
+
+
+
+
+   /* setHashSize(23);
 
 
 
@@ -187,7 +207,7 @@ int main(int argl, const char **argc) {
              std::cout << move_string << "\n";
              std::cerr<<"Finished search"<<std::endl;
          }
-     }
+     }*/
  /*   int numEngines = 2;
     int mainPipe[numEngines][2];
     int enginePipe[numEngines][2];
