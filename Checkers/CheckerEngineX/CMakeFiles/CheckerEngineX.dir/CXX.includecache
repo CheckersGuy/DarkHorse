@@ -34,6 +34,22 @@ Position.h
 Zobrist.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp
+CBInterface.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.h
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.h
+GameLogic.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
+stdio.h
+-
+cstring
+-
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
+GameLogic.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
+
 /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
 Board.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
@@ -95,6 +111,10 @@ types.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/types.h
 Move.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp
+Perft.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
 Position.h
