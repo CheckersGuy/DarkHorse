@@ -30,10 +30,10 @@ inline bool isBitSet(int var, uint32_t bit) {
 
 extern "C" {
 
-MAKRO int getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int unused,
+ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int unused,
             struct CBmove *move);
 
-MAKRO int enginecommand(char str[256], char reply[1024]);
+ int enginecommand(char str[256], char reply[1024]);
 }
 
 #endif //CHECKERENGINEX_CBINTERFACE_H

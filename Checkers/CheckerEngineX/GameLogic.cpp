@@ -13,7 +13,7 @@ extern char *output;
 bool timeOut = false;
 uint64_t endTime = 1000000000;
 
-MAKRO void setHashSize(uint32_t hash) {
+void setHashSize(uint32_t hash) {
     TT.resize(hash);
 }
 
@@ -25,7 +25,7 @@ Weights<int> gameWeights;
 #endif
 
 
-MAKRO void initialize() {
+void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
@@ -40,7 +40,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 }
 
 
-MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;

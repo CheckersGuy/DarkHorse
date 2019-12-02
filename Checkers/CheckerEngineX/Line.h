@@ -14,7 +14,7 @@ class Line {
 
 private:
     std::array<Move, MAX_PLY> myArray;
-    int counter = 0;
+    uint32_t counter = 0;
 
 public:
 

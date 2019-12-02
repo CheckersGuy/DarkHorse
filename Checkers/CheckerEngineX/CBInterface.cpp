@@ -132,7 +132,7 @@ int enginecommand(char str[256], char reply[1024]) {
     }
 
     if(strcmp(str,"name")==0){
-        sprintf(reply,"CheckerEngineX");
+        sprintf(reply,"reading");
         return 1;
     }
     if(strcmp(str,"set hashsize 2048")==0) {
