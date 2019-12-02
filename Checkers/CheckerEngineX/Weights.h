@@ -40,8 +40,7 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
 
 template<typename RunType, typename Iter>
 void compress(Iter begin, Iter end, std::string output) {
-    using DataType = decltype(*begin);
-
+    using DataType = int;
     std::ofstream stream;
     stream.open(output);
     for (auto it = begin; it != end;) {
@@ -57,16 +56,15 @@ void compress(Iter begin, Iter end, std::string output) {
     stream.close();
 }
 
-template< typename RunType,typename DataType, typename OutIter>
+template<typename RunType, typename DataType, typename OutIter>
 void decompress(std::string file, OutIter output) {
     std::ifstream stream(file);
+    RunType length;
+    DataType first;
     while (stream) {
-        RunType length;
-        DataType first;
         stream.read((char *) &length, sizeof(RunType));
         stream.read((char *) &first, sizeof(DataType));
 
-        std::cout<<"Test"<<std::endl;
     }
     stream.close();
 }
@@ -131,7 +129,6 @@ struct Weights {
                 double current;
                 stream.read((char *) &current, sizeof(double));
                 (*this)[i] = current;
-
             }
 
         }
@@ -163,7 +160,7 @@ struct Weights {
     }
 
     Value evaluate(Position pos) const {
-        constexpr int pawnEval = 100 *scalfac;
+        constexpr int pawnEval = 100 * scalfac;
         const Color color = pos.getColor();
         const uint32_t nKings = ~pos.K;
 

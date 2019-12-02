@@ -207,6 +207,12 @@ unistd.h
 -
 regex
 -
+Weights.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Weights.h
+immintrin.h
+-
+x86intrin.h
+-
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/types.h
 iostream

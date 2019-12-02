@@ -15,8 +15,8 @@
 
 
 namespace Zobrist {
-    extern std::array<std::array<uint64_t ,4>,32> ZOBRIST_KEYS;
     extern uint64_t colorBlack;
+
 
     void initializeZobrisKeys();
 
