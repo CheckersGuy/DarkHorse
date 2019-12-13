@@ -1,0 +1,1 @@
+/bin/g++-9  -Ofast -pthread -ffast-math -DNDEBUG  -march=znver2 -mtune=znver2 -funroll-loops   -flto -fno-fat-lto-objects -fuse-linker-plugin  -g   CMakeFiles/compression_check.dir/Checks/compression_check.cpp.o  -o cmake-build-debug/compression_check 

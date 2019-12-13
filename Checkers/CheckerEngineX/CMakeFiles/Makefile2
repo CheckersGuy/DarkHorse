@@ -35,10 +35,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/clion/97/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /snap/clion/98/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /snap/clion/97/bin/cmake/linux/bin/cmake -E remove -f
+RM = /snap/clion/98/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -54,11 +54,13 @@ CMAKE_BINARY_DIR = /home/robin/DarkHorse/Checkers/CheckerEngineX
 
 # The main recursive "all" target.
 all: CMakeFiles/CheckerEngineX.dir/all
+all: CMakeFiles/perft_check.dir/all
 
 .PHONY : all
 
 # The main recursive "clean" target.
 clean: CMakeFiles/CheckerEngineX.dir/clean
+clean: CMakeFiles/perft_check.dir/clean
 
 .PHONY : clean
 
@@ -93,6 +95,33 @@ CheckerEngineX: CMakeFiles/CheckerEngineX.dir/rule
 CMakeFiles/CheckerEngineX.dir/clean:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/clean
 .PHONY : CMakeFiles/CheckerEngineX.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/perft_check.dir
+
+# All Build rule for target.
+CMakeFiles/perft_check.dir/all:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/depend
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=16,17,18,19,20,21,22,23 "Built target perft_check"
+.PHONY : CMakeFiles/perft_check.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/perft_check.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles 8
+	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/perft_check.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles 0
+.PHONY : CMakeFiles/perft_check.dir/rule
+
+# Convenience name for target.
+perft_check: CMakeFiles/perft_check.dir/rule
+
+.PHONY : perft_check
+
+# clean rule for target.
+CMakeFiles/perft_check.dir/clean:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/clean
+.PHONY : CMakeFiles/perft_check.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

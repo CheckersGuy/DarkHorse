@@ -3,6 +3,7 @@
 //
 
 #include "Board.h"
+
 Position &Board::getPosition() {
     return pStack[pCounter];
 }

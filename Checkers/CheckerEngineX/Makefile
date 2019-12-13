@@ -39,10 +39,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/clion/97/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /snap/clion/98/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /snap/clion/97/bin/cmake/linux/bin/cmake -E remove -f
+RM = /snap/clion/98/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -59,7 +59,7 @@ CMAKE_BINARY_DIR = /home/robin/DarkHorse/Checkers/CheckerEngineX
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/snap/clion/97/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/snap/clion/98/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -70,7 +70,7 @@ rebuild_cache/fast: rebuild_cache
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/snap/clion/97/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	/snap/clion/98/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -123,6 +123,19 @@ CheckerEngineX/fast:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/build
 .PHONY : CheckerEngineX/fast
 
+#=============================================================================
+# Target rules for targets named perft_check
+
+# Build rule for target.
+perft_check: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 perft_check
+.PHONY : perft_check
+
+# fast build rule for target.
+perft_check/fast:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/build
+.PHONY : perft_check/fast
+
 Bits.o: Bits.cpp.o
 
 .PHONY : Bits.o
@@ -130,6 +143,7 @@ Bits.o: Bits.cpp.o
 # target to build an object file
 Bits.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Bits.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Bits.cpp.o
 .PHONY : Bits.cpp.o
 
 Bits.i: Bits.cpp.i
@@ -139,6 +153,7 @@ Bits.i: Bits.cpp.i
 # target to preprocess a source file
 Bits.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Bits.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Bits.cpp.i
 .PHONY : Bits.cpp.i
 
 Bits.s: Bits.cpp.s
@@ -148,6 +163,7 @@ Bits.s: Bits.cpp.s
 # target to generate assembly for a file
 Bits.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Bits.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Bits.cpp.s
 .PHONY : Bits.cpp.s
 
 Board.o: Board.cpp.o
@@ -157,6 +173,7 @@ Board.o: Board.cpp.o
 # target to build an object file
 Board.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Board.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Board.cpp.o
 .PHONY : Board.cpp.o
 
 Board.i: Board.cpp.i
@@ -166,6 +183,7 @@ Board.i: Board.cpp.i
 # target to preprocess a source file
 Board.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Board.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Board.cpp.i
 .PHONY : Board.cpp.i
 
 Board.s: Board.cpp.s
@@ -175,6 +193,7 @@ Board.s: Board.cpp.s
 # target to generate assembly for a file
 Board.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Board.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Board.cpp.s
 .PHONY : Board.cpp.s
 
 CBInterface.o: CBInterface.cpp.o
@@ -203,6 +222,33 @@ CBInterface.s: CBInterface.cpp.s
 CBInterface.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s
 .PHONY : CBInterface.cpp.s
+
+Checks/perft_check.o: Checks/perft_check.cpp.o
+
+.PHONY : Checks/perft_check.o
+
+# target to build an object file
+Checks/perft_check.cpp.o:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Checks/perft_check.cpp.o
+.PHONY : Checks/perft_check.cpp.o
+
+Checks/perft_check.i: Checks/perft_check.cpp.i
+
+.PHONY : Checks/perft_check.i
+
+# target to preprocess a source file
+Checks/perft_check.cpp.i:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Checks/perft_check.cpp.i
+.PHONY : Checks/perft_check.cpp.i
+
+Checks/perft_check.s: Checks/perft_check.cpp.s
+
+.PHONY : Checks/perft_check.s
+
+# target to generate assembly for a file
+Checks/perft_check.cpp.s:
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Checks/perft_check.cpp.s
+.PHONY : Checks/perft_check.cpp.s
 
 GameLogic.o: GameLogic.cpp.o
 
@@ -265,6 +311,7 @@ Move.o: Move.cpp.o
 # target to build an object file
 Move.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Move.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Move.cpp.o
 .PHONY : Move.cpp.o
 
 Move.i: Move.cpp.i
@@ -274,6 +321,7 @@ Move.i: Move.cpp.i
 # target to preprocess a source file
 Move.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Move.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Move.cpp.i
 .PHONY : Move.cpp.i
 
 Move.s: Move.cpp.s
@@ -283,6 +331,7 @@ Move.s: Move.cpp.s
 # target to generate assembly for a file
 Move.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Move.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Move.cpp.s
 .PHONY : Move.cpp.s
 
 MoveListe.o: MoveListe.cpp.o
@@ -346,6 +395,7 @@ Perft.o: Perft.cpp.o
 # target to build an object file
 Perft.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.o
 .PHONY : Perft.cpp.o
 
 Perft.i: Perft.cpp.i
@@ -355,6 +405,7 @@ Perft.i: Perft.cpp.i
 # target to preprocess a source file
 Perft.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.i
 .PHONY : Perft.cpp.i
 
 Perft.s: Perft.cpp.s
@@ -364,6 +415,7 @@ Perft.s: Perft.cpp.s
 # target to generate assembly for a file
 Perft.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.s
 .PHONY : Perft.cpp.s
 
 Position.o: Position.cpp.o
@@ -373,6 +425,7 @@ Position.o: Position.cpp.o
 # target to build an object file
 Position.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Position.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Position.cpp.o
 .PHONY : Position.cpp.o
 
 Position.i: Position.cpp.i
@@ -382,6 +435,7 @@ Position.i: Position.cpp.i
 # target to preprocess a source file
 Position.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Position.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Position.cpp.i
 .PHONY : Position.cpp.i
 
 Position.s: Position.cpp.s
@@ -391,6 +445,7 @@ Position.s: Position.cpp.s
 # target to generate assembly for a file
 Position.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Position.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Position.cpp.s
 .PHONY : Position.cpp.s
 
 Thread.o: Thread.cpp.o
@@ -454,6 +509,7 @@ Zobrist.o: Zobrist.cpp.o
 # target to build an object file
 Zobrist.cpp.o:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Zobrist.cpp.o
 .PHONY : Zobrist.cpp.o
 
 Zobrist.i: Zobrist.cpp.i
@@ -463,6 +519,7 @@ Zobrist.i: Zobrist.cpp.i
 # target to preprocess a source file
 Zobrist.cpp.i:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Zobrist.cpp.i
 .PHONY : Zobrist.cpp.i
 
 Zobrist.s: Zobrist.cpp.s
@@ -472,6 +529,7 @@ Zobrist.s: Zobrist.cpp.s
 # target to generate assembly for a file
 Zobrist.cpp.s:
 	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s
+	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Zobrist.cpp.s
 .PHONY : Zobrist.cpp.s
 
 main.o: main.cpp.o
@@ -510,6 +568,7 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... CheckerEngineX"
 	@echo "... edit_cache"
+	@echo "... perft_check"
 	@echo "... Bits.o"
 	@echo "... Bits.i"
 	@echo "... Bits.s"
@@ -519,6 +578,9 @@ help:
 	@echo "... CBInterface.o"
 	@echo "... CBInterface.i"
 	@echo "... CBInterface.s"
+	@echo "... Checks/perft_check.o"
+	@echo "... Checks/perft_check.i"
+	@echo "... Checks/perft_check.s"
 	@echo "... GameLogic.o"
 	@echo "... GameLogic.i"
 	@echo "... GameLogic.s"

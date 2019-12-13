@@ -133,8 +133,8 @@ namespace Training {
     inline double sigmoid(double c, double value) {
        double sig= 1.0/(1.0+std::exp(c*value));
 
-        sig=std::min(sig,0.999999);
-        sig=std::max(sig,0.000001);
+    /*    sig=std::min(sig,0.9999999);
+        sig=std::max(sig,0.0000001);*/
         return sig;
     }
 

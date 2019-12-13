@@ -1,0 +1,2 @@
+/usr/bin/ar qc libSHARED_check.a  CMakeFiles/SHARED_check.dir/Checks/perft_check.cpp.o CMakeFiles/SHARED_check.dir/Perft.cpp.o CMakeFiles/SHARED_check.dir/Zobrist.cpp.o CMakeFiles/SHARED_check.dir/Board.cpp.o CMakeFiles/SHARED_check.dir/Position.cpp.o CMakeFiles/SHARED_check.dir/Bits.cpp.o CMakeFiles/SHARED_check.dir/Move.cpp.o
+/usr/bin/ranlib libSHARED_check.a

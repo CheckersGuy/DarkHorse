@@ -122,8 +122,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        Engine one("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/" + engines[0]);
-        Engine two("/home/robin/DarkHorse/Training/cmake-build-debug/Engines/"  + engines[1]);
+        Engine one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
+        Engine two("/home/robin/DarkHorse/Training/Engines/"  + engines[1]);
         Match match(one, two);
         one.setHashSize(vm["hashSize"].as<int>());
         two.setHashSize(vm["hashSize"].as<int>());
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
 
     std::vector<TrainingPos> data;
 
-    loadGames(data, "/home/robin/DarkHorse/Training/TrainData/test3.game");
+    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game");
 
 
     std::cout << "Length: " << data.size() << std::endl;
@@ -224,11 +224,11 @@ int main(int argc, char *argv[]) {
 
 
     Trainer trainer(data);
-    // 0.0399091
     trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-6e-5);
+    //0.172977
+    trainer.setCValue(-4e-5);
     trainer.startTune();
 
 

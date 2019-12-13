@@ -1,3 +1,4 @@
 /home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/rebuild_cache.dir
 /home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/CheckerEngineX.dir
 /home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/edit_cache.dir
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/perft_check.dir
