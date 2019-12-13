@@ -72,19 +72,19 @@ void decompress(std::string file, OutIter output) {
 
 template<typename T>
 struct Weights {
-
-
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
 
     Weights() : kingOp(0), kingEnd(0) {
         this->weights = std::make_unique<T[]>(SIZE);
-        std::memset(weights.get(), 0, sizeof(T) * SIZE);
+        std::fill(weights.get(), weights.get() + SIZE, T{0});
     }
 
     Weights(const Weights<T> &other) {
         this->weights = std::make_unique<T[]>(SIZE);
-        std::memcpy(this->weights.get(), other.weights.get(), sizeof(T) * SIZE);
+        std::copy(other.weights.get(), other.weights.get() + SIZE, weights.get());
+        this->kingOp = other.kingOp;
+        this->kingOp = other.kingOp;
     }
 
 
@@ -93,12 +93,9 @@ struct Weights {
     }
 
     T getNorm() const {
-        T current = 0;
-        for (size_t i = 0; i < SIZE; ++i) {
-            current += weights[i] * weights[i];
-        }
-        current = std::sqrt(current);
-        return current;
+        T current = std::transform_reduce(weights.get(), weights.get() + SIZE, weights.get(), 0.0,
+                                          [](T v1, T v2) { return v1 + v2; }, [](T v1) { return v1 * v1; });
+        return std::sqrt(current);
     }
 
     T getMaxValue() const {
@@ -160,6 +157,7 @@ struct Weights {
     }
 
     Value evaluate(Position pos) const {
+
         constexpr int pawnEval = 100 * scalfac;
         const Color color = pos.getColor();
         const uint32_t nKings = ~pos.K;
@@ -183,11 +181,11 @@ struct Weights {
         }
         int opening = 0, ending = 0;
 
-        for (int j = 0; j < 3; ++j) {
-            for (int i = 0; i < 3; ++i) {
+        for (uint32_t j = 0; j < 3; ++j) {
+            for (uint32_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);
-                size_t indexOpening = 18 * getIndex(curRegion, pos) + 3 * j + i;
-                size_t indexEnding = 18 * getIndex(curRegion, pos) + 9 + 3 * j + i;
+                size_t indexOpening = 18u * getIndex(curRegion, pos) + 3u * j + i;
+                size_t indexEnding = 18u * getIndex(curRegion, pos) + 9u + 3u * j + i;
                 opening += (weights[indexOpening]);
                 ending += (weights[indexEnding]);
             }
@@ -211,7 +209,6 @@ struct Weights {
 
         int score = (factorOp * opening + factorEnd * ending) / 24;
 
-
         return score;
     }
 
@@ -231,6 +228,18 @@ struct Weights {
             return kingEnd;
         }
         return weights[index];
+    }
+
+    T averageWeight() const {
+        T accumulation = 0;
+        T counter = 0;
+        std::for_each(weights.get(), weights.get() + SIZE, [&](T value) {
+            if (value != 0) {
+                counter++;
+                accumulation += std::abs(value);
+            }
+        });
+        return accumulation / counter;
     }
 
 

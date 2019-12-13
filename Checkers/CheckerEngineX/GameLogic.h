@@ -15,7 +15,14 @@
 #include <algorithm>
 #include "Bits.h"
 
-void setHashSize(uint32_t hash);
+#if defined(__GNUC__)
+#define MAKRO extern"C" __attribute__((visibility("default")))
+#else
+#define MAKRO extern "C" __declspec(dll_export)
+#endif
+
+
+MAKRO void setHashSize(uint32_t hash);
 
 
 template<NodeType type>Value quiescene(Board &board, Value alpha, Value beta,Line& pv, int ply) ;
@@ -23,12 +30,12 @@ template<NodeType type>Value quiescene(Board &board, Value alpha, Value beta,Lin
 template<NodeType type>Value alphaBeta(Board &board, Value alpha, Value beta,Line& localPV, int ply, int depth, bool prune);
 
 
-Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print);
+MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print);
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print);
 
 
- void initialize();
+MAKRO void initialize();
 
 
 

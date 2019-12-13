@@ -2,7 +2,7 @@
 // Created by robin on 8/1/18.
 //
 
-#include <future>
+
 #include "Trainer.h"
 
 
@@ -44,7 +44,6 @@ double getWinValue(Score score) {
         return 0.0;
     else if (score > 0)
         return 1.0;
-
 
     return 0.5;
 }
@@ -130,41 +129,23 @@ void Trainer::startTune() {
     }
 }
 
-double Trainer::calculateLoss(int threads) {
-    double mse = 0;
-    auto evalLambda = [&](TrainingPos pos) {
+double Trainer::calculateLoss() {
+    auto evalLambda = [this](TrainingPos pos) {
         Board board;
-        board = pos.pos;
+        board=pos.pos;
         double current = getWinValue(pos.result);
+        double color = static_cast<double>(pos.pos.color);
         Line local;
-        double quiesc = static_cast<double>(board.getMover() *
-                                            quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value);
+        double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value);
         current = current - Training::sigmoid(cValue, quiesc);
         current = current * current;
         return current;
     };
 
-    std::vector<std::future<double>> workers;
+    auto result = std::transform_reduce(std::execution::seq,data.begin(),data.end(),0.0,std::plus{},[&](TrainingPos& pos){return evalLambda(pos);});
+    result=result/static_cast<double>(data.size());
 
-    size_t chunk = data.size() / threads;
-    size_t i = 0;
-    for (; i < data.size(); i += chunk) {
-        workers.emplace_back(std::async(std::launch::async, [&]() {
-            double local = 0;
-            for (size_t k = i; k < i + chunk; ++k) {
-                local += evalLambda(data[k]);
-            }
-            return local;
-        }));
-    }
-    for (; i < data.size(); ++i) {
-        mse += evalLambda(data[i]);
-    }
-
-    for (auto &th : workers) {
-        mse += th.get();
-    }
-    return mse / static_cast<double>(data.size());
+    return std::sqrt(result);
 }
 
 double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t index, double offset) {

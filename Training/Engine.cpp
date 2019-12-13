@@ -28,18 +28,18 @@ Value Engine::searchEngine(Board &board, Move &best, int depth, int time, bool f
 void Engine::initialize() {
     Init func = (Init) (dlsym(handle, "initialize"));
     if (!func) {
-        std::cout << "Couldn't find the function";
+        std::cout << "Couldn't find the init function"<<std::endl;
         exit(EXIT_FAILURE);
     }
     func();
     setHashSize(DEFAULT_HASH);
 }
 
-void Engine::setHashSize(int hash) {
+void Engine::setHashSize(uint32_t hash) {
     hashSize = hash;
     HashSize func = (HashSize) (dlsym(handle, "setHashSize"));
     if (!func) {
-        std::cout << "Couldn't find the function";
+        std::cout << "Couldn't find setHashSize function"<<std::endl;
         exit(EXIT_FAILURE);
     }
     func(hash);

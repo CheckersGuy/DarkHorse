@@ -13,7 +13,7 @@
 
 using Search =Value (*)(Board &, Move &, int, uint32_t, bool);
 using Init =void (*)();
-using HashSize=void (*)(int);
+using HashSize=void (*)(uint32_t);
 
 class Engine {
 private:
@@ -33,7 +33,7 @@ public:
 
     void initialize();
 
-    void setHashSize(int hash);
+    void setHashSize(uint32_t hash);
 
     void setTimePerMove(int time);
 

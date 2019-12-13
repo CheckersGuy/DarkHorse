@@ -53,6 +53,7 @@ int Match::getNumThreads() {
 }
 
 void Match::start() {
+    Zobrist::initializeZobrisKeys();
     int outStream[threads][2];
     int inStream[threads][2];
 
@@ -127,7 +128,9 @@ void Match::start() {
                 write(outStream[p][1],(char*)(&positions[idx]),sizeof(Position));
                 busy[p]=2;
                 idx++;
-                idx=idx%positions.size();
+                if(idx>=positions.size()){
+                    idx=0;
+                }
             }else{
                 int id;
                 int buf =read(inStream[p][0],(char*)(&id),sizeof(int));

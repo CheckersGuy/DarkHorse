@@ -13,8 +13,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/main.cpp.o"
-  "CheckerEngineX"
-  "CheckerEngineX.pdb"
+  "cmake-build-debug/CheckerEngineX"
+  "cmake-build-debug/CheckerEngineX.pdb"
 )
 
 # Per-language clean rules from dependency scanning.

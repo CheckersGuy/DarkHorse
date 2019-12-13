@@ -13,7 +13,7 @@ extern char *output;
 bool timeOut = false;
 uint64_t endTime = 1000000000;
 
-void setHashSize(uint32_t hash) {
+MAKRO void setHashSize(uint32_t hash) {
     TT.resize(hash);
 }
 
@@ -25,7 +25,7 @@ Weights<int> gameWeights;
 #endif
 
 
-void initialize() {
+MAKRO void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
@@ -40,7 +40,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 }
 
 
- Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;
@@ -57,12 +57,12 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
     Value alpha = -INFINITE;
     Value beta = INFINITE;
-    Value gameValue;
+    Value value;
 
 
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
-        Value value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i * ONE_PLY, true);
+        value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i * ONE_PLY, true);
         if (timeOut)
             break;
 
@@ -80,7 +80,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
         }
 
         if (print) {
-            std::string temp = std::to_string(gameValue.value) + "  ";
+            std::string temp = std::to_string(value.value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
@@ -93,11 +93,9 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
         mainPV = currentPV;
         best = mainPV[0];
-        gameValue = value;
-
         ++i;
     }
-    return gameValue;
+    return value;
 }
 
 template<NodeType type>
@@ -208,8 +206,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && depth >= 3 * ONE_PLY) {
-        Value margin = (5 *scalfac* depth) / ONE_PLY;
+    if (!inPVLine && prune && depth >= 5 * ONE_PLY) {
+        Value margin = (15 *scalfac* depth) / ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;

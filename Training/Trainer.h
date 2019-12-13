@@ -11,6 +11,8 @@
 #include "Weights.h"
 #include "Training.h"
 #include "queue"
+#include <numeric>
+#include <execution>
 
 #ifdef TRAIN
 extern Weights<double> gameWeights;
@@ -53,8 +55,7 @@ public:
 
     void startTune();
 
-
-    double calculateLoss(int threads=std::thread::hardware_concurrency());
+    double calculateLoss();
 
     static double evaluatePosition( Board&board,Weights<double>& weights,size_t index,double offset);
 
