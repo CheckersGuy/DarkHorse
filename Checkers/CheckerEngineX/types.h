@@ -68,8 +68,7 @@ enum Flag : uint8_t {
 };
 
 
-class Value {
-public:
+struct Value {
     int value{0};
 
     static Value loss(Color color, int ply);
