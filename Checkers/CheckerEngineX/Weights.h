@@ -12,7 +12,7 @@
 #include "MGenerator.h"
 #include "GameLogic.h"
 #include <cstring>
-
+#include <iterator>
 
 constexpr uint32_t region = 13107u;
 constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
@@ -37,38 +37,6 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
     }
     return index;
 }
-
-template<typename RunType, typename Iter>
-void compress(Iter begin, Iter end, std::string output) {
-    using DataType = int;
-    std::ofstream stream;
-    stream.open(output);
-    for (auto it = begin; it != end;) {
-        RunType length{0};
-        auto first = *it;
-        while (it != end && length <= std::numeric_limits<RunType>::max() && (*it) == first) {
-            length++;
-            it++;
-        }
-        stream.write((char *) &length, sizeof(RunType));
-        stream.write((char *) &first, sizeof(DataType));
-    }
-    stream.close();
-}
-
-template<typename RunType, typename DataType, typename OutIter>
-void decompress(std::string file, OutIter output) {
-    std::ifstream stream(file);
-    RunType length;
-    DataType first;
-    while (stream) {
-        stream.read((char *) &length, sizeof(RunType));
-        stream.read((char *) &first, sizeof(DataType));
-
-    }
-    stream.close();
-}
-
 
 template<typename T>
 struct Weights {
@@ -106,53 +74,52 @@ struct Weights {
         return *std::min_element(weights.get(), weights.get() + SIZE);
     }
 
-    void loadWeights(const std::string path) {
+    template<typename RunType=uint32_t>
+    void loadWeights(const std::string &path) {
+        static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
-        if (!stream.good()) {
-            std::cerr << "Error: Couldn't find weights, default init" << std::endl;;
-        } else {
-            size_t counter = 0;
-            while (!stream.eof() && counter < SIZE) {
-                uint32_t runLength = 0;
-                stream.read((char *) &runLength, sizeof(uint32_t));
-                double value;
-                stream.read((char *) &value, sizeof(double));
-                for (size_t i = 0; i < runLength; ++i) {
-                    weights[counter] = value;
-                    counter++;
-                }
+        using DataType = double;
+        size_t counter = 0u;
+        while (stream) {
+            if (counter >= SIZE)
+                break;
+            RunType length;
+            DataType first;
+            stream.read((char *) &length, sizeof(RunType));
+            stream.read((char *) &first, sizeof(DataType));
+            if (stream.eof())
+                break;
+            T temp =std::round(first);
+            for (RunType i = 0u; i < length; ++i) {
+                weights[counter] = temp;
+                counter++;
             }
-            for (size_t i = SIZE; i < SIZE + 2; ++i) {
-                double current;
-                stream.read((char *) &current, sizeof(double));
-                (*this)[i] = current;
-            }
-
         }
+        DataType kingOpVal, kingEndVal;
+        stream.read((char *) &kingOpVal, sizeof(DataType));
+        stream.read((char *) &kingEndVal, sizeof(DataType));
+        this->kingOp = static_cast<T>(kingOpVal);
+        this->kingEnd = static_cast<T>(kingEndVal);
         stream.close();
     }
 
-
-    void storeWeights(const std::string path) {
+    template<typename RunType=uint32_t>
+    void storeWeights(const std::string &path) {
+        using DataType = double;
         std::ofstream stream(path, std::ios::binary);
-        if (!stream.good()) {
-            std::cerr << "Error couldnt store weights" << std::endl;
-            exit(0);
-        }
-        for (size_t i = 0; i < SIZE; ++i) {
-            uint32_t runLength = 1;
-            double value = weights[i];
-            while (i < SIZE && weights[i] == weights[i + 1]) {
-                ++i;
-                ++runLength;
+        auto end = weights.get() + SIZE;
+        for (auto it = weights.get(); it != end;) {
+            RunType length{0};
+            auto first = *it;
+            while (it != end && length<std::numeric_limits<RunType>::max() &&  *(it) == first) {
+                length++;
+                it++;
             }
-            stream.write((char *) &runLength, sizeof(uint32_t));
-            stream.write((char *) &value, sizeof(double));
+            stream.write((char *) &length, sizeof(RunType));
+            stream.write((char *) &first, sizeof(DataType));
         }
-
-
-        stream.write((char *) &kingOp, sizeof(T));
-        stream.write((char *) &kingEnd, sizeof(T));
+        stream.write((char *) &kingOp, sizeof(DataType));
+        stream.write((char *) &kingEnd, sizeof(DataType));
         stream.close();
     }
 

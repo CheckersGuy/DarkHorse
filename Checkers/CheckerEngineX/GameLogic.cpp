@@ -29,7 +29,7 @@ MAKRO void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
+    gameWeights.loadWeights<uint16_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSaveCopy2.weights");
     Zobrist::initializeZobrisKeys();
 }
 

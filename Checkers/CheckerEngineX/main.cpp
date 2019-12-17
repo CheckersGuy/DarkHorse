@@ -119,19 +119,19 @@ void Interface::processInput(const int &readPipe) {
         Move move;
         std::regex reg2("[^|]{2}");
         std::sregex_iterator iterator(message.begin(), message.end(), reg2);
-        auto from =(*iterator++).str();
-        auto to =(*iterator).str();
+        auto from = (*iterator++).str();
+        auto to = (*iterator).str();
 
 
-        move.from = 1u<<std::stoi(from);
-        move.to = 1u<<std::stoi(to);
+        move.from = 1u << std::stoi(from);
+        move.to = 1u << std::stoi(to);
 
         for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
-            auto value =(*iterator).str();
-            move.captures= 1u<<std::stoi(value);
+            auto value = (*iterator).str();
+            move.captures = 1u << std::stoi(value);
         }
-        std::cout<<"From: "<<move.getFromIndex()<<std::endl;
-        std::cout<<"To: "<<move.getToIndex()<<std::endl;
+        std::cout << "From: " << move.getFromIndex() << std::endl;
+        std::cout << "To: " << move.getToIndex() << std::endl;
 
     }
 }
@@ -145,25 +145,29 @@ int main(int argl, const char **argc) {
 
 
 
-
-    Weights<double> weights;
-    weights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
-    std::cout<<"average: "<<weights.averageWeight()<<std::endl;
-    std::cout<<"non-zero: "<<weights.numNonZeroValues()<<std::endl;
-
     Board test;
-    test=Position::getStartPosition();
+    test = Position::getStartPosition();
     test.printBoard();
-    std::cout<<std::endl;
+    std::cout << std::endl;
 
-    std::cout<<"\n";
+    std::cout << "\n";
 
-   initialize();
+    initialize();
+    std::cout << "average: " << gameWeights.averageWeight() << std::endl;
+    std::cout << "non-zero: " << gameWeights.numNonZeroValues() << std::endl;
+
+
+
     setHashSize(25);
-    searchValue(test,MAX_PLY,10000000,true);
+    searchValue(test, MAX_PLY, 10000000, true);
 
 
-/**/
+
+
+
+
+
+
 
 /*
     std::string current;
@@ -216,46 +220,46 @@ int main(int argl, const char **argc) {
             std::cout << move_string << "\n";
         }
     }*/
-    int numEngines = 2;
-    int mainPipe[numEngines][2];
-    int enginePipe[numEngines][2];
-    Interface inter{enginePipe[0][0], enginePipe[1][0], mainPipe[0][1], mainPipe[1][1]};
+    /*  int numEngines = 2;
+      int mainPipe[numEngines][2];
+      int enginePipe[numEngines][2];
+      Interface inter{enginePipe[0][0], enginePipe[1][0], mainPipe[0][1], mainPipe[1][1]};
 
-    pid_t pid;
-    for (auto i = 0; i < numEngines; ++i) {
-        pipe(mainPipe[i]);
-        pipe(enginePipe[i]);
-        pid = fork();
-        if (pid < 0) {
-            std::cerr << "Error" << std::endl;
-            exit(EXIT_FAILURE);
-        } else if (pid == 0) {
-            dup2(mainPipe[i][0], STDIN_FILENO);
-            dup2(enginePipe[i][1], STDOUT_FILENO);
-            execlp("./reading", "reading", NULL);
-            exit(EXIT_SUCCESS);
-        }
-    }
-    if (pid > 0) {
-        for (int k = 0; k < numEngines; ++k) {
-            close(mainPipe[k][0]);
-            close(enginePipe[k][1]);
-        }
+      pid_t pid;
+      for (auto i = 0; i < numEngines; ++i) {
+          pipe(mainPipe[i]);
+          pipe(enginePipe[i]);
+          pid = fork();
+          if (pid < 0) {
+              std::cerr << "Error" << std::endl;
+              exit(EXIT_FAILURE);
+          } else if (pid == 0) {
+              dup2(mainPipe[i][0], STDIN_FILENO);
+              dup2(enginePipe[i][1], STDOUT_FILENO);
+              execlp("./reading", "reading", NULL);
+              exit(EXIT_SUCCESS);
+          }
+      }
+      if (pid > 0) {
+          for (int k = 0; k < numEngines; ++k) {
+              close(mainPipe[k][0]);
+              close(enginePipe[k][1]);
+          }
 
-        inter.initEngines();
-        inter.processInput(inter.engineRead1);
-        inter.processInput(inter.engineRead2);
-        std::string message = "search\n";
-        inter.writeMessage(inter.engineWrite1, message);
-        inter.writeMessage(inter.engineWrite2, message);
-        inter.processInput(inter.engineRead1);
-        inter.processInput(inter.engineRead2);
-    }
+          inter.initEngines();
+          inter.processInput(inter.engineRead1);
+          inter.processInput(inter.engineRead2);
+          std::string message = "search\n";
+          inter.writeMessage(inter.engineWrite1, message);
+          inter.writeMessage(inter.engineWrite2, message);
+          inter.processInput(inter.engineRead1);
+          inter.processInput(inter.engineRead2);
+      }
 
 
-    int status;
-    for (int k = 0; k < numEngines; ++k) {
-        wait(&status);
-    }
+      int status;
+      for (int k = 0; k < numEngines; ++k) {
+          wait(&status);
+      }*/
 
 }
