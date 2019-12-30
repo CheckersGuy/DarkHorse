@@ -82,15 +82,11 @@ std::string encodeMove(Move move) {
 }
 
 
-int main(int argl, const char **argc) {
-
-
-
+int main() {
 
     std::string current;
     Board board;
     BoardFactory::setUpStartingPosition(board);
-
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
