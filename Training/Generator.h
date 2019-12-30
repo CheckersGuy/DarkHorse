@@ -12,8 +12,9 @@
 #include "Engine.h"
 #include  <sys/types.h>
 #include <sys/wait.h>
-#include <unistd.h>
 #include  <sys/types.h>
+#include <unistd.h>
+
 #include "fcntl.h"
 #include "Utilities.h"
 

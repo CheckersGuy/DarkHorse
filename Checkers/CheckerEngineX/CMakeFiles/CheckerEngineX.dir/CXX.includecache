@@ -34,10 +34,6 @@ Position.h
 Zobrist.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 
-/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
-GameLogic.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
-
 /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
 Board.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
@@ -207,10 +203,16 @@ algorithm
 -
 Perft.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
+sys/types.h
+-
 sys/wait.h
+-
+sys/types.h
 -
 unistd.h
 -
+fcntl.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/fcntl.h
 regex
 -
 

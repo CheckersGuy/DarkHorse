@@ -4,16 +4,21 @@
 int main(){
     //Checking if the moveGenerator still works
 
+    const int depth=14;
+
     Zobrist::initializeZobrisKeys();
     Perft::table.setCapacity(1u<<23);
     Board board;
     board=Position::getStartPosition();
     board.printBoard();
     std::cout<<std::endl;
-
-    auto count = Perft::perftCheck(board,14);
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto count = Perft::perftCheck(board,depth);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto diff = t2-t1;
+    std::cout<<"Depth: "<<depth<<std::endl;
     std::cout<<"Count: "<<count<<std::endl;
-
+    std::cout<<"Time: "<<(diff.count())/1000000<<std::endl;
     if(count !=7978439499u){
         return 1;
     }

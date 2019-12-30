@@ -11,9 +11,55 @@
 #include <iterator>
 #include <algorithm>
 #include "Perft.h"
+#include  <sys/types.h>
 #include <sys/wait.h>
+#include  <sys/types.h>
 #include <unistd.h>
+#include "fcntl.h"
 #include <regex>
+
+std::optional<Move> decodeMove(const std::string &move_string) {
+    std::regex reg("[0-9]{1,2}[|][0-9]{1,2}([|][0-9]{1,2})*");
+    if (move_string.size() > 2)
+        if (std::regex_match(move_string, reg)) {
+            Move result;
+            std::regex reg2("[^|]+");
+            std::sregex_iterator iterator(move_string.begin(), move_string.end(), reg2);
+            auto from = (*iterator++).str();
+            auto to = (*iterator++).str();
+            result.from = 1u << std::stoi(from);
+            result.to = 1u << std::stoi(to);
+            for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
+                auto value = (*it).str();
+                result.captures |= 1u << std::stoi(value);
+            }
+            return std::make_optional(result);
+        }
+    return std::nullopt;
+}
+
+std::string encodeMove(Move move) {
+    std::string move_string;
+    move_string += std::to_string(move.getFromIndex());
+    move_string += "|";
+    move_string += std::to_string(move.getToIndex());
+    if (move.captures)
+        move_string += "|";
+
+    uint32_t lastMove = (move.captures == 0u) ? 0u : Bits::bitscan_foward(move.captures);
+    uint32_t temp = move.captures & (~(1u << lastMove));
+    while (temp) {
+        uint32_t mSquare = Bits::bitscan_foward(temp);
+        temp &= temp - 1u;
+        move_string += std::to_string(mSquare);
+        move_string += "|";
+    }
+    if (lastMove) {
+        move_string += std::to_string(lastMove);
+    }
+    return move_string;
+}
+
 
 std::string getPositionString(Position pos) {
     std::string position;
@@ -31,10 +77,15 @@ std::string getPositionString(Position pos) {
             position += "0";
         }
     }
+    if (pos.getColor() == BLACK) {
+        position += "B";
+    } else {
+        position += "W";
+    }
     return position;
 }
 
-Position posFromString(const std::string pos) {
+Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
         uint32_t current = 1u << i;
@@ -50,216 +101,260 @@ Position posFromString(const std::string pos) {
             result.WP |= current;
         }
     }
-
+    if (pos[32] == 'B') {
+        result.color = BLACK;
+    } else {
+        result.color = WHITE;
+    }
     return result;
 }
 
 
-struct Interface {
-    enum State {
-        Idle, Ready, Searching
+struct Engine {
+    enum class State {
+        Idle, Game_Ready, Init_Ready,
+        Update
     };
-    const int &engineRead1;
-    const int &engineRead2;
-    const int &engineWrite1;
-    const int &engineWrite2;
-    State oneState;
-    State twoState;
-    Board board;
+    State state;
+    const int &engineRead;
+    const int &engineWrite;
+    bool waiting_response = false;
+    int time_move = 100;
+    int hash_size=21;
 
-    void initEngines();
+    void initEngine();
 
-    void writeMessage(const int &pipe, const std::string &message);
+    void writeMessage(const std::string &msg);
 
-    void processInput(const int &readPipe);
+    void newGame(const Position &pos);
 
-    void startGame(const Position pos);
+    void update();
+
+    std::optional<Move> search();
+
+    std::string readPipe();
+
+    void setHashSize(int hash);
+
+    void setTime(int time);
 };
 
-void Interface::initEngines() {
-    std::string message = "init\n";
-    writeMessage(engineWrite1, message);
-    writeMessage(engineWrite2, message);
+void Engine::setTime(int time) {
+    time_move = time;
+}
+
+void Engine::setHashSize(int hash) {
+    hash_size = hash;
 }
 
 
-void Interface::startGame(const Position pos) {
-    std::string message = "new_game\n";
-    writeMessage(engineWrite1, message);
-    writeMessage(engineWrite1, getPositionString(pos));
-    writeMessage(engineWrite2, message);
-    writeMessage(engineWrite2, getPositionString(pos));
-
-}
-
-
-void Interface::processInput(const int &readPipe) {
+std::string Engine::readPipe() {
     std::string message;
     char c;
-    while ((read(readPipe, &c, sizeof(char))) != -1) {
+    int result;
+    do {
+        result = read(engineRead, (char *) (&c), sizeof(char));
         if (c == '\n') {
             break;
         } else {
             message += c;
         }
-    }
 
-    if (message == "init_ready") {
-        std::cout << "ReadyEngine" << std::endl;
-    }
+    } while (result != -1);
+    return message;
+}
 
-    if (message == "game_ready") {
-        std::cout << "Engines setup position" << std::endl;
-    }
+void Engine::writeMessage(const std::string &msg) {
+    const std::string ex_message = msg + "\n";
+    write(engineWrite, (char *) &ex_message.front(), sizeof(char) * ex_message.size());
+}
 
-    std::regex reg("[0-9]{1,2}[|][0-9]{1,2}([|][0-9]{1,2})*");
-
-    if (std::regex_match(message, reg)) {
-        //engine send a move back
-        Move move;
-        std::regex reg2("[^|]{2}");
-        std::sregex_iterator iterator(message.begin(), message.end(), reg2);
-        auto from = (*iterator++).str();
-        auto to = (*iterator).str();
-
-
-        move.from = 1u << std::stoi(from);
-        move.to = 1u << std::stoi(to);
-
-        for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
-            auto value = (*iterator).str();
-            move.captures = 1u << std::stoi(value);
+std::optional<Move> Engine::search() {
+    if (state == State::Game_Ready) {
+        if (!waiting_response) {
+            writeMessage("search");
+            writeMessage(std::to_string(time_move));
         }
-        std::cout << "From: " << move.getFromIndex() << std::endl;
-        std::cout << "To: " << move.getToIndex() << std::endl;
+        waiting_response = true;
+        auto answer = readPipe();
+        auto move = decodeMove(answer);
+        if (move.has_value()) {
+            waiting_response = false;
+            return move;
+        }
+    }
+    return std::nullopt;
+}
 
+
+void Engine::newGame(const Position &pos) {
+    if (state == State::Init_Ready) {
+        if (!waiting_response) {
+            writeMessage("new_game");
+            writeMessage(getPositionString(pos));
+        }
+        waiting_response = true;
+        auto answer = readPipe();
+        if (answer == "game_ready") {
+            state = State::Game_Ready;
+            waiting_response = false;
+            std::cout << "Game ready" << std::endl;
+        }
     }
 }
 
-void Interface::writeMessage(const int &pipe, const std::string &message) {
-    write(pipe, (char *) &message.front(), sizeof(char) * message.size());
+void Engine::update() {
+    if (state == State::Update) {
+        auto answer = readPipe();
+        if (answer == "update_ready") {
+            state = State::Game_Ready;
+            std::cout << "Updated" << std::endl;
+        }
+    }
+}
+
+void Engine::initEngine() {
+    if (state == State::Idle) {
+        if (!waiting_response) {
+            writeMessage("init");
+            writeMessage(std::to_string(hash_size));
+        }
+        waiting_response = true;
+        auto answer = readPipe();
+        if (answer == "init_ready") {
+            state = State::Init_Ready;
+            waiting_response = false;
+            std::cout << "Init ready" << std::endl;
+        }
+    }
+
+}
+
+
+struct Interface {
+
+    std::array<Engine, 2> engines;
+    Board board;
+    int first_mover = 0;
+    void process();
+};
+
+void Interface::process() {
+    MoveListe liste;
+    getMoves(board.getPosition(), liste);
+    if (liste.length() == 0 || board.isRepetition()) {
+        return;
+    }
+    for (auto &engine : engines) {
+        engine.initEngine();
+        engine.newGame(board.getPosition());
+        engine.update();
+    }
+    const int second_mover = (first_mover == 0) ? 1 : 0;
+    auto move = engines[first_mover].search();
+    if (move.has_value()) {
+        board.makeMove(move.value());
+        engines[second_mover].state = Engine::State::Update;
+        engines[second_mover].writeMessage("update");
+        engines[second_mover].writeMessage(encodeMove(move.value()));
+        first_mover = second_mover;
+        board.printBoard();
+        std::cout << std::endl;
+    }
+
+
 }
 
 
 int main(int argl, const char **argc) {
+/*     std::string current;
+     Board board;
+     board = Position::getStartPosition();
+     while (std::cin >> current) {
+         if (current == "init") {
+             initialize();
+             std::string hash_string;
+             std::cin>>hash_string;
+             const int hash_size = std::stoi(hash_string);
+             setHashSize(1u<<hash_size);
+             std::cerr<<"HashSize: "<<hash_string<<std::endl;
+             std::cout << "init_ready" << "\n";
+         } else if (current == "new_game") {
+             std::string position;
+             std::cin >> position;
+             Position pos = posFromString(position);
+             board = pos;
+             std::cerr << position << std::endl;
+             std::cout << "game_ready" << "\n";
+         } else if (current == "update") {
+             //opponent made a move and we need to update the board
+             std::string move_string;
+             std::cin >> move_string;
+             auto move = decodeMove(move_string);
+             board.makeMove(move.value());
+             std::cout<<"update_ready"<<"\n";
+         } else if (current == "search") {
+             std::cerr<<" I am searching"<<std::endl;
+             std::string time_string;
+             std::cin>>time_string;
+             std::cerr<<"timeMove: "<<time_string<<std::endl;
+             Move bestMove;
+             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+             auto move_string = encodeMove(bestMove);
+             std::cout << move_string << "\n";
+             board.makeMove(bestMove);
+             std::cerr<<"I send the move"<<std::endl;
+         }
+     }*/
+    Zobrist::initializeZobrisKeys();
+    const int numEngines = 2;
+    int mainPipe[numEngines][2];
+    int enginePipe[numEngines][2];
+
+    Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
+    engine.setTime(200);
+    Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
+    engine2.setTime(20000);
+    Interface inter{engine, engine2};
+
+    std::deque<Position> openingQueue;
+    std::vector<std::string> engine_paths{"reading", "reading"};
 
 
-
-    Board test;
-    test = Position::getStartPosition();
-    test.printBoard();
-    std::cout << std::endl;
-
-    std::cout << "\n";
-
-    initialize();
-    std::cout << "average: " << gameWeights.averageWeight() << std::endl;
-    std::cout << "non-zero: " << gameWeights.numNonZeroValues() << std::endl;
-
-
-
-    setHashSize(25);
-    searchValue(test, MAX_PLY, 10000000, true);
-
-
-
-
-
-
-
-
-
-/*
-    std::string current;
-    Board board;
-    board = Position::getStartPosition();
-    while (std::cin >> current) {
-        if (current == "init") {
-            initialize();
-            setHashSize(23);
-            std::cout << "init_ready" << "\n";
-        } else if (current == "hashSize") {
-            std::string hash;
-            std::getline(std::cin, hash);
-            setHashSize(std::stoi(hash));
-        } else if (current == "new_game") {
-            //starting a new game
-            std::string position;
-            std::getline(std::cin, position);
-            Position pos = posFromString(position);
-            board = pos;
-            std::cout << "game_ready" << "\n";
-            std::cerr << "Received position" << std::endl;
-        } else if (current == "update") {
-            //opponent made a move and we need to update the board
-            std::string move;
-            std::getline(std::cin, move);
-        } else if (current == "search") {
-            //engine is supposed to search the current position
-            std::cerr << "Started search" << std::endl;
-            Move bestMove;
-            std::string move_string;
-            auto value = searchValue(board, bestMove, MAX_PLY, 1000, false);
-            move_string += std::to_string(bestMove.getFromIndex());
-            move_string += "|";
-            move_string += std::to_string(bestMove.getToIndex());
-            if (bestMove.captures)
-                move_string += "|";
-
-            uint32_t lastMove = (bestMove.captures == 0u) ? 0u : Bits::bitscan_foward(bestMove.captures);
-            uint32_t temp = bestMove.captures & (~(1u << lastMove));
-            while (temp) {
-                uint32_t mSquare = Bits::bitscan_foward(temp);
-                temp &= temp - 1u;
-                move_string += std::to_string(mSquare);
-                move_string += "|";
-            }
-            if (lastMove) {
-                move_string += std::to_string(lastMove);
-            }
-            std::cout << move_string << "\n";
+    pid_t pid;
+    for (auto i = 0; i < numEngines; ++i) {
+        pipe(mainPipe[i]);
+        pipe(enginePipe[i]);
+        pid = fork();
+        if (pid < 0) {
+            std::cerr << "Error" << std::endl;
+            exit(EXIT_FAILURE);
+        } else if (pid == 0) {
+            dup2(mainPipe[i][0], STDIN_FILENO);
+            dup2(enginePipe[i][1], STDOUT_FILENO);
+            const std::string command = "./" + engine_paths[i];
+            execlp(command.c_str(), engine_paths[i].c_str(), NULL);
+            exit(EXIT_SUCCESS);
         }
-    }*/
-    /*  int numEngines = 2;
-      int mainPipe[numEngines][2];
-      int enginePipe[numEngines][2];
-      Interface inter{enginePipe[0][0], enginePipe[1][0], mainPipe[0][1], mainPipe[1][1]};
-
-      pid_t pid;
-      for (auto i = 0; i < numEngines; ++i) {
-          pipe(mainPipe[i]);
-          pipe(enginePipe[i]);
-          pid = fork();
-          if (pid < 0) {
-              std::cerr << "Error" << std::endl;
-              exit(EXIT_FAILURE);
-          } else if (pid == 0) {
-              dup2(mainPipe[i][0], STDIN_FILENO);
-              dup2(enginePipe[i][1], STDOUT_FILENO);
-              execlp("./reading", "reading", NULL);
-              exit(EXIT_SUCCESS);
-          }
-      }
-      if (pid > 0) {
-          for (int k = 0; k < numEngines; ++k) {
-              close(mainPipe[k][0]);
-              close(enginePipe[k][1]);
-          }
-
-          inter.initEngines();
-          inter.processInput(inter.engineRead1);
-          inter.processInput(inter.engineRead2);
-          std::string message = "search\n";
-          inter.writeMessage(inter.engineWrite1, message);
-          inter.writeMessage(inter.engineWrite2, message);
-          inter.processInput(inter.engineRead1);
-          inter.processInput(inter.engineRead2);
-      }
+    }
+    if (pid > 0) {
+        for (int k = 0; k < numEngines; ++k) {
+            close(mainPipe[k][0]);
+            close(enginePipe[k][1]);
+            fcntl(enginePipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
+        }
+        inter.board = Position::getStartPosition();
+        while (true) {
+            inter.process();
+        }
 
 
-      int status;
-      for (int k = 0; k < numEngines; ++k) {
-          wait(&status);
-      }*/
+    }
+
+
+    int status;
+    for (int k = 0; k < numEngines; ++k) {
+        wait(&status);
+    }
 
 }
