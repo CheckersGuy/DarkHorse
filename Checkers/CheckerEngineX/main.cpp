@@ -312,13 +312,13 @@ int main(int argl, const char **argc) {
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(500);
+    engine.setTime(1000);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(20000);
+    engine2.setTime(1000);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading", "reading"};
+    std::vector<std::string> engine_paths{"reading", "old_engine"};
 
 
     pid_t pid;
