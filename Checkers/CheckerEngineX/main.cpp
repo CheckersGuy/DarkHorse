@@ -116,7 +116,7 @@ int main(int argl, const char **argc) {
             board.makeMove(move.value());
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
-            std::cerr << " I am searching" << std::endl;
+            std::cerr << " old_engine searching" << std::endl;
             std::string time_string;
             std::cin >> time_string;
             std::cerr << "timeMove: " << time_string << std::endl;
