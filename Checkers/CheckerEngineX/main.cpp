@@ -120,7 +120,7 @@ struct Engine {
     const int &engineWrite;
     bool waiting_response = false;
     int time_move = 100;
-    int hash_size=21;
+    int hash_size = 21;
 
     void initEngine();
 
@@ -236,8 +236,25 @@ struct Interface {
     std::array<Engine, 2> engines;
     Board board;
     int first_mover = 0;
+
     void process();
+
+    bool isLegalMove(Move move);
 };
+
+bool Interface::isLegalMove(Move move) {
+    MoveListe liste;
+    getMoves(board.getPosition(), liste);
+    Position check_pos = board.getPosition();
+    check_pos.makeMove(move);
+    for (auto m : liste) {
+        Position copy = board.getPosition();
+        copy.makeMove(m);
+        if (copy == check_pos)
+            return true;
+    }
+    return false;
+}
 
 void Interface::process() {
     MoveListe liste;
@@ -253,6 +270,10 @@ void Interface::process() {
     const int second_mover = (first_mover == 0) ? 1 : 0;
     auto move = engines[first_mover].search();
     if (move.has_value()) {
+        if(!Interface::isLegalMove(move.value())) {
+            std::cerr<<"Illegal move"<<std::endl;
+            exit(EXIT_FAILURE);
+        }
         board.makeMove(move.value());
         engines[second_mover].state = Engine::State::Update;
         engines[second_mover].writeMessage("update");
@@ -312,9 +333,9 @@ int main(int argl, const char **argc) {
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(1000);
+    engine.setTime(2000);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(1000);
+    engine2.setTime(2000);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
