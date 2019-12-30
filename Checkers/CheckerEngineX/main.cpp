@@ -83,12 +83,18 @@ std::string encodeMove(Move move) {
 
 
 int main(int argl, const char **argc) {
+
+
+
+
     std::string current;
     Board board;
     BoardFactory::setUpStartingPosition(board);
+
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
+            setHashSize(21);
             std::string hash_string;
             std::cin >> hash_string;
             const int hash_size = std::stoi(hash_string);
