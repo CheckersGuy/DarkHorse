@@ -23,8 +23,8 @@ std::optional<Move> decodeMove(const std::string &move_string) {
             std::sregex_iterator iterator(move_string.begin(), move_string.end(), reg2);
             auto from = (*iterator++).str();
             auto to = (*iterator++).str();
-            result.setFrom(1u << std::stoi(from));
-            result.setTo(1u << std::stoi(to));
+            result.setFrom(std::stoi(from));
+            result.setTo(std::stoi(to));
             for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
                 auto value = (*it).str();
                 result.captures |= 1u << std::stoi(value);
