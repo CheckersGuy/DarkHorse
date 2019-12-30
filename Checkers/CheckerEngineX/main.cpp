@@ -67,7 +67,7 @@ std::string encodeMove(Move move) {
     if (move.captures)
         move_string += "|";
 
-    uint32_t lastMove = (move.captures ==0u)?0u : _tzcnt_u32(move.captures);
+    uint32_t lastMove = (move.captures == 0u) ? 0u : _tzcnt_u32(move.captures);
     uint32_t temp = move.captures & (~(1u << lastMove));
     while (temp) {
         uint32_t mSquare = _tzcnt_u32(temp);
@@ -87,21 +87,21 @@ int main() {
     std::string current;
     Board board;
     BoardFactory::setUpStartingPosition(board);
-  /*  initialize();
-    setHashSize(21);
-    while(true){
-        MoveListe liste;
-        getMoves(*board.getPosition(),liste);
-         if(liste.length() == 0 || board.isRepetition())
-             break;
+    /*  initialize();
+      setHashSize(21);
+      while(true){
+          MoveListe liste;
+          getMoves(*board.getPosition(),liste);
+           if(liste.length() == 0 || board.isRepetition())
+               break;
 
-         Move best;
-         searchValue(board,best,MAX_PLY,1000,true);
-         board.makeMove(best);
-         board.printBoard();
-         std::cout<<std::endl;
+           Move best;
+           searchValue(board,best,MAX_PLY,1000,true);
+           board.makeMove(best);
+           board.printBoard();
+           std::cout<<std::endl;
 
-    }*/
+      }*/
 
 
     while (std::cin >> current) {
@@ -115,11 +115,11 @@ int main() {
             std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
-            std::cerr<<"new_game"<<std::endl;
+            std::cerr << "new_game" << std::endl;
             std::string position;
             std::cin >> position;
-            Position pos =posFromString(position);
-            BoardFactory::setUpPosition(board,pos);
+            Position pos = posFromString(position);
+            BoardFactory::setUpPosition(board, pos);
             std::cerr << position << std::endl;
             std::cout << "game_ready" << "\n";
         } else if (current == "update") {
@@ -140,7 +140,7 @@ int main() {
             auto move_string = encodeMove(bestMove);
             std::cout << move_string << "\n";
             std::cerr << "I send the move" << std::endl;
-            std::cerr<<move_string<<std::endl;
+            std::cerr << move_string << std::endl;
         }
     }
 }
