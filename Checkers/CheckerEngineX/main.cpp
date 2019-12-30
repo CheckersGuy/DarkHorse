@@ -87,6 +87,23 @@ int main() {
     std::string current;
     Board board;
     BoardFactory::setUpStartingPosition(board);
+  /*  initialize();
+    setHashSize(21);
+    while(true){
+        MoveListe liste;
+        getMoves(*board.getPosition(),liste);
+         if(liste.length() == 0 || board.isRepetition())
+             break;
+
+         Move best;
+         searchValue(board,best,MAX_PLY,1000,true);
+         board.makeMove(best);
+         board.printBoard();
+         std::cout<<std::endl;
+
+    }*/
+
+
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
@@ -119,6 +136,7 @@ int main() {
             std::cerr << "timeMove: " << time_string << std::endl;
             Move bestMove;
             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+            board.makeMove(bestMove);
             auto move_string = encodeMove(bestMove);
             std::cout << move_string << "\n";
             std::cerr << "I send the move" << std::endl;

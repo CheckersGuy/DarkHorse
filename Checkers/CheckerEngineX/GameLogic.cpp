@@ -100,8 +100,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
 
     }
-    board.makeMove(best);
-
     return gameValue;
 }
 
