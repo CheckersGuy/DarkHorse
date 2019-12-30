@@ -118,7 +118,6 @@ int main(int argl, const char **argc) {
             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             auto move_string = encodeMove(bestMove);
             std::cout << move_string << "\n";
-            board.makeMove(bestMove);
             std::cerr << "I send the move" << std::endl;
         }
     }

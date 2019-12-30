@@ -28,7 +28,7 @@ Weights<FixPoint<short, 4>> gameWeights;
 
 MAKRO void initialize() {
    // gameWeights.loadWeights("/home/Robin/Weights/newYear.weights");
-    gameWeights.loadWeights("/home/robin/Checkers/Training/cmake-build-debug/Weights/newYear.weights");
+    gameWeights.loadWeights("/home/robin/DarkHorse/Training/cmake-build-debug/newYear.weights");
 
     Zobrist::initializeZobrisKeys();
 }
