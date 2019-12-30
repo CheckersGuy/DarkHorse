@@ -67,7 +67,7 @@ std::string encodeMove(Move move) {
     if (move.captures)
         move_string += "|";
 
-    uint32_t lastMove = _tzcnt_u32(move.captures);
+    uint32_t lastMove = (move.captures ==0u)?0u : _tzcnt_u32(move.captures);
     uint32_t temp = move.captures & (~(1u << lastMove));
     while (temp) {
         uint32_t mSquare = _tzcnt_u32(temp);
