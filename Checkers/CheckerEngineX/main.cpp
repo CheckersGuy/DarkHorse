@@ -102,10 +102,11 @@ int main(int argl, const char **argc) {
             std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
+            std::cerr<<"new_game"<<std::endl;
             std::string position;
             std::cin >> position;
-            Position pos = posFromString(position);
-            board = pos;
+            Position pos =posFromString(position);
+            BoardFactory::setUpPosition(board,pos);
             std::cerr << position << std::endl;
             std::cout << "game_ready" << "\n";
         } else if (current == "update") {
