@@ -126,6 +126,7 @@ int main(int argl, const char **argc) {
             auto move_string = encodeMove(bestMove);
             std::cout << move_string << "\n";
             std::cerr << "I send the move" << std::endl;
+            std::cerr<<move_string<<std::endl;
         }
     }
 }
