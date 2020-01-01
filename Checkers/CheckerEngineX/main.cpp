@@ -331,15 +331,15 @@ int main(int argl, const char **argc) {
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(1000);
-    engine.setHashSize(21);
+    engine.setTime(200);
+    engine.setHashSize(25);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(1000);
-    engine2.setHashSize(21);
+    engine2.setTime(2000);
+    engine2.setHashSize(25);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading2", "reading2"};
+    std::vector<std::string> engine_paths{"reading", "reading"};
 
 
     pid_t pid;
