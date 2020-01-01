@@ -74,10 +74,11 @@ int main() {
             for (auto i = 2; i < squares.size(); ++i) {
                 move.captures |= 1u << squares[i];
             }
+            if (((1u << move.getFrom()) & board.getPosition()->K) != 0u)
+                move.setPieceType(1u);
             board.makeMove(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
-            std::cerr << " old_engine searching" << std::endl;
             std::string time_string;
             std::cin >> time_string;
             Move bestMove;
@@ -91,6 +92,7 @@ int main() {
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
+            board.makeMove(bestMove);
         }
     }
 }
