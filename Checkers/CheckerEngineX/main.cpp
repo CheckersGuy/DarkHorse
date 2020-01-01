@@ -1,6 +1,3 @@
-
-
-
 #include <vector>
 #include <future>
 #include <bitset>
@@ -12,28 +9,6 @@
 #include <list>
 #include <iterator>
 #include <regex>
-
-
-std::optional<Move> decodeMove(const std::string &move_string) {
-    std::regex reg("[0-9]{1,2}[|][0-9]{1,2}([|][0-9]{1,2})*");
-    if (move_string.size() > 2)
-        if (std::regex_match(move_string, reg)) {
-            Move result;
-            std::regex reg2("[^|]+");
-            std::sregex_iterator iterator(move_string.begin(), move_string.end(), reg2);
-            auto from = (*iterator++).str();
-            auto to = (*iterator++).str();
-            result.setFrom(std::stoi(from));
-            result.setTo(std::stoi(to));
-            for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
-                auto value = (*it).str();
-                result.captures |= 1u << std::stoi(value);
-            }
-            return std::make_optional(result);
-        }
-    return std::nullopt;
-}
-
 
 Position posFromString(const std::string &pos) {
     Position result;
@@ -59,51 +34,11 @@ Position posFromString(const std::string &pos) {
     return result;
 }
 
-std::string encodeMove(Move move) {
-    std::string move_string;
-    move_string += std::to_string(move.getFrom());
-    move_string += "|";
-    move_string += std::to_string(move.getTo());
-    if (move.captures)
-        move_string += "|";
-
-    uint32_t lastMove = (move.captures == 0u) ? 0u : _tzcnt_u32(move.captures);
-    uint32_t temp = move.captures & (~(1u << lastMove));
-    while (temp) {
-        uint32_t mSquare = _tzcnt_u32(temp);
-        temp &= temp - 1u;
-        move_string += std::to_string(mSquare);
-        move_string += "|";
-    }
-    if (lastMove) {
-        move_string += std::to_string(lastMove);
-    }
-    return move_string;
-}
-
 
 int main() {
-
     std::string current;
     Board board;
     BoardFactory::setUpStartingPosition(board);
-    /*  initialize();
-      setHashSize(21);
-      while(true){
-          MoveListe liste;
-          getMoves(*board.getPosition(),liste);
-           if(liste.length() == 0 || board.isRepetition())
-               break;
-
-           Move best;
-           searchValue(board,best,MAX_PLY,1000,true);
-           board.makeMove(best);
-           board.printBoard();
-           std::cout<<std::endl;
-
-      }*/
-
-
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
@@ -122,25 +57,40 @@ int main() {
             BoardFactory::setUpPosition(board, pos);
             std::cerr << position << std::endl;
             std::cout << "game_ready" << "\n";
-        } else if (current == "update") {
+        } else if (current == "new_move") {
             //opponent made a move and we need to update the board
-            std::string move_string;
-            std::cin >> move_string;
-            auto move = decodeMove(move_string);
-            board.makeMove(move.value());
+            Move move;
+            std::vector<uint32_t> squares;
+            std::string line;
+            std::cin >> line;
+            while (!line.empty()) {
+                if (line == "end_move")
+                    break;
+                squares.emplace_back(std::stoi(line));
+                std::cin >> line;
+            }
+            move.setFrom(squares[0]);
+            move.setTo(squares[1]);
+            for (auto i = 2; i < squares.size(); ++i) {
+                move.captures |= 1u << squares[i];
+            }
+            board.makeMove(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
             std::cerr << " old_engine searching" << std::endl;
             std::string time_string;
             std::cin >> time_string;
-            std::cerr << "timeMove: " << time_string << std::endl;
             Move bestMove;
             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-            board.makeMove(bestMove);
-            auto move_string = encodeMove(bestMove);
-            std::cout << move_string << "\n";
-            std::cerr << "I send the move" << std::endl;
-            std::cerr << move_string << std::endl;
+            std::cout << "new_move" << "\n";
+            std::cout << std::to_string(bestMove.getFrom()) << "\n";
+            std::cout << std::to_string(bestMove.getTo()) << "\n";
+            uint32_t captures = bestMove.captures;
+            while (captures) {
+                std::cout << std::to_string(__tzcnt_u32(captures)) << "\n";
+                captures &= captures - 1u;
+            }
+            std::cout << "end_move" << "\n";
         }
     }
 }
