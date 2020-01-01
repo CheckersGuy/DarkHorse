@@ -242,6 +242,7 @@ void Interface::process() {
     auto move = engines[first_mover].search();
     if (move.has_value()) {
         if (!Interface::isLegalMove(move.value())) {
+            std::cerr<<"Illegal move"<<std::endl;
             exit(EXIT_FAILURE);
         }
         board.makeMove(move.value());
@@ -336,7 +337,7 @@ int main(int argl, const char **argc) {
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading", "reading"};
+    std::vector<std::string> engine_paths{"reading2", "reading2"};
 
 
     pid_t pid;
