@@ -339,7 +339,7 @@ int main(int argl, const char **argc) {
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading2", "reading2"};
+    std::vector<std::string> engine_paths{"reading", "reading"};
 
 
     pid_t pid;
