@@ -67,7 +67,7 @@ int main() {
                    squares.emplace_back(std::stoi(line));
                    std::cin >> line;
                }
-               move.setTo(squares[0]);
+               move.setFrom(squares[0]);
                move.setTo(squares[1]);
                for (auto i = 2; i < squares.size(); ++i) {
                    move.captures |= 1u << squares[i];
