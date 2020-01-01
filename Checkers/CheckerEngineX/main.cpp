@@ -243,6 +243,8 @@ void Interface::process() {
     if (move.has_value()) {
         if (!Interface::isLegalMove(move.value())) {
             std::cerr<<"Illegal move"<<std::endl;
+            std::cerr<<"From: "<<move->getFromIndex()<<std::endl;
+            std::cerr<<"To: "<<move->getToIndex()<<std::endl;
             exit(EXIT_FAILURE);
         }
         board.makeMove(move.value());
