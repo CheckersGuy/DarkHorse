@@ -37,7 +37,7 @@ Position posFromString(const std::string &pos) {
 
 int main() {
 
-        std::string current;
+       std::string current;
        Board board;
        while (std::cin >> current) {
            if (current == "init") {

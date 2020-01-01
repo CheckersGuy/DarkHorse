@@ -46,7 +46,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     getMoves(*board.getPosition(), easyMoves);
     if (easyMoves.length() == 1) {
         best = easyMoves.liste[0];
-        board.makeMove(best);
         return EASY_MOVE;
     }
     TT.incrementAgeCounter();
