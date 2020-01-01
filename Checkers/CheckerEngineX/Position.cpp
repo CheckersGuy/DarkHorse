@@ -84,27 +84,28 @@ void Position::makeMove(Move move) {
             WP &= ~move.captures;
             K &= ~move.captures;
         }
-        BP &= ~(1 << move.getFrom());
-        BP |= 1 << move.getTo();
+        BP &= ~(1u << move.getFrom());
+        BP |= 1u << move.getTo();
 
-        if (move.getPieceType() == 0 && move.getTo() >> 2 == 7)
-            K |= 1 << move.getTo();
+        if (move.getPieceType() == 0 && move.getTo() >> 2u == 7)
+            K |= 1u << move.getTo();
 
     } else {
         if (move.isCapture()) {
             BP &= ~move.captures;
             K &= ~move.captures;
         }
-        WP &= ~(1 << move.getFrom());
-        WP |= 1 << move.getTo();
+        WP &= ~(1u << move.getFrom());
+        WP |= 1u << move.getTo();
 
-        if (move.getPieceType() == 0 && move.getTo() >> 2 == 0)
-            K |= 1 << move.getTo();
+        if (move.getPieceType() == 0 && move.getTo() >> 2u == 0)
+            K |= 1u << move.getTo();
 
     }
-    if (move.getPieceType() == 1) {
-        K &= ~((1 << move.getFrom()));
-        K |= (1 << move.getTo());
+    const uint32_t sq = 1u<<move.getFrom();
+    if ((sq & K) != 0) {
+        K &= ~sq;
+        K |= 1u<<move.getTo();
     }
     this->color = ~this->color;
 }
