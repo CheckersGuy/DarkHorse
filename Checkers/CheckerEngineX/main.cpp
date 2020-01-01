@@ -76,6 +76,8 @@ int main() {
             }
             if (((1u << move.getFrom()) & board.getPosition()->K) != 0u)
                 move.setPieceType(1u);
+
+
             board.makeMove(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
