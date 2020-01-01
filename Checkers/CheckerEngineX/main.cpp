@@ -18,49 +18,6 @@
 #include "fcntl.h"
 #include <regex>
 
-std::optional<Move> decodeMove(const std::string &move_string) {
-    std::regex reg("[0-9]{1,2}[|][0-9]{1,2}([|][0-9]{1,2})*");
-    if (move_string.size() > 2)
-        if (std::regex_match(move_string, reg)) {
-            Move result;
-            std::regex reg2("[^|]+");
-            std::sregex_iterator iterator(move_string.begin(), move_string.end(), reg2);
-            auto from = (*iterator++).str();
-            auto to = (*iterator++).str();
-            result.from = 1u << std::stoi(from);
-            result.to = 1u << std::stoi(to);
-            for (auto it = iterator; it != std::sregex_iterator{}; ++it) {
-                auto value = (*it).str();
-                result.captures |= 1u << std::stoi(value);
-            }
-            return std::make_optional(result);
-        }
-    return std::nullopt;
-}
-
-std::string encodeMove(Move move) {
-    std::string move_string;
-    move_string += std::to_string(move.getFromIndex());
-    move_string += "|";
-    move_string += std::to_string(move.getToIndex());
-    if (move.captures)
-        move_string += "|";
-
-    uint32_t lastMove = (move.captures == 0u) ? 0u : Bits::bitscan_foward(move.captures);
-    uint32_t temp = move.captures & (~(1u << lastMove));
-    while (temp) {
-        uint32_t mSquare = Bits::bitscan_foward(temp);
-        temp &= temp - 1u;
-        move_string += std::to_string(mSquare);
-        move_string += "|";
-    }
-    if (lastMove) {
-        move_string += std::to_string(lastMove);
-    }
-    return move_string;
-}
-
-
 std::string getPositionString(Position pos) {
     std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -154,7 +111,7 @@ std::string Engine::readPipe() {
     int result;
     do {
         result = read(engineRead, (char *) (&c), sizeof(char));
-        if (c == '\n') {
+        if (c== char(0) || c == '\n') {
             break;
         } else {
             message += c;
@@ -177,8 +134,22 @@ std::optional<Move> Engine::search() {
         }
         waiting_response = true;
         auto answer = readPipe();
-        auto move = decodeMove(answer);
-        if (move.has_value()) {
+        if (answer == "new_move") {
+            Move move;
+            auto line = readPipe();
+            std::vector<uint32_t> squares;
+            while (!line.empty()) {
+                if (line == "end_move")
+                    break;
+                squares.emplace_back(std::stoi(line));
+                line = readPipe();
+            }
+
+            move.from = 1u << squares[0];
+            move.to = 1u << squares[1];
+            for (auto i = 2; i < squares.size(); ++i) {
+                move.captures |= 1u << squares[i];
+            }
             waiting_response = false;
             return move;
         }
@@ -270,14 +241,22 @@ void Interface::process() {
     const int second_mover = (first_mover == 0) ? 1 : 0;
     auto move = engines[first_mover].search();
     if (move.has_value()) {
-        if(!Interface::isLegalMove(move.value())) {
-            std::cerr<<"Illegal move"<<std::endl;
+        if (!Interface::isLegalMove(move.value())) {
             exit(EXIT_FAILURE);
         }
         board.makeMove(move.value());
         engines[second_mover].state = Engine::State::Update;
-        engines[second_mover].writeMessage("update");
-        engines[second_mover].writeMessage(encodeMove(move.value()));
+        //seind the move to the engine
+        engines[second_mover].writeMessage("new_move");
+        engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().from)));
+        engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().to)));
+        uint32_t captures = move->captures;
+        while (captures) {
+            engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(captures)));
+            captures &= captures - 1u;
+        }
+        engines[second_mover].writeMessage("end_move");
+
         first_mover = second_mover;
         board.printBoard();
         std::cout << std::endl;
@@ -288,45 +267,61 @@ void Interface::process() {
 
 
 int main(int argl, const char **argc) {
-/*     std::string current;
-     Board board;
-     board = Position::getStartPosition();
-     while (std::cin >> current) {
-         if (current == "init") {
-             initialize();
-             std::string hash_string;
-             std::cin>>hash_string;
-             const int hash_size = std::stoi(hash_string);
-             setHashSize(1u<<hash_size);
-             std::cerr<<"HashSize: "<<hash_string<<std::endl;
-             std::cout << "init_ready" << "\n";
-         } else if (current == "new_game") {
-             std::string position;
-             std::cin >> position;
-             Position pos = posFromString(position);
-             board = pos;
-             std::cerr << position << std::endl;
-             std::cout << "game_ready" << "\n";
-         } else if (current == "update") {
-             //opponent made a move and we need to update the board
-             std::string move_string;
-             std::cin >> move_string;
-             auto move = decodeMove(move_string);
-             board.makeMove(move.value());
-             std::cout<<"update_ready"<<"\n";
-         } else if (current == "search") {
-             std::cerr<<" I am searching"<<std::endl;
-             std::string time_string;
-             std::cin>>time_string;
-             std::cerr<<"timeMove: "<<time_string<<std::endl;
-             Move bestMove;
-             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-             auto move_string = encodeMove(bestMove);
-             std::cout << move_string << "\n";
-             board.makeMove(bestMove);
-             std::cerr<<"I send the move"<<std::endl;
-         }
-     }*/
+   /*    std::string current;
+       Board board;
+       board = Position::getStartPosition();
+       while (std::cin >> current) {
+           if (current == "init") {
+               initialize();
+               std::string hash_string;
+               std::cin >> hash_string;
+               const int hash_size = std::stoi(hash_string);
+               setHashSize(1u << hash_size);
+               std::cerr << "HashSize: " << hash_string << std::endl;
+               std::cout << "init_ready" << "\n";
+           } else if (current == "new_game") {
+               std::string position;
+               std::cin >> position;
+               Position pos = posFromString(position);
+               board = pos;
+               std::cerr << position << std::endl;
+               std::cout << "game_ready" << "\n";
+           } else if (current == "new_move") {
+               //opponent made a move and we need to update the board
+               Move move;
+               std::vector<uint32_t> squares;
+               std::string line;
+               std::cin >> line;
+               while (!line.empty()) {
+                   if (line == "end_move")
+                       break;
+                   squares.emplace_back(std::stoi(line));
+                   std::cin >> line;
+               }
+               move.from = 1u << squares[0];
+               move.to = 1u << squares[1];
+               for (auto i = 2; i < squares.size(); ++i) {
+                   move.captures |= 1u << squares[i];
+               }
+               board.makeMove(move);
+               std::cout << "update_ready" << "\n";
+           } else if (current == "search") {
+               std::string time_string;
+               std::cin >> time_string;
+               Move bestMove;
+               auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+               std::cout << "new_move" << "\n";
+               std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
+               std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";
+               uint32_t captures = bestMove.captures;
+               while (captures) {
+                   std::cout << std::to_string(__tzcnt_u32(captures))<<"\n";
+                   captures &= captures - 1u;
+               }
+               std::cout << "end_move" << "\n";
+               board.makeMove(bestMove);
+           }
+       }*/
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
     int mainPipe[numEngines][2];
@@ -334,14 +329,14 @@ int main(int argl, const char **argc) {
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
     engine.setTime(1000);
-    engine.setHashSize(23);
+    engine.setHashSize(21);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
     engine2.setTime(1000);
-    engine2.setHashSize(23);
+    engine2.setHashSize(21);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"old_engine", "old_engine"};
+    std::vector<std::string> engine_paths{"reading", "reading"};
 
 
     pid_t pid;
