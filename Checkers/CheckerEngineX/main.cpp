@@ -131,8 +131,9 @@ std::optional<Move> Engine::search() {
         if (!waiting_response) {
             writeMessage("search");
             writeMessage(std::to_string(time_move));
+            waiting_response = true;
         }
-        waiting_response = true;
+
         auto answer = readPipe();
         if (answer == "new_move") {
             Move move;
@@ -144,13 +145,13 @@ std::optional<Move> Engine::search() {
                 squares.emplace_back(std::stoi(line));
                 line = readPipe();
             }
-
+            waiting_response = false;
             move.from = 1u << squares[0];
             move.to = 1u << squares[1];
             for (auto i = 2; i < squares.size(); ++i) {
                 move.captures |= 1u << squares[i];
             }
-            waiting_response = false;
+
             return move;
         }
     }
@@ -339,7 +340,7 @@ int main(int argl, const char **argc) {
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading", "reading"};
+    std::vector<std::string> engine_paths{"reading2", "reading2"};
 
 
     pid_t pid;
