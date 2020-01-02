@@ -29,7 +29,7 @@ MAKRO void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint16_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSaveCopy2.weights");
+    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -40,7 +40,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 }
 
 
- MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;
@@ -74,9 +74,9 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
         }
 
 
-        if (i >= 5) {
-            alpha = value - 50*scalfac ;
-            beta = value + 50*scalfac ;
+        if (i >= 3) {
+            alpha = value - 100 * scalfac;
+            beta = value + 100 * scalfac;
         }
 
         if (print) {
@@ -207,7 +207,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 
     if (!inPVLine && prune && depth >= 5 * ONE_PLY) {
-        Value margin = (15 *scalfac* depth) / ONE_PLY;
+        Value margin = (10 * scalfac * depth) / ONE_PLY;
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
@@ -229,7 +229,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     int extension = 0;
     if (sucessors.length() == 1 && sucessors[0].isCapture()) {
-        extension += 500;
+        extension += 590;
     }
 
     int newDepth = depth - ONE_PLY + extension;
@@ -242,11 +242,12 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth > 2 * ONE_PLY && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
+            if (depth >= 2 * ONE_PLY && !sucessors[i].isCapture() && !sucessors[i].isPromotion() &&
+                i > ((inPVLine) ? 3 : 1) &&
                 !sucessors[i].isPromotion()) {
                 reduce = ONE_PLY;
                 if (i > 3) {
-                    reduce = 2000;
+                    reduce = 2*ONE_PLY;
                 }
             }
             value = ~alphaBeta<NONPV>(board, ~alpha - 1, ~alpha, localPV, ply + 1, newDepth - reduce, prune);
