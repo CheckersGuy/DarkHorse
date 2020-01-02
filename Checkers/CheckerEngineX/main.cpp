@@ -338,7 +338,7 @@ int main(int argl, const char **argc) {
     engine.setTime(300);
     engine.setHashSize(23);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(300);
+    engine2.setTime(1800);
     engine2.setHashSize(23);
     Interface inter{engine, engine2};
 
@@ -370,9 +370,12 @@ int main(int argl, const char **argc) {
         }
         inter.board = Position::getStartPosition();
         while (true) {
-            if(inter.board.isRepetition())
-                break;
+
             inter.process();
+            if(inter.board.isRepetition()){
+                std::cout<<"Repetition"<<std::endl;
+                break;
+            }
         }
 
 
