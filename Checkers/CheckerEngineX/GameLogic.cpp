@@ -180,13 +180,12 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return board.getMover() * gameWeights.evaluate(*board.getPosition());
     }
 
+    if (depth < ONE_PLY) {
+        return quiescene<type>(board, alpha, beta, pv, ply);
+    }
 
     if (ply > 0 && board.isRepetition()) {
         return 0;
-    }
-
-    if (depth < ONE_PLY) {
-        return quiescene<type>(board, alpha, beta, pv, ply);
     }
 
     MoveListe sucessors;
