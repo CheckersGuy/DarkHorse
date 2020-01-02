@@ -184,7 +184,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
 
-    if (ply > 0 && board.isRepetition()) {
+    if (ply > 1 && board.isRepetition()) {
         return 0;
     }
 
