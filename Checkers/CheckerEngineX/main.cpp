@@ -63,6 +63,7 @@ Position posFromString(const std::string &pos) {
     } else {
         result.color = WHITE;
     }
+    result.key = Zobrist::generateKey(result);
     return result;
 }
 
@@ -240,7 +241,7 @@ void Interface::process() {
         engine.update();
     }
 
-    auto move = engines[first_mover].search();/**/
+    auto move = engines[first_mover].search();
     if (move.has_value()) {
         const int second_mover = (first_mover == 0) ? 1 : 0;
         if (!Interface::isLegalMove(move.value())) {
@@ -275,7 +276,6 @@ void Interface::process() {
 int main(int argl, const char **argc) {
    /*    std::string current;
        Board board;
-       board = Position::getStartPosition();
        while (std::cin >> current) {
            if (current == "init") {
                initialize();
@@ -290,7 +290,6 @@ int main(int argl, const char **argc) {
                std::cin >> position;
                Position pos = posFromString(position);
                board = pos;
-               std::cerr << position << std::endl;
                std::cout << "game_ready" << "\n";
            } else if (current == "new_move") {
                //opponent made a move and we need to update the board
@@ -302,6 +301,7 @@ int main(int argl, const char **argc) {
                    if (line == "end_move")
                        break;
                    squares.emplace_back(std::stoi(line));
+                   std::cerr<<"Line "<<line<<std::endl;
                    std::cin >> line;
                }
                move.from = 1u << squares[0];
@@ -343,7 +343,7 @@ int main(int argl, const char **argc) {
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading", "reading2"};
+    std::vector<std::string> engine_paths{"reading", "reading"};
 
 
     pid_t pid;
@@ -370,6 +370,8 @@ int main(int argl, const char **argc) {
         }
         inter.board = Position::getStartPosition();
         while (true) {
+            if(inter.board.isRepetition())
+                break;
             inter.process();
         }
 

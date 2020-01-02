@@ -167,9 +167,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         timeOut = true;
         return 0;
     }
-    if (ply > 0 && board.isRepetition()) {
-        return 0;
-    }
+
 
     if (ply > MAX_PLY) {
         return gameWeights.evaluate(board.getPosition()) * board.getMover();
@@ -177,6 +175,10 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     if (depth < ONE_PLY) {
         return quiescene<type>(board, alpha, beta, pv, ply);
+    }
+
+    if (ply > 0 && board.isRepetition()) {
+        return 0;
     }
 
     MoveListe sucessors;
