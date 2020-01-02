@@ -55,7 +55,7 @@ enum Score : int {
 
 };
 enum SEARCH {
-    MAX_PLY = 128, MAX_MOVE = 420, ONE_PLY = 1000
+    MAX_PLY = 128, MAX_MOVE = 320, ONE_PLY = 1000
 };
 enum Color : int {
     BLACK = -1, WHITE = 1, NONE

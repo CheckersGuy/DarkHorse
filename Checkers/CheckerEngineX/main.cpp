@@ -231,7 +231,7 @@ bool Interface::isLegalMove(Move move) {
 void Interface::process() {
     MoveListe liste;
     getMoves(board.getPosition(), liste);
-    if (liste.length() == 0 || board.isRepetition()) {
+    if (liste.length() == 0 ) {
         return;
     }
     for (auto &engine : engines) {
@@ -239,14 +239,16 @@ void Interface::process() {
         engine.newGame(board.getPosition());
         engine.update();
     }
-    const int second_mover = (first_mover == 0) ? 1 : 0;
-    auto move = engines[first_mover].search();
+
+    auto move = engines[first_mover].search();/**/
     if (move.has_value()) {
+        const int second_mover = (first_mover == 0) ? 1 : 0;
         if (!Interface::isLegalMove(move.value())) {
             std::cerr<<"Illegal move"<<std::endl;
             std::cerr<<"From: "<<move->getFromIndex()<<std::endl;
             std::cerr<<"To: "<<move->getToIndex()<<std::endl;
             exit(EXIT_FAILURE);
+
         }
         board.makeMove(move.value());
         engines[second_mover].state = Engine::State::Update;
@@ -314,6 +316,7 @@ int main(int argl, const char **argc) {
                std::cin >> time_string;
                Move bestMove;
                auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+               std::cerr<<"Value: "<<value<<std::endl;
                std::cout << "new_move" << "\n";
                std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
                std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";
@@ -332,15 +335,15 @@ int main(int argl, const char **argc) {
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(200);
-    engine.setHashSize(25);
+    engine.setTime(300);
+    engine.setHashSize(23);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(2000);
-    engine2.setHashSize(25);
+    engine2.setTime(300);
+    engine2.setHashSize(23);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading2", "reading2"};
+    std::vector<std::string> engine_paths{"reading", "reading2"};
 
 
     pid_t pid;
