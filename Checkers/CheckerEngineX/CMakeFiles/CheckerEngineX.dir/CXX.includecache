@@ -89,6 +89,8 @@ MovePicker.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.h
 array
 -
+iterator
+-
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.h
 types.h

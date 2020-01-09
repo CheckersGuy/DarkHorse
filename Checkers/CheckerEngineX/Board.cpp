@@ -9,8 +9,8 @@ Position &Board::getPosition() {
 }
 
 Board::Board(const Board &board) {
-    for (int i = 0; i < MAX_MOVE + MAX_PLY; ++i) {
-        this->history[i] = board.history[i];
+    for (int i = 0; i < moves.size(); ++i) {
+        this->moves[i] = board.moves[i];
         this->pStack[i] = board.pStack[i];
     }
     this->pCounter = board.pCounter;
@@ -24,9 +24,8 @@ void Board::printBoard() {
 void Board::makeMove(Move move) {
     assert(!move.isEmpty());
     pStack[pCounter + 1] = pStack[pCounter];
-    history[pCounter] = move;
-    this->pCounter++;
-    Zobrist::doUpdateZobristKey(pStack[pCounter], move);
+    moves[pCounter++] = move;
+    Zobrist::doUpdateZobristKey(getPosition(), move);
     pStack[pCounter].makeMove(move);
 
 }
@@ -62,14 +61,23 @@ uint64_t Board::getCurrentKey() {
 }
 
 bool Board::isRepetition() {
-    //checking for repetitions
-    for (int i = pCounter - 2; i >= 0; i -= 2) {
-        if (getPosition().key == pStack[i].key) {
+    for (int i = pCounter - 2; i > 0; i -= 2) {
+        Move current = moves[i];
+        //This needs to be fixed
+
+        if ((current.getFrom() & (pStack[i].K)) == 0u)
+            return false;
+
+
+        if (current.isCapture() || current.isPromotion(pStack[i].K))
+            return false;
+
+
+        if (pStack[i] == getPosition()) {
             return true;
         }
-        if (((history[i].getFrom() & pStack[i].K) == 0) || history[i].isCapture() || history[i].isPromotion()) {
-            return false;
-        }
+
+
     }
 
     return false;

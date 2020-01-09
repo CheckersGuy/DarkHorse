@@ -95,7 +95,7 @@ void Position::makeMove(Move &move) {
     assert(!move.isEmpty());
     //setting the piece type
     if (color == BLACK) {
-        if(move.isCapture()){
+        if (move.isCapture()) {
             WP &= ~move.captures;
             K &= ~move.captures;
         }
@@ -106,7 +106,7 @@ void Position::makeMove(Move &move) {
             K |= move.to;
 
     } else {
-        if(move.isCapture()){
+        if (move.isCapture()) {
             BP &= ~move.captures;
             K &= ~move.captures;
         }

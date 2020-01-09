@@ -18,9 +18,9 @@
 class Board {
 
 public:
-    std::array<Position,MAX_PLY + MAX_MOVE>pStack;
-    std::array<Move,MAX_PLY + MAX_MOVE> history;
-    int pCounter = 0;
+    std::array<Position,MAX_PLY+500>pStack;
+    std::array<Move,MAX_PLY+500> moves;
+    uint32_t pCounter = 0;
 
     Board() = default;
 

@@ -19,8 +19,8 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 include_directories(../Checkers/CheckerEngineX)
 
 
-add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp Engine.cpp Engine.h Match.cpp Match.h Generator.cpp Generator.h
-       Utilities.cpp Utilities.h
+add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp Match.cpp Match.h
+        Utilities.cpp Utilities.h
         ../Checkers/CheckerEngineX/types.h
         ../Checkers/CheckerEngineX/Position.cpp ../Checkers/CheckerEngineX/Position.h
         ../Checkers/CheckerEngineX/Move.h  ../Checkers/CheckerEngineX/Move.cpp
