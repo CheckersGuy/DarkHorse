@@ -10,7 +10,6 @@
 #include "types.h"
 #include <vector>
 #include <fstream>
-#include "Engine.h"
 #include <MGenerator.h>
 #include "Weights.h"
 #include <algorithm>
@@ -132,26 +131,12 @@ namespace Training {
 
     inline double sigmoid(double c, double value) {
        double sig= 1.0/(1.0+std::exp(c*value));
-
-    /*    sig=std::min(sig,0.9999999);
-        sig=std::max(sig,0.0000001);*/
         return sig;
     }
 
     inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
-
     }
-
-
-
-    inline double signum(double value){
-        if( value==0.0)
-            return 0.0;
-
-        return (value>=0)?1.0:-1.0;
-    }
-
 
 
 

@@ -78,13 +78,13 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
 
     if (color == CBBLACK) {
 
-        if (bestMove.isPromotion() || ((pos->K & bestMove.getFrom()) != 0)) {
+        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFrom()) != 0)) {
             board[to % 8][to / 8] = CBBLACK + CBKING;
         } else {
             board[to % 8][to / 8] = CBBLACK + CBMAN;
         }
     } else {
-        if (bestMove.isPromotion() || ((pos->K & bestMove.getFrom()) != 0)) {
+        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFrom()) != 0)) {
             board[to % 8][to / 8] = CBWHITE + CBKING;
         } else {
             board[to % 8][to / 8] = CBWHITE + CBMAN;

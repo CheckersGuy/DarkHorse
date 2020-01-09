@@ -7,9 +7,6 @@ bool Move::isCapture() const {
     return captures != 0;
 }
 
-bool Move::isPromotion() const {
-    return ((to & PROMO_SQUARES_WHITE) != 0) || ((to & PROMO_SQUARES_BLACK) != 0);
-}
 
 uint32_t Move::getFrom() const {
     return from;
@@ -32,11 +29,16 @@ uint32_t Move::getToIndex() const {
 }
 
 bool Move::operator==(const Move &other) const {
-    return  (to == other.to) && (from == other.from) && (captures == other.captures);
+    return (to == other.to) && (from == other.from) && (captures == other.captures);
 }
 
 bool Move::operator!=(const Move &other) const {
     return !((*this) == other);
+}
+
+bool Move::isPromotion(const uint32_t kings) {
+    //current is the position before the move is made
+    return (((to & PROMO_SQUARES_WHITE) != 0) || ((to & PROMO_SQUARES_BLACK) != 0)) && ((from & kings) == 0u);
 }
 
 

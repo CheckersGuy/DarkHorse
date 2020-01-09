@@ -33,8 +33,6 @@ namespace Utilities {
 
     void savePositions(std::vector<Position>&positions,const std::string file);
 
-    Score playGame(Training::TrainingGame& game,Engine&engine,Engine& second,Position position, bool print);
-
     std::vector<std::string> getWhiteSpaceSeperated(const std::string msg);
 
     std::vector<std::string> getDelimiterSeperated(const std::string message, const std::string delimiter);

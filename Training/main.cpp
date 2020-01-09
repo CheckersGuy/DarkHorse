@@ -2,48 +2,11 @@
 #include <iomanip>
 #include "boost/program_options.hpp"
 #include "Match.h"
-#include "Generator.h"
 #include "Trainer.h"
 #include "boost/filesystem.hpp"
 #include "boost/foreach.hpp"
 
-namespace fs =boost::filesystem;
 namespace opt =boost::program_options;
-
-
-std::string formatByteSize(const uint64_t size) {
-    //Formats the size given in byte to MB,GB...
-    std::string output;
-    const double sizes[] = {1e12, 1e9, 1e6, 1e3};
-    std::vector<std::string> names = {"TB", "GB", "MB", "KB"};
-    auto it = names.begin();
-    for (auto e : sizes) {
-        if (size >= e) {
-
-            output += std::to_string(((double) (size)) / e);
-            output += "" + *it;
-            break;
-        }
-        it++;
-    }
-    return output;
-}
-
-void listDirectory(fs::path &myPath) {
-    fs::directory_iterator it(myPath), eod;
-    BOOST_FOREACH(fs::path const &p, std::make_pair(it, eod)) {
-                    constexpr int indent = 25;
-                    if (fs::is_regular_file(p)) {
-                        std::cout << p.filename().string() << " ";
-                        for (int i = 0; i < indent - p.filename().string().size(); ++i)
-                            std::cout << " ";
-
-                        std::cout << "Size:";
-                        std::cout << formatByteSize(fs::file_size(p));
-                        std::cout << std::endl;
-                    }
-                }
-}
 
 int main(int argc, char *argv[]) {
     opt::options_description all("All options");
@@ -94,20 +57,6 @@ int main(int argc, char *argv[]) {
         std::cout << all << std::endl;
     }
 
-    if (vm.count("listEngines")) {
-        fs::path myPath("/home/robin/Checkers/Training/Engines");
-        listDirectory(myPath);
-    }
-
-    if (vm.count("listWeights")) {
-        fs::path myPath("/home/robin/Checkers/Training/Weights");
-        listDirectory(myPath);
-    }
-
-    if (vm.count("listTrainData")) {
-        fs::path myPath("/home/robin/Checkers/Training/TrainData");
-        listDirectory(myPath);
-    }
 
     if (vm.count("match")) {
         const std::vector<std::string> &engines = vm["match"].as<std::vector<std::string>>();
@@ -122,71 +71,34 @@ int main(int argc, char *argv[]) {
         }
 
 
-        Engine one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
-        Engine two("/home/robin/DarkHorse/Training/Engines/"  + engines[1]);
-        Match match(one, two);
-        one.setHashSize(vm["hashSize"].as<int>());
-        two.setHashSize(vm["hashSize"].as<int>());
+        const std::string  path_one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
+        const std::string path_two("/home/robin/DarkHorse/Training/Engines/"  + engines[1]);
+        Match m(path_one, path_two);
 
 
         if (vm.count("book")) {
-            match.setOpeningBook("Positions/" + vm["book"].as<std::string>());
+            m.setOpeningBook("Positions/" + vm["book"].as<std::string>());
         }
         if (vm.count("time")) {
             const std::vector<int> &timeVector = vm["time"].as<std::vector<int>>();
             if (timeVector.size() == 1) {
-                one.setTimePerMove(timeVector[0]);
-                two.setTimePerMove(timeVector[0]);
-            } else if (timeVector.size() == 2) {
-                one.setTimePerMove(timeVector[0]);
-                two.setTimePerMove(timeVector[1]);
-            } else {
-                one.setTimePerMove(50);
-                two.setTimePerMove(50);
+                m.setTime(timeVector[0]);
             }
         }
         if (vm.count("threads")) {
-            match.setNumThreads(vm["threads"].as<int>());
+            m.setNumThreads(vm["threads"].as<int>());
         }
         if (vm.count("maxGames")) {
-            match.setMaxGames(vm["maxGames"].as<int>());
+            m.setMaxGames(vm["maxGames"].as<int>());
         }
 
-        std::cout << "Book: " << match.getOpeningBook() << std::endl;
-        std::cout << "Time: " << one.getTimePerMove() << " | " << two.getTimePerMove() << std::endl;
-        std::cout << "Threads: " << match.getNumThreads() << std::endl;
-        std::cout << "MaxGames: " << match.getMaxGames() << std::endl;
+        std::cout << "Book: " << m.getOpeningBook() << std::endl;
+        std::cout << "Threads: " << m.getNumThreads() << std::endl;
+        std::cout << "MaxGames: " << m.getMaxGames() << std::endl;
         std::cout << "HashSize: " << vm["hashSize"].as<int>() << std::endl;
 
-        match.start();
+        m.start();
 
-    }
-
-    if (vm.count("generate")) {
-
-
-        Zobrist::initializeZobrisKeys();
-        std::string engine = vm["generate"].as<std::string>();
-        std::string path = "Engines/" + engine;
-        auto &timeVector = vm["time"].as<std::vector<int>>();
-        int time = timeVector[0];
-
-        Engine myEngine(path);
-        myEngine.setHashSize(vm["hashSize"].as<int>());
-        Generator gen(myEngine, "Positions/genBook6.pos", "TrainData/" + vm["output"].as<std::string>());
-        gen.setThreads(vm["threads"].as<int>());
-        gen.setMaxGames(vm["maxGames"].as<int>());
-        gen.setTime(100);
-
-
-        std::cout << "Time: " << myEngine.getTimePerMove() << std::endl;
-        std::cout << "Threads: " << gen.getThreads() << std::endl;
-        std::cout << "MaxGames: " << gen.getMaxGames()<< std::endl;
-        std::cout << "HashSize: " << vm["hashSize"].as<int>() << std::endl;
-        std::cout<<std::endl;
-        std::cout<<std::endl;
-
-        gen.start();
     }
     using namespace Training;
 

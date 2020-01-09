@@ -9,15 +9,12 @@
 #include <cstdint>
 #include "types.h"
 #include "Bits.h"
-
 struct Move {
     uint32_t from = 0u;
     uint32_t to = 0u;
     uint32_t captures = 0u;
 
     bool isCapture() const;
-
-    bool isPromotion() const;
 
     bool isEmpty() const;
 
@@ -32,6 +29,8 @@ struct Move {
     uint32_t getFromIndex() const;
 
     uint32_t getToIndex() const;
+
+    bool isPromotion(const uint32_t kings);
 
 };
 

@@ -30,6 +30,7 @@ MAKRO void initialize() {
     Bits::set_up_bitscan();
 #endif
     gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
+    std::cerr << "loaded weights" << std::endl;
     Zobrist::initializeZobrisKeys();
 }
 
@@ -41,6 +42,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 
 MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+    std::cerr << "Counter: " << board.pCounter << std::endl;
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     MoveListe easyMoves;
@@ -58,14 +60,13 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Value alpha = -INFINITE;
     Value beta = INFINITE;
     Value value;
-
+    Value eval;
 
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
-        value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i * ONE_PLY, true);
+        value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
         if (timeOut)
             break;
-
 
         if (value <= alpha || value >= beta) {
             alpha = -INFINITE;
@@ -73,10 +74,11 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
             continue;
         }
 
+        eval = value;
 
-        if (i >= 3) {
-            alpha = value - 100 * scalfac;
-            beta = value + 100 * scalfac;
+        if (i >= 5) {
+            alpha = value - 50 * scalfac;
+            beta = value + 50 * scalfac;
         }
 
         if (print) {
@@ -95,7 +97,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         best = mainPV[0];
         ++i;
     }
-    return value;
+    return eval;
 }
 
 template<NodeType type>
@@ -109,7 +111,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 
     if (moves.isEmpty()) {
         if (board.getPosition().hasThreat()) {
-            return alphaBeta<type>(board, alpha, beta, pv, ply, ONE_PLY, false);
+            return alphaBeta<type>(board, alpha, beta, pv, ply + 1, 1, false);
         }
 
         if (board.getPosition().isWipe()) {
@@ -169,17 +171,18 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
+    if (ply > 0 && board.isRepetition()) {
+        return 0;
+    }
+
     if (ply > MAX_PLY) {
         return gameWeights.evaluate(board.getPosition()) * board.getMover();
     }
 
-    if (depth < ONE_PLY) {
+    if (depth == 0) {
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
 
-    if (ply > 1 && board.isRepetition()) {
-        return 0;
-    }
 
     MoveListe sucessors;
     getMoves(board.getPosition(), sucessors);
@@ -197,7 +200,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     NodeInfo info;
 #ifndef TRAIN
     if (ply > 0) {
-        TT.findHash(board.getCurrentKey(), depth / ONE_PLY, &alpha.value, &beta.value, info);
+        TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
         info.value = info.value.valueFromTT(ply);
     };
 #endif
@@ -208,13 +211,14 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && depth >= 5 * ONE_PLY) {
-        Value margin = (10 * scalfac * depth) / ONE_PLY;
+    if (!inPVLine && prune && depth >= 3 && beta.isEval()) {
+        Value margin = (15 * scalfac * depth);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
-        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
+        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply + 1, newDepth, false);
         if (value >= newBeta) {
+            pv = local;
             return addSafe(value, ~margin);
         }
     }
@@ -231,12 +235,13 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     int extension = 0;
     if (sucessors.length() == 1 && sucessors[0].isCapture()) {
-        extension += 590;
+        extension += 1;
     }
 
-    int newDepth = depth - ONE_PLY + extension;
+    int newDepth = depth - 1 + extension;
 
     for (int i = 0; i < sucessors.length(); ++i) {
+        bool is_promotion = sucessors[i].isPromotion(board.getPosition().K);
         board.makeMove(sucessors[i]);
         Value value;
         Line localPV;
@@ -244,12 +249,11 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
-            if (depth >= 2 * ONE_PLY && !sucessors[i].isCapture() && !sucessors[i].isPromotion() &&
-                i > ((inPVLine) ? 3 : 1) &&
-                !sucessors[i].isPromotion()) {
-                reduce = ONE_PLY;
-                if (i > 3) {
-                    reduce = 2*ONE_PLY;
+            if (depth >= 2 && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
+                !is_promotion) {
+                reduce = 1;
+                if (i > 3 && depth > 2) {
+                    reduce = 2;
                 }
             }
             value = ~alphaBeta<NONPV>(board, ~alpha - 1, ~alpha, localPV, ply + 1, newDepth - reduce, prune);
@@ -262,8 +266,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             bestValue = value;
             bestMove = sucessors[i];
             if (value >= beta) {
-                Statistics::mPicker.updateHHScore(sucessors[i], board.getMover(), depth / ONE_PLY);
-                Statistics::mPicker.updateBFScore(sucessors.begin(), i, board.getMover(), depth / ONE_PLY);
+                Statistics::mPicker.updateHHScore(sucessors[i], board.getMover(), depth);
+                Statistics::mPicker.updateBFScore(sucessors.begin(), i, board.getMover(), depth);
                 break;
             }
             if (value > alpha) {
@@ -275,11 +279,11 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 #ifndef TRAIN
     if (bestValue <= alphaOrig) {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_UPPER, depth / ONE_PLY, bestMove);
+        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_UPPER, depth, bestMove);
     } else if (bestValue >= beta) {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_LOWER, depth / ONE_PLY, bestMove);
+        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_LOWER, depth, bestMove);
     } else {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_EXACT, depth / ONE_PLY, bestMove);
+        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_EXACT, depth, bestMove);
     }
 #endif
     return bestValue;

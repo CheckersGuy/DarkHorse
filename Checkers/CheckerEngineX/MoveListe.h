@@ -11,7 +11,7 @@
 #include "types.h"
 #include "MovePicker.h"
 #include <array>
-
+#include <iterator>
 class MoveListe {
 
 private:
@@ -40,6 +40,8 @@ public:
     Move &operator[](int index);
 
     void putFront(const Move& other);
+
+    MoveListe& operator=(const MoveListe& other);
 
 };
 
@@ -78,6 +80,11 @@ inline auto MoveListe::begin() const {
 
 inline auto MoveListe::end() const {
     return liste.cbegin() + moveCounter;
+}
+
+inline MoveListe & MoveListe::operator=(const MoveListe &other) {
+    this->moveCounter =other.moveCounter;
+    std::copy(other.begin(),other.begin()+other.moveCounter,begin());
 }
 
 #endif //CHECKERSTEST_MOVELISTE_H

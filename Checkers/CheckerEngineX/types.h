@@ -38,7 +38,7 @@ constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15
 using Depth =int;
 using Ply =int;
 
-constexpr int scalfac=128;
+constexpr int scalfac = 128;
 enum NodeType {
     PVNode, NONPV
 };
@@ -48,14 +48,14 @@ enum Score : int {
     WHITE_LOSS = -1550000,
     BLACK_WIN = -1550000,
     BLACK_LOSS = 1550000,
-    DRAW = 0,
+    DRAW = 1,
     INFINITE = 15000000,
     EASY_MOVE = 99999999,
     INVALID = 100000000
 
 };
-enum SEARCH {
-    MAX_PLY = 128, MAX_MOVE = 320, ONE_PLY = 1000
+enum SEARCH : int {
+    MAX_PLY = 128, REP_LOOK_BACK = 40
 };
 enum Color : int {
     BLACK = -1, WHITE = 1, NONE
@@ -93,7 +93,7 @@ struct Value {
 
     template<class T, class E>
     bool isInRange(T a, E b) const {
-        return this->value >= a && this->value <= b;
+        return this->value > a && this->value < b;
     }
 
     constexpr Value &operator=(int value);
