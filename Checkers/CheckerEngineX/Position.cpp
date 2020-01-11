@@ -57,7 +57,7 @@ bool Position::isLoss() const {
 }
 
 bool Position::isWipe() const {
-    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u)) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)));
+    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u) && getJumpers<BLACK>()==0u) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)&& getJumpers<WHITE>()==0u));
 }
 
 void Position::printPosition() const {
