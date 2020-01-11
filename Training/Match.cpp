@@ -168,8 +168,10 @@ void Interface::process() {
 
         first_mover = second_mover;
         pos.printPosition();
+        std::cout << getPositionString(pos) << std::endl;
         std::cout << std::endl;
     }
+
 
 }
 int Match::getMaxGames() {
@@ -214,26 +216,23 @@ int Match::getNumThreads() {
 
 
 void Match::start() {
-    std::cout << "Starting the match" << std::endl;
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
     int mainPipe[numEngines][2];
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(time);
+    engine.setTime(100);
+    engine.setHashSize(25);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(time);
+    engine2.setTime(100);
+    engine2.setHashSize(25);
     Interface inter{engine, engine2};
 
     std::deque<Position> openingQueue;
-    std::vector<Position> positions;
-    Utilities::loadPositions(positions, "Positions/3move.pos");
-    for (auto pos : positions) {
-        openingQueue.push_back(pos);
-    }
+    std::vector<std::string> engine_paths{"reading", "reading2"};
 
-    std::array<std::string, 2> engine_paths = {first, second};
+
     pid_t pid;
     for (auto i = 0; i < numEngines; ++i) {
         pipe(mainPipe[i]);
@@ -245,8 +244,7 @@ void Match::start() {
         } else if (pid == 0) {
             dup2(mainPipe[i][0], STDIN_FILENO);
             dup2(enginePipe[i][1], STDOUT_FILENO);
-
-            std::string command = "./home/robin/DarkHorse/Training/Engines/reading";
+            const std::string command = "./" + engine_paths[i];
             execlp(command.c_str(), engine_paths[i].c_str(), NULL);
             exit(EXIT_SUCCESS);
         }
@@ -268,7 +266,7 @@ void Match::start() {
                 break;
             }
             if (inter.is_n_fold(3)) {
-                std::cout << "Repeittion" << std::endl;
+                std::cout << "Repetition" << std::endl;
                 break;
             }
         }

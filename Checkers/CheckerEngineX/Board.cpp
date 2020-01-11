@@ -61,9 +61,11 @@ uint64_t Board::getCurrentKey() {
 }
 
 bool Board::isRepetition() {
-    for (int i = pCounter - 2; i > 0; i -= 2) {
-        Move current = moves[i];
-        //This needs to be fixed
+    for (int i = pCounter - 2; i >= 0; i -= 2) {
+        Move &current = moves[i];
+        if (pStack[i] == getPosition()) {
+            return true;
+        }
 
         if ((current.getFrom() & (pStack[i].K)) == 0u)
             return false;
@@ -71,11 +73,6 @@ bool Board::isRepetition() {
 
         if (current.isCapture() || current.isPromotion(pStack[i].K))
             return false;
-
-
-        if (pStack[i] == getPosition()) {
-            return true;
-        }
 
 
     }

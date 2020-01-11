@@ -45,14 +45,16 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     std::cerr << "Counter: " << board.pCounter << std::endl;
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
-    MoveListe easyMoves;
-    getMoves(board.getPosition(), easyMoves);
-    if (easyMoves.length() == 1) {
-        best = easyMoves[0];
-        return EASY_MOVE;
-    }
     mainPV.clear();
     TT.clear();
+
+    MoveListe easyMoves;
+    getMoves(board.getPosition(), easyMoves);
+  /*  if (easyMoves.length() == 1) {
+        best = easyMoves[0];
+        return EASY_MOVE;
+    }*/
+
     timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
@@ -105,18 +107,25 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
+
+    if (board.getPosition().isWipe()) {
+        return Value::loss(board.getMover(), ply);
+    }
+
+    if (ply > MAX_PLY) {
+        return gameWeights.evaluate(board.getPosition()) * board.getMover();
+    }
+
     MoveListe moves;
     getCaptures(board.getPosition(), moves);
     Value bestValue = -INFINITE;
 
     if (moves.isEmpty()) {
+
         if (board.getPosition().hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply + 1, 1, false);
         }
 
-        if (board.getPosition().isWipe()) {
-            return Value::loss(board.getMover(), ply);
-        }
 
         bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
         if (bestValue >= beta) {
@@ -170,13 +179,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return 0;
     }
 
-
     if (ply > 0 && board.isRepetition()) {
         return 0;
-    }
-
-    if (ply > MAX_PLY) {
-        return gameWeights.evaluate(board.getPosition()) * board.getMover();
     }
 
     if (depth == 0) {
@@ -199,10 +203,8 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     NodeInfo info;
 #ifndef TRAIN
-    if (ply > 0) {
-        TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
-        info.value = info.value.valueFromTT(ply);
-    };
+    TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
+    info.value = info.value.valueFromTT(ply);
 #endif
 
 

@@ -45,20 +45,16 @@ enum NodeType {
 
 enum Score : int {
     WHITE_WIN = 1550000,
-    WHITE_LOSS = -1550000,
     BLACK_WIN = -1550000,
-    BLACK_LOSS = 1550000,
-    DRAW = 1,
     INFINITE = 15000000,
-    EASY_MOVE = 99999999,
+    EASY_MOVE = 4 * INFINITE,
     INVALID = 100000000
-
 };
 enum SEARCH : int {
-    MAX_PLY = 128, REP_LOOK_BACK = 40
+    MAX_PLY = 128
 };
 enum Color : int {
-    BLACK = -1, WHITE = 1, NONE
+    BLACK = -1, WHITE = 1
 };
 enum PieceType {
     BPAWN = -1, WPAWN = 1, BKING = -2, WKING = 2, KING = 4, PAWN = 5,
@@ -181,11 +177,7 @@ inline bool Value::isEval() const {
 }
 
 inline Value Value::loss(Color color, int ply) {
-    if (color == WHITE) {
-        return BLACK_WIN + ply;
-    } else {
-        return -(WHITE_WIN - ply);
-    }
+    return BLACK_WIN + ply;
 }
 
 //operators
@@ -341,10 +333,10 @@ inline std::ostream &operator<<(std::ostream &outstream, const Value val) {
 
 inline Value clampScore(Value val) {
     //Scores are only positive
-    if (val >= (WHITE_WIN + MAX_PLY)) {
-        return Value(WHITE_WIN + MAX_PLY);
-    } else if (val <= BLACK_WIN - MAX_PLY) {
-        return Value(BLACK_WIN - MAX_PLY);
+    if (val < (BLACK_WIN + MAX_PLY)) {
+        return Value(-INFINITE);
+    } else if (val > WHITE_WIN - MAX_PLY) {
+        return Value(INFINITE);
     }
     return val;
 }

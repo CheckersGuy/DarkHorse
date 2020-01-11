@@ -59,6 +59,9 @@ int main(int argc, char *argv[]) {
 
 
     if (vm.count("match")) {
+
+        std::cout<<"Getting stuff to work out"<<std::endl;
+
         const std::vector<std::string> &engines = vm["match"].as<std::vector<std::string>>();
         if (engines.size() > 2) {
             std::cerr << "To many engines for a match" << std::endl;
@@ -71,8 +74,8 @@ int main(int argc, char *argv[]) {
         }
 
 
-        const std::string  path_one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
-        const std::string path_two("/home/robin/DarkHorse/Training/Engines/"  + engines[1]);
+        const std::string path_one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
+        const std::string path_two("/home/robin/DarkHorse/Training/Engines/" + engines[1]);
         Match m(path_one, path_two);
 
 
@@ -102,8 +105,9 @@ int main(int argc, char *argv[]) {
     }
     using namespace Training;
 
+/*
     initialize();
-    std::cout<<"Final Run"<<std::endl;
+    std::cout << "Final Run" << std::endl;
 
     std::vector<TrainingPos> data;
 
@@ -111,6 +115,7 @@ int main(int argc, char *argv[]) {
 
 
     std::cout << "Length: " << data.size() << std::endl;
+*/
 
 
 /*
@@ -130,19 +135,31 @@ int main(int argc, char *argv[]) {
 */
 
 
+/*
     std::cout << "Positions after erase: " << data.size() << std::endl;
 
     std::cout << "Starting " << std::endl;
+    std::cout << "Decesive: " << std::count_if(data.begin(), data.end(), [](const TrainingPos &pos) {
+        return (pos.result >0 || pos.result<0);
+    });
+    std::cout << std::endl;
 
+    std::cout << "Draws: " << std::count_if(data.begin(), data.end(), [](const TrainingPos &pos) {
+        return (pos.result ==0);
+    });
+    std::cout << std::endl;
+*/
+
+/*
 
     Trainer trainer(data);
     trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    //0.172977
     trainer.setCValue(-4e-5);
     trainer.startTune();
 
+*/
 
 
 

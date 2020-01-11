@@ -61,13 +61,6 @@ namespace Training {
         size_t length() const {
             return positions.size();
         }
-
-        void print() {
-            std::for_each(begin(), end(), [](Position pos) {
-                pos.printPosition();
-                std::cout << std::endl;
-            });
-        }
     };
 
     inline size_t minValue(size_t val1, size_t val2) {
@@ -137,8 +130,6 @@ namespace Training {
     inline double sigmoidDiff(double c, double value) {
         return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
     }
-
-
 
 
 
