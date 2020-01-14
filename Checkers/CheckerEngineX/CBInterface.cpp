@@ -12,8 +12,8 @@ bool initialized=false;
 
 int getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int unused,
             struct CBmove *move) {
-    output = str;
-    Position *pos = &playBoard.pStack[playBoard.pCounter];
+   /* output = str;
+    Position *pos = &playBoard.getPosition();
     pos->BP=0;
     pos->WP=0;
     pos->K=0;
@@ -25,9 +25,9 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
 
 
     if (color == CBWHITE) {
-        playBoard.pStack[playBoard.pCounter].color = WHITE;
+        playBoard.getPosition().color = WHITE;
     } else {
-        playBoard.pStack[playBoard.pCounter].color = BLACK;
+        playBoard.getPosition().color = BLACK;
     }
     sprintf(str, "Some testing");
     if (*playnow) {
@@ -104,7 +104,7 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
                    std::to_string(to / 8)).c_str()));
 
     playBoard.pCounter++;
-
+*/
     return 3;
 };
 

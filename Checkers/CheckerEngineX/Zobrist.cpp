@@ -57,7 +57,8 @@ namespace Zobrist {
     void doUpdateZobristKey(Position &pos, Move move) {
         auto toIndex=move.getToIndex();
         auto fromIndex=move.getFromIndex();
-        if (((move.getFrom() & pos.K) ==0u) && (move.getTo() & (PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK)) !=0 ) {
+        constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
+        if (((move.getFrom() & pos.K) ==0u) && (move.getTo() & promo_squares) !=0 ) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][pos.getColor()*WKING];
             pos.key ^= Zobrist::ZOBRIST_KEYS[fromIndex][pos.getColor()*WPAWN];
         } else if (((move.getFrom() & pos.K) !=0) ) {

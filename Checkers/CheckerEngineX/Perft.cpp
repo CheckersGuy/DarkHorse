@@ -57,7 +57,7 @@ namespace Perft {
         if (result.has_value()) {
             return result.value();
         }
-        for (const auto &m : liste) {
+        for (const auto &m : liste.liste) {
             board.makeMove(m);
             counter += perftCheck(board, depth - 1);
             board.undoMove();

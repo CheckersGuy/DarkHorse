@@ -5,10 +5,7 @@
 #ifndef CHECKERSTEST_BOARD_H
 #define CHECKERSTEST_BOARD_H
 
-#include <iostream>
-#include<string>
 #include "Move.h"
-#include<random>
 #include <cassert>
 #include <string>
 #include "types.h"
@@ -17,10 +14,13 @@
 
 class Board {
 
+private:
+    std::array<Position,MAX_PLY+400>pStack;
+    std::array<Move,MAX_PLY+400> moves;
+    int pCounter = 0;
 public:
-    std::array<Position,MAX_PLY+500>pStack;
-    std::array<Move,MAX_PLY+500> moves;
-    uint32_t pCounter = 0;
+
+
 
     Board() = default;
 

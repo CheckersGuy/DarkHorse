@@ -51,13 +51,8 @@ bool Position::hasThreat() const {
     return hasJumps(~getColor());
 }
 
-bool Position::isLoss() const {
-    return ((getJumpers<WHITE>() == 0u && getMovers<WHITE>() == 0u) ||
-            (getJumpers<WHITE>() == 0u && getMovers<WHITE>() == 0u));
-}
-
 bool Position::isWipe() const {
-    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u) && getJumpers<BLACK>()==0u) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)&& getJumpers<WHITE>()==0u));
+    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u) && (getJumpers<BLACK>())==0u) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)&& (getJumpers<WHITE>()==0u)));
 }
 
 void Position::printPosition() const {

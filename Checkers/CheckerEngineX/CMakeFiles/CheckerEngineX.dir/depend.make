@@ -55,10 +55,18 @@ CMakeFiles/CheckerEngineX.dir/Move.cpp.o: Move.h
 CMakeFiles/CheckerEngineX.dir/Move.cpp.o: types.h
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Bits.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Board.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: GameLogic.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Line.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MGenerator.h
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Move.h
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MoveListe.cpp
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MoveListe.h
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MovePicker.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Position.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Transposition.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Weights.h
+CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: Zobrist.h
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: types.h
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: Bits.h
@@ -94,6 +102,7 @@ CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Bits.h
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Move.h
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: MoveListe.h
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: MovePicker.h
+CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Position.h
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Transposition.cpp
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Transposition.h
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: types.h
