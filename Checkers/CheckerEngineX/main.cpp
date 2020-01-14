@@ -45,7 +45,7 @@ int main() {
             std::string hash_string;
             std::cin >> hash_string;
             const int hash_size = std::stoi(hash_string);
-            setHashSize(1u << hash_size);
+            setHashSize(hash_size);
             std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
