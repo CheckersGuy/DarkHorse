@@ -1,39 +1,33 @@
-//
-// Created by Robin on 04.01.2018.
-//
-
 #ifndef CHECKERSTEST_MOVELISTE_H
 #define CHECKERSTEST_MOVELISTE_H
 
-#include <stdio.h>
+#include <cstdio>
 #include "Move.h"
 #include <cassert>
 #include "types.h"
 #include "MovePicker.h"
 #include <array>
 #include <iterator>
+#include "Position.h"
 class MoveListe {
 
 private:
     uint32_t moveCounter = 0;
-    std::array<Move, 40> liste;
-public:
+    std::array<int,40> scores;
 
-    int length() const;
+    void help_sort(int start_index);
+
+public:
+    std::array<Move, 40> liste;
+    uint32_t length() const;
 
     void addMove(Move next);
 
     void sort(Move ttMove, bool inPVLine, Color color);
 
+    void sort_static(Color mover, const Position &pos,const Move& ttMove);
+
     bool isEmpty() const;
-
-    auto begin();
-
-    auto end();
-
-    auto begin() const;
-
-    auto end() const;
 
     const Move &operator[](int index) const;
 
@@ -62,29 +56,10 @@ inline void MoveListe::addMove(Move next) {
     liste[this->moveCounter++] = next;
 }
 
-inline int MoveListe::length() const {
+inline uint32_t MoveListe::length() const {
     return moveCounter;
 }
 
-inline auto MoveListe::begin() {
-    return liste.begin();
-}
 
-inline auto MoveListe::end() {
-    return liste.begin() + moveCounter;
-}
-
-inline auto MoveListe::begin() const {
-    return liste.cbegin();
-}
-
-inline auto MoveListe::end() const {
-    return liste.cbegin() + moveCounter;
-}
-
-inline MoveListe & MoveListe::operator=(const MoveListe &other) {
-    this->moveCounter =other.moveCounter;
-    std::copy(other.begin(),other.begin()+other.moveCounter,begin());
-}
 
 #endif //CHECKERSTEST_MOVELISTE_H

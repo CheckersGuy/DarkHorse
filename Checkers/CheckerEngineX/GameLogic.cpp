@@ -42,7 +42,6 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 
 MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-    std::cerr << "Counter: " << board.pCounter << std::endl;
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -50,10 +49,10 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
     MoveListe easyMoves;
     getMoves(board.getPosition(), easyMoves);
-  /*  if (easyMoves.length() == 1) {
+    if (easyMoves.length() == 1) {
         best = easyMoves[0];
         return EASY_MOVE;
-    }*/
+    }
 
     timeOut = false;
     endTime = getSystemTime() + time;
@@ -107,11 +106,6 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
-
-    if (board.getPosition().isWipe()) {
-        return Value::loss(board.getMover(), ply);
-    }
-
     if (ply > MAX_PLY) {
         return gameWeights.evaluate(board.getPosition()) * board.getMover();
     }
@@ -121,6 +115,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     Value bestValue = -INFINITE;
 
     if (moves.isEmpty()) {
+        if (board.getMover() == BLACK && board.getPosition().getMovers<BLACK>() == 0u) {
+            return Value::loss(ply);
+        }
+        if (board.getMover() == WHITE && board.getPosition().getMovers<WHITE>() == 0u) {
+            return Value::loss(ply);
+        }
 
         if (board.getPosition().hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply + 1, 1, false);
@@ -188,18 +188,21 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
+
+
     MoveListe sucessors;
     getMoves(board.getPosition(), sucessors);
     if (sucessors.isEmpty()) {
-        return Value::loss(board.getMover(), ply);
+        return Value::loss(ply);
     }
 
 
-    /*if (isRoot) {
-        static std::mt19937 generator(getSystemTime());
-        std::shuffle(sucessors.begin(), sucessors.end(), generator);
-    }
-*/
+    /*  if (ply ==0) {
+          static std::mt19937 generator(getSystemTime());
+          std::shuffle(sucessors.liste.begin(), sucessors.liste.end(), generator);
+      }*/
+
+
 
     NodeInfo info;
 #ifndef TRAIN
@@ -213,7 +216,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && depth >= 3 && beta.isEval()) {
+    if (!inPVLine && prune && depth >= 3 && !beta.isWin()) {
         Value margin = (15 * scalfac * depth);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
@@ -231,6 +234,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
     sucessors.sort(info.move, inPVLine, board.getMover());
 
+
     Value bestValue = -INFINITE;
     Move bestMove;
     Value alphaOrig = alpha;
@@ -239,6 +243,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     if (sucessors.length() == 1 && sucessors[0].isCapture()) {
         extension += 1;
     }
+
 
     int newDepth = depth - 1 + extension;
 
@@ -269,7 +274,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             bestMove = sucessors[i];
             if (value >= beta) {
                 Statistics::mPicker.updateHHScore(sucessors[i], board.getMover(), depth);
-                Statistics::mPicker.updateBFScore(sucessors.begin(), i, board.getMover(), depth);
+                Statistics::mPicker.updateBFScore(sucessors.liste.begin(), i, board.getMover(), depth);
                 break;
             }
             if (value > alpha) {

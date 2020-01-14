@@ -26,11 +26,9 @@ namespace Statistics {
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         if (move == ttMove) {
-            return 2000000;
+            return 20000000;
         }
-        int score=getMoveScore(move, color);
-
-        return score;
+        return getMoveScore(move, color);
     }
 
     void MovePicker::updateHHScore(Move move, Color color, int depth) {

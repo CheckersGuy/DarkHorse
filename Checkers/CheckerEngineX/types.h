@@ -67,17 +67,15 @@ enum Flag : uint8_t {
 struct Value {
     int value{0};
 
-    static Value loss(Color color, int ply);
+    static Value loss(int ply);
 
-    constexpr Value(int value) noexcept : value(value) {};
+    constexpr Value(int value): value(value) {};
 
     constexpr Value() = default;
 
-    bool isWinning() const;
+    bool isLoss() const;
 
-    bool isBlackWin() const;
-
-    bool isWhiteWin() const;
+    bool isWin() const;
 
     bool isEasyMove() const;
 
@@ -106,16 +104,12 @@ struct Value {
 
     Value &operator*=(int other);
 
-    //pre increment
     Value &operator++();
 
-    //postincrement
     Value operator++(int);
 
-    //pre increment
     Value &operator--();
 
-    //post increment
     Value operator--(int);
 
     template<typename T>
@@ -176,7 +170,7 @@ inline bool Value::isEval() const {
     return isInRange(-INFINITE, INFINITE);
 }
 
-inline Value Value::loss(Color color, int ply) {
+inline Value Value::loss( int ply) {
     return BLACK_WIN + ply;
 }
 
@@ -286,32 +280,21 @@ constexpr bool operator<=(Value val1, int val2) {
     return val1.value <= val2;
 }
 
-
-//Value class-functions
-inline bool Value::isEasyMove() const {
-    return (this->value == EASY_MOVE);
-}
-
-inline bool Value::isBlackWin() const {
+inline bool Value::isLoss() const {
     assert(value >= -INFINITE && value <= INFINITE);
     return this->value - MAX_PLY <= BLACK_WIN;
 }
 
-inline bool Value::isWhiteWin() const {
+inline bool Value::isWin() const {
     assert(value >= -INFINITE && value <= INFINITE);
     return this->value + MAX_PLY >= WHITE_WIN;
 }
 
-inline bool Value::isWinning() const {
-    assert(value >= -INFINITE && value <= INFINITE);
-    return isWhiteWin() || isBlackWin();
-}
-
 inline Value Value::valueFromTT(int ply) {
-    if (this->value + MAX_PLY >= WHITE_WIN) {
+    if (isWin()) {
         return value + ply;
     }
-    if (this->value - MAX_PLY <= BLACK_WIN) {
+    if (isLoss()) {
         return value - ply;
     }
     return *this;
@@ -333,10 +316,10 @@ inline std::ostream &operator<<(std::ostream &outstream, const Value val) {
 
 inline Value clampScore(Value val) {
     //Scores are only positive
-    if (val < (BLACK_WIN + MAX_PLY)) {
-        return Value(-INFINITE);
-    } else if (val > WHITE_WIN - MAX_PLY) {
-        return Value(INFINITE);
+    if (val.isLoss()) {
+        return Value(BLACK_WIN+MAX_PLY);
+    } else if (val.isWin()) {
+        return Value(WHITE_WIN-MAX_PLY);
     }
     return val;
 }

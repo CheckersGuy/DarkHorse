@@ -61,7 +61,7 @@ uint64_t Board::getCurrentKey() {
 }
 
 bool Board::isRepetition() {
-    for (int i = pCounter - 2; i >= 0; i -= 2) {
+    for (auto i = pCounter - 2; i > 0; i -= 2) {
         Move &current = moves[i];
         if (pStack[i] == getPosition()) {
             return true;

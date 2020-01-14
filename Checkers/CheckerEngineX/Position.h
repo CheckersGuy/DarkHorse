@@ -1,7 +1,7 @@
 /**///
 // Created by Robin on 14.01.2018.
 //
-#include "stdint.h"
+#include <cstdint>
 #include "Move.h"
 #include <cassert>
 #include "types.h"
