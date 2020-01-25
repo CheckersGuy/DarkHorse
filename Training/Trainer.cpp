@@ -97,7 +97,7 @@ void Trainer::epoch() {
         gradientUpdate(pos);
 
         if ((counter % 200000) == 0) {
-            gameWeights.storeWeights("failSave.weights");
+            gameWeights.storeWeights("test.weights");
             std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
             std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
             std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
@@ -132,20 +132,20 @@ void Trainer::startTune() {
 double Trainer::calculateLoss() {
     auto evalLambda = [this](TrainingPos pos) {
         Board board;
-        board=pos.pos;
+        board = pos.pos;
         double current = getWinValue(pos.result);
-        double color = static_cast<double>(pos.pos.color);
+        auto color = static_cast<double>(pos.pos.color);
         Line local;
         double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value);
         current = current - Training::sigmoid(cValue, quiesc);
         current = current * current;
-        return current;
+        return 1.0;
     };
+    //0.288253
 
-    auto result = std::transform_reduce(std::execution::seq,data.begin(),data.end(),0.0,std::plus{},[&](TrainingPos& pos){return evalLambda(pos);});
-    result=result/static_cast<double>(data.size());
+    double result = 0;
 
-    return std::sqrt(result);
+    return std::sqrt(result / static_cast<double>(data.size()));
 }
 
 double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t index, double offset) {

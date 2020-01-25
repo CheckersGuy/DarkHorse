@@ -105,6 +105,13 @@ int main(int argc, char *argv[]) {
     }
     using namespace Training;
 
+
+
+
+
+
+
+
 /*
     initialize();
     std::cout << "Final Run" << std::endl;
@@ -115,10 +122,18 @@ int main(int argc, char *argv[]) {
 
 
     std::cout << "Length: " << data.size() << std::endl;
+
+
+
 */
 
 
+
+
+
+
 /*
+
     auto removeCl = [](TrainingPos pos) {
 
         if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
@@ -128,11 +143,13 @@ int main(int argc, char *argv[]) {
         board=pos.pos;
         Line local;
         Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        return qStatic.isWinning();
+        return qStatic.isWin();
     };
 
     data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
+
 */
+
 
 
 /*
@@ -150,16 +167,38 @@ int main(int argc, char *argv[]) {
     std::cout << std::endl;
 */
 
-/*
 
+
+
+    Match engine_match("reading2", "reading");
+
+    engine_match.start();
+
+
+
+
+
+
+
+
+
+
+
+
+/*
     Trainer trainer(data);
     trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-4e-5);
+    trainer.setCValue(-3e-5);
     trainer.startTune();
-
+    std::cout<<"Loss: "<<trainer.calculateLoss()<<std::endl;
+    //0.170178
 */
+
+
+
+
 
 
 

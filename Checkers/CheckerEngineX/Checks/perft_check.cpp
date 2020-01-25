@@ -7,13 +7,13 @@ int main(){
     const int depth=14;
 
     Zobrist::initializeZobrisKeys();
-    Perft::table.setCapacity(1u<<23);
+    Perft::table.setCapacity(1u<<27u);
     Board board;
     board=Position::getStartPosition();
     board.printBoard();
     std::cout<<std::endl;
     auto t1 = std::chrono::high_resolution_clock::now();
-    auto count = Perft::perftCheck(board,depth);
+    auto count = Perft::perftCheck(board.getPosition(),depth);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto diff = t2-t1;
     std::cout<<"Depth: "<<depth<<std::endl;

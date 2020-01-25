@@ -13,6 +13,8 @@
 #include "queue"
 #include <numeric>
 #include <execution>
+#include "Utilities.h"
+
 
 #ifdef TRAIN
 extern Weights<double> gameWeights;

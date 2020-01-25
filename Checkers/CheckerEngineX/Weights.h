@@ -17,6 +17,7 @@
 constexpr uint32_t region = 13107u;
 constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
+constexpr std::array<uint32_t, 4> row_count{0, 0, 0, 0};
 
 inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
@@ -78,6 +79,10 @@ struct Weights {
     void loadWeights(const std::string &path) {
         static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
+        if (!stream.good()) {
+            std::cerr << "Couldnt load weights" << std::endl;
+            return;
+        }
         using DataType = double;
         size_t counter = 0u;
         while (stream) {
@@ -89,7 +94,7 @@ struct Weights {
             stream.read((char *) &first, sizeof(DataType));
             if (stream.eof())
                 break;
-            T temp =std::round(first);
+            T temp = first;
             for (RunType i = 0u; i < length; ++i) {
                 weights[counter] = temp;
                 counter++;
@@ -111,7 +116,7 @@ struct Weights {
         for (auto it = weights.get(); it != end;) {
             RunType length{0};
             auto first = *it;
-            while (it != end && length<std::numeric_limits<RunType>::max() &&  *(it) == first) {
+            while (it != end && length < std::numeric_limits<RunType>::max() && *(it) == first) {
                 length++;
                 it++;
             }
@@ -123,6 +128,7 @@ struct Weights {
         stream.close();
     }
 
+
     Value evaluate(Position pos) const {
 
         constexpr int pawnEval = 100 * scalfac;
@@ -132,7 +138,6 @@ struct Weights {
         const int WP = __builtin_popcount(pos.WP & (~pos.K));
         const int BP = __builtin_popcount(pos.BP & (~pos.K));
 
-
         int phase = WP + BP;
         int WK = 0;
         int BK = 0;
@@ -141,7 +146,6 @@ struct Weights {
             BK = __builtin_popcount(pos.BP & pos.K);
             phase += WK + BK;
         }
-
 
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
@@ -159,10 +163,10 @@ struct Weights {
         }
         opening *= color;
         ending *= color;
+
+
         const int factorOp = phase;
         const int factorEnd = 24 - phase;
-
-
         const int pieceEval = (WP - BP) * pawnEval;
         const int kingEvalOp = (pawnEval + kingOp) * (WK - BK);
         const int kingEvalEnd = (pawnEval + kingEnd) * (WK - BK);
@@ -173,6 +177,7 @@ struct Weights {
 
         ending += kingEvalEnd;
         ending += pieceEval;
+
 
         int score = (factorOp * opening + factorEnd * ending) / 24;
 

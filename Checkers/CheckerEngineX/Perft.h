@@ -60,7 +60,7 @@ namespace Perft {
 
     extern Table table;
 
-    uint64_t perftCheck(Board &board, int depth);
+    uint64_t perftCheck(Position &pos, int depth);
 }
 #endif //CHECKERENGINEX_PERFT_H
 

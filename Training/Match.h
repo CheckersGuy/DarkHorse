@@ -18,14 +18,14 @@ inline std::string getPositionString(Position pos) {
     std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
         uint32_t current = 1u << i;
-        if ((current & pos.BP)) {
-            position += "1";
-        } else if ((current & pos.WP)) {
-            position += "2";
-        } else if ((current & (pos.BP & pos.K))) {
+        if ((current & (pos.BP & pos.K))) {
             position += "3";
         } else if ((current & (pos.WP & pos.K))) {
             position += "4";
+        } else if ((current & pos.BP)) {
+            position += "1";
+        } else if ((current & pos.WP)) {
+            position += "2";
         } else {
             position += "0";
         }
@@ -37,32 +37,6 @@ inline std::string getPositionString(Position pos) {
     }
     return position;
 }
-
-inline Position posFromString(const std::string &pos) {
-    Position result;
-    for (uint32_t i = 0; i < 32u; ++i) {
-        uint32_t current = 1u << i;
-        if (pos[i] == '1') {
-            result.BP |= current;
-        } else if (pos[i] == '2') {
-            result.WP |= current;
-        } else if (pos[i] == '3') {
-            result.K |= current;
-            result.BP |= current;
-        } else if (pos[i] == '4') {
-            result.K |= current;
-            result.WP |= current;
-        }
-    }
-    if (pos[32] == 'B') {
-        result.color = BLACK;
-    } else {
-        result.color = WHITE;
-    }
-    result.key = Zobrist::generateKey(result);
-    return result;
-}
-
 
 struct Engine {
     enum class State {
@@ -126,7 +100,7 @@ public:
     Match() = default;
 
     Match(const std::string &first, const std::string &second) : first(first), second(second), wins(0), losses(0), draws(0), maxGames(1000),
-                                           time(100), threads(1), openingBook("Positions/3move.pos") {};
+                                           time(100), threads(1), openingBook("/home/robin/DarkHorse/Training/Positions/3move.pos") {};
 
     void setMaxGames(int games);
 

@@ -52,7 +52,7 @@ bool Position::hasThreat() const {
 }
 
 bool Position::isWipe() const {
-    return ((getColor() == BLACK && (getMovers<BLACK>() == 0u) && (getJumpers<BLACK>())==0u) || (getColor() == WHITE && (getMovers<WHITE>() == 0u)&& (getJumpers<WHITE>()==0u)));
+    return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
 }
 
 void Position::printPosition() const {

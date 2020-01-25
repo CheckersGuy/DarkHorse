@@ -46,24 +46,24 @@ namespace Perft {
         };
     }
 
-    uint64_t perftCheck(Board &board, int depth) {
+    uint64_t perftCheck(Position& pos, int depth) {
         MoveListe liste;
-        getMoves(board.getPosition(), liste);
+        getMoves(pos, liste);
         if (depth == 1) {
             return liste.length();
         }
         uint64_t counter = 0;
-        auto result = table.probe(board.getPosition(), depth);
+        auto result = table.probe(pos, depth);
         if (result.has_value()) {
             return result.value();
         }
-        for (const auto &m : liste.liste) {
-            board.makeMove(m);
-            counter += perftCheck(board, depth - 1);
-            board.undoMove();
+        for (int i=0;i<liste.length();++i) {
+            Position copy=pos;
+            copy.makeMove(liste[i]);
+            counter+=perftCheck(copy,depth-1);
         }
 
-        table.store(board.getPosition(), depth, counter);
+        table.store(pos, depth, counter);
         return counter;
     }
 }

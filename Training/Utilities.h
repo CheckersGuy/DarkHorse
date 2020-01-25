@@ -4,6 +4,7 @@
 
 #ifndef TRAINING_UTILITIES_H
 #define TRAINING_UTILITIES_H
+
 #include <boost/iostreams/filtering_streambuf.hpp>
 #include <boost/iostreams/filter/bzip2.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
@@ -22,16 +23,19 @@
 #include "Training.h"
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <unordered_set>
+#include <iterator>
+#include <future>
+#include <algorithm>
 
 namespace Utilities {
 
     void createNMoveBook(std::vector<Position> &data, int N, Board &board, Value lowerBound, Value upperBound);
 
-    void createNMoveBook(std::vector<Position>&pos, int N, Board &board);
+    void createNMoveBook(std::vector<Position> &pos, int N, Board &board);
 
-    void loadPositions(std::vector<Position>& positions,const std::string file);
+    void loadPositions(std::vector<Position> &positions, const std::string file);
 
-    void savePositions(std::vector<Position>&positions,const std::string file);
+    void savePositions(std::vector<Position> &positions, const std::string file);
 
     std::vector<std::string> getWhiteSpaceSeperated(const std::string msg);
 

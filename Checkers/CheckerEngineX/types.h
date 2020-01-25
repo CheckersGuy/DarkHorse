@@ -19,7 +19,6 @@ inline uint64_t getSystemTime() {
             (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
-
 constexpr uint32_t MASK_L3 = 14737632u;
 constexpr uint32_t MASK_L5 = 117901063u;
 constexpr uint32_t MASK_R3 = 117901056u;
@@ -30,6 +29,10 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
+
+constexpr uint32_t LEFT_HALF = 3435973836u;
+constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2u;
+
 
 constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u,
                             23u, 22u, 21u, 20u, 27u, 26u,
@@ -44,11 +47,12 @@ enum NodeType {
 };
 
 enum Score : int {
-    WHITE_WIN = 1550000,
-    BLACK_WIN = -1550000,
-    INFINITE = 15000000,
-    EASY_MOVE = 4 * INFINITE,
-    INVALID = 100000000
+    WIN = 15500000,
+    LOSS = -15500000,
+    INFINITE = 150000000,
+    EASY_MOVE = 4 * WIN,
+    INVALID = 100000000,
+    DRAW = 0
 };
 enum SEARCH : int {
     MAX_PLY = 128
@@ -69,15 +73,13 @@ struct Value {
 
     static Value loss(int ply);
 
-    constexpr Value(int value): value(value) {};
+    constexpr Value(int value) : value(value) {};
 
     constexpr Value() = default;
 
     bool isLoss() const;
 
     bool isWin() const;
-
-    bool isEasyMove() const;
 
     Value valueFromTT(int ply);
 
@@ -87,7 +89,7 @@ struct Value {
 
     template<class T, class E>
     bool isInRange(T a, E b) const {
-        return this->value > a && this->value < b;
+        return this->value >= a && this->value <= b;
     }
 
     constexpr Value &operator=(int value);
@@ -170,8 +172,8 @@ inline bool Value::isEval() const {
     return isInRange(-INFINITE, INFINITE);
 }
 
-inline Value Value::loss( int ply) {
-    return BLACK_WIN + ply;
+inline Value Value::loss(int ply) {
+    return LOSS + ply;
 }
 
 //operators
@@ -228,23 +230,20 @@ constexpr Value operator+(Value val, int val2) {
 }
 
 constexpr Value operator*(Value val, Value val2) {
-    Value next = Value(val.value * val2.value);
-    return next;
+    return Value(val.value * val2.value);
 }
 
 constexpr Value operator*(Value val, int val2) {
-    Value next = Value(val.value * val2);
-    return next;
+    return Value(val.value * val2);
 }
 
 constexpr Value operator-(Value val, Value val2) {
-    Value next = Value(val.value - val2.value);
-    return next;
+    return Value(val.value - val2.value);
+
 }
 
 constexpr Value operator-(Value val, int val2) {
-    Value next = Value(val.value - val2);
-    return next;
+    return Value(val.value - val2);
 }
 
 constexpr bool operator>(Value val1, Value val2) {
@@ -281,29 +280,26 @@ constexpr bool operator<=(Value val1, int val2) {
 }
 
 inline bool Value::isLoss() const {
-    assert(value >= -INFINITE && value <= INFINITE);
-    return this->value - MAX_PLY <= BLACK_WIN;
+    return this->value - MAX_PLY <= LOSS;
 }
 
 inline bool Value::isWin() const {
-    assert(value >= -INFINITE && value <= INFINITE);
-    return this->value + MAX_PLY >= WHITE_WIN;
+    return this->value + MAX_PLY >= WIN;
 }
 
 inline Value Value::valueFromTT(int ply) {
-    if (isWin()) {
-        return value + ply;
-    }
     if (isLoss()) {
+        return value + ply;
+    } else if (isWin()) {
         return value - ply;
     }
-    return *this;
+    return value;
 }
 
 inline Value Value::toTT(int ply) {
-    if (this->value - MAX_PLY <= BLACK_WIN) {
+    if (isLoss()) {
         return value - ply;
-    } else if (this->value + MAX_PLY >= WHITE_WIN) {
+    } else if (isWin()) {
         return value + ply;
     }
     return *this;
@@ -317,9 +313,9 @@ inline std::ostream &operator<<(std::ostream &outstream, const Value val) {
 inline Value clampScore(Value val) {
     //Scores are only positive
     if (val.isLoss()) {
-        return Value(BLACK_WIN+MAX_PLY);
+        return Value::loss(MAX_PLY);
     } else if (val.isWin()) {
-        return Value(WHITE_WIN-MAX_PLY);
+        return ~Value::loss(MAX_PLY);
     }
     return val;
 }

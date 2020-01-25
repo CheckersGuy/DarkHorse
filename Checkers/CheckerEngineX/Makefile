@@ -39,10 +39,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/clion/99/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /snap/clion/100/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /snap/clion/99/bin/cmake/linux/bin/cmake -E remove -f
+RM = /snap/clion/100/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -59,7 +59,7 @@ CMAKE_BINARY_DIR = /home/robin/DarkHorse/Checkers/CheckerEngineX
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
-	/snap/clion/99/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/snap/clion/100/bin/cmake/linux/bin/cmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -70,7 +70,7 @@ rebuild_cache/fast: rebuild_cache
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "No interactive CMake dialog available..."
-	/snap/clion/99/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+	/snap/clion/100/bin/cmake/linux/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -394,7 +394,6 @@ Perft.o: Perft.cpp.o
 
 # target to build an object file
 Perft.cpp.o:
-	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.o
 	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.o
 .PHONY : Perft.cpp.o
 
@@ -404,7 +403,6 @@ Perft.i: Perft.cpp.i
 
 # target to preprocess a source file
 Perft.cpp.i:
-	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.i
 	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.i
 .PHONY : Perft.cpp.i
 
@@ -414,7 +412,6 @@ Perft.s: Perft.cpp.s
 
 # target to generate assembly for a file
 Perft.cpp.s:
-	$(MAKE) -f CMakeFiles/CheckerEngineX.dir/build.make CMakeFiles/CheckerEngineX.dir/Perft.cpp.s
 	$(MAKE) -f CMakeFiles/perft_check.dir/build.make CMakeFiles/perft_check.dir/Perft.cpp.s
 .PHONY : Perft.cpp.s
 
