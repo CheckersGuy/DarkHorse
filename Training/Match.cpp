@@ -6,8 +6,8 @@
 
 bool Interface::is_n_fold(int n) {
     const Position other = history.back();
-    auto count = std::count_if(history.begin(), history.end(), [&other](Position &pos) {
-        return pos == other;
+    auto count = std::count_if(history.begin(), history.end(), [&other](Position &p) {
+        return p == other;
     });
     return count >= n;
 }
@@ -18,7 +18,7 @@ bool Interface::isLegalMove(Move move) {
     getMoves(pos, liste);
     Position check_pos = pos;
     check_pos.makeMove(move);
-    for (auto m : liste) {
+    for (auto m : liste.liste) {
         Position copy = pos;
         copy.makeMove(m);
         if (copy == check_pos)
@@ -35,7 +35,6 @@ void Engine::setTime(int time) {
 void Engine::setHashSize(int hash) {
     hash_size = hash;
 }
-
 
 std::string Engine::readPipe() {
     std::string message;
@@ -107,6 +106,7 @@ void Engine::newGame(const Position &pos) {
     }
 }
 
+
 void Engine::update() {
     if (state == State::Update) {
         auto answer = readPipe();
@@ -131,8 +131,8 @@ void Engine::initEngine() {
             std::cout << "Init ready" << std::endl;
         }
     }
-}
 
+}
 
 void Interface::process() {
 
@@ -155,7 +155,6 @@ void Interface::process() {
         pos.makeMove(move.value());
         history.emplace_back(pos);
         engines[second_mover].state = Engine::State::Update;
-        //seind the move to the engine
         engines[second_mover].writeMessage("new_move");
         engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().from)));
         engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().to)));
@@ -171,9 +170,8 @@ void Interface::process() {
         std::cout << getPositionString(pos) << std::endl;
         std::cout << std::endl;
     }
-
-
 }
+
 int Match::getMaxGames() {
     return maxGames;
 }
@@ -225,12 +223,18 @@ void Match::start() {
     engine.setTime(100);
     engine.setHashSize(25);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(100);
+    engine2.setTime(500);
     engine2.setHashSize(25);
     Interface inter{engine, engine2};
 
+    std::vector<Position> positions;
+    Utilities::loadPositions(positions, openingBook);
     std::deque<Position> openingQueue;
-    std::vector<std::string> engine_paths{"reading", "reading2"};
+    std::for_each(positions.begin(), positions.end(), [&](Position pos) {
+        openingQueue.emplace_back(pos);
+    });
+
+    std::vector<std::string> engine_paths{first, second};
 
 
     pid_t pid;
@@ -244,8 +248,10 @@ void Match::start() {
         } else if (pid == 0) {
             dup2(mainPipe[i][0], STDIN_FILENO);
             dup2(enginePipe[i][1], STDOUT_FILENO);
-            const std::string command = "./" + engine_paths[i];
-            execlp(command.c_str(), engine_paths[i].c_str(), NULL);
+            const std::string e="../Engines/"+engine_paths[i];
+            const std::string command = "./" + e;
+            std::cout<<command<<std::endl;
+            execlp(command.c_str(), e.c_str(), NULL);
             exit(EXIT_SUCCESS);
         }
     }
@@ -255,7 +261,11 @@ void Match::start() {
             close(enginePipe[k][1]);
             fcntl(enginePipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
         }
-        inter.pos = Position::getStartPosition();
+        Position &pos = openingQueue.front();
+        pos.printPosition();
+        openingQueue.pop_front();
+
+        inter.pos = pos;
         inter.history.emplace_back(inter.pos);
         while (true) {
             inter.process();
@@ -269,6 +279,10 @@ void Match::start() {
                 std::cout << "Repetition" << std::endl;
                 break;
             }
+            if (inter.history.size() >= 400) {
+                std::cout << "Reached max move" << std::endl;
+                break;
+            }
         }
 
 
@@ -279,5 +293,6 @@ void Match::start() {
     for (int k = 0; k < numEngines; ++k) {
         wait(&status);
     }
+
 
 }

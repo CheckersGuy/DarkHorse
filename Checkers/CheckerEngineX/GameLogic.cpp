@@ -49,10 +49,10 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
     MoveListe easyMoves;
     getMoves(board.getPosition(), easyMoves);
-    if (easyMoves.length() == 1) {
+   /* if (easyMoves.length() == 1) {
         best = easyMoves[0];
         return EASY_MOVE;
-    }
+    }*/
 
     timeOut = false;
     endTime = getSystemTime() + time;
@@ -101,13 +101,14 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     return eval;
 }
 
+
 template<NodeType type>
 Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     constexpr bool inPVLine = (type == PVNode);
     assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
-    if (ply > MAX_PLY) {
-        return gameWeights.evaluate(board.getPosition()) * board.getMover();
+    if (ply >= MAX_PLY) {
+        return board.getMover() * gameWeights.evaluate(board.getPosition());
     }
 
     MoveListe moves;
@@ -115,16 +116,15 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     Value bestValue = -INFINITE;
 
     if (moves.isEmpty()) {
-        if (board.getMover() == BLACK && board.getPosition().getMovers<BLACK>() == 0u) {
-            return Value::loss(ply);
-        }
-        if (board.getMover() == WHITE && board.getPosition().getMovers<WHITE>() == 0u) {
+
+        if (board.getPosition().isWipe()) {
             return Value::loss(ply);
         }
 
         if (board.getPosition().hasThreat()) {
-            return alphaBeta<type>(board, alpha, beta, pv, ply + 1, 1, false);
+            return alphaBeta<type>(board, alpha, beta, pv, ply, 1, false);
         }
+
 
 
         bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -134,12 +134,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     }
 
     if (inPVLine && ply < mainPV.length()) {
-        moves.putFront(mainPV[0]);
+        moves.putFront(mainPV[ply]);
     }
 
     for (int i = 0; i < moves.length(); ++i) {
         Line localPV;
-        board.makeMove(moves[i]);
+        board.makeMove(moves.liste[i]);
         Value value;
         if (i == 0) {
             value = ~quiescene<type>(board, ~beta, ~alpha, localPV, ply + 1);
@@ -167,7 +167,6 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     return bestValue;
 }
 
-
 template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
@@ -186,7 +185,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     if (depth == 0) {
         return quiescene<type>(board, alpha, beta, pv, ply);
     }
-
 
 
 
@@ -216,17 +214,21 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-    if (!inPVLine && prune && depth >= 3 && !beta.isWin()) {
+
+
+    if (!inPVLine && prune && depth >= 5 && !beta.isWin()) {
         Value margin = (15 * scalfac * depth);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
-        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply + 1, newDepth, false);
+        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply+1, newDepth, false);
         if (value >= newBeta) {
-            pv = local;
-            return addSafe(value, ~margin);
+            value = addSafe(value, ~margin);
+            return value;
         }
     }
+
+
 
     if (inPVLine && ply < mainPV.length()) {
         sucessors.putFront(mainPV[ply]);
@@ -259,7 +261,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             if (depth >= 2 && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
                 !is_promotion) {
                 reduce = 1;
-                if (i > 3 && depth > 2) {
+                if (i >= 4 && depth>2) {
                     reduce = 2;
                 }
             }

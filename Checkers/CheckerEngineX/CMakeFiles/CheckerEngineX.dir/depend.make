@@ -75,19 +75,6 @@ CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: MovePicker.cpp
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: MovePicker.h
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: types.h
 
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Bits.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Board.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: MGenerator.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Move.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: MoveListe.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: MovePicker.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Perft.cpp
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Perft.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Position.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: SMPLock.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Zobrist.h
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: types.h
-
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: Bits.h
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: Move.h
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: Position.cpp

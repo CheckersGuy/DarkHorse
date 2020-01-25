@@ -191,11 +191,9 @@
 			<Option target="CheckerEngineX"/>
 		</Unit>
 		<Unit filename="/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp">
-			<Option target="CheckerEngineX"/>
 			<Option target="perft_check"/>
 		</Unit>
 		<Unit filename="/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h">
-			<Option target="CheckerEngineX"/>
 			<Option target="perft_check"/>
 		</Unit>
 		<Unit filename="/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp">

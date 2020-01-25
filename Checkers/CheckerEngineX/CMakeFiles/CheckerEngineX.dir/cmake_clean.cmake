@@ -7,7 +7,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/CheckerEngineX.dir/Move.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o"
-  "CMakeFiles/CheckerEngineX.dir/Perft.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/Position.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/Thread.cpp.o"
   "CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o"

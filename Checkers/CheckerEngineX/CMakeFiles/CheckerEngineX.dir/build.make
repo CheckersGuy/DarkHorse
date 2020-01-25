@@ -34,10 +34,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/clion/99/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /snap/clion/100/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /snap/clion/99/bin/cmake/linux/bin/cmake -E remove -f
+RM = /snap/clion/100/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -70,22 +70,9 @@ CMakeFiles/CheckerEngineX.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/main.cpp.s"
 	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp -o CMakeFiles/CheckerEngineX.dir/main.cpp.s
 
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.o: Perft.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/CheckerEngineX.dir/Perft.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Perft.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp
-
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Perft.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp > CMakeFiles/CheckerEngineX.dir/Perft.cpp.i
-
-CMakeFiles/CheckerEngineX.dir/Perft.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Perft.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp -o CMakeFiles/CheckerEngineX.dir/Perft.cpp.s
-
 CMakeFiles/CheckerEngineX.dir/Board.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Board.cpp.o: Board.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/CheckerEngineX.dir/Board.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/CheckerEngineX.dir/Board.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Board.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp
 
 CMakeFiles/CheckerEngineX.dir/Board.cpp.i: cmake_force
@@ -98,7 +85,7 @@ CMakeFiles/CheckerEngineX.dir/Board.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o: GameLogic.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
 
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.i: cmake_force
@@ -111,7 +98,7 @@ CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Transposition.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp
 
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.i: cmake_force
@@ -124,7 +111,7 @@ CMakeFiles/CheckerEngineX.dir/Transposition.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MoveListe.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.i: cmake_force
@@ -137,7 +124,7 @@ CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: Position.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/CheckerEngineX.dir/Position.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/CheckerEngineX.dir/Position.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Position.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp
 
 CMakeFiles/CheckerEngineX.dir/Position.cpp.i: cmake_force
@@ -150,7 +137,7 @@ CMakeFiles/CheckerEngineX.dir/Position.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: MovePicker.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.i: cmake_force
@@ -163,7 +150,7 @@ CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o: CBInterface.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp
 
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.i: cmake_force
@@ -176,7 +163,7 @@ CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o: Zobrist.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp
 
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i: cmake_force
@@ -189,7 +176,7 @@ CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Line.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Line.cpp.o: Line.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/CheckerEngineX.dir/Line.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/CheckerEngineX.dir/Line.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Line.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp
 
 CMakeFiles/CheckerEngineX.dir/Line.cpp.i: cmake_force
@@ -202,7 +189,7 @@ CMakeFiles/CheckerEngineX.dir/Line.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.o: Thread.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/CheckerEngineX.dir/Thread.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/CheckerEngineX.dir/Thread.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Thread.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp
 
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.i: cmake_force
@@ -215,7 +202,7 @@ CMakeFiles/CheckerEngineX.dir/Thread.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Move.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Move.cpp.o: Move.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/CheckerEngineX.dir/Move.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/CheckerEngineX.dir/Move.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Move.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp
 
 CMakeFiles/CheckerEngineX.dir/Move.cpp.i: cmake_force
@@ -228,7 +215,7 @@ CMakeFiles/CheckerEngineX.dir/Move.cpp.s: cmake_force
 
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.o: Bits.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/CheckerEngineX.dir/Bits.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/CheckerEngineX.dir/Bits.cpp.o"
 	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Bits.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp
 
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.i: cmake_force
@@ -242,7 +229,6 @@ CMakeFiles/CheckerEngineX.dir/Bits.cpp.s: cmake_force
 # Object files for target CheckerEngineX
 CheckerEngineX_OBJECTS = \
 "CMakeFiles/CheckerEngineX.dir/main.cpp.o" \
-"CMakeFiles/CheckerEngineX.dir/Perft.cpp.o" \
 "CMakeFiles/CheckerEngineX.dir/Board.cpp.o" \
 "CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o" \
 "CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o" \
@@ -260,7 +246,6 @@ CheckerEngineX_OBJECTS = \
 CheckerEngineX_EXTERNAL_OBJECTS =
 
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/main.cpp.o
-cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/Perft.cpp.o
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/Board.cpp.o
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o
@@ -275,7 +260,7 @@ cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/Move.cpp.o
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/Bits.cpp.o
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/build.make
 cmake-build-debug/CheckerEngineX: CMakeFiles/CheckerEngineX.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Linking CXX executable cmake-build-debug/CheckerEngineX"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Linking CXX executable cmake-build-debug/CheckerEngineX"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/CheckerEngineX.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

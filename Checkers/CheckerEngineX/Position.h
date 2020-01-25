@@ -105,8 +105,6 @@ struct Position {
 
     bool hasJumps(Color color) const;
 
-    bool isLoss() const;
-
     bool isWipe() const;
 
     bool hasThreat() const;
