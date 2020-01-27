@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     if (vm.count("match")) {
 
-        std::cout<<"Getting stuff to work out"<<std::endl;
+        std::cout << "Getting stuff to work out" << std::endl;
 
         const std::vector<std::string> &engines = vm["match"].as<std::vector<std::string>>();
         if (engines.size() > 2) {
@@ -112,43 +112,35 @@ int main(int argc, char *argv[]) {
 
 
 
-/*
+
+
+
     initialize();
     std::cout << "Final Run" << std::endl;
 
     std::vector<TrainingPos> data;
 
-    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game");
+    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game", 300000);
 
 
     std::cout << "Length: " << data.size() << std::endl;
 
 
-
-*/
-
-
-
-
-
-
-/*
-
     auto removeCl = [](TrainingPos pos) {
-
-        if(__builtin_popcount(pos.pos.BP|pos.pos.WP)<=4)
-            return true;
-
+        if (__builtin_popcount(pos.pos.BP | pos.pos.WP) <= 4)
+            return false;
         Board board;
-        board=pos.pos;
+        board = pos.pos;
         Line local;
         Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        return qStatic.isWin();
+        return isWin(qStatic);
     };
 
-    data.erase(std::remove_if(data.begin(),data.end(),removeCl),data.end());
+    data.erase(std::remove_if(data.begin(), data.end(), removeCl), data.end());
 
-*/
+
+
+
 
 
 
@@ -170,31 +162,36 @@ int main(int argc, char *argv[]) {
 
 
 
-    Match engine_match("reading2", "reading");
-
-    engine_match.start();
-
-
-
-
-
-
-
-
-
-
 
 
 /*
+    Match engine_match("reading", "reading2");
+
+    engine_match.start();
+*/
+
+
+
+
+
+
+
+
+
+
+
+
     Trainer trainer(data);
     trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-3e-5);
-    trainer.startTune();
-    std::cout<<"Loss: "<<trainer.calculateLoss()<<std::endl;
+    //trainer.startTune();
+    std::cout << "Loss: " << trainer.calculateLoss() << std::endl;
     //0.170178
-*/
+
+
+
 
 
 

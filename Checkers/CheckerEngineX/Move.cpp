@@ -37,8 +37,8 @@ bool Move::operator!=(const Move &other) const {
 }
 
 bool Move::isPromotion(const uint32_t kings) {
-    //current is the position before the move is made
-    return (((to & PROMO_SQUARES_WHITE) != 0) || ((to & PROMO_SQUARES_BLACK) != 0)) && ((from & kings) == 0u);
+    constexpr uint32_t promo_squares = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
+    return ((from & getFrom()) == 0u && (to & promo_squares) != 0u);
 }
 
 

@@ -220,20 +220,15 @@ void Match::start() {
     int enginePipe[numEngines][2];
 
     Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(100);
+    engine.setTime(500);
     engine.setHashSize(25);
     Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(500);
+    engine2.setTime(100);
     engine2.setHashSize(25);
     Interface inter{engine, engine2};
 
     std::vector<Position> positions;
     Utilities::loadPositions(positions, openingBook);
-    std::deque<Position> openingQueue;
-    std::for_each(positions.begin(), positions.end(), [&](Position pos) {
-        openingQueue.emplace_back(pos);
-    });
-
     std::vector<std::string> engine_paths{first, second};
 
 
@@ -261,9 +256,8 @@ void Match::start() {
             close(enginePipe[k][1]);
             fcntl(enginePipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
         }
-        Position &pos = openingQueue.front();
+        Position &pos = positions[12];
         pos.printPosition();
-        openingQueue.pop_front();
 
         inter.pos = pos;
         inter.history.emplace_back(inter.pos);

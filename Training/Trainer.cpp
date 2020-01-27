@@ -60,7 +60,7 @@ void Trainer::gradientUpdate(TrainingPos position) {
     double c = getCValue();
 
     double offset = static_cast<double>(scalfac);
-    double qValue = mover * qStatic.as<double>();
+    double qValue = mover * static_cast<double>(qStatic);
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
@@ -136,14 +136,16 @@ double Trainer::calculateLoss() {
         double current = getWinValue(pos.result);
         auto color = static_cast<double>(pos.pos.color);
         Line local;
-        double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value);
+        double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0));
         current = current - Training::sigmoid(cValue, quiesc);
         current = current * current;
-        return 1.0;
+        return current;
     };
     //0.288253
-
-    double result = 0;
+    double result = 0.0;
+    for (auto &pos : data) {
+        result += evalLambda(pos);
+    }
 
     return std::sqrt(result / static_cast<double>(data.size()));
 }
@@ -153,7 +155,7 @@ double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t 
     Line local;
     Value qDiff = quiescene<PVNode>(board, -INFINITE, INFINITE, local, 0);
     weights[index] -= offset;
-    auto qDiffValue = qDiff.as<double>();
+    auto qDiffValue = static_cast<double>(qDiff);
 
     return qDiffValue;
 }
