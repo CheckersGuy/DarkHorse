@@ -14,6 +14,7 @@
 #include "Bits.h"
 
 
+
 namespace Zobrist {
     extern uint64_t colorBlack;
 
@@ -22,7 +23,7 @@ namespace Zobrist {
 
     uint64_t generateKey(const Position &pos);
 
-    void doUpdateZobristKey(Position &pos, Move move);
+    void doUpdateZobristKey( Position &pos, Move move);
 }
 
 

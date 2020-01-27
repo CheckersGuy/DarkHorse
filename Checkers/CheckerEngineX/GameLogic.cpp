@@ -46,14 +46,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     nodeCounter = 0;
     mainPV.clear();
     TT.clear();
-
-    MoveListe easyMoves;
-    getMoves(board.getPosition(), easyMoves);
-   /* if (easyMoves.length() == 1) {
-        best = easyMoves[0];
-        return EASY_MOVE;
-    }*/
-
     timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
@@ -61,7 +53,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Value alpha = -INFINITE;
     Value beta = INFINITE;
     Value value;
-    Value eval;
+    Value eval=DRAW;
 
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
@@ -83,7 +75,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
         }
 
         if (print) {
-            std::string temp = std::to_string(value.value) + "  ";
+            std::string temp = std::to_string(value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
@@ -118,13 +110,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     if (moves.isEmpty()) {
 
         if (board.getPosition().isWipe()) {
-            return Value::loss(ply);
+            return loss(ply);
         }
 
         if (board.getPosition().hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply, 1, false);
         }
-
 
 
         bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -141,12 +132,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         Line localPV;
         board.makeMove(moves.liste[i]);
         Value value;
-        if (i == 0) {
-            value = ~quiescene<type>(board, ~beta, ~alpha, localPV, ply + 1);
-        } else {
-
-            value = ~quiescene<NONPV>(board, ~beta, ~alpha, localPV, ply + 1);
-        }
+        value = -quiescene<type>(board, -beta, -alpha, localPV, ply + 1);
         board.undoMove();
 
         if (value > bestValue) {
@@ -187,47 +173,52 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-
     MoveListe sucessors;
     getMoves(board.getPosition(), sucessors);
     if (sucessors.isEmpty()) {
-        return Value::loss(ply);
+        return loss(ply);
     }
 
+/*
 
-    /*  if (ply ==0) {
-          static std::mt19937 generator(getSystemTime());
-          std::shuffle(sucessors.liste.begin(), sucessors.liste.end(), generator);
-      }*/
-
-
+    if (ply == 0) {
+        static std::mt19937 generator(getSystemTime());
+        std::shuffle(sucessors.liste.begin(), sucessors.liste.end(), generator);
+    }
+*/
 
     NodeInfo info;
+
+
 #ifndef TRAIN
-    TT.findHash(board.getCurrentKey(), depth, &alpha.value, &beta.value, info);
-    info.value = info.value.valueFromTT(ply);
+    if (ply > 0 && TT.findHash(board.getPosition(), info)) {
+        auto tt_score = valueFromTT(info.score, ply);
+        if (info.depth >= depth) {
+            if ((info.flag == TT_LOWER && info.score >= beta)
+                || (info.flag == TT_UPPER && info.score <= alpha)
+                || info.flag == TT_EXACT) {
+                return tt_score;
+            }
+        }
+
+        if ((info.flag == TT_LOWER && isWin(info.score) && info.score >= beta)
+            || (info.flag == TT_UPPER && isLoss(info.score) && info.score <= alpha)) {
+            return tt_score;
+        }
+    }
 #endif
 
-
-    if (!inPVLine && ply > 0 && alpha >= beta) {
-        return info.value;
-    }
-
-
-
-
-    if (!inPVLine && prune && depth >= 5 && !beta.isWin()) {
-        Value margin = (15 * scalfac * depth);
+    if (!inPVLine && prune && depth >= 5 && isEval(beta)) {
+        Value margin = (10 * scalfac * depth);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
-        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply+1, newDepth, false);
+        Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
         if (value >= newBeta) {
-            value = addSafe(value, ~margin);
+            value=addSafe(value,-margin);
             return value;
         }
     }
-
 
 
     if (inPVLine && ply < mainPV.length()) {
@@ -255,19 +246,19 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         Value value;
         Line localPV;
         if (i == 0) {
-            value = ~alphaBeta<type>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
+            value = -alphaBeta<type>(board, -beta, -alpha, localPV, ply + 1, newDepth, prune);
         } else {
             int reduce = 0;
             if (depth >= 2 && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
                 !is_promotion) {
                 reduce = 1;
-                if (i >= 4 && depth>2) {
+                if (i >= 4 && depth > 2) {
                     reduce = 2;
                 }
             }
-            value = ~alphaBeta<NONPV>(board, ~alpha - 1, ~alpha, localPV, ply + 1, newDepth - reduce, prune);
+            value = -alphaBeta<NONPV>(board, -alpha - 1, -alpha, localPV, ply + 1, newDepth - reduce, prune);
             if (value > alpha && value < beta) {
-                value = ~alphaBeta<NONPV>(board, ~beta, ~alpha, localPV, ply + 1, newDepth, prune);
+                value = -alphaBeta<NONPV>(board, -beta, -alpha, localPV, ply + 1, newDepth, prune);
             }
         }
         board.undoMove();
@@ -287,13 +278,15 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         }
     }
 #ifndef TRAIN
+    Value tt_value = toTT(bestValue, ply);
     if (bestValue <= alphaOrig) {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_UPPER, depth, bestMove);
+        TT.storeHash(tt_value, board.getPosition(), TT_UPPER, depth, bestMove);
     } else if (bestValue >= beta) {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_LOWER, depth, bestMove);
+        TT.storeHash(tt_value, board.getPosition(), TT_LOWER, depth, bestMove);
     } else {
-        TT.storeHash(bestValue.toTT(ply), board.getCurrentKey(), TT_EXACT, depth, bestMove);
+        TT.storeHash(tt_value, board.getPosition(), TT_EXACT, depth, bestMove);
     }
+
 #endif
     return bestValue;
 }

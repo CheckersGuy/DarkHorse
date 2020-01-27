@@ -38,8 +38,9 @@ constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15
                             23u, 22u, 21u, 20u, 27u, 26u,
                             25u, 24u, 31u, 30u, 29u, 28u};
 
-using Depth =int;
-using Ply =int;
+using Depth = int;
+using Ply = int;
+using Value = int;
 
 constexpr int scalfac = 128;
 enum NodeType {
@@ -47,10 +48,9 @@ enum NodeType {
 };
 
 enum Score : int {
-    WIN = 15500000,
-    LOSS = -15500000,
-    INFINITE = 150000000,
-    EASY_MOVE = 4 * WIN,
+    WIN = 1550000,
+    LOSS = -1550000,
+    INFINITE = 15000000,
     INVALID = 100000000,
     DRAW = 0
 };
@@ -61,125 +61,23 @@ enum Color : int {
     BLACK = -1, WHITE = 1
 };
 enum PieceType {
-    BPAWN = -1, WPAWN = 1, BKING = -2, WKING = 2, KING = 4, PAWN = 5,
+    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
 enum Flag : uint8_t {
-    TT_EXACT = 1, TT_LOWER = 2, TT_UPPER = 3
+    None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u
 };
 
 
-struct Value {
-    int value{0};
-
-    static Value loss(int ply);
-
-    constexpr Value(int value) : value(value) {};
-
-    constexpr Value() = default;
-
-    bool isLoss() const;
-
-    bool isWin() const;
-
-    Value valueFromTT(int ply);
-
-    Value toTT(int ply);
-
-    bool isEval() const;
-
-    template<class T, class E>
-    bool isInRange(T a, E b) const {
-        return this->value >= a && this->value <= b;
-    }
-
-    constexpr Value &operator=(int value);
-
-    Value &operator+=(Value other);
-
-    Value &operator+=(int other);
-
-    Value &operator-=(Value other);
-
-    Value &operator-=(int other);
-
-    Value &operator*=(Value other);
-
-    Value &operator*=(int other);
-
-    Value &operator++();
-
-    Value operator++(int);
-
-    Value &operator--();
-
-    Value operator--(int);
-
-    template<typename T>
-    T as() {
-        return static_cast<T>(value);
-    }
-};
-
-inline Value &Value::operator++() {
-    this->value++;
-    return *this;
+inline bool isInRange(Value val, Value a, Value b) {
+    return val >= a && val <= b;
 }
 
-inline Value Value::operator++(int) {
-    return this->value + 1;;
+inline bool isEval(Value val) {
+    return isInRange(val, -INFINITE, INFINITE);
 }
 
-inline Value &Value::operator--() {
-    this->value--;
-    return *this;
-}
-
-inline Value Value::operator--(int) {
-    return this->value - 1;
-}
-
-inline Value &Value::operator+=(Value other) {
-    this->value += other.value;
-    return *this;
-}
-
-inline Value &Value::operator+=(int other) {
-    this->value += other;
-    return *this;
-}
-
-inline Value &Value::operator-=(Value other) {
-    this->value -= other.value;
-    return *this;
-}
-
-inline Value &Value::operator-=(int other) {
-    this->value -= other;
-    return *this;
-}
-
-inline Value &Value::operator*=(Value other) {
-    this->value *= other.value;
-    return *this;
-}
-
-inline Value &Value::operator*=(int other) {
-    this->value *= other;
-    return *this;
-}
-
-inline bool Value::isEval() const {
-    return isInRange(-INFINITE, INFINITE);
-}
-
-inline Value Value::loss(int ply) {
+inline Value loss(int ply) {
     return LOSS + ply;
-}
-
-//operators
-constexpr Value operator~(Value val) {
-    Value next = -val.value;
-    return next;
 }
 
 constexpr Color operator~(Color color) {
@@ -190,132 +88,39 @@ constexpr Color operator~(Color color) {
     }
 }
 
-constexpr bool operator!=(Value one, Value two) {
-    return one.value != two.value;
+inline bool isLoss(Value val) {
+    return val - MAX_PLY <= LOSS;
 }
 
-constexpr bool operator==(Value one, Value two) {
-    return one.value == two.value;
+inline bool isWin(Value val) {
+    return val + MAX_PLY >= WIN;
 }
 
-constexpr bool operator==(Value one, int two) {
-    return one.value == two;
-}
-
-constexpr bool operator!=(Value one, int two) {
-    return one.value != two;
-}
-
-constexpr bool operator!=(int one, Value two) {
-    return one != two.value;
-}
-
-
-constexpr Value &Value::operator=(int val) {
-    this->value = val;
-    return *this;
-}
-
-
-constexpr Value operator+(const Value val, const Value val2) {
-    Value next;
-    next.value = val.value + val2.value;
-    return next;
-}
-
-constexpr Value operator+(Value val, int val2) {
-    Value next;
-    next.value = val.value + val2;
-    return next;
-}
-
-constexpr Value operator*(Value val, Value val2) {
-    return Value(val.value * val2.value);
-}
-
-constexpr Value operator*(Value val, int val2) {
-    return Value(val.value * val2);
-}
-
-constexpr Value operator-(Value val, Value val2) {
-    return Value(val.value - val2.value);
-
-}
-
-constexpr Value operator-(Value val, int val2) {
-    return Value(val.value - val2);
-}
-
-constexpr bool operator>(Value val1, Value val2) {
-    return val1.value > val2.value;
-}
-
-constexpr bool operator>=(Value val1, Value val2) {
-    return val1.value >= val2.value;
-}
-
-constexpr bool operator<(Value val1, Value val2) {
-    return val1.value < val2.value;
-}
-
-constexpr bool operator<=(Value val1, Value val2) {
-    return val1.value <= val2.value;
-}
-
-
-constexpr bool operator>(Value val1, int val2) {
-    return val1.value > val2;
-}
-
-constexpr bool operator>=(Value val1, int val2) {
-    return val1.value >= val2;
-}
-
-constexpr bool operator<(Value val1, int val2) {
-    return val1.value < val2;
-}
-
-constexpr bool operator<=(Value val1, int val2) {
-    return val1.value <= val2;
-}
-
-inline bool Value::isLoss() const {
-    return this->value - MAX_PLY <= LOSS;
-}
-
-inline bool Value::isWin() const {
-    return this->value + MAX_PLY >= WIN;
-}
-
-inline Value Value::valueFromTT(int ply) {
-    if (isLoss()) {
-        return value + ply;
-    } else if (isWin()) {
-        return value - ply;
+inline Value valueFromTT(Value val, int ply) {
+    if (isLoss(val)) {
+        return val + ply;
+    } else if (isWin(val)) {
+        return val - ply;
     }
-    return value;
+    return val;
 }
 
-inline Value Value::toTT(int ply) {
-    if (isLoss()) {
-        return value - ply;
-    } else if (isWin()) {
-        return value + ply;
+inline Value toTT(Value val, int ply) {
+    if (isLoss(val)) {
+        return val - ply;
+    } else if (isWin(val)) {
+        return val + ply;
     }
-    return *this;
+    return val;
 }
 
-inline std::ostream &operator<<(std::ostream &outstream, const Value val) {
-    outstream << val.value;
-    return outstream;
-}
 
 inline Value clampScore(Value val) {
     //Scores are only positive
-    if (val.isLoss()) {
-        return Value::loss(MAX_PLY);
-    } else if (val.isWin()) {
-        return ~Value::loss(MAX_PLY);
+    if (isLoss(val)) {
+        return -INFINITE;
+    } else if (isWin(val)) {
+        return INFINITE;
     }
     return val;
 }

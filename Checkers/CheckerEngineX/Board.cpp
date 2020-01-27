@@ -24,7 +24,7 @@ void Board::printBoard() {
 void Board::makeMove(Move move) {
     assert(!move.isEmpty());
     pStack[pCounter + 1] = pStack[pCounter];
-    moves[pCounter++] = move;
+    this->pCounter++;
     Zobrist::doUpdateZobristKey(getPosition(), move);
     pStack[pCounter].makeMove(move);
 
@@ -66,14 +66,8 @@ bool Board::isRepetition() {
         if (pStack[i] == getPosition()) {
             return true;
         }
-
-        if ((current.getFrom() & (pStack[i].K)) == 0u)
+        if (current.isCapture() || current.isPromotion(pStack[i - 1].K))
             return false;
-
-
-        if (current.isCapture() || current.isPromotion(pStack[i].K))
-            return false;
-
 
     }
 

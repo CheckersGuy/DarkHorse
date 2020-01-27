@@ -42,21 +42,25 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     std::string current;
-    Position start_pos = Position::getStartPosition();
+    Position start_pos = posFromString("04000000000000300000004000000003W");
 
     Board board;
- /*   board = Position::getStartPosition();
+/*
+    board = start_pos;
     board.printBoard();
     std::cout<<std::endl;
 
     initialize();
     setHashSize(25);
+
     Move best;
-    searchValue(board,best, 128, 300000, true);
+    searchValue(board,best, 128, 30000000, true);
     board.makeMove(best);
     board.printBoard();
+*/
 
-    while (true) {
+
+ /*   while (true) {
         MoveListe liste;
         getMoves(board.getPosition(), liste);
         if (board.isRepetition() || liste.length() == 0)

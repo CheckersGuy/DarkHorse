@@ -24,8 +24,8 @@
 
 MAKRO void setHashSize(uint32_t hash);
 
-
-template<NodeType type>Value quiescene(Board &board, Value alpha, Value beta,Line& pv, int ply) ;
+template<NodeType type>
+Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply);
 
 template<NodeType type>Value alphaBeta(Board &board, Value alpha, Value beta,Line& localPV, int ply, int depth, bool prune);
 

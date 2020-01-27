@@ -47,7 +47,7 @@ void MoveListe::sort_static(Color mover, const Position &pos, const Move &ttMove
 
         auto eval = Statistics::mPicker.getMoveScore(liste[i], mover, ttMove);
         Line local;
-        auto score = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0).value / scalfac;
+        auto score = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0) / scalfac;
 
         eval += score;
 

@@ -15,9 +15,9 @@
 
 struct NodeInfo {
     Move move;
-    Value value ;
+    Value score;
     uint8_t depth ;
-    uint8_t  flag ;
+    uint8_t  flag{Flag::None} ;
 };
 
 
@@ -25,7 +25,7 @@ struct Entry {
     Move bestMove;
     Value value ;
     uint32_t key ;
-    uint8_t flag;
+    Flag flag;
     uint8_t depth;
     uint32_t getKey();
 
@@ -62,8 +62,6 @@ using Cluster=Entry[2];
 
 class Transposition {
 
-    static constexpr uint8_t AGE_LIMIT = 8;
-
 public:
     uint32_t length = 0;
     uint32_t capacity = 0;
@@ -87,11 +85,9 @@ public:
 
     void resize(uint32_t capa);
 
-    void incrementAgeCounter();
+    void storeHash(Value value, const Position&pos, Flag flag, uint8_t depth, Move move);
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move move);
-
-    void findHash(uint64_t key, int depth, int *alpha, int *beta, NodeInfo &info);
+    bool findHash(const Position&pos, NodeInfo &info);
 };
 
 

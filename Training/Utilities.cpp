@@ -28,7 +28,7 @@ namespace Utilities {
         if (N == 0) {
             Board copy(board);
             Value value = searchValue(copy, MAX_PLY, 70, false);
-            if (value.isInRange(lowerBound, upperBound)) {
+            if (isInRange(value,lowerBound, upperBound)) {
                 hashes.insert(board.getCurrentKey());
                 Position currentPos = board.getPosition();
                 data.emplace_back(currentPos);
