@@ -237,87 +237,99 @@ void Match::start() {
     std::cerr.rdbuf(logger.rdbuf());
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
-    int mainPipe[numEngines][2];
-    int enginePipe[numEngines][2];
-    int eng_info_pipe[numEngines][2];
-
-    int start_index = 0;
-    int game_count = 0;
-
-    Engine engine{Engine::State::Idle, enginePipe[0][0], mainPipe[0][1]};
-    engine.setTime(time);
-    engine.setHashSize(hash_size);
-    Engine engine2{Engine::State::Idle, enginePipe[1][0], mainPipe[1][1]};
-    engine2.setTime(time);
-    engine2.setHashSize(hash_size);
-    Interface inter{engine, engine2};
-
+    const int num_matches = 8;
+    std::vector<Interface> interfaces;
     std::vector<Position> positions;
     Utilities::loadPositions(positions, openingBook);
     std::vector<std::string> engine_paths{first, second};
 
 
+    int mainPipe[num_matches][numEngines][2];
+    int enginePipe[num_matches][numEngines][2];
+    int eng_info_pipe[num_matches][numEngines][2];
+
+    int start_index = 0;
+    int game_count = 0;
+
+    for (int p = 0; p < num_matches; ++p) {
+        Engine engine{Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
+        engine.setTime(time);
+        engine.setHashSize(hash_size);
+        Engine engine2{Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
+        engine2.setTime(time);
+        engine2.setHashSize(hash_size);
+        interfaces.emplace_back(Interface{engine, engine2});
+    }
+
+
     pid_t pid;
-    for (auto i = 0; i < numEngines; ++i) {
-        pipe(mainPipe[i]);
-        pipe(enginePipe[i]);
-        pid = fork();
-        if (pid < 0) {
-            std::cerr << "Error" << std::endl;
-            exit(EXIT_FAILURE);
-        } else if (pid == 0) {
-            dup2(mainPipe[i][0], STDIN_FILENO);
-            dup2(enginePipe[i][1], STDOUT_FILENO);
-            dup2(eng_info_pipe[i][1], STDERR_FILENO);
-            const std::string e = "../Engines/" + engine_paths[i];
-            const std::string command = "./" + e;
-            std::cerr << command << std::endl;
-            execlp(command.c_str(), e.c_str(), NULL);
-            exit(EXIT_SUCCESS);
+    for (int p = 0; p < num_matches; ++p) {
+        for (auto i = 0; i < numEngines; ++i) {
+            pipe(mainPipe[p][i]);
+            pipe(enginePipe[p][i]);
+            pid = fork();
+            if (pid < 0) {
+                std::cerr << "Error" << std::endl;
+                exit(EXIT_FAILURE);
+            } else if (pid == 0) {
+                dup2(mainPipe[p][i][0], STDIN_FILENO);
+                dup2(enginePipe[p][i][1], STDOUT_FILENO);
+                dup2(eng_info_pipe[p][i][1], STDERR_FILENO);
+                const std::string e = "../Engines/" + engine_paths[i];
+                const std::string command = "./" + e;
+                std::cerr << command << std::endl;
+                execlp(command.c_str(), e.c_str(), NULL);
+                exit(EXIT_SUCCESS);
+            }
         }
     }
     if (pid > 0) {
-        for (int k = 0; k < numEngines; ++k) {
-            close(mainPipe[k][0]);
-            close(enginePipe[k][1]);
-            close(eng_info_pipe[k][1]);
-            fcntl(enginePipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
-            fcntl(eng_info_pipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
+        for (int p = 0; p < num_matches; ++p) {
+            for (int k = 0; k < numEngines; ++k) {
+                close(mainPipe[p][k][0]);
+                close(enginePipe[p][k][1]);
+                close(eng_info_pipe[p][k][1]);
+                fcntl(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
+                fcntl(eng_info_pipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
+            }
         }
         printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
         while (game_count < maxGames) {
 
-            if (inter.is_terminal_state()) {
-                //need to set up a new position
-                std::cerr << "Start of the game" << std::endl;
-                Position &pos = positions[start_index];
-                std::cerr << pos.position_str() << std::endl;
-                inter.pos = pos;
-                inter.first_mover = 0;
-                inter.history.clear();
-                start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
-                inter.reset_engines();
-                printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-                printf("\r");
-            }
-            inter.process();
-
-            MoveListe liste;
-            getMoves(inter.pos, liste);
-            if (liste.length() == 0) {
-                std::cerr << "End game" << std::endl;
-                if (inter.first_mover == 0) {
-                    wins_two++;
-                } else {
-                    wins_one++;
+            for (auto &inter : interfaces) {
+                if (inter.is_terminal_state()) {
+                    //need to set up a new position
+                    std::cerr << "Start of the game" << std::endl;
+                    Position &pos = positions[start_index];
+                    std::cerr << pos.position_str() << std::endl;
+                    inter.pos = pos;
+                    inter.first_mover = 0;
+                    inter.history.clear();
+                    game_count++;
+                    start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
+                    inter.reset_engines();
+                    printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
+                    printf("\r");
                 }
-            }
-            if (inter.is_n_fold(3)) {
-                std::cerr << "Repetition" << std::endl;
-                draws++;
-            }
-            if (inter.history.size() >= 400) {
-                std::cerr << "Reached max move" << std::endl;
+                inter.process();
+
+                MoveListe liste;
+                getMoves(inter.pos, liste);
+                if (liste.length() == 0) {
+                    std::cerr << "End game" << std::endl;
+                    if (inter.first_mover == 0) {
+                        wins_two++;
+                    } else {
+                        wins_one++;
+                    }
+                }
+                if (inter.is_n_fold(3)) {
+                    std::cerr << "Repetition" << std::endl;
+                    draws++;
+                }
+                if (inter.history.size() >= 400) {
+                    std::cerr << "Reached max move" << std::endl;
+                }
             }
 
         }
@@ -327,8 +339,10 @@ void Match::start() {
 
 
     int status;
-    for (int k = 0; k < numEngines; ++k) {
-        wait(&status);
+    for (int p = 0; p < num_matches; ++p) {
+        for (int k = 0; k < numEngines; ++k) {
+            wait(&status);
+        }
     }
     std::cerr.rdbuf(previous_buffer_cerr);
 }
