@@ -143,7 +143,7 @@ bool Interface::is_terminal_state() {
 
     MoveListe liste;
     getMoves(pos, liste);
-    return liste.length() == 0;
+    return liste.length() == 0 || history.size() >= 400;
 
 }
 
@@ -159,9 +159,9 @@ void Interface::process() {
     if (move.has_value()) {
         const int second_mover = (first_mover == 0) ? 1 : 0;
         if (!Interface::isLegalMove(move.value())) {
-            std::cerr << "Illegal move" << std::endl;
-            std::cerr << "From: " << move->getFromIndex() << std::endl;
-            std::cerr << "To: " << move->getToIndex() << std::endl;
+            std::cerr << "Illegal move" << "\n";
+            std::cerr << "From: " << move->getFromIndex() << "\n";
+            std::cerr << "To: " << move->getToIndex() << "\n";
             exit(EXIT_FAILURE);
         }
         pos.makeMove(move.value());
@@ -178,9 +178,9 @@ void Interface::process() {
         engines[second_mover].writeMessage("end_move");
 
         first_mover = second_mover;
-        std::cerr << pos.position_str() << std::endl;
-        std::cerr << getPositionString(pos) << std::endl;
-        std::cerr << std::endl;
+        std::cerr << pos.position_str() << "\n";
+        std::cerr << getPositionString(pos) << "\n";
+        std::cerr << "\n";
     }
 }
 
@@ -226,7 +226,6 @@ void Interface::reset_engines() {
     first_mover = 0;
     for (auto &engine : engines) {
         engine.state = Engine::State::Idle;
-        engine.waiting_response = false;
     }
 }
 

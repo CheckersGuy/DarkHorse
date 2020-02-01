@@ -13,7 +13,7 @@ extern char *output;
 bool timeOut = false;
 uint64_t endTime = 1000000000;
 
-MAKRO void setHashSize(uint32_t hash) {
+void setHashSize(uint32_t hash) {
     TT.resize(hash);
 }
 
@@ -25,12 +25,11 @@ Weights<int> gameWeights;
 #endif
 
 
-MAKRO void initialize() {
+void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave22.weights");
-    std::cerr << "loaded weights" << std::endl;
+    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -41,7 +40,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 }
 
 
-MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();

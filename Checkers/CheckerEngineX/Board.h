@@ -15,14 +15,15 @@
 class Board {
 
 private:
-    std::array<Position,MAX_PLY+400>pStack;
-    std::array<Move,MAX_PLY+400> moves;
-    int pCounter = 0;
+    std::array<Position, MAX_PLY + 400> pStack;
+    std::array<Move, MAX_PLY + 400> moves;
+
 public:
+    int pCounter = 0;
 
     Board() = default;
 
-    Board(const Board& board);
+    Board(const Board &board);
 
     void printBoard();
 
@@ -34,7 +35,7 @@ public:
 
     bool hasJumps();
 
-    Position& getPosition();
+    Position &getPosition();
 
     uint64_t getCurrentKey();
 
@@ -42,7 +43,7 @@ public:
 
     Color getMover();
 
-    Board& operator=(Position pos);
+    Board &operator=(Position pos);
 };
 
 
