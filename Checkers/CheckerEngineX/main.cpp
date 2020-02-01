@@ -41,11 +41,7 @@ inline Position posFromString(const std::string &pos) {
 }
 
 int main(int argl, const char **argc) {
-    std::string current;
-    Position start_pos = Position::getStartPosition();;
 
-
-    Board board;
 /*
     board = posFromString("00000040000100000040000000300000W");
     board.printBoard();
@@ -76,7 +72,8 @@ int main(int argl, const char **argc) {
            std::cout << "Value: " << value << "\n" << std::endl;
        }
    */
-
+    std::string current;
+    Board board;
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
@@ -84,11 +81,9 @@ int main(int argl, const char **argc) {
             std::cin >> hash_string;
             const int hash_size = std::stoi(hash_string);
             setHashSize(hash_size);
-            //std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
-            Board new_board;
-            board = new_board;
+            board.pCounter=0;
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);

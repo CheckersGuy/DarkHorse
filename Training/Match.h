@@ -104,7 +104,7 @@ private:
 public:
     Match(const std::string &first, const std::string &second) : first(first), second(second), draws(0), maxGames(1000),
                                                                  time(100), threads(1), openingBook(
-                    "/home/robin/DarkHorse/Training/Positions/3move.pos"), log_file("log.txt") {
+                    "/home/robin/DarkHorse/Training/Positions/genBook6.pos"), log_file("log.txt") {
         logger = std::ofstream(log_file, std::ios::app);
         if (!logger.good()) {
             std::cerr << "Error log_file" << std::endl;
