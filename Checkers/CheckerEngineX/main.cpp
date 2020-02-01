@@ -41,8 +41,6 @@ int main() {
     Board board;
     while (std::cin >> current) {
         if (current == "init") {
-            Board new_board;
-            board = new_board;
             initialize();
             std::string hash_string;
             std::cin >> hash_string;
@@ -51,6 +49,7 @@ int main() {
             std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
+            board.pCounter=0;
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);
