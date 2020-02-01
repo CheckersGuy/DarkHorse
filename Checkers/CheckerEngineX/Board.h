@@ -20,8 +20,6 @@ private:
     int pCounter = 0;
 public:
 
-
-
     Board() = default;
 
     Board(const Board& board);

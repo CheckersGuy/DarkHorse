@@ -29,7 +29,7 @@ MAKRO void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
+    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave22.weights");
     std::cerr << "loaded weights" << std::endl;
     Zobrist::initializeZobrisKeys();
 }
@@ -53,7 +53,7 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
     Value alpha = -INFINITE;
     Value beta = INFINITE;
     Value value;
-    Value eval=DRAW;
+    Value eval = DRAW;
 
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
@@ -102,7 +102,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     if (ply >= MAX_PLY) {
         return board.getMover() * gameWeights.evaluate(board.getPosition());
     }
-
+    pv.clear();
     MoveListe moves;
     getCaptures(board.getPosition(), moves);
     Value bestValue = -INFINITE;
@@ -111,6 +111,9 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 
         if (board.getPosition().isWipe()) {
             return loss(ply);
+        }
+        if (loss(ply + 2) >= beta) {
+            return loss(ply + 2);
         }
 
         if (board.getPosition().hasThreat()) {
@@ -130,23 +133,14 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 
     for (int i = 0; i < moves.length(); ++i) {
         Line localPV;
-        board.makeMove(moves.liste[i]);
-        Value value;
-        value = -quiescene<type>(board, -beta, -alpha, localPV, ply + 1);
+        board.makeMove(moves.liste[i]);;
+        Value value = -quiescene<type>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
         board.undoMove();
-
         if (value > bestValue) {
             bestValue = value;
-
-            if (value >= beta) {
+            pv.concat(moves[i], localPV);
+            if (value >= beta)
                 break;
-            }
-            if (value > alpha) {
-                pv.clear();
-                pv.concat(moves[i], localPV);
-                alpha = value;
-            }
-
         }
     }
 
@@ -208,14 +202,14 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 #endif
 
-    if (!inPVLine && prune && depth >= 5 && isEval(beta)) {
+    if (!inPVLine && prune && depth >= 3 && isEval(beta)) {
         Value margin = (10 * scalfac * depth);
         Value newBeta = addSafe(beta, margin);
         int newDepth = (depth * 40) / 100;
         Line local;
         Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
         if (value >= newBeta) {
-            value=addSafe(value,-margin);
+            value = addSafe(value, -margin);
             return value;
         }
     }
@@ -290,3 +284,4 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 #endif
     return bestValue;
 }
+

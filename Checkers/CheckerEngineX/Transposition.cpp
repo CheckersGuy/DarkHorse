@@ -52,7 +52,6 @@ void Transposition::storeHash(Value value, const Position &pos, Flag flag, uint8
         cluster[1].flag = flag;
         cluster[1].bestMove = move;
         cluster[1].value = value;
-
         cluster[1].key = static_cast<uint32_t >(pos.key >> 32u);
         return;
     }
@@ -68,7 +67,7 @@ bool Transposition::findHash(const Position&pos, NodeInfo &info) {
     auto currKey = static_cast<uint32_t >(pos.key>> 32u);
     for (int i = 0; i <= 1; ++i) {
         if (this->entries[index][i].key == currKey) {
-           /* if(this->entries[index][i].pos !=pos){
+          /*  if(this->entries[index][i].pos !=pos){
                 std::cerr<<"COLLISIONS"<<std::endl;
             }*/
             info.move = this->entries[index][i].bestMove;

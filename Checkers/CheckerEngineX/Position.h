@@ -111,6 +111,8 @@ struct Position {
 
     bool isEmpty() const;
 
+    std::string position_str() const;
+
     void makeMove(Move &move);
 
     void printPosition() const;
