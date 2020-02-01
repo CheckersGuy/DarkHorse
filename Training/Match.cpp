@@ -237,7 +237,7 @@ void Match::start() {
     std::cerr.rdbuf(logger.rdbuf());
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
-    const int num_matches = 8;
+    const int num_matches = 6;
     std::vector<Interface> interfaces;
     std::vector<Position> positions;
     Utilities::loadPositions(positions, openingBook);

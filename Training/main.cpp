@@ -168,9 +168,9 @@ int main(int argc, char *argv[]) {
 
 
 
-    Match engine_match("reading", "reading");
-    engine_match.setTime(100);
-    engine_match.setHashSize(21);
+    Match engine_match("reading", "reading2");
+    engine_match.setTime(300);
+    engine_match.setHashSize(23);
 
     engine_match.start();
 
