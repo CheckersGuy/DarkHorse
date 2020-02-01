@@ -41,6 +41,8 @@ int main() {
     Board board;
     while (std::cin >> current) {
         if (current == "init") {
+            Board new_board;
+            board = new_board;
             initialize();
             std::string hash_string;
             std::cin >> hash_string;
