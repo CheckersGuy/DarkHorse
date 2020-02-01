@@ -42,11 +42,12 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     std::string current;
-    Position start_pos = posFromString("04000000000000300000004000000003W");
+    Position start_pos = Position::getStartPosition();;
+
 
     Board board;
 /*
-    board = start_pos;
+    board = posFromString("00000040000100000040000000300000W");
     board.printBoard();
     std::cout<<std::endl;
 
@@ -57,22 +58,24 @@ int main(int argl, const char **argc) {
     searchValue(board,best, 128, 30000000, true);
     board.makeMove(best);
     board.printBoard();
+
 */
 
 
- /*   while (true) {
-        MoveListe liste;
-        getMoves(board.getPosition(), liste);
-        if (board.isRepetition() || liste.length() == 0)
-            break;
 
-        Move best;
-        auto value = searchValue(board, best, MAX_PLY, 300, false);
-        board.makeMove(best);
-        board.printBoard();
-        std::cout << "Value: " << value << "\n" << std::endl;
-    }
-*/
+    /*   while (true) {
+           MoveListe liste;
+           getMoves(board.getPosition(), liste);
+           if (board.isRepetition() || liste.length() == 0)
+               break;
+
+           Move best;
+           auto value = searchValue(board, best, MAX_PLY, 300, false);
+           board.makeMove(best);
+           board.printBoard();
+           std::cout << "Value: " << value << "\n" << std::endl;
+       }
+   */
 
     while (std::cin >> current) {
         if (current == "init") {
@@ -81,9 +84,11 @@ int main(int argl, const char **argc) {
             std::cin >> hash_string;
             const int hash_size = std::stoi(hash_string);
             setHashSize(hash_size);
-            std::cerr << "HashSize: " << hash_string << std::endl;
+            //std::cerr << "HashSize: " << hash_string << std::endl;
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
+            Board new_board;
+            board = new_board;
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);
@@ -99,7 +104,7 @@ int main(int argl, const char **argc) {
                 if (line == "end_move")
                     break;
                 squares.emplace_back(std::stoi(line));
-                std::cerr << "Line " << line << std::endl;
+                //std::cerr << "Line " << line << std::endl;
                 std::cin >> line;
             }
             move.from = 1u << squares[0];
@@ -114,7 +119,7 @@ int main(int argl, const char **argc) {
             std::cin >> time_string;
             Move bestMove;
             auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-            std::cerr << "Value: " << value << std::endl;
+            //std::cerr << "Value: " << value << std::endl;
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";

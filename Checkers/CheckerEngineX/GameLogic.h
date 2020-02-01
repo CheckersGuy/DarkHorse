@@ -34,7 +34,6 @@ MAKRO Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print);
 
-
 MAKRO void initialize();
 
 

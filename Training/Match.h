@@ -68,7 +68,6 @@ struct Engine {
 };
 
 
-
 struct Interface {
 
     std::array<Engine, 2> engines;
@@ -81,6 +80,10 @@ struct Interface {
     bool is_n_fold(int n);
 
     bool isLegalMove(Move move);
+
+    bool is_terminal_state();
+
+    void reset_engines();
 };
 
 
@@ -90,17 +93,26 @@ private:
     const std::string &first;
     const std::string &second;
     int time;
+    int hash_size;
     int maxGames;
-    int wins, losses, draws;
+    int wins_one{0}, wins_two{0}, draws{0};
     int threads;
     std::string openingBook;
+    const std::string log_file;
+    std::ofstream logger;
 
 public:
+    Match(const std::string &first, const std::string &second) : first(first), second(second), draws(0), maxGames(1000),
+                                                                 time(100), threads(1), openingBook(
+                    "/home/robin/DarkHorse/Training/Positions/3move.pos"), log_file("log.txt") {
+        logger = std::ofstream(log_file, std::ios::app);
+        if (!logger.good()) {
+            std::cerr << "Error log_file" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    };
 
-    Match() = default;
-
-    Match(const std::string &first, const std::string &second) : first(first), second(second), wins(0), losses(0), draws(0), maxGames(1000),
-                                           time(100), threads(1), openingBook("/home/robin/DarkHorse/Training/Positions/3move.pos") {};
+    ~Match();
 
     void setMaxGames(int games);
 
@@ -108,13 +120,7 @@ public:
 
     void start();
 
-    int getWins();
-
-    int getLosses();
-
-    int getDraws();
-
-    int getElo();
+    void setHashSize(int hash);
 
     void setTime(int time);
 

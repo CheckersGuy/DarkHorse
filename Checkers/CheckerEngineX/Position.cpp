@@ -2,6 +2,7 @@
 // Created by Robin on 14.01.2018.
 //
 
+#include <sstream>
 #include "Position.h"
 #include "Zobrist.h"
 
@@ -55,35 +56,40 @@ bool Position::isWipe() const {
     return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
 }
 
-void Position::printPosition() const {
-    std::string output;
+std::string Position::position_str() const {
+    std::ostringstream out;
     uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
         int row = i / 8;
         int col = i % 8;
         if ((row + col) % 2 == 0) {
-            std::cout << "[ ]";
+            out << "[ ]";
         } else {
             if ((row + col + 1) % 2 == 0) {
                 counter--;
             }
             uint32_t maske = 1u << (counter);
             if (((BP & K) & maske) == maske) {
-                std::cout << "[B]";
+                out << "[B]";
             } else if (((BP) & maske) == maske) {
-                std::cout << "[0]";
+                out << "[0]";
             } else if (((WP & K) & maske) == maske) {
-                std::cout << "[W]";
+                out << "[W]";
             } else if (((WP) & maske) == maske) {
-                std::cout << "[X]";
+                out << "[X]";
             } else {
-                std::cout << "[ ]";
+                out << "[ ]";
             }
         }
         if ((i + 1) % 8 == 0) {
-            std::cout << "\n";
+            out << "\n";
         }
     }
+    return out.str();
+}
+
+void Position::printPosition() const {
+   std::cout<<position_str()<<std::endl;
 }
 
 void Position::makeMove(Move &move) {

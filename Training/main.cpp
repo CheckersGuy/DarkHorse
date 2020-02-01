@@ -114,13 +114,13 @@ int main(int argc, char *argv[]) {
 
 
 
-
+/*
     initialize();
     std::cout << "Final Run" << std::endl;
 
     std::vector<TrainingPos> data;
 
-    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game", 300000);
+    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game");
 
 
     std::cout << "Length: " << data.size() << std::endl;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
 
     auto removeCl = [](TrainingPos pos) {
         if (__builtin_popcount(pos.pos.BP | pos.pos.WP) <= 4)
-            return false;
+            return true;
         Board board;
         board = pos.pos;
         Line local;
@@ -139,6 +139,9 @@ int main(int argc, char *argv[]) {
     data.erase(std::remove_if(data.begin(), data.end(), removeCl), data.end());
 
 
+
+
+*/
 
 
 
@@ -157,38 +160,33 @@ int main(int argc, char *argv[]) {
         return (pos.result ==0);
     });
     std::cout << std::endl;
+
 */
 
 
+
+
+
+
+    Match engine_match("reading", "test");
+    engine_match.setTime(300);
+    engine_match.setHashSize(25);
+
+    engine_match.start();
 
 
 
 
 /*
-    Match engine_match("reading", "reading2");
-
-    engine_match.start();
-*/
-
-
-
-
-
-
-
-
-
-
-
-
     Trainer trainer(data);
     trainer.setLearningRate(180000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-3e-5);
-    //trainer.startTune();
-    std::cout << "Loss: " << trainer.calculateLoss() << std::endl;
-    //0.170178
+    trainer.startTune();
+
+*/
+
 
 
 
