@@ -285,6 +285,7 @@ void Match::start() {
             fcntl(enginePipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
             fcntl(eng_info_pipe[k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
         }
+        printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
         while (game_count < maxGames) {
 
             if (inter.is_terminal_state()) {
@@ -292,17 +293,13 @@ void Match::start() {
                 std::cerr << "Start of the game" << std::endl;
                 Position &pos = positions[start_index];
                 std::cerr << pos.position_str() << std::endl;
-                std::cout << std::endl;
                 inter.pos = pos;
                 inter.first_mover = 0;
                 inter.history.clear();
                 start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
                 inter.reset_engines();
-                
-                printf("%-5s %-5s %-5s", "Wins_one", "Wins_two", "Draws");
-                printf("\r");
                 printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-
+                printf("\r");
             }
             inter.process();
 
