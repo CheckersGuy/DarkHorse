@@ -12,7 +12,8 @@
 #include  <sys/types.h>
 #include "fcntl.h"
 #include "Utilities.h"
-
+#include <sys/resource.h>
+#include "proto/Training.pb.h"
 
 inline std::string getPositionString(Position pos) {
     std::string position;
@@ -37,6 +38,54 @@ inline std::string getPositionString(Position pos) {
     }
     return position;
 }
+
+
+struct Logger {
+    std::ofstream stream;
+    const std::string log_file = "log.txt";
+    bool logging{false};
+
+    Logger() {
+        stream = std::ofstream(log_file, std::ios::app);
+        if (!stream.good()) {
+            std::cerr << "Couldnt initialize logger" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    ~Logger() {
+        stream.close();
+    }
+
+    void turn_on() {
+        logging = true;
+    }
+
+    void turn_off() {
+        logging = false;
+    }
+
+    template<typename T>
+    void write_log_message(T arg) {
+        if (!logging)
+            return;
+        stream << arg;
+    }
+
+
+    template<typename T>
+    Logger &operator<<(T msg) {
+        write_log_message(msg);
+        return *this;
+    }
+
+
+    static Logger &get_instance() {
+        static Logger logger;
+        return logger;
+    }
+
+};
 
 struct Engine {
     enum class State {
@@ -74,6 +123,7 @@ struct Interface {
     Position pos;
     int first_mover = 0;
     std::vector<Position> history;
+    bool played_reverse = false;
 
     void process();
 
@@ -84,6 +134,8 @@ struct Interface {
     bool is_terminal_state();
 
     void reset_engines();
+
+    void terminate_engines();
 };
 
 
@@ -97,22 +149,24 @@ private:
     int maxGames;
     int wins_one{0}, wins_two{0}, draws{0};
     int threads;
+    bool play_reverse{false};
     std::string openingBook;
-    const std::string log_file;
-    std::ofstream logger;
+    std::string output_file;
+    Training::TrainData data;
+
+
+    void addPosition(Position pos,Training::Result result);
 
 public:
     Match(const std::string &first, const std::string &second) : first(first), second(second), draws(0), maxGames(1000),
                                                                  time(100), threads(1), openingBook(
-                    "/home/robin/DarkHorse/Training/Positions/3move.pos"), log_file("log.txt") {
-        logger = std::ofstream(log_file, std::ios::app);
-        if (!logger.good()) {
-            std::cerr << "Error log_file" << std::endl;
-            exit(EXIT_FAILURE);
+                    "/home/robin/DarkHorse/Training/Positions/3move.pos") {
+        std::ifstream stream("output_file",std::ios::binary);
+        if(stream.good()){
+            data.ParseFromIstream(&stream);
         }
+        stream.close();
     };
-
-    ~Match();
 
     void setMaxGames(int games);
 
@@ -125,6 +179,10 @@ public:
     void setTime(int time);
 
     void setNumThreads(int threads);
+
+    void set_play_reverse(bool flag);
+
+     std::string get_output_file();
 
     int getNumThreads();
 

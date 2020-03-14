@@ -4,20 +4,11 @@
 #include "Move.h"
 
 bool Move::isCapture() const {
-    return captures != 0;
-}
-
-
-uint32_t Move::getFrom() const {
-    return from;
-}
-
-uint32_t Move::getTo() const {
-    return to;
+    return captures != 0u;
 }
 
 bool Move::isEmpty() const {
-    return (from == 0) && (to == 0) && (captures == 0);
+    return (from == 0u) && (to == 0u) && (captures == 0u);
 }
 
 uint32_t Move::getFromIndex() const {
@@ -38,9 +29,13 @@ bool Move::operator!=(const Move &other) const {
 
 bool Move::isPromotion(const uint32_t kings) {
     constexpr uint32_t promo_squares = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
-    return ((from & getFrom()) == 0u && (to & promo_squares) != 0u);
+    return (((from & kings) == 0u) && ((to & promo_squares) != 0u));
 }
 
+Move Move::empty_move() {
+    Move value;
+    return value;
+}
 
 
 

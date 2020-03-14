@@ -14,7 +14,6 @@
 #include <unistd.h>
 #include "fcntl.h"
 #include <regex>
-
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -42,38 +41,29 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
 
-/*
-    board = posFromString("00000040000100000040000000300000W");
+    Board board;
+
+    board = Position::getStartPosition();
     board.printBoard();
     std::cout<<std::endl;
 
     initialize();
+    std::cout<<"non-zero-weights: "<<gameWeights.numNonZeroValues()<<std::endl;
     setHashSize(25);
 
     Move best;
-    searchValue(board,best, 128, 30000000, true);
+    searchValue(board,best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
 
-*/
 
 
 
-    /*   while (true) {
-           MoveListe liste;
-           getMoves(board.getPosition(), liste);
-           if (board.isRepetition() || liste.length() == 0)
-               break;
 
-           Move best;
-           auto value = searchValue(board, best, MAX_PLY, 300, false);
-           board.makeMove(best);
-           board.printBoard();
-           std::cout << "Value: " << value << "\n" << std::endl;
-       }
-   */
+
     std::string current;
-    Board board;
+
+
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
@@ -125,8 +115,11 @@ int main(int argl, const char **argc) {
             }
             std::cout << "end_move" << "\n";
             board.makeMove(bestMove);
+        }else if(current == "terminate"){
+            //terminating the program
+            break;
         }
     }
 
-
+    return 0;
 }

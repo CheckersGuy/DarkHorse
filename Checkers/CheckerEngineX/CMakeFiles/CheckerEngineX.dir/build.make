@@ -34,10 +34,10 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /snap/clion/100/bin/cmake/linux/bin/cmake
+CMAKE_COMMAND = /snap/clion/103/bin/cmake/linux/bin/cmake
 
 # The command to remove a file.
-RM = /snap/clion/100/bin/cmake/linux/bin/cmake -E remove -f
+RM = /snap/clion/103/bin/cmake/linux/bin/cmake -E remove -f
 
 # Escaping for special characters.
 EQUALS = =
@@ -60,171 +60,171 @@ include CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/main.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/main.cpp.o: main.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/CheckerEngineX.dir/main.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/main.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/main.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp
 
 CMakeFiles/CheckerEngineX.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/main.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp > CMakeFiles/CheckerEngineX.dir/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp > CMakeFiles/CheckerEngineX.dir/main.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/main.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp -o CMakeFiles/CheckerEngineX.dir/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/main.cpp -o CMakeFiles/CheckerEngineX.dir/main.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Board.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Board.cpp.o: Board.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/CheckerEngineX.dir/Board.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Board.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Board.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp
 
 CMakeFiles/CheckerEngineX.dir/Board.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Board.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp > CMakeFiles/CheckerEngineX.dir/Board.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp > CMakeFiles/CheckerEngineX.dir/Board.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Board.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Board.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp -o CMakeFiles/CheckerEngineX.dir/Board.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp -o CMakeFiles/CheckerEngineX.dir/Board.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o: GameLogic.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
 
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp > CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp > CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp -o CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp -o CMakeFiles/CheckerEngineX.dir/GameLogic.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o: Transposition.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Transposition.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp
 
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Transposition.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp > CMakeFiles/CheckerEngineX.dir/Transposition.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp > CMakeFiles/CheckerEngineX.dir/Transposition.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Transposition.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Transposition.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp -o CMakeFiles/CheckerEngineX.dir/Transposition.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp -o CMakeFiles/CheckerEngineX.dir/Transposition.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o: MoveListe.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp > CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp > CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp -o CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp -o CMakeFiles/CheckerEngineX.dir/MoveListe.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Position.cpp.o: Position.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/CheckerEngineX.dir/Position.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Position.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Position.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp
 
 CMakeFiles/CheckerEngineX.dir/Position.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Position.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp > CMakeFiles/CheckerEngineX.dir/Position.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp > CMakeFiles/CheckerEngineX.dir/Position.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Position.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Position.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp -o CMakeFiles/CheckerEngineX.dir/Position.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp -o CMakeFiles/CheckerEngineX.dir/Position.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o: MovePicker.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp > CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp > CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp -o CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/MovePicker.cpp -o CMakeFiles/CheckerEngineX.dir/MovePicker.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o: CBInterface.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp
 
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp > CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp > CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp -o CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp -o CMakeFiles/CheckerEngineX.dir/CBInterface.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o: Zobrist.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp
 
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp > CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp > CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp -o CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp -o CMakeFiles/CheckerEngineX.dir/Zobrist.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Line.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Line.cpp.o: Line.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/CheckerEngineX.dir/Line.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Line.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Line.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp
 
 CMakeFiles/CheckerEngineX.dir/Line.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Line.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp > CMakeFiles/CheckerEngineX.dir/Line.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp > CMakeFiles/CheckerEngineX.dir/Line.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Line.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Line.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp -o CMakeFiles/CheckerEngineX.dir/Line.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Line.cpp -o CMakeFiles/CheckerEngineX.dir/Line.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.o: Thread.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/CheckerEngineX.dir/Thread.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Thread.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Thread.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp
 
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Thread.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp > CMakeFiles/CheckerEngineX.dir/Thread.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp > CMakeFiles/CheckerEngineX.dir/Thread.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Thread.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Thread.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp -o CMakeFiles/CheckerEngineX.dir/Thread.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Thread.cpp -o CMakeFiles/CheckerEngineX.dir/Thread.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Move.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Move.cpp.o: Move.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/CheckerEngineX.dir/Move.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Move.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Move.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp
 
 CMakeFiles/CheckerEngineX.dir/Move.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Move.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp > CMakeFiles/CheckerEngineX.dir/Move.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp > CMakeFiles/CheckerEngineX.dir/Move.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Move.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Move.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp -o CMakeFiles/CheckerEngineX.dir/Move.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp -o CMakeFiles/CheckerEngineX.dir/Move.cpp.s
 
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.o: CMakeFiles/CheckerEngineX.dir/flags.make
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.o: Bits.cpp
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/CheckerEngineX.dir/Bits.cpp.o"
-	/bin/g++-9  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Bits.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/CheckerEngineX.dir/Bits.cpp.o -c /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp
 
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/CheckerEngineX.dir/Bits.cpp.i"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp > CMakeFiles/CheckerEngineX.dir/Bits.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp > CMakeFiles/CheckerEngineX.dir/Bits.cpp.i
 
 CMakeFiles/CheckerEngineX.dir/Bits.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/CheckerEngineX.dir/Bits.cpp.s"
-	/bin/g++-9 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp -o CMakeFiles/CheckerEngineX.dir/Bits.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.cpp -o CMakeFiles/CheckerEngineX.dir/Bits.cpp.s
 
 # Object files for target CheckerEngineX
 CheckerEngineX_OBJECTS = \

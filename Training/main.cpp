@@ -103,64 +103,23 @@ int main(int argc, char *argv[]) {
         m.start();
 
     }
-    using namespace Training;
 
 
-
-
-
-
-
-
-
-
-/*
     initialize();
-    std::cout << "Final Run" << std::endl;
-
-    std::vector<TrainingPos> data;
-
-    loadGames(data, "/home/robin/Schreibtisch/TrainData/test3.game");
 
 
-    std::cout << "Length: " << data.size() << std::endl;
-
-
-    auto removeCl = [](TrainingPos pos) {
-        if (__builtin_popcount(pos.pos.BP | pos.pos.WP) <= 4)
-            return true;
+/*  Training::TrainData data;
+    std::ifstream stream("output_file");
+    data.ParseFromIstream(&stream);
+    stream.close();
+    std::for_each(data.mutable_positions()->begin(),data.mutable_positions()->end(),[](Training::Position&pos){
         Board board;
-        board = pos.pos;
-        Line local;
-        Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
-        return isWin(qStatic);
-    };
-
-    data.erase(std::remove_if(data.begin(), data.end(), removeCl), data.end());
-
-
-
-
-*/
-
-
-
-
-
-/*
-    std::cout << "Positions after erase: " << data.size() << std::endl;
-
-    std::cout << "Starting " << std::endl;
-    std::cout << "Decesive: " << std::count_if(data.begin(), data.end(), [](const TrainingPos &pos) {
-        return (pos.result >0 || pos.result<0);
+        board.getPosition().BP=pos.bp();
+        board.getPosition().WP=pos.wp();
+        board.getPosition().K=pos.k();
+        board.printBoard();
+        std::cout<<std::endl;
     });
-    std::cout << std::endl;
-
-    std::cout << "Draws: " << std::count_if(data.begin(), data.end(), [](const TrainingPos &pos) {
-        return (pos.result ==0);
-    });
-    std::cout << std::endl;
-
 */
 
 
@@ -168,22 +127,47 @@ int main(int argc, char *argv[]) {
 
 
 
-    Match engine_match("reading", "reading2");
-    engine_match.setTime(300);
-    engine_match.setHashSize(23);
 
+
+
+
+
+    Match engine_match("dev_engine", "dev_engine_old");
+    engine_match.setTime(100);
+    engine_match.setMaxGames(50000);
+    engine_match.setNumThreads(6);
+    engine_match.setHashSize(22);
+    engine_match.set_play_reverse(true);
     engine_match.start();
 
 
 
 
-/*
-    Trainer trainer(data);
-    trainer.setLearningRate(180000);
+
+
+
+
+
+
+
+
+
+
+
+
+
+ /*   Trainer trainer("output_file");
+    trainer.setLearningRate(18000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-3e-5);
+    trainer.setCValue(-5e-4);
     trainer.startTune();
+    //0.197482
+    auto loss = trainer.calculateLoss();
+    std::cout<<"Loss: "<<loss<<std::endl;
+
+
+
 
 */
 

@@ -12,7 +12,7 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp" "/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/perft_check.dir/Position.cpp.o"
   "/home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp" "/home/robin/DarkHorse/Checkers/CheckerEngineX/CMakeFiles/perft_check.dir/Zobrist.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH

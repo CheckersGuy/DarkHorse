@@ -18,10 +18,6 @@ struct Move {
 
     bool isEmpty() const;
 
-    uint32_t getFrom() const;
-
-    uint32_t getTo() const;
-
     bool operator==(const Move &other) const;
 
     bool operator!=(const Move &other) const;
@@ -31,6 +27,8 @@ struct Move {
     uint32_t getToIndex() const;
 
     bool isPromotion(const uint32_t kings);
+
+    static Move empty_move();
 
 };
 
