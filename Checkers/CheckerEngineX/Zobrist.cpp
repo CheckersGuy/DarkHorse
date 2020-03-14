@@ -63,10 +63,10 @@ namespace Zobrist {
         auto toIndex = move.getToIndex();
         auto fromIndex = move.getFromIndex();
         constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
-        if (((move.getFrom() & pos.K) == 0u) && (move.getTo() & promo_squares) != 0) {
+        if (((move.from & pos.K) == 0u) && (move.to & promo_squares) != 0) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
             pos.key ^= Zobrist::ZOBRIST_KEYS[fromIndex][pawn_index];
-        } else if (((move.getFrom() & pos.K) != 0)) {
+        } else if (((move.from & pos.K) != 0)) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
             pos.key ^= Zobrist::ZOBRIST_KEYS[fromIndex][king_index];
         } else {

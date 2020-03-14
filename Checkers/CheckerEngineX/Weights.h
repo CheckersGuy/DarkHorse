@@ -17,7 +17,6 @@
 constexpr uint32_t region = 13107u;
 constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
-constexpr std::array<uint32_t, 4> row_count{0, 0, 0, 0};
 
 inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
@@ -31,8 +30,8 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
         pieces &= pieces - 1u;
-        size_t current;
-        current = ((BP & lsb) != 0) * 3 + ((WP & lsb) != 0) * 4 + ((BK & lsb) != 0) * 1 + ((WK & lsb) != 0) * 2;
+        size_t current = ((BP & lsb) != 0u) * 3ull + ((WP & lsb) != 0u) * 4ull + ((BK & lsb) != 0u) * 1ull +
+                         ((WK & lsb) != 0u) * 2ull;
         index += powers[counter++] * current;
 
     }

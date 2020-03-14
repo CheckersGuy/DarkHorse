@@ -104,7 +104,7 @@ void Engine::newGame(const Position &pos) {
         if (answer == "game_ready") {
             state = State::Game_Ready;
             waiting_response = false;
-            std::cerr << "Game ready" << std::endl;
+            Logger::get_instance() << "Game ready" << "\n";
         }
     }
 }
@@ -115,7 +115,7 @@ void Engine::update() {
         auto answer = readPipe();
         if (answer == "update_ready") {
             state = State::Game_Ready;
-            std::cerr << "Updated" << std::endl;
+            Logger::get_instance() << "Updated" << "\n";
         }
     }
 }
@@ -131,7 +131,7 @@ void Engine::initEngine() {
         if (answer == "init_ready") {
             state = State::Init_Ready;
             waiting_response = false;
-            std::cerr << "Init ready" << std::endl;
+            Logger::get_instance() << "Init ready" << "\n";
         }
     }
 
@@ -157,12 +157,13 @@ void Interface::process() {
 
     auto move = engines[first_mover].search();
     if (move.has_value()) {
+        auto &logger = Logger::get_instance();
         const int second_mover = (first_mover == 0) ? 1 : 0;
         if (!Interface::isLegalMove(move.value())) {
-            std::cerr << "Illegal move" << "\n";
-            std::cerr << "From: " << move->getFromIndex() << "\n";
-            std::cerr << "To: " << move->getToIndex() << "\n";
-            exit(EXIT_FAILURE);
+            logger << "Error: Illegal move" << "\n";
+            logger << "From: " << move->getFromIndex() << "\n";
+            logger << "To: " << move->getToIndex() << "\n";
+            std::exit(EXIT_FAILURE);
         }
         pos.makeMove(move.value());
         history.emplace_back(pos);
@@ -178,16 +179,12 @@ void Interface::process() {
         engines[second_mover].writeMessage("end_move");
 
         first_mover = second_mover;
-        std::cerr << pos.position_str() << "\n";
-        std::cerr << getPositionString(pos) << "\n";
-        std::cerr << "\n";
+        logger << pos.position_str() << "\n";
+        logger << getPositionString(pos) << "\n";
+        logger << "\n";
     }
 }
 
-
-Match::~Match() {
-    logger.close();
-}
 
 int Match::getMaxGames() {
     return maxGames;
@@ -229,15 +226,44 @@ void Interface::reset_engines() {
     }
 }
 
-void Match::start() {
-    bool reverse = false;
-    system("echo ' \\e[1;31m Engine Match \\e[0m' ");
+std::string Match::get_output_file() {
+    return output_file;
+}
 
-    auto previous_buffer_cerr = std::cerr.rdbuf();
-    std::cerr.rdbuf(logger.rdbuf());
+
+
+
+void Match::addPosition(Position p, Training::Result result) {
+    auto pos = data.add_positions();
+    pos->set_k(p.K);
+    pos->set_bp(p.BP);
+    pos->set_wp(p.WP);
+    pos->set_mover((p.color == BLACK) ? Training::BLACK : Training::WHITE);
+    pos->set_result(result);
+}
+
+void Match::set_play_reverse(bool flag) {
+    play_reverse=flag;
+}
+
+void Interface::terminate_engines() {
+    for (auto &engine : engines) {
+        engine.writeMessage("terminate");
+    }
+}
+
+
+void Match::start() {
+    system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
-    const int num_matches = 6;
+    const int num_matches = this->threads;
+
+    if (num_matches == 1) {
+        Logger::get_instance().turn_on();
+    }
+
+
     std::vector<Interface> interfaces;
     std::vector<Position> positions;
     Utilities::loadPositions(positions, openingBook);
@@ -249,7 +275,7 @@ void Match::start() {
     int eng_info_pipe[num_matches][numEngines][2];
 
     int start_index = 0;
-    int game_count = 0;
+    int game_count = -num_matches;
 
     for (int p = 0; p < num_matches; ++p) {
         Engine engine{Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
@@ -272,18 +298,20 @@ void Match::start() {
                 std::cerr << "Error" << std::endl;
                 exit(EXIT_FAILURE);
             } else if (pid == 0) {
+                setpriority(PRIO_PROCESS, pid, -20);
                 dup2(mainPipe[p][i][0], STDIN_FILENO);
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
                 dup2(eng_info_pipe[p][i][1], STDERR_FILENO);
                 const std::string e = "../Engines/" + engine_paths[i];
                 const std::string command = "./" + e;
-                std::cerr << command << std::endl;
+                Logger::get_instance() << command << "\n";
                 execlp(command.c_str(), e.c_str(), NULL);
                 exit(EXIT_SUCCESS);
             }
         }
     }
     if (pid > 0) {
+        setpriority(PRIO_PROCESS, pid, 5);
         for (int p = 0; p < num_matches; ++p) {
             for (int k = 0; k < numEngines; ++k) {
                 close(mainPipe[p][k][0]);
@@ -294,55 +322,82 @@ void Match::start() {
             }
         }
         printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
-        while (game_count < maxGames) {
-
+        while (game_count<maxGames) {
             for (auto &inter : interfaces) {
+                auto &logger = Logger::get_instance();
                 if (inter.is_terminal_state()) {
                     //need to set up a new position
-                    std::cerr << "Start of the game" << std::endl;
-                    Position &pos = positions[start_index];
-                    std::cerr << pos.position_str() << std::endl;
-                    inter.pos = pos;
-                    inter.first_mover = 0;
-                    inter.history.clear();
-                    game_count++;
-                    start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
-                    inter.reset_engines();
+                    logger << "Start of the game" << "\n";
+                    if (!inter.played_reverse || !play_reverse) {
+                        start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
+                        Position &pos = positions[start_index];
+                        inter.pos = pos;
+                        inter.played_reverse = !inter.played_reverse;
+                        inter.first_mover = 0;
+                    } else {
+                        inter.first_mover = 1;
+                        inter.played_reverse = !inter.played_reverse;
+                        inter.pos = inter.history.front();
+                    }
+
+                    logger << inter.pos.position_str() << "\n";
+                    logger << "First_Mover: " << inter.first_mover << "\n";
+
                     printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
                     printf("\r");
+                    std::cout.flush();
+                    inter.history.clear();
+                    inter.reset_engines();
+                    game_count++;
                 }
+
                 inter.process();
 
                 MoveListe liste;
                 getMoves(inter.pos, liste);
                 if (liste.length() == 0) {
-                    std::cerr << "End game" << std::endl;
+                    logger << "End game" << "\n";
                     if (inter.first_mover == 0) {
                         wins_two++;
                     } else {
                         wins_one++;
                     }
+                    Training::Result result;
+                    result = (inter.pos.color == BLACK) ? Training::WHITE_WON : Training::BLACK_WON;
+                    for (Position &p : inter.history) {
+                        addPosition(p, result);
+                    }
                 }
                 if (inter.is_n_fold(3)) {
-                    std::cerr << "Repetition" << std::endl;
+                    logger << "Repetition" << "\n";
                     draws++;
+                    for (Position &p : inter.history) {
+                        addPosition(p, Training::DRAW);
+                    }
                 }
                 if (inter.history.size() >= 400) {
-                    std::cerr << "Reached max move" << std::endl;
+                    logger << "Reached max move" << "\n";
                 }
             }
-
+            if (game_count >= maxGames)
+                break;
+            std::this_thread::yield();
         }
 
 
     }
-
-
+    for (auto &inter : interfaces) {
+        inter.terminate_engines();
+    }
     int status;
     for (int p = 0; p < num_matches; ++p) {
         for (int k = 0; k < numEngines; ++k) {
             wait(&status);
         }
     }
-    std::cerr.rdbuf(previous_buffer_cerr);
+    Logger::get_instance().turn_off();
+    std::ofstream stream("output_file", std::ios::binary);
+    data.SerializeToOstream(&stream);
+    stream.close();
+    std::cout<<"Finished the match"<<std::endl;
 }

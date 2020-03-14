@@ -59,6 +59,24 @@ struct Position {
     }
 
     template<Color color>
+    uint32_t pawn_count() {
+        if constexpr (color == BLACK)
+            return __builtin_popcount(BP & (~K));
+        else
+            return __builtin_popcount(WP & (~K));;
+    }
+
+    template<Color color>
+    uint32_t king_count() {
+        if constexpr (color == BLACK)
+            return __builtin_popcount(BP & K);
+        else
+            return __builtin_popcount(WP & K);
+    }
+
+    uint32_t piece_count();
+
+    template<Color color>
     uint32_t getMovers() const {
         const uint32_t nocc = ~(BP | WP);
         const uint32_t current = getCurrent<color>();

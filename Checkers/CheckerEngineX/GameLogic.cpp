@@ -29,7 +29,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/failSave.weights");
+    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -96,7 +96,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
 template<NodeType type>
 Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
     constexpr bool inPVLine = (type == PVNode);
-    assert(alpha.isEval() && beta.isEval());
     nodeCounter++;
     if (ply >= MAX_PLY) {
         return board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -149,9 +148,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
-
     constexpr bool inPVLine = (type == PVNode);
-    assert(alpha.isEval() && beta.isEval());
     if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
         timeOut = true;
         return 0;
@@ -172,13 +169,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         return loss(ply);
     }
 
-/*
 
-    if (ply == 0) {
-        static std::mt19937 generator(getSystemTime());
-        std::shuffle(sucessors.liste.begin(), sucessors.liste.end(), generator);
-    }
-*/
 
     NodeInfo info;
 
@@ -218,8 +209,14 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         sucessors.putFront(mainPV[ply]);
     }
 
+ /*   if(ply==0){
+        static std::mt19937_64 generator(getSystemTime());
+        auto next = sucessors.liste.begin();
+        std::advance(next,sucessors.length());
+        std::shuffle(sucessors.liste.begin(),next,generator);
+    }
+*/
     sucessors.sort(info.move, inPVLine, board.getMover());
-
 
     Value bestValue = -INFINITE;
     Move bestMove;
@@ -284,3 +281,26 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     return bestValue;
 }
 
+namespace Search{
+
+
+    Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, Line &line) {
+        return 0;
+    }
+
+    Value move_loop(Local &local) {
+        return 0;
+    }
+
+    Value qs(Local &local, Depth depth, Ply ply) {
+        return 0;
+    }
+
+    Value searchMove(Local &local, Value alpha, Value beta, Depth depth, Ply ply) {
+        //the implementation will follow;
+
+        return 0;
+    }
+
+
+}

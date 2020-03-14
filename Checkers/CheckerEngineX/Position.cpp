@@ -40,6 +40,10 @@ Color Position::getColor() const {
     return color;
 }
 
+uint32_t Position::piece_count() {
+    return __builtin_popcount(WP | BP);
+}
+
 bool Position::hasJumps(Color col) const {
     if (col == BLACK) {
         return getJumpers<BLACK>() != 0u;
@@ -53,7 +57,7 @@ bool Position::hasThreat() const {
 }
 
 bool Position::isWipe() const {
-    return ((getColor() == BLACK && getMovers<BLACK>() == 0) || (getColor() == WHITE && getMovers<WHITE>() == 0));
+    return ((getColor() == BLACK && getMovers<BLACK>() == 0u) || (getColor() == WHITE && getMovers<WHITE>() == 0u));
 }
 
 std::string Position::position_str() const {
@@ -89,7 +93,7 @@ std::string Position::position_str() const {
 }
 
 void Position::printPosition() const {
-   std::cout<<position_str()<<std::endl;
+    std::cout << position_str() << std::endl;
 }
 
 void Position::makeMove(Move &move) {

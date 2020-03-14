@@ -40,7 +40,6 @@ namespace Perft {
     private:
         uint32_t capacity;
         std::unique_ptr<Cluster[]> entries;
-
     public:
         Table(uint32_t capacity) : capacity(capacity), entries(std::make_unique<Cluster[]>(capacity)) {
             std::memset(entries.get(), 0, sizeof(Entry) * 2 * capacity);

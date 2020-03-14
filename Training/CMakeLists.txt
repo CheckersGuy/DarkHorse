@@ -3,23 +3,18 @@ project(Training)
 
 set(CMAKE_CXX_STANDARD 17)
 add_compile_definitions(TRAIN)
-
-
-
 set(CMAKE_CXX_FLAGS "-O2 -DNDEBUG -march=znver2 -mtune=znver2 -pthread  -flto -ffat-lto-objects -fuse-linker-plugin")
 set(CMAKE_CXX_STANDARD_LIBRARIES -ldl )
 set(Boost_USE_STATIC_LIBS   ON)
-
+find_package(Protobuf REQUIRED)
 find_package( Boost REQUIRED COMPONENTS program_options system iostreams filesystem)
 include_directories( ${Boost_INCLUDE_DIRS} )
-
-
 
 
 include_directories(../Checkers/CheckerEngineX)
 
 
-add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp Match.cpp Match.h
+add_executable(Training main.cpp Trainer.cpp Trainer.h Match.cpp Match.h
         Utilities.cpp Utilities.h
         ../Checkers/CheckerEngineX/types.h
         ../Checkers/CheckerEngineX/Position.cpp ../Checkers/CheckerEngineX/Position.h
@@ -34,8 +29,9 @@ add_executable(Training main.cpp Trainer.cpp Trainer.h Training.h Training.cpp M
         ../Checkers/CheckerEngineX/CBInterface.h ../Checkers/CheckerEngineX/Line.h
         ../Checkers/CheckerEngineX/CBInterface.cpp ../Checkers/CheckerEngineX/Line.cpp
         ../Checkers/CheckerEngineX/SMPLock.h
-        ../Checkers/CheckerEngineX/Bits.cpp ../Checkers/CheckerEngineX/Bits.h)
+        ../Checkers/CheckerEngineX/Bits.cpp ../Checkers/CheckerEngineX/Bits.h
+        proto/Training.pb.h proto/Training.pb.cc)
 
 target_link_libraries( Training ${Boost_PROGRAM_OPTIONS_LIBRARY}
-        ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} )
+        ${Boost_SYSTEM_LIBRARY} ${Boost_IOSTREAMS_LIBRARY} ${Boost_FILESYSTEM_LIBRARY} ${PROTOBUF_LIBRARY})
 

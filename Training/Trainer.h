@@ -9,35 +9,40 @@
 #include <atomic>
 #include <SMPLock.h>
 #include "Weights.h"
-#include "Training.h"
 #include "queue"
 #include <numeric>
 #include <execution>
 #include "Utilities.h"
-
+#include "proto/Training.pb.h"
 
 #ifdef TRAIN
 extern Weights<double> gameWeights;
 #endif
 
 
-using namespace Training;
 class Trainer {
 
 private:
     int epochs;
-    uint64_t bufferCounter;
-    std::vector<TrainingPos> &data;
+    Training::TrainData data;
     double learningRate, l2Reg, cValue;
 
 public:
 
 
-    Trainer(std::vector<TrainingPos> &data) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01),bufferCounter(0){};
+    Trainer(const std::string& data_path) :data(data), cValue(1.0),
+                                                                      learningRate(0.1), l2Reg(0.01){
+        std::ifstream stream(data_path);
+        if(!stream.good()){
+            std::cerr<<"Couldnt init training data"<<std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+        data.ParseFromIstream(&stream);
+        stream.close();
+    };
     void epoch();
 
-    void gradientUpdate(TrainingPos position);
+    void gradientUpdate(Training::Position& position);
 
     void setEpochs(int epoch);
 
