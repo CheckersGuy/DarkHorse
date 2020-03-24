@@ -57,10 +57,6 @@ int main(int argl, const char **argc) {
     board.printBoard();
 
 
-
-
-
-
     std::string current;
 
 

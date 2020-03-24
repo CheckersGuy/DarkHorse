@@ -14,7 +14,6 @@ enum CBKONST {
     CBMAN = 4,
     CBKING = 8,
     CBFREE = 0,
-
 };
 
 struct CBmove {

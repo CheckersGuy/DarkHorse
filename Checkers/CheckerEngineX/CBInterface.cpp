@@ -12,14 +12,14 @@ bool initialized=false;
 
 int getmove(int board[8][8], int color, double maxtime, char str[1024], int *playnow, int info, int unused,
             struct CBmove *move) {
-   /* output = str;
+    output = str;
     Position *pos = &playBoard.getPosition();
     pos->BP=0;
     pos->WP=0;
     pos->K=0;
     if (isBitSet(info, 0)) {
         sprintf(str, "interupt");
-        //Natural course of the game has been interrupted;
+        //natural course of the game has been interrupted;
         playBoard.pCounter = 0;
     }
 
@@ -32,7 +32,6 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     sprintf(str, "Some testing");
     if (*playnow) {
         playBoard.pCounter=0;
-
     }
     pos->BP=0;
     pos->WP=0;
@@ -70,21 +69,21 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
     Move bestMove;
     Value value = searchValue(playBoard, bestMove, 128, static_cast<uint32_t>(maxtime * 1000), false);
 
-    int from = bestMove.getFrom();
+    auto from = bestMove.getFromIndex();
     from = convIndex[S[from]];
-    int to = bestMove.getTo();
+    auto to = bestMove.getToIndex();
     to = convIndex[S[to]];
     board[from % 8][from / 8] = CBFREE;
 
     if (color == CBBLACK) {
 
-        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFrom()) != 0)) {
+        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFromIndex()) != 0)) {
             board[to % 8][to / 8] = CBBLACK + CBKING;
         } else {
             board[to % 8][to / 8] = CBBLACK + CBMAN;
         }
     } else {
-        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFrom()) != 0)) {
+        if (bestMove.isPromotion(playBoard.getPosition().K) || ((pos->K & bestMove.getFromIndex()) != 0)) {
             board[to % 8][to / 8] = CBWHITE + CBKING;
         } else {
             board[to % 8][to / 8] = CBWHITE + CBMAN;
@@ -99,12 +98,12 @@ int getmove(int board[8][8], int color, double maxtime, char str[1024], int *pla
         }
     }
     testString += std::to_string(to % 8) + "|" + std::to_string(from / 8);
-    sprintf(str, ((std::to_string(bestMove.getFrom() + 1) + "|" + std::to_string(bestMove.getTo() + 1) + "TEST: " +
+    sprintf(str, ((std::to_string(bestMove.getFromIndex() + 1) + "|" + std::to_string(bestMove.getToIndex() + 1) + "TEST: " +
                    std::to_string(from % 8) + "|" + std::to_string(from / 8) + " To: " + std::to_string(to % 8) + "|" +
                    std::to_string(to / 8)).c_str()));
 
     playBoard.pCounter++;
-*/
+
     return 3;
 };
 
