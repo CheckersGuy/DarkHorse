@@ -124,14 +124,6 @@ int main(int argc, char *argv[]) {
 
 
 
-
-
-
-
-
-
-
-
     Match engine_match("dev_engine", "dev_engine_old");
     engine_match.setTime(100);
     engine_match.setMaxGames(50000);
@@ -139,17 +131,6 @@ int main(int argc, char *argv[]) {
     engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();
-
-
-
-
-
-
-
-
-
-
-
 
 
 

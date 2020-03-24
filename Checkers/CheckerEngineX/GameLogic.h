@@ -36,9 +36,9 @@ namespace Search {
 
     Value move_loop(Local &local);
 
-    Value qs(Local &local, Depth depth, Ply ply);
+    Value qs(Local &local,Ply ply);
 
-    Value searchMove(Local& local, Value alpha, Value beta, Depth depth, Ply ply);
+    Value searchMove(Move move, Local& local, Value alpha, Value beta, Depth depth, Ply ply);
 
 }
 

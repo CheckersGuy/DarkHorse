@@ -18,9 +18,8 @@ struct SplitPoint {
 
 struct ThreadBase {
 
-    virtual void search();
+    virtual void search() const = 0;
 };
-
 
 
 #endif //CHECKERENGINEX_THREAD_H

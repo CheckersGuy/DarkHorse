@@ -110,14 +110,15 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         if (board.getPosition().isWipe()) {
             return loss(ply);
         }
+        //loss-distance pruning
         if (loss(ply + 2) >= beta) {
             return loss(ply + 2);
         }
 
+        //thread-detection -> 1 ply search
         if (board.getPosition().hasThreat()) {
             return alphaBeta<type>(board, alpha, beta, pv, ply, 1, false);
         }
-
 
         bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
         if (bestValue >= beta) {
@@ -170,7 +171,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-
     NodeInfo info;
 
 
@@ -209,13 +209,13 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         sucessors.putFront(mainPV[ply]);
     }
 
- /*   if(ply==0){
-        static std::mt19937_64 generator(getSystemTime());
-        auto next = sucessors.liste.begin();
-        std::advance(next,sucessors.length());
-        std::shuffle(sucessors.liste.begin(),next,generator);
-    }
-*/
+    /*   if(ply==0){
+           static std::mt19937_64 generator(getSystemTime());
+           auto next = sucessors.liste.begin();
+           std::advance(next,sucessors.length());
+           std::shuffle(sucessors.liste.begin(),next,generator);
+       }
+   */
     sucessors.sort(info.move, inPVLine, board.getMover());
 
     Value bestValue = -INFINITE;
@@ -281,7 +281,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     return bestValue;
 }
 
-namespace Search{
+namespace Search {
 
 
     Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, Line &line) {
@@ -289,15 +289,17 @@ namespace Search{
     }
 
     Value move_loop(Local &local) {
+
         return 0;
     }
 
-    Value qs(Local &local, Depth depth, Ply ply) {
+    Value qs(Local &local, Ply ply) {
         return 0;
     }
 
-    Value searchMove(Local &local, Value alpha, Value beta, Depth depth, Ply ply) {
-        //the implementation will follow;
+    Value searchMove(Move move, Local &local, Value alpha, Value beta, Depth depth, Ply ply) {
+        //everything that is specific to a move goes into search_move
+        //that includes reductions and extensions (lmr and probuct and jump extension)
 
         return 0;
     }
