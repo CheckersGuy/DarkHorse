@@ -16,7 +16,7 @@ bool Interface::is_n_fold(int n) {
 }
 
 
-bool Interface::isLegalMove(Move move) {
+bool Interface::is_legal_move(Move move) {
     MoveListe liste;
     getMoves(pos, liste);
     Position check_pos = pos;
@@ -159,7 +159,7 @@ void Interface::process() {
     if (move.has_value()) {
         auto &logger = Logger::get_instance();
         const int second_mover = (first_mover == 0) ? 1 : 0;
-        if (!Interface::isLegalMove(move.value())) {
+        if (!Interface::is_legal_move(move.value())) {
             logger << "Error: Illegal move" << "\n";
             logger << "From: " << move->getFromIndex() << "\n";
             logger << "To: " << move->getToIndex() << "\n";
