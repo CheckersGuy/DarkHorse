@@ -16,57 +16,28 @@
 struct NodeInfo {
     Move move;
     Value score;
-    uint8_t depth ;
-    uint8_t  flag{Flag::None} ;
+    uint8_t depth;
+    uint8_t flag{Flag::None};
 };
 
 
 struct Entry {
     Move bestMove;
-    Value value ;
-    uint32_t key ;
+    Value value;
+    uint32_t key;
     Flag flag;
     uint8_t depth;
-    uint32_t getKey();
-
-    Value getValue();
-
-    uint8_t getFlag();
-
-    uint8_t getDepth();
-
 };
 
-
-
-
-inline uint32_t Entry::getKey() {
-    return this->key;
-}
-
-
-inline Value Entry::getValue() {
-    return this->value;
-}
-
-inline uint8_t Entry::getFlag() {
-    return flag;
-}
-
-
-inline uint8_t Entry::getDepth() {
-    return depth;
-}
-
-using Cluster=Entry[2];
+using Cluster=std::array<Entry, 2>;
 
 class Transposition {
 
 public:
-    uint32_t length = 0;
-    uint32_t capacity = 0;
-    uint32_t hashHit = 0;
-    std::unique_ptr<Cluster[]>entries;
+    uint32_t length{0u};
+    uint32_t capacity{0u};
+    uint32_t hashHit{0u};
+    std::unique_ptr<Cluster[]> entries;
 
 public:
     explicit Transposition(uint32_t length);
@@ -85,9 +56,9 @@ public:
 
     void resize(uint32_t capa);
 
-    void storeHash(Value value, const Position&pos, Flag flag, uint8_t depth, Move move);
+    void storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, Move move);
 
-    bool findHash(const Position&pos, NodeInfo &info);
+    bool findHash(const Position &pos, NodeInfo &info);
 };
 
 

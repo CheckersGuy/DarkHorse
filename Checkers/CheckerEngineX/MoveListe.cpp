@@ -3,8 +3,7 @@
 
 
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
-    auto distance = std::distance(liste.begin(), liste.end());
-    for (auto i = 0; i < distance; ++i) {
+    for (auto i = 0; i < liste.size(); ++i) {
         scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
     }
     auto start_index = (inPVLine) ? 1 : 0;

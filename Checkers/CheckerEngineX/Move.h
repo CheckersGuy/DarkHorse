@@ -9,10 +9,11 @@
 #include <cstdint>
 #include "types.h"
 #include "Bits.h"
+
 struct Move {
-    uint32_t from = 0u;
-    uint32_t to = 0u;
-    uint32_t captures = 0u;
+    uint32_t from{0u};
+    uint32_t to{0u};
+    uint32_t captures{0u};
 
     bool isCapture() const;
 

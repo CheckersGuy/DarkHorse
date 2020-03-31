@@ -37,8 +37,8 @@ inline uint32_t getMirrored(uint32_t b) {
 
 struct Position {
     Color color{BLACK};
-    uint32_t WP{0}, BP{0}, K{0};
-    uint64_t key{0};
+    uint32_t WP{0u}, BP{0u}, K{0u};
+    uint64_t key{0ull};
 
 
     template<Color color>

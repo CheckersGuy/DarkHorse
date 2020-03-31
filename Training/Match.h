@@ -40,7 +40,10 @@ inline std::string getPositionString(Position pos) {
 }
 
 
-struct Logger {
+class Logger {
+
+private:
+
     std::ofstream stream;
     const std::string log_file = "log.txt";
     bool logging{false};
@@ -56,6 +59,8 @@ struct Logger {
     ~Logger() {
         stream.close();
     }
+
+public:
 
     void turn_on() {
         logging = true;
@@ -129,7 +134,7 @@ struct Interface {
 
     bool is_n_fold(int n);
 
-    bool isLegalMove(Move move);
+    bool is_legal_move(Move move);
 
     bool is_terminal_state();
 
@@ -144,25 +149,23 @@ class Match {
 private:
     const std::string &first;
     const std::string &second;
-    int time;
-    int hash_size;
-    int maxGames;
+    int time{100};
+    int hash_size{21};
+    int maxGames{1000};
     int wins_one{0}, wins_two{0}, draws{0};
-    int threads;
+    int threads{1};
     bool play_reverse{false};
-    std::string openingBook;
+    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/3move.pos"};
     std::string output_file;
     Training::TrainData data;
 
 
-    void addPosition(Position pos,Training::Result result);
+    void addPosition(Position pos, Training::Result result);
 
 public:
-    Match(const std::string &first, const std::string &second) : first(first), second(second), draws(0), maxGames(1000),
-                                                                 time(100), threads(1), openingBook(
-                    "/home/robin/DarkHorse/Training/Positions/3move.pos") {
-        std::ifstream stream("output_file",std::ios::binary);
-        if(stream.good()){
+    Match(const std::string &first, const std::string &second) : first(first), second(second) {
+        std::ifstream stream("output_file", std::ios::binary);
+        if (stream.good()) {
             data.ParseFromIstream(&stream);
         }
         stream.close();
@@ -182,7 +185,7 @@ public:
 
     void set_play_reverse(bool flag);
 
-     std::string get_output_file();
+    std::string get_output_file();
 
     int getNumThreads();
 

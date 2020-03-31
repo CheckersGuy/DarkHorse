@@ -124,7 +124,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    Match engine_match("dev_engine", "dev_engine_old");
+    Match engine_match("test_engine", "dev_engine");
     engine_match.setTime(100);
     engine_match.setMaxGames(50000);
     engine_match.setNumThreads(6);

@@ -95,7 +95,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
 
 template<NodeType type>
 Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
-    constexpr bool inPVLine = (type == PVNode);
+    constexpr bool in_pv = type == PVNode;
     nodeCounter++;
     if (ply >= MAX_PLY) {
         return board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -126,14 +126,19 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         }
     }
 
-    if (inPVLine && ply < mainPV.length()) {
+    if (in_pv && ply < mainPV.length()) {
         moves.putFront(mainPV[ply]);
     }
 
     for (int i = 0; i < moves.length(); ++i) {
         Line localPV;
         board.makeMove(moves.liste[i]);;
-        Value value = -quiescene<type>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
+        Value value;
+        if (i == 0) {
+            value = -quiescene<type>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
+        } else {
+            value = -quiescene<NONPV>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
+        }
         board.undoMove();
         if (value > bestValue) {
             bestValue = value;
@@ -149,7 +154,8 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
 template<NodeType type>
 Value
 alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, bool prune) {
-    constexpr bool inPVLine = (type == PVNode);
+    pv.clear();
+    const bool inPVLine = type == PVNode;
     if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
         timeOut = true;
         return 0;
@@ -261,7 +267,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
                 break;
             }
             if (value > alpha) {
-                pv.clear();
                 pv.concat(bestMove, localPV);
                 alpha = value;
             }
@@ -283,21 +288,109 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 namespace Search {
 
+    template<NodeType type>
+    Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
+        local.best_score = -INFINITE;
+        local.alpha = alpha;
+        local.beta = beta;
+        local.ply = ply;
+        local.depth = depth;
+        local.best_score = -INFINITE;
+        local.in_pv_line = type == PVNode;
+        local.i = 0;
+        local.prune = prune;
+        local.pv_line.clear();
 
-    Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, Line &line) {
+
+        if ((local.node_counter & 16383u) == 0u && getSystemTime() >= endTime) {
+            timeOut = true;
+            return 0;
+        }
+
+        if (local.ply > 0 && local.board.isRepetition()) {
+            return 0;
+        }
+
+        if (local.depth == 0) {
+            return quiescene<type>(local.board, local.alpha, local.beta, local.pv_line, local.ply);
+        }
+
+        getMoves(local.board.getPosition(), local.move_list);
+
+        if (local.move_list.isEmpty()) {
+            return loss(ply);
+        }
+
+        NodeInfo info;
+        //doing the rest
+
+        Value alphaOrig = alpha;
+
+
+
+        // tb-probing
+        if (local.ply > 0 && TT.findHash(local.board.getPosition(), info)) {
+            auto tt_score = valueFromTT(info.score, local.ply);
+            if (info.depth >= local.depth) {
+                if ((info.flag == TT_LOWER && info.score >= local.beta)
+                    || (info.flag == TT_UPPER && info.score <= local.alpha)
+                    || info.flag == TT_EXACT) {
+                    return tt_score;
+                }
+            }
+
+            if ((info.flag == TT_LOWER && isWin(info.score) && info.score >= local.beta)
+                || (info.flag == TT_UPPER && isLoss(info.score) && info.score <= local.alpha)) {
+                return tt_score;
+            }
+        }
+        //probcut
+        if (!local.in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
+            Value margin = (10 * scalfac * local.depth);
+            Value newBeta = addSafe(local.beta, margin);
+            int newDepth = (local.depth * 40) / 100;
+            Line new_pv;
+            Value value = Search::search<type>(local, local.alpha, local.beta - 1, local.ply, newDepth, false);
+            if (value >= newBeta) {
+                value = addSafe(value, -margin);
+                return value;
+            }
+        }
+        //sorting
+        local.move_list.sort(info.move, local.in_pv_line, local.board.getMover());
+
+        //move-loop
+
+        Search::move_loop(local);
+
+        Value tt_value = toTT(local.best_score, ply);
+        if (local.best_score <= alphaOrig) {
+            TT.storeHash(tt_value, local.board.getPosition(), TT_UPPER, depth, local.move);
+        } else if (local.best_score >= beta) {
+            TT.storeHash(tt_value, local.board.getPosition(), TT_LOWER, depth, local.move);
+        } else {
+            TT.storeHash(tt_value, local.board.getPosition(), TT_EXACT, depth, local.move);
+        }
+
+
+        return local.best_score;
+    }
+
+    void move_loop(Local &local) {
+
+        //move-loop goes here
+
+
         return 0;
     }
 
-    Value move_loop(Local &local) {
-
-        return 0;
-    }
-
+    template<NodeType type>
     Value qs(Local &local, Ply ply) {
         return 0;
     }
 
-    Value searchMove(Move move, Local &local, Value alpha, Value beta, Depth depth, Ply ply) {
+    template<NodeType type>
+    void searchMove(Move move, Local &local) {
         //everything that is specific to a move goes into search_move
         //that includes reductions and extensions (lmr and probuct and jump extension)
 

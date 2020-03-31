@@ -17,13 +17,15 @@
 #include <iterator>
 
 struct Local {
+    uintuint64_t node_counter{0u};
     Value alpha, beta;
     Value best_score;
     Line pv_line;
     Depth depth;
     Ply ply;
     int i;
-    Move skip_move = Move::empty_move();
+    Move skip_move;
+    Move move;
     MoveListe move_list;
     bool in_pv_line{false};
     bool prune{false};
@@ -32,13 +34,20 @@ struct Local {
 
 namespace Search {
 
+    template<NodeType type>
     Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, Line &line);
 
-    Value move_loop(Local &local);
+    void move_loop(Local &local);
 
-    Value qs(Local &local,Ply ply);
+    template<NodeType type>
+    Value qs(Local &local, Ply ply);
 
-    Value searchMove(Move move, Local& local, Value alpha, Value beta, Depth depth, Ply ply);
+    template<NodeType type>
+    void searchMove(Move move, Local &local);
+
+    Depth reduce(Local &local, Move move);
+
+    Depth extend(Local &local, Move move);
 
 }
 
