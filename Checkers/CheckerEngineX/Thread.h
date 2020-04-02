@@ -62,5 +62,9 @@ void ThreadBase::idleLoop() {
 
 }
 
+void ThreadBase::start_thread() {
+    native_thread = std::thread(&ThreadBase::idleLoop,this);
+}
+
 
 #endif //CHECKERENGINEX_THREAD_H
