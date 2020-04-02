@@ -301,29 +301,28 @@ namespace Search {
         local.prune = prune;
         local.pv_line.clear();
 
-
+        //checking time-used
         if ((local.node_counter & 16383u) == 0u && getSystemTime() >= endTime) {
             timeOut = true;
             return 0;
         }
-
+        //Repetition check
         if (local.ply > 0 && local.board.isRepetition()) {
             return 0;
         }
 
+        //qs
         if (local.depth == 0) {
             return quiescene<type>(local.board, local.alpha, local.beta, local.pv_line, local.ply);
         }
 
         getMoves(local.board.getPosition(), local.move_list);
-
+        //checking win condition
         if (local.move_list.isEmpty()) {
             return loss(ply);
         }
 
         NodeInfo info;
-        //doing the rest
-
         Value alphaOrig = alpha;
 
 
@@ -350,7 +349,7 @@ namespace Search {
             Value newBeta = addSafe(local.beta, margin);
             int newDepth = (local.depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search<type>(local, local.alpha, local.beta - 1, local.ply, newDepth, false);
+            Value value = Search::search<type>(local, newBeta, newBeta - 1, local.ply, newDepth, false);
             if (value >= newBeta) {
                 value = addSafe(value, -margin);
                 return value;
@@ -360,9 +359,9 @@ namespace Search {
         local.move_list.sort(info.move, local.in_pv_line, local.board.getMover());
 
         //move-loop
+        Search::move_loop<type>(local);
 
-        Search::move_loop(local);
-
+        //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
         if (local.best_score <= alphaOrig) {
             TT.storeHash(tt_value, local.board.getPosition(), TT_UPPER, depth, local.move);
@@ -376,12 +375,16 @@ namespace Search {
         return local.best_score;
     }
 
+    template<NodeType type>
     void move_loop(Local &local) {
 
         //move-loop goes here
+        //skip-move and so on
+        while (local.alpha < local.beta && local.i < local.move_list.length()) {
+            Move move = local.move_list[local.i++];
+            Search::searchMove<type>(move, local);
+        }
 
-
-        return 0;
     }
 
     template<NodeType type>
@@ -393,8 +396,17 @@ namespace Search {
     void searchMove(Move move, Local &local) {
         //everything that is specific to a move goes into search_move
         //that includes reductions and extensions (lmr and probuct and jump extension)
+        Depth extension = Search::extend(local, move);
+        Depth reduction = Search::reduce(local, move);
+        Depth new_depth = local.depth + extension - reduction;
+        local.depth = new_depth;
 
-        return 0;
+        const bool is_promotion = local.move_list[local.i].isPromotion(local.board.getPosition().K);
+        const Value new_alpha = (local.i == 0) ? -local.beta : (-local.alpha - 1);
+        const Value new_beta = -local.alpha;
+        //Adding all the other stuff
+
+
     }
 
 
