@@ -325,8 +325,6 @@ namespace Search {
         NodeInfo info;
         Value alphaOrig = alpha;
 
-
-
         // tb-probing
         if (local.ply > 0 && TT.findHash(local.board.getPosition(), info)) {
             auto tt_score = valueFromTT(info.score, local.ply);
@@ -347,7 +345,7 @@ namespace Search {
         if (!local.in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
             Value margin = (10 * scalfac * local.depth);
             Value newBeta = addSafe(local.beta, margin);
-            int newDepth = (local.depth * 40) / 100;
+            Depth newDepth = (local.depth * 40) / 100;
             Line new_pv;
             Value value = Search::search<type>(local, newBeta, newBeta - 1, local.ply, newDepth, false);
             if (value >= newBeta) {
@@ -398,14 +396,37 @@ namespace Search {
         //that includes reductions and extensions (lmr and probuct and jump extension)
         Depth extension = Search::extend(local, move);
         Depth reduction = Search::reduce(local, move);
-        Depth new_depth = local.depth + extension - reduction;
-        local.depth = new_depth;
+        Depth new_depth = local.depth + extension - reduction - 1;
 
         const bool is_promotion = local.move_list[local.i].isPromotion(local.board.getPosition().K);
-        const Value new_alpha = (local.i == 0) ? -local.beta : (-local.alpha - 1);
-        const Value new_beta = -local.alpha;
-        //Adding all the other stuff
+        const bool is_first_move = local.i == 0;
+        Value val = -INFINITE;
 
+
+        //something wrong need to add pv to search
+        if (is_first_move) {
+            //doing a fully window search
+            val = -Search::search<type>(local, -local.beta, -local.alpha, local.ply + 1, new_depth, local.prune);
+        } else {
+            //zero-window and research
+            val = -Search::search<type>(local, -local.alpha - 1, -local.alpha, local.ply + 1, new_depth, local.prune);
+        }
+
+        
+        if (val > local.best_score) {
+            local.best_score = val;
+            local.move =  move;
+            if (val >= local.beta) {
+                Statistics::mPicker.updateHHScore(move,local.board.getMover(), local.depth);
+                Statistics::mPicker.updateBFScore(local.move_list.liste.begin(), local.i, local.board.getMover(), local.depth);
+                return;
+            }
+            //needs to be fixed see comment above
+            if (val > alpha) {
+                pv.concat(bestMove, localPV);
+                alpha = value;
+            }
+        }
 
     }
 
