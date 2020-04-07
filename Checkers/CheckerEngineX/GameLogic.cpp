@@ -288,8 +288,27 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 namespace Search {
 
+    Depth reduce(Local &local, Move move) {
+        Depth red = 0;
+        const bool is_promotion = move.isPromotion(local.board.getPosition().K);
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i > ((local.in_pv_line) ? 3 : 1)) {
+            red = 1;
+            if (local.i >= 4 && local.depth > 2) {
+                red = 2;
+            }
+        }
+        return red;
+    }
+
+    Depth extend(Local &local, Move move) {
+        if (local.move_list.length() == 1 && local.move_list[0].isCapture()) {
+            return 1;
+        }
+        return 0;
+    }
+
     template<NodeType type>
-    Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
+    Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
@@ -299,7 +318,7 @@ namespace Search {
         local.in_pv_line = type == PVNode;
         local.i = 0;
         local.prune = prune;
-        local.pv_line.clear();
+        line.clear();
 
         //checking time-used
         if ((local.node_counter & 16383u) == 0u && getSystemTime() >= endTime) {
@@ -347,7 +366,7 @@ namespace Search {
             Value newBeta = addSafe(local.beta, margin);
             Depth newDepth = (local.depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search<type>(local, newBeta, newBeta - 1, local.ply, newDepth, false);
+            Value value = Search::search<type>(local, new_pv, newBeta, newBeta - 1, local.ply, newDepth, false);
             if (value >= newBeta) {
                 value = addSafe(value, -margin);
                 return value;
@@ -374,8 +393,7 @@ namespace Search {
     }
 
     template<NodeType type>
-    void move_loop(Local &local) {
-
+    void move_loop(Local &local, Line &line) {
         //move-loop goes here
         //skip-move and so on
         while (local.alpha < local.beta && local.i < local.move_list.length()) {
@@ -386,45 +404,52 @@ namespace Search {
     }
 
     template<NodeType type>
-    Value qs(Local &local, Ply ply) {
+    Value qs(Local &local, Line &line, Ply ply) {
         return 0;
     }
 
     template<NodeType type>
-    void searchMove(Move move, Local &local) {
+    void searchMove(Move move, Local &local, Line &line) {
         //everything that is specific to a move goes into search_move
         //that includes reductions and extensions (lmr and probuct and jump extension)
         Depth extension = Search::extend(local, move);
         Depth reduction = Search::reduce(local, move);
         Depth new_depth = local.depth + extension - reduction - 1;
 
-        const bool is_promotion = local.move_list[local.i].isPromotion(local.board.getPosition().K);
         const bool is_first_move = local.i == 0;
-        Value val = -INFINITE;
-
 
         //something wrong need to add pv to search
+        Line new_pv;
+        Value val;
         if (is_first_move) {
             //doing a fully window search
-            val = -Search::search<type>(local, -local.beta, -local.alpha, local.ply + 1, new_depth, local.prune);
+            val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
+                                        local.prune);
         } else {
             //zero-window and research
-            val = -Search::search<type>(local, -local.alpha - 1, -local.alpha, local.ply + 1, new_depth, local.prune);
+            val = -Search::search<NONPV>(local, new_pv, -local.alpha - 1, -local.alpha, local.ply + 1, new_depth,
+                                         local.prune);
+            //doing the research if we didnt fail low
+            if (val > local.alpha && val < local.beta) {
+                val = -Search::search<NONPV>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
+                                             local.prune);
+            }
+
         }
 
-        
         if (val > local.best_score) {
             local.best_score = val;
-            local.move =  move;
+            local.move = move;
             if (val >= local.beta) {
-                Statistics::mPicker.updateHHScore(move,local.board.getMover(), local.depth);
-                Statistics::mPicker.updateBFScore(local.move_list.liste.begin(), local.i, local.board.getMover(), local.depth);
+                Statistics::mPicker.updateHHScore(move, local.board.getMover(), local.depth);
+                Statistics::mPicker.updateBFScore(local.move_list.liste.begin(), local.i, local.board.getMover(),
+                                                  local.depth);
                 return;
             }
             //needs to be fixed see comment above
-            if (val > alpha) {
-                pv.concat(bestMove, localPV);
-                alpha = value;
+            if (val > local.alpha) {
+                line.concat(local.move, new_pv);
+                local.alpha = local.best_score;
             }
         }
 

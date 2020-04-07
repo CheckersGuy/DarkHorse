@@ -32,10 +32,4 @@ bool Move::isPromotion(const uint32_t kings) {
     return (((from & kings) == 0u) && ((to & promo_squares) != 0u));
 }
 
-Move Move::empty_move() {
-    Move value;
-    return value;
-}
-
-
 
