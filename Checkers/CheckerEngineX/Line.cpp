@@ -6,14 +6,7 @@
 #include "Line.h"
 
 
-Line::Line(const Line &other) noexcept {
-    this->counter = other.counter;
-    for (int i = 0; i < other.counter; ++i) {
-        this->myArray[i] = other.myArray[i];
-    }
-}
-
-int Line::length() const {
+uint32_t Line::length() const {
     return counter;
 }
 
@@ -68,14 +61,6 @@ bool Line::operator==(const Line &other) const {
 
 bool Line::operator!=(const Line &other) const {
     return *this != other;
-}
-
-Line &Line::operator=(const Line &other) {
-    for (int i = 0; i < other.length(); ++i) {
-        this->myArray[i] = other.myArray[i];
-    }
-    this->counter = other.counter;
-    return *this;
 }
 
 const Move &Line::operator[](int index) const {

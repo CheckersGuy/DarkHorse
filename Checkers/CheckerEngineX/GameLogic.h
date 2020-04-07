@@ -17,7 +17,7 @@
 #include <iterator>
 
 struct Local {
-    uint64_t node_counter{0u};
+    uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
     Line pv_line;
@@ -35,16 +35,16 @@ struct Local {
 namespace Search {
 
     template<NodeType type>
-    Value search(Local &local, Value alpha, Value beta, Ply ply, Depth depth, Line &line);
+    Value search(Local &local,Line& line Value alpha, Value beta, Ply ply, Depth depth, bool prune);
 
     template<NodeType type>
-    void move_loop(Local &local);
+    void move_loop(Local &local, Line& line);
 
     template<NodeType type>
-    Value qs(Local &local, Ply ply);
+    Value qs(Local &local, Line& line, Ply ply);
 
     template<NodeType type>
-    void searchMove(Move move, Local &local);
+    void searchMove(Move move, Local &local, Line& line);
 
     Depth reduce(Local &local, Move move);
 

@@ -44,7 +44,8 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-  /*  board = Position::getStartPosition();
+/*
+    board = Position::getStartPosition();
     board.printBoard();
     std::cout<<std::endl;
 
@@ -55,9 +56,10 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board,best, MAX_PLY, 30000000, true);
     board.makeMove(best);
-    board.printBoard();
+    board.printBoard();*/
 
-*/
+
+
 
     std::string current;
 

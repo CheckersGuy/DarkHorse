@@ -29,8 +29,6 @@ struct Move {
 
     bool isPromotion(const uint32_t kings);
 
-    static Move empty_move();
-
 };
 
 

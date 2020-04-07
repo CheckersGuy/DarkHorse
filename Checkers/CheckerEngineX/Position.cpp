@@ -18,10 +18,7 @@ Position Position::getColorFlip() const {
 }
 
 Position Position::getStartPosition() {
-    Position pos;
-    pos.BP = 0u;
-    pos.WP = 0u;
-    pos.K = 0u;
+    Position pos{};
     for (int i = 0; i <= 11; i++) {
         pos.BP |= 1u << S[i];
     }
