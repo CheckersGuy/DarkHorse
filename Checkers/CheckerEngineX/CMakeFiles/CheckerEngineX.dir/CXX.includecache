@@ -28,6 +28,22 @@ Position.h
 Zobrist.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.cpp
+CBInterface.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.h
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/CBInterface.h
+GameLogic.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
+stdio.h
+-
+cstring
+-
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
+GameLogic.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
+
 /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
 Board.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
@@ -69,6 +85,12 @@ types.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/types.h
 Bits.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Bits.h
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.cpp
+MoveListe.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.h
+Weights.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Weights.h
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.h
 cstdio
@@ -130,6 +152,12 @@ types.h
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/SMPLock.h
 atomic
+-
+
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.cpp
+Transposition.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.h
+string.h
 -
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Transposition.h

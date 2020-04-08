@@ -100,14 +100,6 @@ thread
 cstring
 -
 
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp
-sstream
--
-Position.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h
-Zobrist.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
-
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h
 cstdint
 -

@@ -20,6 +20,7 @@ struct Local {
     uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
+    Value sing_score;
     Line pv_line;
     Depth depth;
     Ply ply;
@@ -27,15 +28,16 @@ struct Local {
     Move skip_move;
     Move move;
     MoveListe move_list;
-    bool in_pv_line{false};
     bool prune{false};
     Board board;
 };
 
 namespace Search {
 
+    void search_root(Local& local, Value alpha, Value beta, Depth depth);
+
     template<NodeType type>
-    Value search(Local &local,Line& line Value alpha, Value beta, Ply ply, Depth depth, bool prune);
+    Value search(Local &local,Line& line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
 
     template<NodeType type>
     void move_loop(Local &local, Line& line);
@@ -46,7 +48,7 @@ namespace Search {
     template<NodeType type>
     void searchMove(Move move, Local &local, Line& line);
 
-    Depth reduce(Local &local, Move move);
+    Depth reduce(Local &local, Move move, bool in_pv_line);
 
     Depth extend(Local &local, Move move);
 
