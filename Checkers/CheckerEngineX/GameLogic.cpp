@@ -288,10 +288,10 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
 
 namespace Search {
 
-    Depth reduce(Local &local, Move move) {
+    Depth reduce(Local &local, Move move, bool in_pv_line) {
         Depth red = 0;
         const bool is_promotion = move.isPromotion(local.board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i > ((local.in_pv_line) ? 3 : 1)) {
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i > ((in_pv_line) ? 3 : 1)) {
             red = 1;
             if (local.i >= 4 && local.depth > 2) {
                 red = 2;
@@ -307,15 +307,15 @@ namespace Search {
         return 0;
     }
 
+
     template<NodeType type>
     Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
+        constexpr bool in_pv_line = (type ==PVNode);
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
         local.depth = depth;
-        local.best_score = -INFINITE;
-        local.in_pv_line = type == PVNode;
         local.i = 0;
         local.prune = prune;
         line.clear();
@@ -361,7 +361,7 @@ namespace Search {
             }
         }
         //probcut
-        if (!local.in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
+        if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
             Value margin = (10 * scalfac * local.depth);
             Value newBeta = addSafe(local.beta, margin);
             Depth newDepth = (local.depth * 40) / 100;
@@ -373,10 +373,10 @@ namespace Search {
             }
         }
         //sorting
-        local.move_list.sort(info.move, local.in_pv_line, local.board.getMover());
+        local.move_list.sort(info.move, in_pv_line, local.board.getMover());
 
         //move-loop
-        Search::move_loop<type>(local);
+        Search::move_loop<type>(local,line);
 
         //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
@@ -392,16 +392,6 @@ namespace Search {
         return local.best_score;
     }
 
-    template<NodeType type>
-    void move_loop(Local &local, Line &line) {
-        //move-loop goes here
-        //skip-move and so on
-        while (local.alpha < local.beta && local.i < local.move_list.length()) {
-            Move move = local.move_list[local.i++];
-            Search::searchMove<type>(move, local);
-        }
-
-    }
 
     template<NodeType type>
     Value qs(Local &local, Line &line, Ply ply) {
@@ -410,15 +400,18 @@ namespace Search {
 
     template<NodeType type>
     void searchMove(Move move, Local &local, Line &line) {
+        constexpr bool in_pv_line = (type ==PVNode);
         //everything that is specific to a move goes into search_move
         //that includes reductions and extensions (lmr and probuct and jump extension)
         Depth extension = Search::extend(local, move);
-        Depth reduction = Search::reduce(local, move);
+        Depth reduction = Search::reduce(local, move,in_pv_line);
         Depth new_depth = local.depth + extension - reduction - 1;
 
         const bool is_first_move = local.i == 0;
 
-        //something wrong need to add pv to search
+        //making the move
+        local.board.makeMove(move);
+
         Line new_pv;
         Value val;
         if (is_first_move) {
@@ -437,6 +430,9 @@ namespace Search {
 
         }
 
+        //undoing the move
+        local.board.undoMove();
+
         if (val > local.best_score) {
             local.best_score = val;
             local.move = move;
@@ -452,6 +448,41 @@ namespace Search {
                 local.alpha = local.best_score;
             }
         }
+
+    }
+
+    template<NodeType type>
+    void move_loop(Local &local, Line &line) {
+        //move-loop goes here
+        //skip-move and so on
+        while (local.alpha < local.beta && local.i < local.move_list.length()) {
+            Move move = local.move_list[local.i++];
+            searchMove<type>(move, local, line);
+        }
+
+    }
+
+
+    void search_root(Local &local, Value alpha, Value beta, Depth depth) {
+        //root search can throw out a couple of things
+        //no prob-cut or probing of the hash_table
+        //no quiescent search
+
+
+        local.best_score = -INFINITE;
+        local.alpha = alpha;
+        local.beta = beta;
+        local.ply = 0;
+        local.depth = depth;
+        local.i = 0;
+        local.prune = true;
+        local.pv_line.clear();
+
+        //little bit more work on this
+
+        //generating the moves
+
+        move_loop<PVNode>(local, local.pv_line);
 
     }
 
