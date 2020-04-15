@@ -11,11 +11,11 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 }
 
 void MoveListe::help_sort(int start_index) {
-    for (int i = start_index + 1; i < moveCounter; i++) {
+    for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
         int j;
-        for (j = i; j > (start_index) && scores[j - 1] < tmp; j--) {
+        for (j = i; j > (start_index) && scores[j - 1] < tmp; --j) {
             liste[j] = liste[j - 1];
             scores[j] = scores[j - 1];
         }

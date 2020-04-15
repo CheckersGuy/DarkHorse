@@ -9,7 +9,7 @@ Position &Board::getPosition() {
 }
 
 Board::Board(const Board &board) {
-    for (int i = 0; i < moves.size(); ++i) {
+    for (int i = 0; i < pCounter; ++i) {
         this->moves[i] = board.moves[i];
         this->pStack[i] = board.pStack[i];
     }
