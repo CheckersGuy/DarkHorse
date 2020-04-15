@@ -26,8 +26,8 @@ struct Local {
     Ply ply;
     int i;
     Move skip_move;
+    Move sing_move;
     Move move;
-    MoveListe move_list;
     bool prune{false};
     Board board;
 };
@@ -36,11 +36,15 @@ namespace Search {
 
     void search_root(Local& local, Value alpha, Value beta, Depth depth);
 
+    //aspiration search
+
+
+
     template<NodeType type>
     Value search(Local &local,Line& line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
 
     template<NodeType type>
-    void move_loop(Local &local, Line& line);
+    void move_loop(Local &local,const MoveListe& liste, Line& line);
 
     template<NodeType type>
     Value qs(Local &local, Line& line, Ply ply);
@@ -49,8 +53,6 @@ namespace Search {
     void searchMove(Move move, Local &local, Line& line);
 
     Depth reduce(Local &local, Move move, bool in_pv_line);
-
-    Depth extend(Local &local, Move move);
 
 }
 

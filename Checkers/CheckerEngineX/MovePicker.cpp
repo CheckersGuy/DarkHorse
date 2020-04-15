@@ -3,17 +3,14 @@
 //
 
 #include "MovePicker.h"
-
 namespace Statistics {
 
 
     MovePicker mPicker;
 
     void MovePicker::clearScores() {
-        for (int i = 0; i < 32 * 32 * 2; ++i) {
-            this->bfScore[i] = 0;
-            this->history[i] = 0;
-        }
+        std::fill(bfScore.begin(),bfScore.end(),0);
+        std::fill(history.begin(),history.end(),0);
     }
 
     int MovePicker::getMoveScore(Move move, Color color) {
@@ -26,7 +23,7 @@ namespace Statistics {
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         if (move == ttMove) {
-            return 20000000;
+            return std::numeric_limits<int16_t>::max();
         }
         return getMoveScore(move, color);
     }
@@ -36,11 +33,16 @@ namespace Statistics {
         history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
     }
 
-    void MovePicker::updateBFScore(Move *liste, int moveIndex, Color color, int depth) {
+    void MovePicker::updateBFScore(Move* liste, int moveIndex, Color color, int depth) {
         const int colorIndex = (color + 1) / 2;
         for (auto i = 0; i < moveIndex; ++i) {
             bfScore[32 * 32 * colorIndex + 32 * liste[i].getToIndex() + liste[i].getFromIndex()] += depth;
         }
+    }
+
+    void MovePicker::update_scores(Move *list, int move_index, Color color, int depth) {
+        Statistics::mPicker.updateHHScore(list[move_index], color, depth);
+        Statistics::mPicker.updateBFScore(list, move_index, color, depth);
     }
 
 }

@@ -13,12 +13,13 @@ class MoveListe {
 
 private:
     uint32_t moveCounter = 0;
-    std::array<int,40> scores;
+    std::array<int16_t ,40> scores;
 
     void help_sort(int start_index);
 
 public:
     std::array<Move, 40> liste;
+
     uint32_t length() const;
 
     void addMove(Move next);
@@ -34,6 +35,14 @@ public:
     Move &operator[](int index);
 
     void putFront(const Move& other);
+
+    auto begin(){
+        return liste.begin();
+    }
+
+    auto end(){
+        return liste.end();
+    }
 
     MoveListe& operator=(const MoveListe& other);
 
@@ -52,7 +61,6 @@ inline Move &MoveListe::operator[](int index) {
 }
 
 inline void MoveListe::addMove(Move next) {
-    assert(!next.isEmpty());
     liste[this->moveCounter++] = next;
 }
 
