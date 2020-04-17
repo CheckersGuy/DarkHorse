@@ -34,7 +34,7 @@ constexpr uint32_t LEFT_HALF = 3435973836u;
 constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2u;
 
 
-constexpr uint32_t S[32] = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u,
+constexpr std::array<uint32_t,32> S= {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u,
                             23u, 22u, 21u, 20u, 27u, 26u,
                             25u, 24u, 31u, 30u, 29u, 28u};
 
@@ -130,8 +130,7 @@ inline Value addSafe(Value val, Value incre) {
 }
 
 template<Color color>
-inline
-uint32_t defaultShift(const uint32_t maske) {
+constexpr uint32_t defaultShift(const uint32_t maske) {
     if constexpr(color == BLACK) {
         return maske << 4u;
     } else {
@@ -140,7 +139,7 @@ uint32_t defaultShift(const uint32_t maske) {
 }
 
 template<Color color>
-inline
+constexpr
 uint32_t forwardMask(const uint32_t maske) {
     if constexpr (color == BLACK) {
         return ((maske & MASK_L3) << 3u) | ((maske & MASK_L5) << 5u);
