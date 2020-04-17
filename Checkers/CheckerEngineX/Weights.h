@@ -40,11 +40,11 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
 
 template<typename T>
 struct Weights {
+    static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>);
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
 
-    Weights() : kingOp(0), kingEnd(0) {
-        this->weights = std::make_unique<T[]>(SIZE);
+    Weights() : kingOp(0), kingEnd(0),weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
     }
 
