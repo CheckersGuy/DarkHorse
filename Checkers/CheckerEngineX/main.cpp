@@ -40,8 +40,9 @@ inline Position posFromString(const std::string &pos) {
 }
 
 int main(int argl, const char **argc) {
-
     Board board;
+
+/*
 
 
 
@@ -60,6 +61,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
+*/
 
 
 

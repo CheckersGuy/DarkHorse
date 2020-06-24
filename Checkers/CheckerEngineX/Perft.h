@@ -51,6 +51,8 @@ namespace Perft {
 
         void setCapacity(uint32_t capacity);
 
+        void setCapacity(std::string capa_string);
+
         std::optional<uint64_t> probe(Position pos, int depth);
 
         void store(Position pos, int depth, uint64_t nodes);
