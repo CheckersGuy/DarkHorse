@@ -13,10 +13,33 @@
 #include "GameLogic.h"
 #include <cstring>
 #include <iterator>
+#include <filesystem>
 
 constexpr uint32_t region = 13107u;
 constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
+
+namespace fs = std::filesystem;
+
+std::optional<fs::path> has_directory(const fs::path &path, std::string directory_name) {
+    if (fs::exists(path) && fs::is_directory(path)) {
+        for (const auto &entry : fs::directory_iterator(path)) {
+            if (fs::is_directory(entry.path()) && entry.path().filename() == directory_name)
+                return std::make_optional(entry.path());
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<fs::path> has_file(const fs::path &path, std::string file_name) {
+    if (fs::exists(path) && fs::is_directory(path)) {
+        for (const auto &entry: fs::directory_iterator(path)) {
+            if (fs::is_regular_file(entry.path()) && entry.path().filename() == file_name)
+                return std::make_optional(entry.path());
+        }
+    }
+    return std::nullopt;
+}
 
 inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
@@ -44,7 +67,7 @@ struct Weights {
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
 
-    Weights() : kingOp(0), kingEnd(0),weights(std::make_unique<T[]>(SIZE)) {
+    Weights() : kingOp(0), kingEnd(0), weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
     }
 
@@ -79,7 +102,9 @@ struct Weights {
         static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
-            std::cerr << "Couldnt load weights" << std::endl;
+            //should print something to a logfile if
+            //weights couldnt be loaded
+            //or only print if we are in debug mode
             return;
         }
         using DataType = double;

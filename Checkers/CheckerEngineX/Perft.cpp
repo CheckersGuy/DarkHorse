@@ -8,10 +8,19 @@
 
 namespace Perft {
 
+
     Table table;
 
     uint64_t Table::getCapacity() {
         return capacity;
+    }
+
+    void Table::setCapacity(std::string capa_string) {
+        //specifying the ram to use
+        //example "12mb" will use the largest power of
+        //two less than 12mb and so on up to tb/TB for terabytes
+        //of memory :P
+        //Probably best to check
     }
 
     void Table::setCapacity(uint32_t capacity) {
@@ -60,6 +69,7 @@ namespace Perft {
         for (int i=0;i<liste.length();++i) {
             Position copy=pos;
             copy.makeMove(liste[i]);
+            Zobrist::doUpdateZobristKey(copy, liste[i]);
             counter+=perftCheck(copy,depth-1);
         }
 

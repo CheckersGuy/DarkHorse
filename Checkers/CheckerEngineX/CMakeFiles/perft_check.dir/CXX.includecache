@@ -14,10 +14,6 @@ array
 immintrin.h
 -
 
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Board.cpp
-Board.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
-
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
 Move.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
@@ -43,10 +39,6 @@ Board.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h
 MoveListe.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/MoveListe.h
-
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Move.cpp
-Move.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
 cstdint
@@ -80,10 +72,6 @@ types.h
 Move.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
 
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp
-Perft.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
-
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
 Position.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h
@@ -108,14 +96,6 @@ thread
 cstring
 -
 
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.cpp
-sstream
--
-Position.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h
-Zobrist.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
-
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h
 cstdint
 -
@@ -129,10 +109,6 @@ types.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/SMPLock.h
 atomic
 -
-
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.cpp
-Zobrist.h
-/home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 cstdint
