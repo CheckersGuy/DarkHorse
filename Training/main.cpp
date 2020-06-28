@@ -6,7 +6,7 @@
 #include "boost/filesystem.hpp"
 #include "boost/foreach.hpp"
 
-namespace opt =boost::program_options;
+namespace opt = boost::program_options;
 
 int main(int argc, char *argv[]) {
     opt::options_description all("All options");
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
 
         const std::string path_one("/home/robin/DarkHorse/Training/Engines/" + engines[0]);
         const std::string path_two("/home/robin/DarkHorse/Training/Engines/" + engines[1]);
-        Match m(path_one, path_two);
+        Match m(path_one, path_two, "output_file");
 
 
         if (vm.count("book")) {
@@ -107,8 +107,9 @@ int main(int argc, char *argv[]) {
 
     initialize();
 
+/*
 
-/*  Training::TrainData data;
+  Training::TrainData data;
     std::ifstream stream("output_file");
     data.ParseFromIstream(&stream);
     stream.close();
@@ -120,24 +121,26 @@ int main(int argc, char *argv[]) {
         board.printBoard();
         std::cout<<std::endl;
     });
+
 */
 
 
 
-    Match engine_match("test_engine2", "test_engine");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(50000);
-    engine_match.setNumThreads(6);
-    engine_match.setHashSize(22);
+    Match engine_match("new_light2", "new_light", "test_file");
+    engine_match.setTime(300);
+    engine_match.setMaxGames(10000);
+    engine_match.setNumThreads(12);
+    engine_match.setHashSize(20);
     engine_match.set_play_reverse(true);
+
     engine_match.start();
 
 
 
+/*
 
-
-
- /*   Trainer trainer("output_file");
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("output_file");
     trainer.setLearningRate(18000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
@@ -145,22 +148,8 @@ int main(int argc, char *argv[]) {
     trainer.startTune();
     //0.197482
     auto loss = trainer.calculateLoss();
-    std::cout<<"Loss: "<<loss<<std::endl;
-
-
-
-
+    std::cout << "Loss: " << loss << std::endl;
 */
-
-
-
-
-
-
-
-
-
-
 
 
     return 0;

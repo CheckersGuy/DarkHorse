@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include "fcntl.h"
 #include <regex>
+
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -42,11 +43,6 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
-/*
-
-
-
-
 
     board = Position::getStartPosition();
     board.printBoard();
@@ -57,13 +53,11 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board,best, 1, 30000000, true);
+    searchValue(board,best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
 
-*/
-
-
+    
 
 
 
@@ -79,7 +73,7 @@ int main(int argl, const char **argc) {
             setHashSize(hash_size);
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
-            board.pCounter=0;
+            board.pCounter = 0;
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);
@@ -109,8 +103,7 @@ int main(int argl, const char **argc) {
             std::string time_string;
             std::cin >> time_string;
             Move bestMove;
-            auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-            //std::cerr << "Value: " << value << std::endl;
+            auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), true);
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";
@@ -121,7 +114,7 @@ int main(int argl, const char **argc) {
             }
             std::cout << "end_move" << "\n";
             board.makeMove(bestMove);
-        }else if(current == "terminate"){
+        } else if (current == "terminate") {
             //terminating the program
             break;
         }

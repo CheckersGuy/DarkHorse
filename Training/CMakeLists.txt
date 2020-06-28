@@ -3,7 +3,7 @@ project(Training)
 
 set(CMAKE_CXX_STANDARD 17)
 add_compile_definitions(TRAIN)
-set(CMAKE_CXX_FLAGS "-O2 -DNDEBUG -march=znver2 -mtune=znver2 -pthread  -flto -ffat-lto-objects -fuse-linker-plugin")
+set(CMAKE_CXX_FLAGS "-O3 -DNDEBUG -march=znver2 -mtune=znver2 -pthread  -flto -ffat-lto-objects -fuse-linker-plugin")
 set(CMAKE_CXX_STANDARD_LIBRARIES -ldl )
 set(Boost_USE_STATIC_LIBS   ON)
 find_package(Protobuf REQUIRED)

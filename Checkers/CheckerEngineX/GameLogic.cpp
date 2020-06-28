@@ -7,7 +7,7 @@
 
 uint64_t nodeCounter = 0;
 Line mainPV;
-
+Value last_evaluation = INFINITE;
 
 extern char *output;
 bool timeOut = false;
@@ -29,7 +29,8 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
+    //gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
+    gameWeights.loadWeights<uint32_t>("test2.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -41,6 +42,14 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+
+    MoveListe easy_moves;
+    getMoves(board.getPosition(), easy_moves);
+    if (easy_moves.length() == 1) {
+        best = easy_moves[0];
+        return (last_evaluation != INFINITE) ? last_evaluation : 0;
+    }
+
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -56,23 +65,18 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     Local local;
     local.board = board;
     while (i <= depth && i <= MAX_PLY) {
-        //testing new_search
-
         Line currentPV;
-        //value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
-        Search::search_root(local, alpha, beta, i);
-        value = local.best_score;
+        value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
         if (timeOut)
             break;
 
 
-/*
         if (value <= alpha || value >= beta) {
             alpha = -INFINITE;
             beta = INFINITE;
             continue;
         }
-*/
+
 
         eval = value;
 
@@ -93,7 +97,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
             std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
         }
 
-        mainPV = local.pv_line;
+        mainPV = currentPV;
         best = mainPV[0];
         ++i;
     }
@@ -227,13 +231,15 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         sucessors.putFront(mainPV[ply]);
     }
 
-    /*   if(ply==0){
-           static std::mt19937_64 generator(getSystemTime());
-           auto next = sucessors.liste.begin();
-           std::advance(next,sucessors.length());
-           std::shuffle(sucessors.liste.begin(),next,generator);
-       }
-   */
+
+   /* if (ply == 0) {
+        static std::mt19937_64 generator(getSystemTime());
+        auto next = sucessors.liste.begin();
+        std::advance(next, sucessors.length());
+        std::shuffle(sucessors.liste.begin(), next, generator);
+    }*/
+
+
     sucessors.sort(info.move, inPVLine, board.getMover());
 
     Value bestValue = -INFINITE;
@@ -397,7 +403,7 @@ namespace Search {
 
         //jump extension
         if (liste.length() == 1 && liste[0].isCapture()) {
-           //needs to be fixed
+            //needs to be fixed
         }
 
         //sorting
