@@ -1,10 +1,6 @@
 #include <iostream>
-#include <iomanip>
 #include "boost/program_options.hpp"
 #include "Match.h"
-#include "Trainer.h"
-#include "boost/filesystem.hpp"
-#include "boost/foreach.hpp"
 
 namespace opt = boost::program_options;
 
