@@ -21,7 +21,13 @@ constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
 namespace fs = std::filesystem;
 
-std::optional<fs::path> has_directory(const fs::path &path, std::string directory_name) {
+
+//We do some things differently if the program
+//is running as root.
+inline bool is_root_user();
+
+
+inline std::optional<fs::path> has_directory(const fs::path &path, std::string directory_name) {
     if (fs::exists(path) && fs::is_directory(path)) {
         for (const auto &entry : fs::directory_iterator(path)) {
             if (fs::is_directory(entry.path()) && entry.path().filename() == directory_name)
@@ -31,7 +37,7 @@ std::optional<fs::path> has_directory(const fs::path &path, std::string director
     return std::nullopt;
 }
 
-std::optional<fs::path> has_file(const fs::path &path, std::string file_name) {
+inline std::optional<fs::path> has_file(const fs::path &path, std::string file_name) {
     if (fs::exists(path) && fs::is_directory(path)) {
         for (const auto &entry: fs::directory_iterator(path)) {
             if (fs::is_regular_file(entry.path()) && entry.path().filename() == file_name)
@@ -67,7 +73,7 @@ struct Weights {
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
 
-    Weights() : kingOp(0), kingEnd(0), weights(std::make_unique<T[]>(SIZE)) {
+    Weights() : kingOp(50), kingEnd(50), weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
     }
 
@@ -100,11 +106,32 @@ struct Weights {
     template<typename RunType=uint32_t>
     void loadWeights(const std::string &path) {
         static_assert(std::is_unsigned<RunType>::value);
-        std::ifstream stream(path, std::ios::binary);
+        fs::path home_path(getenv("HOME"));
+        home_path /= "Dokumente";
+
+        auto w_direc = has_directory(home_path, "CWeights");
+        if (!w_direc.has_value()) {
+            //std::cerr << "Could not locate weights folder" << std::endl;
+            return;
+        }
+        auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
+        if (!weight_path.has_value()) {
+           // std::cerr << "Could not load the weights";
+            return;
+        }
+        std::string path_string = weight_path.value().string();
+
+        std::ifstream stream(path_string, std::ios::binary);
         if (!stream.good()) {
+            //std::cerr<<"could not load the file"<<std::endl;
             //should print something to a logfile if
             //weights couldnt be loaded
             //or only print if we are in debug mode
+            //check if we user is root then:
+            // 1. load an absolute path to a file
+            // 2. if not the root
+            //  -> check for the weights folder
+            // -> and find the weight file in there
             return;
         }
         using DataType = double;

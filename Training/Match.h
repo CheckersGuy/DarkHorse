@@ -155,7 +155,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/3move.pos"};
+    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/genBook6.pos"};
     std::string output_file;
     Training::TrainData data;
 
@@ -163,8 +163,10 @@ private:
     void addPosition(Position pos, Training::Result result);
 
 public:
-    Match(const std::string &first, const std::string &second) : first(first), second(second) {
-        std::ifstream stream("output_file", std::ios::binary);
+    explicit Match(const std::string &first, const std::string &second, std::string output) : first(
+            first),
+                                                                                                              second(second) {
+        std::ifstream stream(output.c_str(), std::ios::binary);
         if (stream.good()) {
             data.ParseFromIstream(&stream);
         }

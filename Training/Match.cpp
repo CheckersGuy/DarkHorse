@@ -4,6 +4,8 @@
 
 #include "Match.h"
 
+
+
 bool Interface::is_n_fold(int n) {
     if (history.empty())
         return false;
@@ -311,7 +313,6 @@ void Match::start() {
         }
     }
     if (pid > 0) {
-        setpriority(PRIO_PROCESS, pid, 5);
         for (int p = 0; p < num_matches; ++p) {
             for (int k = 0; k < numEngines; ++k) {
                 close(mainPipe[p][k][0]);
