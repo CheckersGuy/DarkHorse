@@ -6,6 +6,7 @@
 #include "Trainer.h"
 
 
+
 int Trainer::getEpochs() {
     return epochs;
 }
@@ -67,7 +68,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     board.getPosition().K = pos.k();
     board.getPosition().color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
 
-    if (board.getPosition().piece_count() <= 4u || pos.result()==Training::UNKNOWN)
+    if (board.getPosition().piece_count() <= 4u || pos.result() == Training::UNKNOWN)
         return;
 
     Line local;
@@ -79,7 +80,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     double c = getCValue();
 
     double qValue = mover * static_cast<double>(qStatic);
-    auto offset= static_cast<double>(scalfac*10);
+    auto offset = static_cast<double>(scalfac * 10);
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
@@ -88,7 +89,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
                 double qDiffValue = mover * Trainer::evaluatePosition(board, gameWeights, index, offset);
                 double qDiffValue2 = mover * Trainer::evaluatePosition(board, gameWeights, index, -offset);
                 double diff = ((sigmoid(c, qValue) - result) *
-                               sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0*offset);
+                               sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
                 gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
 
             }
@@ -98,7 +99,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
         double qDiffValue = mover * Trainer::evaluatePosition(board, gameWeights, index, offset);
         double qDiffValue2 = mover * Trainer::evaluatePosition(board, gameWeights, index, -offset);
         double diff = ((sigmoid(c, qValue) - result) *
-                       sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0*offset);
+                       sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
         gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
     }
 
@@ -107,11 +108,16 @@ void Trainer::gradientUpdate(Training::Position &pos) {
 
 
 void Trainer::epoch() {
+
+    constexpr size_t num_threads = 4;
+
     static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     std::cout << "Start shuffling" << std::endl;
     std::shuffle(data.mutable_positions()->begin(), data.mutable_positions()->end(), generator);
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
+
+
     std::for_each(data.mutable_positions()->begin(), data.mutable_positions()->end(),
                   [this, &counter](Training::Position &pos) {
                       counter++;
@@ -132,7 +138,7 @@ void Trainer::epoch() {
 
 void Trainer::startTune() {
     int counter = 1;
-    std::cout<<"Data_size: "<<data.positions_size()<<std::endl;
+    std::cout << "Data_size: " << data.positions_size() << std::endl;
     while (counter < getEpochs()) {
         std::cout << "CValue: " << getCValue() << std::endl;
         double loss = calculateLoss();
@@ -152,13 +158,13 @@ void Trainer::startTune() {
 }
 
 double Trainer::calculateLoss() {
-    auto evalLambda = [this](Training::Position pos) {
+    auto evalLambda = [this](const Training::Position &pos) {
         Board board;
         board.getPosition().BP = pos.bp();
         board.getPosition().WP = pos.wp();
         board.getPosition().K = pos.k();
         board.getPosition().color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
-        if (board.getPosition().piece_count() <= 4u || pos.result()==Training::UNKNOWN)
+        if (board.getPosition().piece_count() <= 4u || pos.result() == Training::UNKNOWN)
             return 0.0;
 
         double current = getWinValue(pos.result());

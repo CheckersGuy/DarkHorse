@@ -44,9 +44,13 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-    board = Position::getStartPosition();
+    /*board = Position::getStartPosition();
+
+    board = posFromString("00000000000100400004003000000000B");
+
     board.printBoard();
     std::cout<<std::endl;
+
 
     initialize();
     std::cout<<"non-zero-weights: "<<gameWeights.numNonZeroValues()<<std::endl;
@@ -56,8 +60,9 @@ int main(int argl, const char **argc) {
     searchValue(board,best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
+*/
 
-    
+
 
 
 
@@ -89,7 +94,6 @@ int main(int argl, const char **argc) {
                 if (line == "end_move")
                     break;
                 squares.emplace_back(std::stoi(line));
-                //std::cerr << "Line " << line << std::endl;
                 std::cin >> line;
             }
             move.from = 1u << squares[0];

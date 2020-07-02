@@ -30,7 +30,7 @@ void initialize() {
     Bits::set_up_bitscan();
 #endif
     //gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
-    gameWeights.loadWeights<uint32_t>("test2.weights");
+    gameWeights.loadWeights<uint32_t>("checkers.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -42,14 +42,6 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-
-    MoveListe easy_moves;
-    getMoves(board.getPosition(), easy_moves);
-    if (easy_moves.length() == 1) {
-        best = easy_moves[0];
-        return (last_evaluation != INFINITE) ? last_evaluation : 0;
-    }
-
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -232,12 +224,12 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
-   /* if (ply == 0) {
+    if (ply == 0) {
         static std::mt19937_64 generator(getSystemTime());
         auto next = sucessors.liste.begin();
         std::advance(next, sucessors.length());
         std::shuffle(sucessors.liste.begin(), next, generator);
-    }*/
+    }
 
 
     sucessors.sort(info.move, inPVLine, board.getMover());
