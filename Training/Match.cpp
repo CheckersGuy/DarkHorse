@@ -5,7 +5,6 @@
 #include "Match.h"
 
 
-
 bool Interface::is_n_fold(int n) {
     if (history.empty())
         return false;
@@ -88,7 +87,7 @@ std::optional<Move> Engine::search() {
                 move.captures |= 1u << squares[i];
             }
 
-            return move;
+            return  std::make_optional(move);
         }
     }
     return std::nullopt;
@@ -149,6 +148,7 @@ bool Interface::is_terminal_state() {
 
 }
 
+
 void Interface::process() {
 
     for (auto &engine : engines) {
@@ -156,6 +156,7 @@ void Interface::process() {
         engine.newGame(pos);
         engine.update();
     }
+
 
     auto move = engines[first_mover].search();
     if (move.has_value()) {
@@ -233,8 +234,6 @@ std::string Match::get_output_file() {
 }
 
 
-
-
 void Match::addPosition(Position p, Training::Result result) {
     auto pos = data.add_positions();
     pos->set_k(p.K);
@@ -245,7 +244,7 @@ void Match::addPosition(Position p, Training::Result result) {
 }
 
 void Match::set_play_reverse(bool flag) {
-    play_reverse=flag;
+    play_reverse = flag;
 }
 
 void Interface::terminate_engines() {
@@ -300,7 +299,6 @@ void Match::start() {
                 std::cerr << "Error" << std::endl;
                 exit(EXIT_FAILURE);
             } else if (pid == 0) {
-                setpriority(PRIO_PROCESS, pid, -20);
                 dup2(mainPipe[p][i][0], STDIN_FILENO);
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
                 dup2(eng_info_pipe[p][i][1], STDERR_FILENO);
@@ -323,7 +321,7 @@ void Match::start() {
             }
         }
         printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
-        while (game_count<maxGames) {
+        while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 auto &logger = Logger::get_instance();
                 if (inter.is_terminal_state()) {
@@ -382,7 +380,6 @@ void Match::start() {
             }
             if (game_count >= maxGames)
                 break;
-            std::this_thread::yield();
         }
 
 
@@ -400,5 +397,5 @@ void Match::start() {
     std::ofstream stream("output_file", std::ios::binary);
     data.SerializeToOstream(&stream);
     stream.close();
-    std::cout<<"Finished the match"<<std::endl;
+    std::cout << "Finished the match" << std::endl;
 }
