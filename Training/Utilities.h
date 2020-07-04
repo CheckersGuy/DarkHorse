@@ -19,14 +19,34 @@
 #include <algorithm>
 
 namespace Utilities {
-    void createNMoveBook(std::vector<Position> &data, int N, Board &board, Value lowerBound, Value upperBound);
+    extern std::unordered_set<uint64_t> hashes;
 
-    void createNMoveBook(std::vector<Position> &pos, int N, Board &board);
-
-    void loadPositions(std::vector<Position> &positions, const std::string file);
-
-    void savePositions(std::vector<Position> &positions, const std::string file);
-
+    template<typename OutIter>
+    void createNMoveBook(OutIter iter, int N, Board &board, Value lowerBound, Value upperBound) {
+        if (hashes.find(board.getCurrentKey()) != hashes.end()) {
+            return;
+        }
+        if (N == 0) {
+            Board copy(board);
+            Move best;
+            Value value = searchValue(copy, lowerBound, upperBound, best, MAX_PLY, 100, false);
+            if (isInRange(value, lowerBound, upperBound)) {
+                hashes.insert(board.getCurrentKey());
+                Position currentPos = board.getPosition();
+                *iter = currentPos;
+                iter++;
+                std::cout << "Added position" << std::endl;
+            }
+            return;
+        }
+        MoveListe liste;
+        getMoves(board.getPosition(), liste);
+        for (int i = 0; i < liste.length(); ++i) {
+            board.makeMove(liste[i]);
+            createNMoveBook(iter, N - 1, board, lowerBound, upperBound);
+            board.undoMove();
+        }
+    }
 }
 
 

@@ -28,6 +28,10 @@ Position.h
 Zobrist.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Zobrist.h
 
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.cpp
+GameLogic.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
+
 /home/robin/DarkHorse/Checkers/CheckerEngineX/GameLogic.h
 Board.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Board.h

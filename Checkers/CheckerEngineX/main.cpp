@@ -42,11 +42,11 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     Board board;
+/*
 
 
-    /*board = Position::getStartPosition();
+   board = Position::getStartPosition();
 
-    board = posFromString("00000000000100400004003000000000B");
 
     board.printBoard();
     std::cout<<std::endl;
@@ -60,6 +60,7 @@ int main(int argl, const char **argc) {
     searchValue(board,best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
+
 */
 
 
@@ -107,7 +108,15 @@ int main(int argl, const char **argc) {
             std::string time_string;
             std::cin >> time_string;
             Move bestMove;
-            auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), true);
+
+            MoveListe liste;
+            getMoves(board.getPosition(),liste);
+            if(liste.length()==1){
+                bestMove = liste[0];
+            }else{
+                auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), true);
+            }
+
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
             std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";

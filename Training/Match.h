@@ -96,6 +96,7 @@ struct Engine {
         Idle, Game_Ready, Init_Ready,
         Update
     };
+    std::string engine_name;
     State state;
     const int &engineRead;
     const int &engineWrite;
@@ -107,11 +108,13 @@ struct Engine {
 
     void writeMessage(const std::string &msg);
 
+    void new_move(Move move);
+
     void newGame(const Position &pos);
 
     void update();
 
-    std::optional<Move> search();
+    Move search();
 
     std::string readPipe();
 
@@ -154,7 +157,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/genBook6.pos"};
+    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/genBook2.book"};
     std::string output_file;
     Training::TrainData data;
 

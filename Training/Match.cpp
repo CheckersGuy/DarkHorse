@@ -56,12 +56,13 @@ std::string Engine::readPipe() {
     return message;
 }
 
+
 void Engine::writeMessage(const std::string &msg) {
     const std::string ex_message = msg + "\n";
     write(engineWrite, (char *) &ex_message.front(), sizeof(char) * ex_message.size());
 }
 
-std::optional<Move> Engine::search() {
+Move Engine::search() {
     if (state == State::Game_Ready) {
         if (!waiting_response) {
             writeMessage("search");
@@ -87,10 +88,10 @@ std::optional<Move> Engine::search() {
                 move.captures |= 1u << squares[i];
             }
 
-            return  std::make_optional(move);
+            return move;
         }
     }
-    return std::nullopt;
+    return Move{};
 }
 
 
@@ -111,10 +112,12 @@ void Engine::newGame(const Position &pos) {
 }
 
 
+
 void Engine::update() {
     if (state == State::Update) {
         auto answer = readPipe();
         if (answer == "update_ready") {
+            waiting_response = false;
             state = State::Game_Ready;
             Logger::get_instance() << "Updated" << "\n";
         }
@@ -148,42 +151,61 @@ bool Interface::is_terminal_state() {
 
 }
 
+void Engine::new_move(Move move) {
+    state = Engine::State::Update;
+    writeMessage("new_move");
+    writeMessage(std::to_string(__tzcnt_u32(move.from)));
+    writeMessage(std::to_string(__tzcnt_u32(move.to)));
+    uint32_t captures = move.captures;
+    while (captures) {
+        writeMessage(std::to_string(__tzcnt_u32(captures)));
+        captures &= captures - 1u;
+    }
+    writeMessage("end_move");
+}
+
 
 void Interface::process() {
+    auto &logger = Logger::get_instance();
 
     for (auto &engine : engines) {
         engine.initEngine();
         engine.newGame(pos);
         engine.update();
     }
+    const int second_mover = (first_mover == 0) ? 1 : 0;
+
+    //checking if there is only one possible move
+    MoveListe liste;
+    getMoves(pos, liste);
+
+    Move move{};
+
+    move = engines[first_mover].search();
 
 
-    auto move = engines[first_mover].search();
-    if (move.has_value()) {
-        auto &logger = Logger::get_instance();
-        const int second_mover = (first_mover == 0) ? 1 : 0;
-        if (!Interface::is_legal_move(move.value())) {
+    if (!move.isEmpty()) {
+
+        if (!Interface::is_legal_move(move)) {
             logger << "Error: Illegal move" << "\n";
-            logger << "From: " << move->getFromIndex() << "\n";
-            logger << "To: " << move->getToIndex() << "\n";
+            logger << "From: " << move.getFromIndex() << "\n";
+            logger << "To: " << move.getToIndex() << "\n";
             std::exit(EXIT_FAILURE);
         }
-        pos.makeMove(move.value());
+        pos.makeMove(move);
         history.emplace_back(pos);
-        engines[second_mover].state = Engine::State::Update;
-        engines[second_mover].writeMessage("new_move");
-        engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().from)));
-        engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(move.value().to)));
-        uint32_t captures = move->captures;
-        while (captures) {
-            engines[second_mover].writeMessage(std::to_string(__tzcnt_u32(captures)));
-            captures &= captures - 1u;
-        }
-        engines[second_mover].writeMessage("end_move");
-
+        engines[second_mover].new_move(move);
         first_mover = second_mover;
+
+
         logger << pos.position_str() << "\n";
         logger << getPositionString(pos) << "\n";
+        if (liste.length() == 1)
+            logger << "Easy_move" << "\n";
+        logger << "Move: [" << std::to_string(move.getFromIndex()) << ", "
+               << std::to_string(move.getToIndex()) << "]"
+               << "\n";
+        logger << "Engine " << first_mover << ": " << engines[first_mover].engine_name << "\n";
         logger << "\n";
     }
 }
@@ -223,10 +245,10 @@ void Match::setHashSize(int hash) {
 }
 
 void Interface::reset_engines() {
-    first_mover = 0;
     for (auto &engine : engines) {
         engine.state = Engine::State::Idle;
     }
+    pos = Position{};
 }
 
 std::string Match::get_output_file() {
@@ -266,23 +288,27 @@ void Match::start() {
 
 
     std::vector<Interface> interfaces;
-    std::vector<Position> positions;
-    Utilities::loadPositions(positions, openingBook);
+
+    Training::TrainData positions;
+    std::ifstream in(openingBook);
+    positions.ParseFromIstream(&in);
+    in.close();
+
+    std::cout << "OpeningBook: " << openingBook << std::endl;
+    std::cout << "Number of Positions: " << positions.positions_size() << std::endl;
+
     std::vector<std::string> engine_paths{first, second};
 
 
     int mainPipe[num_matches][numEngines][2];
     int enginePipe[num_matches][numEngines][2];
-    int eng_info_pipe[num_matches][numEngines][2];
-
-    int start_index = 0;
     int game_count = -num_matches;
 
     for (int p = 0; p < num_matches; ++p) {
-        Engine engine{Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
+        Engine engine{first, Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
         engine.setTime(time);
         engine.setHashSize(hash_size);
-        Engine engine2{Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
+        Engine engine2{second, Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
         engine2.setTime(time);
         engine2.setHashSize(hash_size);
         interfaces.emplace_back(Interface{engine, engine2});
@@ -301,7 +327,6 @@ void Match::start() {
             } else if (pid == 0) {
                 dup2(mainPipe[p][i][0], STDIN_FILENO);
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
-                dup2(eng_info_pipe[p][i][1], STDERR_FILENO);
                 const std::string e = "../Engines/" + engine_paths[i];
                 const std::string command = "./" + e;
                 Logger::get_instance() << command << "\n";
@@ -315,68 +340,81 @@ void Match::start() {
             for (int k = 0; k < numEngines; ++k) {
                 close(mainPipe[p][k][0]);
                 close(enginePipe[p][k][1]);
-                close(eng_info_pipe[p][k][1]);
                 fcntl(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
-                fcntl(eng_info_pipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
             }
         }
         printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
+        printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
+        printf("\r");
+        std::cout.flush();
+        int start_index = 0;
+        auto &logger = Logger::get_instance();
+
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
-                auto &logger = Logger::get_instance();
-                if (inter.is_terminal_state()) {
-                    //need to set up a new position
-                    logger << "Start of the game" << "\n";
-                    if (!inter.played_reverse || !play_reverse) {
-                        start_index = (start_index >= positions.size()) ? 0 : start_index + 1;
-                        Position &pos = positions[start_index];
+
+                if (inter.pos.isEmpty()) {
+                    if (!inter.played_reverse) {
+                        start_index = (start_index >= positions.positions().size()) ? 0 : start_index + 1;
+                        const Training::Position& temp =  positions.positions(start_index);
+                        Position pos;
+                        pos.WP=temp.wp();
+                        pos.BP=temp.bp();
+                        pos.K = temp.k();
+                        pos.color =(temp.mover()==Training::BLACK)?BLACK:WHITE;
+
                         inter.pos = pos;
-                        inter.played_reverse = !inter.played_reverse;
+                        inter.played_reverse = play_reverse;
                         inter.first_mover = 0;
                     } else {
                         inter.first_mover = 1;
-                        inter.played_reverse = !inter.played_reverse;
+                        inter.played_reverse = false;
                         inter.pos = inter.history.front();
                     }
+                }
 
-                    logger << inter.pos.position_str() << "\n";
-                    logger << "First_Mover: " << inter.first_mover << "\n";
-
+                if (inter.is_terminal_state()) {
+                    game_count++;
                     printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
                     printf("\r");
                     std::cout.flush();
+
+                    MoveListe liste;
+                    getMoves(inter.pos, liste);
+                    if (liste.length() == 0) {
+                        logger << "End game" << "\n";
+                        if (inter.first_mover == 0) {
+                            wins_two++;
+                        } else {
+                            wins_one++;
+                        }
+                        Training::Result result;
+                        result = (inter.pos.color == BLACK) ? Training::WHITE_WON : Training::BLACK_WON;
+                        for (Position &p : inter.history) {
+                            addPosition(p, result);
+                        }
+                    }
+                    if (inter.is_n_fold(3)) {
+                        logger << "Repetition" << "\n";
+                        draws++;
+                        for (Position &p : inter.history) {
+                            addPosition(p, Training::DRAW);
+                        }
+                    }
+                    if (inter.history.size() >= 400) {
+                        logger << "Reached max move" << "\n";
+                    }
+                    logger << inter.pos.position_str() << "\n";
+
+                    logger << "End of the game with index: " << start_index << "\n";
                     inter.history.clear();
                     inter.reset_engines();
-                    game_count++;
                 }
+
 
                 inter.process();
 
-                MoveListe liste;
-                getMoves(inter.pos, liste);
-                if (liste.length() == 0) {
-                    logger << "End game" << "\n";
-                    if (inter.first_mover == 0) {
-                        wins_two++;
-                    } else {
-                        wins_one++;
-                    }
-                    Training::Result result;
-                    result = (inter.pos.color == BLACK) ? Training::WHITE_WON : Training::BLACK_WON;
-                    for (Position &p : inter.history) {
-                        addPosition(p, result);
-                    }
-                }
-                if (inter.is_n_fold(3)) {
-                    logger << "Repetition" << "\n";
-                    draws++;
-                    for (Position &p : inter.history) {
-                        addPosition(p, Training::DRAW);
-                    }
-                }
-                if (inter.history.size() >= 400) {
-                    logger << "Reached max move" << "\n";
-                }
+
             }
             if (game_count >= maxGames)
                 break;
