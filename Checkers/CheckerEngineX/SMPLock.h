@@ -9,10 +9,8 @@
 
 class SMPLock {
 private:
-    std::atomic_flag flag;
+    std::atomic_flag flag{ATOMIC_FLAG_INIT};
 public:
-
-    SMPLock() : flag(ATOMIC_FLAG_INIT) {}
 
     void lock();
 

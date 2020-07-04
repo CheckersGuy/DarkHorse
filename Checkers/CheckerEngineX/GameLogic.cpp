@@ -30,7 +30,7 @@ void initialize() {
     Bits::set_up_bitscan();
 #endif
     //gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
-    gameWeights.loadWeights<uint32_t>("checkers.weights");
+    gameWeights.loadWeights<uint32_t>("checkers2.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -39,9 +39,11 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
-
-
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+    return searchValue(board,-INFINITE,INFINITE,best,depth,time,print);
+}
+
+Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -49,9 +51,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
-
-    Value alpha = -INFINITE;
-    Value beta = INFINITE;
     Value value;
     Value eval = DRAW;
     Local local;

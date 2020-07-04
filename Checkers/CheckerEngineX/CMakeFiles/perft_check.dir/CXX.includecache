@@ -72,6 +72,10 @@ types.h
 Move.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Move.h
 
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.cpp
+Perft.h
+/home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
+
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Perft.h
 Position.h
 /home/robin/DarkHorse/Checkers/CheckerEngineX/Position.h

@@ -8,12 +8,10 @@ Position &Board::getPosition() {
     return pStack[pCounter];
 }
 
-Board::Board(const Board &board) {
-    for (int i = 0; i < pCounter; ++i) {
-        this->moves[i] = board.moves[i];
-        this->pStack[i] = board.pStack[i];
-    }
-    this->pCounter = board.pCounter;
+Board::Board(const Board &other) {
+    std::copy(other.moves.begin(),other.moves.end(),moves.begin());
+    std::copy(other.pStack.begin(),other.pStack.end(),pStack.begin());
+    this->pCounter = other.pCounter;
 }
 
 void Board::printBoard() {
