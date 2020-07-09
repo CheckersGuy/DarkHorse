@@ -1,7 +1,6 @@
 #include <iostream>
 #include "Match.h"
 #include "Trainer.h"
-#include "proto/Training.pb.h"
 
 struct HelpInserter {
     Training::TrainData &data;
@@ -18,8 +17,8 @@ struct HelpInserter {
 };
 
 
-int main() {
-    initialize();
+int main(int argl, const char** argc) {
+    //initialize();
  /*   Training::TrainData data;
     HelpInserter inserter{data};
     Board board;
@@ -50,30 +49,25 @@ int main() {
         std::cout << std::endl;
     });
 */
+    std::cout<<"Starting a match"<<std::endl;
+    std::cout<<"Parallelism: "<<std::endl;
+    int threads;
+    std::cin>>threads;
+    std::cout<<"MaxGames: "<<std::endl;
+    int max_games;
+    std::cin>>max_games;
 
-
-
-
-
-
-    Match engine_match("generator", "generator", "output_file2");
+    Match engine_match("Generator", "Generator", "output_file");
     engine_match.setTime(100);
-    engine_match.setMaxGames(1);
-    engine_match.setNumThreads(1);
+    engine_match.setMaxGames(max_games);
+    engine_match.setNumThreads(threads);
     engine_match.setHashSize(20);
     engine_match.set_play_reverse(false);
     engine_match.start();
 
 
 
-
-
-
-
-
-
-/*
-    Match engine_match("new_light4", "new_light3", "match_file");
+ /*   Match engine_match("new_light4", "new_light3", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(15);
@@ -85,19 +79,11 @@ int main() {
 
 
 
-
-    //0.187126
-    //0.186267
-    //0.18615
-    //0.18618
-    //0.186162
-    //0.185978
-    //0.185965
-
 /*
+
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("output_file");
-    trainer.setLearningRate(500000);
+    trainer.setLearningRate(200000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-5e-4);
@@ -106,6 +92,7 @@ int main() {
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
 */
+
 
     return 0;
 }

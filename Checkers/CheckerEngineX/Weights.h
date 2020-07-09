@@ -111,12 +111,12 @@ struct Weights {
 
         auto w_direc = has_directory(home_path, "CWeights");
         if (!w_direc.has_value()) {
-            std::cerr << "Could not locate weights folder" << std::endl;
+            //std::cerr << "Could not locate weights folder" << std::endl;
             return;
         }
         auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
         if (!weight_path.has_value()) {
-            std::cerr << "Could not load the weights";
+            //std::cerr << "Could not load the weights";
             return;
         }
         std::string path_string = weight_path.value().string();
@@ -124,15 +124,6 @@ struct Weights {
         std::ifstream stream(path_string, std::ios::binary);
         if (!stream.good()) {
             std::cerr<<"Error"<<std::endl;
-            //std::cerr<<"could not load the file"<<std::endl;
-            //should print something to a logfile if
-            //weights couldnt be loaded
-            //or only print if we are in debug mode
-            //check if we user is root then:
-            // 1. load an absolute path to a file
-            // 2. if not the root
-            //  -> check for the weights folder
-            // -> and find the weight file in there
             return;
         }
         using DataType = double;

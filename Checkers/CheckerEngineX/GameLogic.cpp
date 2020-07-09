@@ -223,12 +223,14 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 
 
+#ifdef GENERATOR
     if (ply == 0) {
         static std::mt19937_64 generator(getSystemTime());
         auto next = sucessors.liste.begin();
         std::advance(next, sucessors.length());
         std::shuffle(sucessors.liste.begin(), next, generator);
     }
+#endif
 
 
     sucessors.sort(info.move, inPVLine, board.getMover());
