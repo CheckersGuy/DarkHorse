@@ -1,8 +1,0 @@
-cmake_minimum_required(VERSION 3.12)
-project(reading)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-O3 -pthread -DNDEBUG -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
-set(SOURCE_FILES main.cpp Board.cpp Board.h Move.h MGenerator.h GameLogic.cpp GameLogic.h Transposition.cpp Transposition.h types.h MoveListe.cpp MoveListe.h  Position.cpp Position.h MovePicker.cpp MovePicker.h CBInterface.cpp CBInterface.h Zobrist.h Zobrist.cpp Weights.h Line.cpp Line.h SMPLock.h Thread.cpp Thread.h Move.cpp Move.cpp Bits.cpp Bits.h )
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY cmake-build-debug)
-add_executable(CheckerEngineX ${SOURCE_FILES})
-add_executable(perft_check Checks/perft_check.cpp Perft.cpp Perft.h Zobrist.cpp Zobrist.h Board.cpp Board.h Position.cpp Position.h Bits.cpp Bits.h Move.cpp Move.h )

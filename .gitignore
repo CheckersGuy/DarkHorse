@@ -9,13 +9,11 @@
 
 #Games/Positions/Weights/Training-Data
 
-Checkers/CheckerEngineX/cmake-build-debug/**.so
-Training/CheckerEngineX/cmake-build-debug/**.so
-Training/CheckerEngineX/cmake-build-debug/Engines/**.so
-Training/CheckerEngineX/cmake-build-debug/Positions/**.pos
-Training/CheckerEngineX/cmake-build-debug/TrainData/**.game
-Training/CheckerEngineX/cmake-build-debug/Weights/**.weights
-Training/CheckerEngineX/cmake-build-debug/**.weights
+**/*.so
+**/*.weights
+**/*.pos
+**/*.game
+**/*.data
 
 # Precompiled Headers
 *.gch
@@ -33,13 +31,13 @@ Training/CheckerEngineX/cmake-build-debug/**.weights
 # Compiled Static libraries
 *.lai
 *.la
-*.a
-*.lib
+**/*.a
+**/*.lib
 
 # Executables
-*.exe
-*.out
-*.app
+**/*.exe
+**/*.out
+**/*.app
 
 # User-specific stuff:
 **/.idea/workspace.xml

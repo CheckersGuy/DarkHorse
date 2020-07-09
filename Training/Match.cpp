@@ -112,7 +112,6 @@ void Engine::newGame(const Position &pos) {
 }
 
 
-
 void Engine::update() {
     if (state == State::Update) {
         auto answer = readPipe();
@@ -152,7 +151,6 @@ bool Interface::is_terminal_state() {
 }
 
 void Engine::new_move(Move move) {
-    state = Engine::State::Update;
     writeMessage("new_move");
     writeMessage(std::to_string(__tzcnt_u32(move.from)));
     writeMessage(std::to_string(__tzcnt_u32(move.to)));
@@ -327,7 +325,7 @@ void Match::start() {
             } else if (pid == 0) {
                 dup2(mainPipe[p][i][0], STDIN_FILENO);
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
-                const std::string e = "../Engines/" + engine_paths[i];
+                const std::string e = "../Training/Engines/" + engine_paths[i];
                 const std::string command = "./" + e;
                 Logger::get_instance() << command << "\n";
                 execlp(command.c_str(), e.c_str(), NULL);
@@ -355,13 +353,13 @@ void Match::start() {
 
                 if (inter.pos.isEmpty()) {
                     if (!inter.played_reverse) {
-                        start_index = (start_index >= positions.positions().size()) ? 0 : start_index + 1;
-                        const Training::Position& temp =  positions.positions(start_index);
+                        start_index = (start_index >= positions.positions().size() - 1) ? 0 : start_index + 1;
+                        const Training::Position &temp = positions.positions(start_index);
                         Position pos;
-                        pos.WP=temp.wp();
-                        pos.BP=temp.bp();
+                        pos.WP = temp.wp();
+                        pos.BP = temp.bp();
                         pos.K = temp.k();
-                        pos.color =(temp.mover()==Training::BLACK)?BLACK:WHITE;
+                        pos.color = (temp.mover() == Training::BLACK) ? BLACK : WHITE;
 
                         inter.pos = pos;
                         inter.played_reverse = play_reverse;
@@ -432,7 +430,7 @@ void Match::start() {
         }
     }
     Logger::get_instance().turn_off();
-    std::ofstream stream("output_file", std::ios::binary);
+    std::ofstream stream(this->output_file, std::ios::binary);
     data.SerializeToOstream(&stream);
     stream.close();
     std::cout << "Finished the match" << std::endl;

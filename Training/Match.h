@@ -13,7 +13,7 @@
 #include "Utilities.h"
 #include <sys/resource.h>
 #include "proto/Training.pb.h"
-
+#include <filesystem>
 inline std::string getPositionString(Position pos) {
     std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -48,7 +48,11 @@ private:
     bool logging{false};
 
     Logger() {
-        stream = std::ofstream(log_file, std::ios::app);
+        fs::path home_path(getenv("HOME"));
+        home_path /= "Dokumente";
+        home_path/=log_file;
+
+        stream = std::ofstream(home_path, std::ios::app);
         if (!stream.good()) {
             std::cerr << "Couldnt initialize logger" << std::endl;
             std::exit(EXIT_FAILURE);
@@ -157,7 +161,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"/home/robin/DarkHorse/Training/Positions/genBook2.book"};
+    std::string openingBook{"../Training/Positions/genBook2.book"};
     std::string output_file;
     Training::TrainData data;
 
