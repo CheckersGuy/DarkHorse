@@ -9,6 +9,11 @@
 
 #Games/Positions/Weights/Training-Data
 
+**/output_file
+**/output_file2
+**/*.train
+**/*.match
+
 **/*.so
 **/*.weights
 **/*.pos
