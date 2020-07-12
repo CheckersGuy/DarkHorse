@@ -1,13 +1,15 @@
 /**///
 // Created by Robin on 14.01.2018.
 //
+
+
+#ifndef CHECKERENGINEX_POSITION_H
+#define CHECKERENGINEX_POSITION_H
+
 #include <cstdint>
 #include "Move.h"
 #include <cassert>
 #include "types.h"
-
-#ifndef CHECKERENGINEX_POSITION_H
-#define CHECKERENGINEX_POSITION_H
 
 inline uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;

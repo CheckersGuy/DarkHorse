@@ -14,6 +14,7 @@
 #include <sys/resource.h>
 #include "proto/Training.pb.h"
 #include <filesystem>
+
 inline std::string getPositionString(Position pos) {
     std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -48,11 +49,7 @@ private:
     bool logging{false};
 
     Logger() {
-        fs::path home_path(getenv("HOME"));
-        home_path /= "Dokumente";
-        home_path/=log_file;
-
-        stream = std::ofstream(home_path, std::ios::app);
+        stream = std::ofstream(log_file);
         if (!stream.good()) {
             std::cerr << "Couldnt initialize logger" << std::endl;
             std::exit(EXIT_FAILURE);
@@ -161,7 +158,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"../Training/Positions/genBook2.book"};
+    std::string openingBook{"../Training/Positions/3move.book"};
     std::string output_file;
     Training::TrainData data;
 
@@ -170,8 +167,8 @@ private:
 
 public:
     explicit Match(const std::string &first, const std::string &second, std::string output) : first(
-            first),
-                                                                                                              second(second) {
+            first), output_file(output),
+                                                                                              second(second) {
         std::ifstream stream(output.c_str(), std::ios::binary);
         if (stream.good()) {
             data.ParseFromIstream(&stream);

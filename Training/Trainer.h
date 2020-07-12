@@ -25,12 +25,13 @@ private:
     int epochs;
     Training::TrainData data;
     double learningRate, l2Reg, cValue;
+    double last_loss_value;
 
 public:
 
 
-    Trainer(const std::string& data_path) :data(data), cValue(1.0),
-                                                                      learningRate(0.1), l2Reg(0.01){
+    Trainer(const std::string& data_path) : cValue(1.0),
+                                                                      learningRate(0.1),last_loss_value(std::numeric_limits<double>::max()), l2Reg(0.01){
         std::ifstream stream(data_path);
         if(!stream.good()){
             std::cerr<<"Couldnt init training data"<<std::endl;

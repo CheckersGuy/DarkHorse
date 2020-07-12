@@ -22,8 +22,7 @@ constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 namespace fs = std::filesystem;
 
 
-//We do some things differently if the program
-//is running as root.
+
 inline bool is_root_user();
 
 

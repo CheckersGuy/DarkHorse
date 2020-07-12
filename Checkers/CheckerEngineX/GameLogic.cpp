@@ -30,7 +30,7 @@ void initialize() {
     Bits::set_up_bitscan();
 #endif
     //gameWeights.loadWeights<uint32_t>("/home/robin/DarkHorse/Training/cmake-build-debug/saved.weights");
-    gameWeights.loadWeights<uint32_t>("checkers2.weights");
+    gameWeights.loadWeights<uint32_t>("checkers4.weights");
     Zobrist::initializeZobrisKeys();
 }
 

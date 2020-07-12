@@ -42,26 +42,28 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     Board board;
+
 /*
 
-
-   board = Position::getStartPosition();
-
-
+    board = Position::getStartPosition();
+    board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
-    std::cout<<std::endl;
+    std::cout << std::endl;
 
 
     initialize();
-    std::cout<<"non-zero-weights: "<<gameWeights.numNonZeroValues()<<std::endl;
+    std::cout << "non-zero-weights: " << gameWeights.numNonZeroValues() << std::endl;
     setHashSize(25);
 
     Move best;
-    searchValue(board,best, MAX_PLY, 30000000, true);
+    searchValue(board, best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
 
 */
+
+
+
 
 
 

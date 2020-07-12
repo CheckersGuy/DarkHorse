@@ -68,7 +68,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     board.getPosition().K = pos.k();
     board.getPosition().color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
 
-    if (board.getPosition().piece_count() <= 4u || pos.result() == Training::UNKNOWN)
+    if (pos.result() == Training::UNKNOWN)
         return;
 
     Line local;
@@ -108,9 +108,6 @@ void Trainer::gradientUpdate(Training::Position &pos) {
 
 
 void Trainer::epoch() {
-
-    constexpr size_t num_threads = 4;
-
     static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     std::cout << "Start shuffling" << std::endl;
     std::shuffle(data.mutable_positions()->begin(), data.mutable_positions()->end(), generator);
@@ -122,7 +119,6 @@ void Trainer::epoch() {
                   [this, &counter](Training::Position &pos) {
                       counter++;
                       gradientUpdate(pos);
-
                       if ((counter % 200000) == 0) {
                           gameWeights.storeWeights("current.weights");
                           std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
@@ -142,6 +138,12 @@ void Trainer::startTune() {
     while (counter < getEpochs()) {
         std::cout << "CValue: " << getCValue() << std::endl;
         double loss = calculateLoss();
+        if(loss>last_loss_value){
+            learningRate=0.5*learningRate;
+            std::cout<<"Dropped learning rate"<<std::endl;
+        }
+
+        last_loss_value=loss;
         std::cout << "Loss: " << loss << std::endl;
         epoch();
         counter++;
@@ -164,7 +166,7 @@ double Trainer::calculateLoss() {
         board.getPosition().WP = pos.wp();
         board.getPosition().K = pos.k();
         board.getPosition().color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
-        if (board.getPosition().piece_count() <= 4u || pos.result() == Training::UNKNOWN)
+        if (pos.result() == Training::UNKNOWN)
             return 0.0;
 
         double current = getWinValue(pos.result());
