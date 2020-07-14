@@ -42,6 +42,7 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     Board board;
+    //working on the search part of my engine
 
 /*
 
