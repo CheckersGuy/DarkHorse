@@ -43,10 +43,13 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
+    //working on the search part of my engine
+
 /*
 
+
     board = Position::getStartPosition();
-    board = posFromString("00034030000040000000000000100000B");
+    //board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
     std::cout << std::endl;
 
@@ -61,13 +64,6 @@ int main(int argl, const char **argc) {
     board.printBoard();
 
 */
-
-
-
-
-
-
-
 
     std::string current;
 

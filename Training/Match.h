@@ -158,7 +158,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"../Training/Positions/3move.book"};
+    std::string openingBook{"../Training/Positions/genBook2.book"};
     std::string output_file;
     Training::TrainData data;
 

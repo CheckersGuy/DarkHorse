@@ -110,12 +110,16 @@ struct Weights {
 
         auto w_direc = has_directory(home_path, "CWeights");
         if (!w_direc.has_value()) {
-            //std::cerr << "Could not locate weights folder" << std::endl;
+            const fs::path tmp_path("/tmp");
+            w_direc = has_directory(tmp_path,"CWeights");
+        }
+        if(!w_direc.has_value()){
+            std::cerr<<"Could not find the weights_folder"<<std::endl;
             return;
         }
         auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
         if (!weight_path.has_value()) {
-            //std::cerr << "Could not load the weights";
+            std::cerr << "Could not load the weights";
             return;
         }
         std::string path_string = weight_path.value().string();
