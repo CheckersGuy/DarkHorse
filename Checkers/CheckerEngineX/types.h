@@ -116,7 +116,6 @@ inline Value toTT(Value val, int ply) {
 
 
 inline Value clampScore(Value val) {
-    //Scores are only positive
     if (isLoss(val)) {
         return -INFINITE;
     } else if (isWin(val)) {

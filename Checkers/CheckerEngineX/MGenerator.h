@@ -16,6 +16,7 @@ inline void maskBits(Position &pos, const uint32_t maske) {
         pos.WP ^= maske;
 }
 
+
 template<Color color>
 inline
 void getSilentMoves(const Position &pos, MoveListe &liste) {
