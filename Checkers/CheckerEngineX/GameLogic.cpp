@@ -57,19 +57,11 @@ Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, ui
     local.board = board;
     while (i <= depth && i <= MAX_PLY) {
         Line currentPV;
-        value = alphaBeta<PVNode>(board, alpha, beta, currentPV, 0, i, true);
+        Search::search_root(local,alpha,beta,i);
         if (timeOut)
             break;
 
-
-        if (value <= alpha || value >= beta) {
-            alpha = -INFINITE;
-            beta = INFINITE;
-            continue;
-        }
-
-
-        eval = value;
+        eval = local.best_score;
 
         if (i >= 5) {
             alpha = value - 50 * scalfac;
