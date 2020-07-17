@@ -72,6 +72,7 @@ int main(int argl, const char **argc) {
 */
 
 
+/*
 
     Match engine_match("test3", "test2", "match_file");
     engine_match.setTime(100);
@@ -81,22 +82,22 @@ int main(int argl, const char **argc) {
     engine_match.set_play_reverse(true);
     engine_match.start();
 
-
-
-
-
-    /*   std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-       Trainer trainer("../Training/TrainData/output_file");
-       trainer.setLearningRate(200000);
-       trainer.setEpochs(100);
-       trainer.setl2Reg(0.000000000000);
-       trainer.setCValue(-5e-4);
-       trainer.startTune();
-       //0.197482
-       auto loss = trainer.calculateLoss();
-       std::cout << "Loss: " << loss << std::endl;
-
 */
+
+
+
+
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("../Training/TrainData/output_file");
+    trainer.setLearningRate(200000);
+    trainer.setEpochs(100);
+    trainer.setl2Reg(0.000000000000);
+    trainer.setCValue(-5e-4);
+    trainer.startTune();
+    //0.197482
+    auto loss = trainer.calculateLoss();
+    std::cout << "Loss: " << loss << std::endl;
+
 
     return 0;
 }

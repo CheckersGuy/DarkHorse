@@ -42,6 +42,7 @@ public:
     };
     void epoch();
 
+
     void gradientUpdate(Training::Position& position);
 
     void setEpochs(int epoch);
