@@ -46,7 +46,7 @@ int main(int argl, const char **argc) {
 
 
     board = Position::getStartPosition();
-    //board = posFromString("00034030000040000000000000100000B");
+    board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
     std::cout << std::endl;
 
