@@ -42,7 +42,7 @@ using Depth = int;
 using Ply = int;
 using Value = int;
 
-constexpr int scalfac = 128;
+constexpr int scalfac = 16;
 enum NodeType {
     PVNode, NONPV
 };

@@ -6,7 +6,6 @@
 #include "Trainer.h"
 
 
-
 int Trainer::getEpochs() {
     return epochs;
 }
@@ -51,8 +50,13 @@ double getWinValue(Training::Result result) {
 }
 
 double sigmoid(double c, double value) {
-    double sig = 1.0 / (1.0 + std::exp(c * value));
-    return sig;
+
+    if (value > 0) {
+        return 1.0 / (1.0 + std::exp(c * value));
+    } else {
+        return std::exp(-c * value) / (1.0 + std::exp(-c * value));
+    }
+
 }
 
 double sigmoidDiff(double c, double value) {
@@ -80,7 +84,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     double c = getCValue();
 
     double qValue = mover * static_cast<double>(qStatic);
-    auto offset = static_cast<double>(scalfac * 10);
+    auto offset = static_cast<double>(scalfac * 1);
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
@@ -138,12 +142,12 @@ void Trainer::startTune() {
     while (counter < getEpochs()) {
         std::cout << "CValue: " << getCValue() << std::endl;
         double loss = calculateLoss();
-        if(loss>last_loss_value){
-            learningRate=0.5*learningRate;
-            std::cout<<"Dropped learning rate"<<std::endl;
+        if (loss > last_loss_value) {
+            learningRate = 0.5 * learningRate;
+            std::cout << "Dropped learning rate" << std::endl;
         }
 
-        last_loss_value=loss;
+        last_loss_value = loss;
         std::cout << "Loss: " << loss << std::endl;
         epoch();
         counter++;
@@ -161,13 +165,14 @@ void Trainer::startTune() {
 
 double Trainer::calculateLoss() {
     auto evalLambda = [this](const Training::Position &pos) {
+        if (pos.result() == Training::UNKNOWN)
+            return 0.0;
         Board board;
         board.getPosition().BP = pos.bp();
         board.getPosition().WP = pos.wp();
         board.getPosition().K = pos.k();
-        board.getPosition().color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
-        if (pos.result() == Training::UNKNOWN)
-            return 0.0;
+        board.getPosition().color = ((pos.mover() == Training::BLACK) ? BLACK : WHITE);
+
 
         double current = getWinValue(pos.result());
         auto color = static_cast<double>(board.getPosition().getColor());
