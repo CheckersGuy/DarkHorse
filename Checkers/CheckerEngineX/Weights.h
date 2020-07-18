@@ -51,10 +51,10 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
     size_t index = 0ull;
     uint32_t pieces = reg & (pos.BP | pos.WP);
     size_t counter = 0ull;
-    uint32_t BP = pos.BP & (~pos.K);
-    uint32_t WP = pos.WP & (~pos.K);
-    uint32_t BK = pos.BP & pos.K;
-    uint32_t WK = pos.WP & pos.K;
+    const uint32_t BP = pos.BP & (~pos.K);
+    const uint32_t WP = pos.WP & (~pos.K);
+    const uint32_t BK = pos.BP & pos.K;
+    const uint32_t WK = pos.WP & pos.K;
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
         pieces &= pieces - 1u;
@@ -140,7 +140,7 @@ struct Weights {
             stream.read((char *) &first, sizeof(DataType));
             if (stream.eof())
                 break;
-            T temp = first;
+            auto temp = static_cast<T>(first);
             for (RunType i = 0u; i < length; ++i) {
                 weights[counter] = temp;
                 counter++;
@@ -269,7 +269,7 @@ struct Weights {
 #ifdef TRAIN
 extern Weights<double> gameWeights;
 #else
-extern Weights<int> gameWeights;
+extern Weights<short> gameWeights;
 #endif
 
 #endif //CHECKERENGINEX_WEIGHTS_H

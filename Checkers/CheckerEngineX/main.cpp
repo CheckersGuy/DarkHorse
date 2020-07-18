@@ -45,8 +45,6 @@ int main(int argl, const char **argc) {
 
 
 /*
-
-
     board = Position::getStartPosition();
     //board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
@@ -61,8 +59,8 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
-
 */
+
 
     std::string current;
 
@@ -107,10 +105,10 @@ int main(int argl, const char **argc) {
             Move bestMove;
 
             MoveListe liste;
-            getMoves(board.getPosition(),liste);
-            if(liste.length()==1){
+            getMoves(board.getPosition(), liste);
+            if (liste.length() == 1) {
                 bestMove = liste[0];
-            }else{
+            } else {
                 auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), true);
             }
 

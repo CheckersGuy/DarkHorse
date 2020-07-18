@@ -21,7 +21,7 @@ void setHashSize(uint32_t hash) {
 #ifdef TRAIN
 Weights<double> gameWeights;
 #else
-Weights<int> gameWeights;
+Weights<short> gameWeights;
 #endif
 
 
@@ -29,7 +29,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("checkers5.weights");
+    gameWeights.loadWeights<uint32_t>("checkers7.weights");
     Zobrist::initializeZobrisKeys();
 }
 
