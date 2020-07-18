@@ -51,10 +51,10 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
     size_t index = 0ull;
     uint32_t pieces = reg & (pos.BP | pos.WP);
     size_t counter = 0ull;
-    uint32_t BP = pos.BP & (~pos.K);
-    uint32_t WP = pos.WP & (~pos.K);
-    uint32_t BK = pos.BP & pos.K;
-    uint32_t WK = pos.WP & pos.K;
+    const uint32_t BP = pos.BP & (~pos.K);
+    const uint32_t WP = pos.WP & (~pos.K);
+    const uint32_t BK = pos.BP & pos.K;
+    const uint32_t WK = pos.WP & pos.K;
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
         pieces &= pieces - 1u;
@@ -110,12 +110,16 @@ struct Weights {
 
         auto w_direc = has_directory(home_path, "CWeights");
         if (!w_direc.has_value()) {
-            //std::cerr << "Could not locate weights folder" << std::endl;
+            const fs::path tmp_path("/tmp");
+            w_direc = has_directory(tmp_path,"CWeights");
+        }
+        if(!w_direc.has_value()){
+            std::cerr<<"Could not find the weights_folder"<<std::endl;
             return;
         }
         auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
         if (!weight_path.has_value()) {
-            //std::cerr << "Could not load the weights";
+            std::cerr << "Could not load the weights";
             return;
         }
         std::string path_string = weight_path.value().string();
@@ -136,7 +140,7 @@ struct Weights {
             stream.read((char *) &first, sizeof(DataType));
             if (stream.eof())
                 break;
-            T temp = first;
+            auto temp = static_cast<T>(first);
             for (RunType i = 0u; i < length; ++i) {
                 weights[counter] = temp;
                 counter++;
@@ -265,7 +269,7 @@ struct Weights {
 #ifdef TRAIN
 extern Weights<double> gameWeights;
 #else
-extern Weights<int> gameWeights;
+extern Weights<short> gameWeights;
 #endif
 
 #endif //CHECKERENGINEX_WEIGHTS_H
