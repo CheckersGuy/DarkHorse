@@ -44,7 +44,7 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-/*
+
     board = Position::getStartPosition();
     //board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
@@ -59,7 +59,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
-*/
+
 
 
     std::string current;

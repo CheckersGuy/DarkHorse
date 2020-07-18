@@ -53,7 +53,7 @@ int main(int argl, const char **argc) {
 
 
 
-    std::cout << "Starting a match" << std::endl;
+    std::cout << "Starting Match" << std::endl;
     std::cout << "Parallelism: " << std::endl;
     int threads;
     std::cin >> threads;
