@@ -44,7 +44,7 @@ struct Position {
 
 
     template<Color color>
-    uint32_t getCurrent() const {
+    constexpr uint32_t getCurrent() const {
         if constexpr (color == BLACK)
             return BP;
         else
@@ -52,7 +52,7 @@ struct Position {
     }
 
     template<PieceType type>
-    uint32_t getPieces() {
+    constexpr uint32_t getPieces() {
         if constexpr(type == KING) {
             return K;
         } else {
@@ -61,7 +61,7 @@ struct Position {
     }
 
     template<Color color>
-    uint32_t pawn_count() {
+    constexpr uint32_t pawn_count() {
         if constexpr (color == BLACK)
             return __builtin_popcount(BP & (~K));
         else
@@ -69,7 +69,7 @@ struct Position {
     }
 
     template<Color color>
-    uint32_t king_count() {
+    constexpr uint32_t king_count() {
         if constexpr (color == BLACK)
             return __builtin_popcount(BP & K);
         else

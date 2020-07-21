@@ -1,6 +1,9 @@
 #include "MoveListe.h"
 #include "Weights.h"
 
+void MoveListe::reset() {
+    moveCounter = 0;
+}
 
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
     for (auto i = 0; i < liste.size(); ++i) {
