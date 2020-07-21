@@ -46,7 +46,22 @@ int main(int argl, const char **argc) {
 
 
     board = Position::getStartPosition();
+
+
+
+    /*
     board = posFromString("00034030000040000000000000100000B");
+
+    Position test;
+    test.color = BLACK;
+    test.WP = 1u << S[29];
+    test.WP |= 1u << S[28];
+
+    test.BP = 1u << S[3];
+    test.BP |= 1u << S[23];
+
+
+
     board.printBoard();
     std::cout << std::endl;
 
@@ -60,7 +75,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-
+*/
 
     std::string current;
 

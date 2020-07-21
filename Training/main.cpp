@@ -61,7 +61,7 @@ int main(int argl, const char **argc) {
     int max_games;
     std::cin >> max_games;
 
-    Match engine_match("test7", "test4", "../Training/TrainData/output_file");
+    Match engine_match("asp2", "asp1", "../Training/TrainData/output_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(max_games);
     engine_match.setNumThreads(threads);
