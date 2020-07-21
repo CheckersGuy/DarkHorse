@@ -38,11 +38,12 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
+
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-    return searchValue(board,-INFINITE,INFINITE,best,depth,time,print);
+    return searchValue(board, -INFINITE, INFINITE, best, depth, time, print);
 }
 
-Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, uint32_t time, bool print) {
+Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -55,32 +56,25 @@ Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, ui
     Local local;
     local.board = board;
     while (i <= depth && i <= MAX_PLY) {
-        Line currentPV;
-        Search::search_root(local,alpha,beta,i);
+        Search::search_root(local, alpha, beta, i);
         if (timeOut)
             break;
 
         eval = local.best_score;
-
-        if (i >= 5) {
-            alpha = value - 50 * scalfac;
-            beta = value + 50 * scalfac;
-        }
-
         if (print) {
             std::string temp = std::to_string(value) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
-            temp += currentPV.toString();
+            temp += local.pv_line.toString();
             temp += "\n";
             temp += "\n";
             std::cout << temp;
             std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
         }
 
-        mainPV = currentPV;
-        best = mainPV[0];
+        mainPV = local.pv_line;
+        best = mainPV.getFirstMove();
         ++i;
     }
     return eval;
@@ -311,16 +305,17 @@ namespace Search {
     template<NodeType type>
     Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
         constexpr bool in_pv_line = (type == PVNode);
+        local.liste.reset();
+        line.clear();
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
         local.depth = depth;
-        local.i = 0;
         local.prune = prune;
         local.move = Move{};
         local.skip_move = Move{};
-        line.clear();
+
 
         //checking time-used
         if ((local.node_counter & 16383u) == 0u && getSystemTime() >= endTime) {
@@ -337,16 +332,15 @@ namespace Search {
             return 0;
         }
 
-        MoveListe liste;
 
-        getMoves(local.board.getPosition(), liste);
+        getMoves(local.board.getPosition(), local.liste);
         //checking win condition
-        if (liste.isEmpty()) {
+        if (local.liste.isEmpty()) {
             return loss(ply);
         }
 
         NodeInfo info;
-        Value alphaOrig = alpha;
+        Value alphaOrig = local.alpha;
 
         // tb-probing
         if (local.ply > 0 && TT.findHash(local.board.getPosition(), info)) {
@@ -383,27 +377,27 @@ namespace Search {
             }
         }
 
-        //move-loop
 
         //jump extension
-        if (liste.length() == 1 && liste[0].isCapture()) {
+        if (local.liste.length() == 1 && local.liste[0].isCapture()) {
             //needs to be fixed
         }
 
         //sorting
-        liste.sort(info.move, in_pv_line, local.board.getMover());
+        //local.liste.sort(info.move, in_pv_line, local.board.getMover());
 
-        Search::move_loop<type>(local, liste, line);
+        //move-loop
+        Search::move_loop<type>(local, line);
 
         //updating search stats
-        if (local.best_score >= local.beta) {
-            if (liste.length() > 1) {
-                Statistics::mPicker.updateHHScore(local.move, local.board.getMover(), local.depth);
-                Statistics::mPicker.updateBFScore(liste.liste.begin(), local.i, local.board.getMover(),
-                                                  local.depth);
-            }
-        }
-
+        /*     if (local.best_score >= local.beta) {
+                 if (local.liste.length() > 1) {
+                     Statistics::mPicker.updateHHScore(local.move, local.board.getMover(), local.depth);
+                     Statistics::mPicker.updateBFScore(local.liste.liste.begin(), local.i, local.board.getMover(),
+                                                       local.depth);
+                 }
+             }
+     */
         //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
         if (local.best_score <= alphaOrig) {
@@ -482,14 +476,12 @@ namespace Search {
     }
 
     template<NodeType type>
-    void searchMove(Move move, Local &local, Line &line) {
+    Value searchMove(Move move, Local &local, Line &line) {
         constexpr bool in_pv_line = (type == PVNode);
         //everything that is specific to a move goes into search_move
         //that includes reductions and extensions (lmr and probuct and jump extension)
         Depth reduction = Search::reduce(local, move, in_pv_line);
-        Depth new_depth = local.depth - reduction - 1;
-        const bool is_first_move = local.i == 0;
-
+        Depth new_depth = local.depth - 1;
         //singular move extension
 
         /*      if (local.skip_move.isEmpty() && extension == 0 && local.depth >= 8 && move == local.sing_move) {
@@ -503,52 +495,50 @@ namespace Search {
                       extension = 1;
               }*/
 
-        //making the move
-        local.board.makeMove(move);
-
         Line new_pv;
-        Value val;
-        if (is_first_move) {
-            //doing a fully window search
-            val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
-                                        local.prune);
-        } else {
-            //zero-window and research
-            val = -Search::search<NONPV>(local, new_pv, -local.alpha - 1, -local.alpha, local.ply + 1, new_depth,
-                                         local.prune);
-            //doing the research if we didnt fail low
-            if (val > local.alpha && val < local.beta) {
-                val = -Search::search<NONPV>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
-                                             local.prune);
-            }
+        Value val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
+                                          local.prune);
+        /*  if (local.i==0) {
+              //doing a full window search
+              val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
+                                          local.prune);
+          } else {
+              //zero-window and research
+              val = -Search::search<NONPV>(local, new_pv, -local.alpha - 1, -local.alpha, local.ply + 1, new_depth,
+                                           local.prune);
+              //doing the research if we didnt fail low
+              if (val > local.alpha && val < local.beta) {
+                  val = -Search::search<NONPV>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
+                                               local.prune);
+              }
 
-        }
-
-        //undoing the move
-        local.board.undoMove();
+          }
+          */
 
         if (val > local.best_score) {
             local.best_score = val;
             local.move = move;
-            if (val >= local.beta) {
-                return;
-            }
             if (val > local.alpha) {
                 line.concat(local.move, new_pv);
                 local.alpha = local.best_score;
             }
         }
 
+        return val;
+
     }
 
     template<NodeType type>
-    void move_loop(Local &local, const MoveListe &liste, Line &line) {
+    void move_loop(Local &local, Line &line) {
         //move-loop goes here
         //skip-move and so on
         local.i = 0;
-        while (local.best_score < local.beta && local.i < liste.length()) {
-            Move move = liste[local.i++];
+        while (local.best_score < local.beta && local.i < local.liste.length()) {
+            std::cout << "Move" << std::endl;
+            Move move = local.liste[local.i++];
+            local.board.makeMove(move);
             searchMove<type>(move, local, line);
+            local.board.undoMove();
         }
 
     }
@@ -559,13 +549,12 @@ namespace Search {
         //no prob-cut or probing of the hash_table
         //no quiescent search
 
-
+        local.liste.reset();
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = 0;
         local.depth = depth;
-        local.i = 0;
         local.skip_move = Move{};
         local.sing_move = Move{};
         local.move = Move{};
@@ -578,10 +567,9 @@ namespace Search {
 
         //other things will go here too
 
-        MoveListe liste;
-        getMoves(local.board.getPosition(), liste);
 
-        move_loop<PVNode>(local, liste, local.pv_line);
+        getMoves(local.board.getPosition(), local.liste);
+        move_loop<PVNode>(local, local.pv_line);
 
         //storing tb-entries
         Value tt_value = toTT(local.best_score, local.ply);
