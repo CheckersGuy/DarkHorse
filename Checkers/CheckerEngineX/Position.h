@@ -121,6 +121,8 @@ struct Position {
         return movers;
     }
 
+    std::string get_fen_string() const;
+
     Color getColor() const;
 
     bool hasJumps(Color color) const;
@@ -141,6 +143,8 @@ struct Position {
 
     static Position getStartPosition();
 
+    static Position pos_from_fen(std::string fen_string);
+
 
     inline bool operator==(const Position &pos) const {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color);
@@ -152,9 +156,5 @@ struct Position {
 
 
 };
-
-std::istream &operator>>(std::istream &stream, const Position &pos);
-
-std::ostream &operator<<(std::ostream &stream, const Position &pos);
 
 #endif //CHECKERENGINEX_POSITION_H

@@ -71,8 +71,8 @@ Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, ui
         eval = value;
 
         if (i >= 5) {
-            alpha = value - 50 * scalfac;
-            beta = value + 50 * scalfac;
+            alpha = value - 5 * scalfac;
+            beta = value + 5 * scalfac;
         }
 
         if (print) {

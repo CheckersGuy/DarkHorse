@@ -1,11 +1,57 @@
-//
-// Created by Robin on 14.01.2018.
-//
-
 #include <sstream>
 #include "Position.h"
 #include "Zobrist.h"
 
+Position Position::pos_from_fen(std::string fen_string) {
+    auto mover_pos = fen_string.find(":");
+    //debugging
+    std::cout<<fen_string.substr(0,mover_pos);
+
+    auto start_pos = mover_pos;
+
+    while(start_pos>=fen_string.size()){
+
+    }
+
+    return Position{};
+}
+
+std::string Position::get_fen_string() const {
+    std::ostringstream stream;
+    stream << ((color == BLACK) ? "B" : "W");
+
+    uint32_t white_pieces = WP;
+    uint32_t black_pieces = BP;
+
+    if (white_pieces) {
+        stream << ":W";
+    }
+
+    while (white_pieces) {
+        auto square = __tzcnt_u32(white_pieces);
+        if (((1u << square) & K))
+            stream << K;
+        square = S[square] + 1u;
+        stream << square << ",";
+
+        white_pieces &= white_pieces - 1u;
+    }
+
+    if (black_pieces) {
+        stream << "B:";
+    }
+
+    while (black_pieces) {
+        auto square = __tzcnt_u32(black_pieces);
+        if (((1u << square) & K))
+            stream << K;
+        square = S[square] + 1;
+        stream << square << ",";
+        black_pieces &= black_pieces - 1u;
+    }
+
+    return stream.str().substr(0,stream.str().size()-1);
+}
 
 Position Position::getColorFlip() const {
     Position next;
@@ -124,14 +170,4 @@ void Position::makeMove(Move &move) {
         K |= move.to;
     }
     this->color = ~this->color;
-}
-
-std::istream &operator>>(std::istream &stream, const Position &pos) {
-    stream.read((char *) &pos, sizeof(Position));
-    return stream;
-}
-
-std::ostream &operator<<(std::ostream &stream, const Position &pos) {
-    stream.write((char *) &pos, sizeof(Position));
-    return stream;
 }
