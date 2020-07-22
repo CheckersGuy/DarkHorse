@@ -45,12 +45,23 @@ int main(int argl, const char **argc) {
 
 
 
+/*
+
     board = Position::getStartPosition();
 
 
+*/
+/*
+    Position::pos_from_fen("W:WK12:BK4,K3");
 
-    /*
-    board = posFromString("00034030000040000000000000100000B");
+*//*
+
+
+
+
+
+
+    //board = posFromString("00034030000040000000000000100000B");
 
     Position test;
     test.color = BLACK;
@@ -76,6 +87,8 @@ int main(int argl, const char **argc) {
     board.printBoard();
 
 */
+
+
 
     std::string current;
 

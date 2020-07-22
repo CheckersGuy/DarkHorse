@@ -1,19 +1,51 @@
 #include <sstream>
 #include "Position.h"
 #include "Zobrist.h"
+#include "iterator"
+
+std::vector<std::string> split_by(std::string input, char delim){
+    std::string output="";
+    std::vector<std::string> splits;
+    for (char c : input) {
+        if (c == delim) {
+            splits.emplace_back(output);
+            output = "";
+        } else {
+            output += c;
+        }
+    }
+    splits.emplace_back(output);
+    return splits;
+}
 
 Position Position::pos_from_fen(std::string fen_string) {
-    auto mover_pos = fen_string.find(":");
-    //debugging
-    std::cout<<fen_string.substr(0,mover_pos);
 
-    auto start_pos = mover_pos;
+    Position position;
 
-    while(start_pos>=fen_string.size()){
+    std::string output;
+    std::vector<std::string> splits=split_by(fen_string,':');
 
-    }
+    const std::string mover = splits[0];
 
-    return Position{};
+    if(mover == "W")
+        position.color =WHITE;
+    else
+        position.color =BLACK;
+
+    const std::string white_tmp = splits[1];
+    const std::string black_tmp =splits[2];
+
+    std::vector<std::string> white_pieces = split_by(white_tmp,',');
+    std::vector<std::string> black_pieces = split_by(black_tmp,',');
+
+    //to be continued
+
+
+
+
+    std::copy(white_pieces.begin(),white_pieces.end(),std::ostream_iterator<std::string>(std::cout,"\n"));
+
+    return position;
 }
 
 std::string Position::get_fen_string() const {
@@ -38,7 +70,7 @@ std::string Position::get_fen_string() const {
     }
 
     if (black_pieces) {
-        stream << "B:";
+        stream << ":B";
     }
 
     while (black_pieces) {
@@ -50,7 +82,7 @@ std::string Position::get_fen_string() const {
         black_pieces &= black_pieces - 1u;
     }
 
-    return stream.str().substr(0,stream.str().size()-1);
+    return stream.str().substr(0, stream.str().size() - 1);
 }
 
 Position Position::getColorFlip() const {
