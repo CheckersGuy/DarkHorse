@@ -28,9 +28,8 @@ void getSilentMoves(const Position &pos, MoveListe &liste) {
         squares |= forwardMask<~color>(maske & pos.K) | defaultShift<~color>(maske & pos.K);
         squares &= nocc;
         while (squares) {
-            const uint32_t next = squares & ~(squares - 1u);
-            Move move{maske, next};
-            liste.addMove(move);
+            const uint32_t next = squares & ~(squares - 1u);;
+            liste.addMove(Move{maske, next});
             squares &= squares - 1u;
         }
         movers &= movers - 1u;
@@ -77,6 +76,8 @@ void loopCaptures(Position &pos, MoveListe &liste) {
     uint32_t movers = pos.getJumpers<color>();
     uint32_t kingJumpers = movers & pos.K;
     uint32_t pawnJumpers = movers & (~pos.K);
+
+
     while (kingJumpers) {
         const uint32_t maske = kingJumpers & ~(kingJumpers - 1u);
         maskBits<color>(pos, maske);
@@ -84,11 +85,13 @@ void loopCaptures(Position &pos, MoveListe &liste) {
         maskBits<color>(pos, maske);
         kingJumpers &= kingJumpers - 1u;
     }
+
     while (pawnJumpers) {
         const uint32_t maske = pawnJumpers & ~(pawnJumpers - 1u);
         addKingCaptures<color, PAWN>(pos, maske, maske, 0, liste);
         pawnJumpers &= pawnJumpers - 1u;
     }
+
 }
 
 

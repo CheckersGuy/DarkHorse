@@ -60,7 +60,7 @@ bool Line::operator==(const Line &other) const {
 
 
 bool Line::operator!=(const Line &other) const {
-    return *this != other;
+    return !(*this == other);
 }
 
 const Move &Line::operator[](int index) const {

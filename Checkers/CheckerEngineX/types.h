@@ -81,11 +81,7 @@ inline Value loss(int ply) {
 }
 
 constexpr Color operator~(Color color) {
-    if (color == BLACK) {
-        return WHITE;
-    } else {
-        return BLACK;
-    }
+    return static_cast<Color>(-color);
 }
 
 inline bool isLoss(Value val) {
@@ -117,9 +113,9 @@ inline Value toTT(Value val, int ply) {
 
 inline Value clampScore(Value val) {
     if (isLoss(val)) {
-        return -INFINITE;
+        return LOSS;
     } else if (isWin(val)) {
-        return INFINITE;
+        return WIN;
     }
     return val;
 }
