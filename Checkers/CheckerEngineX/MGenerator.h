@@ -93,6 +93,7 @@ void loopCaptures(Position &pos, MoveListe &liste) {
 
 
 inline void getMoves(Position &pos, MoveListe &liste) {
+    liste.reset();
     if (pos.color == BLACK) {
         loopCaptures<BLACK>(pos, liste);
         if (!liste.isEmpty())
@@ -107,6 +108,7 @@ inline void getMoves(Position &pos, MoveListe &liste) {
 }
 
 inline void getCaptures(Position &pos, MoveListe &liste) {
+    liste.reset();
     if (pos.getColor() == BLACK) {
         loopCaptures<BLACK>(pos, liste);
     } else {
