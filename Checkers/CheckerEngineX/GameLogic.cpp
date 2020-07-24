@@ -62,7 +62,7 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
 
         eval = local.best_score;
         if (print) {
-            std::string temp = std::to_string(value) + "  ";
+            std::string temp = std::to_string(eval) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
 
@@ -305,7 +305,6 @@ namespace Search {
     template<NodeType type>
     Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
         constexpr bool in_pv_line = (type == PVNode);
-        local.liste.reset();
         line.clear();
         local.best_score = -INFINITE;
         local.alpha = alpha;
@@ -336,6 +335,7 @@ namespace Search {
         getMoves(local.board.getPosition(), local.liste);
         //checking win condition
         if (local.liste.isEmpty()) {
+            std::cout << "Test" << std::endl;
             return loss(ply);
         }
 
@@ -365,7 +365,7 @@ namespace Search {
             }*/
         }
         //probcut
-        if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
+      /*  if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
             Value margin = (10 * scalfac * local.depth);
             Value newBeta = addSafe(local.beta, margin);
             Depth newDepth = (local.depth * 40) / 100;
@@ -375,7 +375,7 @@ namespace Search {
                 value = addSafe(value, -margin);
                 return value;
             }
-        }
+        }*/
 
 
         //jump extension
@@ -533,7 +533,8 @@ namespace Search {
         //move-loop goes here
         //skip-move and so on
         local.i = 0;
-        while (local.best_score < local.beta && local.i < local.liste.length()) {
+        auto num_moves =local.liste.length();
+        while (local.best_score < local.beta && local.i < num_moves) {
             std::cout << "Move" << std::endl;
             Move move = local.liste[local.i++];
             local.board.makeMove(move);
@@ -548,8 +549,6 @@ namespace Search {
         //root search can throw out a couple of things
         //no prob-cut or probing of the hash_table
         //no quiescent search
-
-        local.liste.reset();
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
