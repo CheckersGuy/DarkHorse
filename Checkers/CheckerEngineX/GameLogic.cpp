@@ -305,17 +305,8 @@ namespace Search {
     template<NodeType type>
     Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
         constexpr bool in_pv_line = (type == PVNode);
+
         line.clear();
-        local.best_score = -INFINITE;
-        local.alpha = alpha;
-        local.beta = beta;
-        local.ply = ply;
-        local.depth = depth;
-        local.prune = prune;
-        local.move = Move{};
-        local.skip_move = Move{};
-
-
         //checking time-used
         if ((local.node_counter & 16383u) == 0u && getSystemTime() >= endTime) {
             timeOut = true;
@@ -332,10 +323,20 @@ namespace Search {
         }
 
 
+
+
+        local.best_score = -INFINITE;
+        local.alpha = alpha;
+        local.beta = beta;
+        local.ply = ply;
+        local.depth = depth;
+        local.prune = prune;
+        local.move = Move{};
+        local.skip_move = Move{};
+
         getMoves(local.board.getPosition(), local.liste);
         //checking win condition
         if (local.liste.isEmpty()) {
-            std::cout << "Test" << std::endl;
             return loss(ply);
         }
 
@@ -365,17 +366,17 @@ namespace Search {
             }*/
         }
         //probcut
-      /*  if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (10 * scalfac * local.depth);
-            Value newBeta = addSafe(local.beta, margin);
-            Depth newDepth = (local.depth * 40) / 100;
-            Line new_pv;
-            Value value = Search::search<type>(local, new_pv, newBeta, newBeta - 1, local.ply, newDepth, false);
-            if (value >= newBeta) {
-                value = addSafe(value, -margin);
-                return value;
-            }
-        }*/
+        /*  if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
+              Value margin = (10 * scalfac * local.depth);
+              Value newBeta = addSafe(local.beta, margin);
+              Depth newDepth = (local.depth * 40) / 100;
+              Line new_pv;
+              Value value = Search::search<type>(local, new_pv, newBeta, newBeta - 1, local.ply, newDepth, false);
+              if (value >= newBeta) {
+                  value = addSafe(value, -margin);
+                  return value;
+              }
+          }*/
 
 
         //jump extension
@@ -496,8 +497,10 @@ namespace Search {
               }*/
 
         Line new_pv;
+        local.board.makeMove(move);
         Value val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
                                           local.prune);
+        local.board.undoMove();
         /*  if (local.i==0) {
               //doing a full window search
               val = -Search::search<type>(local, new_pv, -local.beta, -local.alpha, local.ply + 1, new_depth,
@@ -530,16 +533,11 @@ namespace Search {
 
     template<NodeType type>
     void move_loop(Local &local, Line &line) {
-        //move-loop goes here
-        //skip-move and so on
         local.i = 0;
-        auto num_moves =local.liste.length();
+        auto num_moves = local.liste.length();
         while (local.best_score < local.beta && local.i < num_moves) {
-            std::cout << "Move" << std::endl;
             Move move = local.liste[local.i++];
-            local.board.makeMove(move);
             searchMove<type>(move, local, line);
-            local.board.undoMove();
         }
 
     }
@@ -551,6 +549,7 @@ namespace Search {
         //no quiescent search
         local.best_score = -INFINITE;
         local.alpha = alpha;
+        local.best_score=-INFINITE;
         local.beta = beta;
         local.ply = 0;
         local.depth = depth;
