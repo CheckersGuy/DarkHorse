@@ -179,8 +179,6 @@ struct Weights {
 
         constexpr int pawnEval = 100 * scalfac;
         const Color color = pos.getColor();
-        const uint32_t nKings = ~pos.K;
-
         const int WP = __builtin_popcount(pos.WP & (~pos.K));
         const int BP = __builtin_popcount(pos.BP & (~pos.K));
 

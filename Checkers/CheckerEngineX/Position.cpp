@@ -3,8 +3,8 @@
 #include "Zobrist.h"
 #include "iterator"
 
-std::vector<std::string> split_by(std::string input, char delim){
-    std::string output="";
+std::vector<std::string> split_by(std::string input, char delim) {
+    std::string output;
     std::vector<std::string> splits;
     for (char c : input) {
         if (c == delim) {
@@ -19,31 +19,47 @@ std::vector<std::string> split_by(std::string input, char delim){
 }
 
 Position Position::pos_from_fen(std::string fen_string) {
-
+    //we are assuming that fen_string is a valid pdn notation
     Position position;
-
     std::string output;
-    std::vector<std::string> splits=split_by(fen_string,':');
+    std::vector<std::string> splits = split_by(fen_string, ':');
 
     const std::string mover = splits[0];
 
-    if(mover == "W")
-        position.color =WHITE;
+    if (mover == "W")
+        position.color = WHITE;
     else
-        position.color =BLACK;
+        position.color = BLACK;
 
     const std::string white_tmp = splits[1];
-    const std::string black_tmp =splits[2];
+    const std::string black_tmp = splits[2];
 
-    std::vector<std::string> white_pieces = split_by(white_tmp,',');
-    std::vector<std::string> black_pieces = split_by(black_tmp,',');
+    std::vector<std::string> white_pieces = split_by(white_tmp, ',');
+    std::vector<std::string> black_pieces = split_by(black_tmp, ',');
 
-    //to be continued
+    for (auto piece : white_pieces) {
+        //this should be the square
+        auto index = piece.find_first_not_of("BWbwKk");
+        auto square_num = piece.substr(index, 2);
+        uint32_t s = std::stoi(square_num) - 1;
+        std::cout<<S[s]<<std::endl;
+        position.WP |= 1u <<  s;
+        if (piece.find('K') != std::string::npos) {
+            position.K |= 1u <<  s;
+        }
+    }
 
+    for (auto piece : black_pieces) {
+        //this should be the square
+        auto index = piece.find_first_not_of("BWbwKk");
+        auto square_num = piece.substr(index, 2);
+        uint32_t s = std::stoi(square_num) - 1;
+        position.BP |= 1u << s;
+        if (piece.find('K') != std::string::npos) {
+            position.K |= 1u << s;
+        }
+    }
 
-
-
-    std::copy(white_pieces.begin(),white_pieces.end(),std::ostream_iterator<std::string>(std::cout,"\n"));
 
     return position;
 }
@@ -61,10 +77,13 @@ std::string Position::get_fen_string() const {
 
     while (white_pieces) {
         auto square = __tzcnt_u32(white_pieces);
+        const uint32_t mask = 1u << square;
         if (((1u << square) & K))
-            stream << K;
+            stream << "K";
         square = S[square] + 1u;
-        stream << square << ",";
+        stream << square;
+        if ((white_pieces & (~mask)) != 0u)
+            stream << ",";
 
         white_pieces &= white_pieces - 1u;
     }
@@ -75,14 +94,17 @@ std::string Position::get_fen_string() const {
 
     while (black_pieces) {
         auto square = __tzcnt_u32(black_pieces);
+        const uint32_t mask = 1u << square;
         if (((1u << square) & K))
-            stream << K;
+            stream << "K";
         square = S[square] + 1;
-        stream << square << ",";
+        stream << square;
+        if ((black_pieces & (~mask)) != 0u)
+            stream << ",";
         black_pieces &= black_pieces - 1u;
     }
 
-    return stream.str().substr(0, stream.str().size() - 1);
+    return stream.str();
 }
 
 Position Position::getColorFlip() const {

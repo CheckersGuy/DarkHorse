@@ -42,26 +42,20 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     Board board;
-
-
-
 /*
-
     board = Position::getStartPosition();
-
-
 */
-/*
-    Position::pos_from_fen("W:WK12:BK4,K3");
-
-*//*
 
 
 
 
 
 
-    //board = posFromString("00034030000040000000000000100000B");
+    board = posFromString("00034030000040000000000000100000B");
+    board = Position::getStartPosition();
+    board = Position::pos_from_fen("W:W25:B4,3,22\"");
+    std::cout<<std::endl;
+    std::cout<<board.getPosition().get_fen_string()<<std::endl;
 
     Position test;
     test.color = BLACK;
@@ -86,7 +80,10 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
+
+
+
 
 
 
