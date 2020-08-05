@@ -137,9 +137,9 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         board.makeMove(moves.liste[i]);;
         Value value;
         if (i == 0) {
-            value = -quiescene<type>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
+            value = -quiescene<type>(board, -beta, -alpha, localPV, ply + 1);
         } else {
-            value = -quiescene<NONPV>(board, -beta, -std::max(alpha, bestValue), localPV, ply + 1);
+            value = -quiescene<NONPV>(board, -beta, -alpha, localPV, ply + 1);
         }
         board.undoMove();
         if (value > bestValue) {
@@ -148,6 +148,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
                 break;
 
             if (value > alpha) {
+                alpha=value;
                 pv.concat(moves[i], localPV);
             }
 
