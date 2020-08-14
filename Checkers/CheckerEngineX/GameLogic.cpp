@@ -319,6 +319,7 @@ namespace Search {
 
         //qs
         if (local.depth == 0) {
+            std::cout<<"Quiescent"<<std::endl;
             return 0;
         }
 
