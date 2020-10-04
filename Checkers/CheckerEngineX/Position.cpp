@@ -42,10 +42,10 @@ Position Position::pos_from_fen(std::string fen_string) {
         auto index = piece.find_first_not_of("BWbwKk");
         auto square_num = piece.substr(index, 2);
         uint32_t s = std::stoi(square_num) - 1;
-        std::cout<<S[s]<<std::endl;
-        position.WP |= 1u <<  s;
+        std::cout << S[s] << std::endl;
+        position.WP |= 1u << s;
         if (piece.find('K') != std::string::npos) {
-            position.K |= 1u <<  s;
+            position.K |= 1u << s;
         }
     }
 
@@ -80,7 +80,7 @@ std::string Position::get_fen_string() const {
         const uint32_t mask = 1u << square;
         if (((1u << square) & K))
             stream << "K";
-        square = S[square] + 1u;
+        square = square + 1u;
         stream << square;
         if ((white_pieces & (~mask)) != 0u)
             stream << ",";
@@ -97,7 +97,7 @@ std::string Position::get_fen_string() const {
         const uint32_t mask = 1u << square;
         if (((1u << square) & K))
             stream << "K";
-        square = S[square] + 1;
+        square = square + 1;
         stream << square;
         if ((black_pieces & (~mask)) != 0u)
             stream << ",";
