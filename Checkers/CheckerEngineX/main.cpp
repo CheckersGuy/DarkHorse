@@ -44,46 +44,23 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-/*
-
-
-    board = posFromString("00034030000040000000000000100000B");
-   */
-/* board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK14,25:BK3,K2,K17");*//*
-
-    std::cout<<std::endl;
-    std::cout<<board.getPosition().get_fen_string()<<std::endl;
-
-    Position test;
-    test.color = BLACK;
-    test.WP = 1u << S[29];
-    test.WP |= 1u << S[28];
-
-    test.BP = 1u << S[3];
-    test.BP |= 1u << S[23];
-
-
+    board = Position::getStartPosition();
+    board = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
 
     board.printBoard();
+
     std::cout << std::endl;
+    std::cout << board.getPosition().get_fen_string() << std::endl;
 
 
     initialize();
     std::cout << "non-zero-weights: " << gameWeights.numNonZeroValues() << std::endl;
-    setHashSize(25);
+    setHashSize(23);
 
     Move best;
     searchValue(board, best, MAX_PLY, 30000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
-*/
-
 
 
     std::string current;
