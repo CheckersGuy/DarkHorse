@@ -3,21 +3,22 @@
 //
 
 #include "MovePicker.h"
+
 namespace Statistics {
 
 
     MovePicker mPicker;
 
     void MovePicker::clearScores() {
-        std::fill(bfScore.begin(),bfScore.end(),0);
-        std::fill(history.begin(),history.end(),0);
+        std::fill(bfScore.begin(), bfScore.end(), 0);
+        std::fill(history.begin(), history.end(), 0);
     }
 
     int MovePicker::getMoveScore(Move move, Color color) {
         const int colorIndex = (color + 1) / 2;
-        const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
+        const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] + 1;
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
-        const int score = (bScore == 0) ? 0 : ((hhScore / bScore));
+        const int score = hhScore / bScore;
         return score;
     }
 
@@ -28,21 +29,16 @@ namespace Statistics {
         return getMoveScore(move, color);
     }
 
-    void MovePicker::updateHHScore(Move move, Color color, int depth) {
-        const int colorIndex = (color + 1) / 2;
-        history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
-    }
-
-    void MovePicker::updateBFScore(Move* liste, int moveIndex, Color color, int depth) {
-        const int colorIndex = (color + 1) / 2;
-        for (auto i = 0; i < moveIndex; ++i) {
-            bfScore[32 * 32 * colorIndex + 32 * liste[i].getToIndex() + liste[i].getFromIndex()] += depth;
-        }
-    }
 
     void MovePicker::update_scores(Move *list, int move_index, Color color, int depth) {
-        Statistics::mPicker.updateHHScore(list[move_index], color, depth);
-        Statistics::mPicker.updateBFScore(list, move_index, color, depth);
+        const int colorIndex = (color + 1) / 2;
+        const Move move = list[move_index];
+        history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth*depth ;
+
+        for (auto i = 0; i < move_index; ++i) {
+            bfScore[32 * 32 * colorIndex + 32 * list[i].getToIndex() + list[i].getFromIndex()] += depth*depth;
+        }
+
     }
 
 }

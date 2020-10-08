@@ -294,7 +294,7 @@ void Match::start() {
 
     std::cout << "OpeningBook: " << openingBook << std::endl;
     std::cout << "Number of Positions: " << positions.positions_size() << std::endl;
-    std::cout<<"Output_File: "<<output_file<<std::endl;
+    std::cout << "Output_File: " << output_file << std::endl;
     std::vector<std::string> engine_paths{first, second};
 
 
@@ -432,8 +432,8 @@ void Match::start() {
     }
     Logger::get_instance().turn_off();
     std::ofstream stream(this->output_file);
-    if(!stream.good())
-        std::cerr<<"Could not save the training-data"<<std::endl;
+    if (!stream.good())
+        std::cerr << "Could not save the training-data" << std::endl;
     data.SerializeToOstream(&stream);
     stream.close();
     std::cout << "Finished the match" << std::endl;

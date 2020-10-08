@@ -29,7 +29,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("checkers7.weights");
+    gameWeights.loadWeights<uint32_t>("checkers8.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -38,11 +38,12 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
+
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-    return searchValue(board,-INFINITE,INFINITE,best,depth,time,print);
+    return searchValue(board, -INFINITE, INFINITE, best, depth, time, print);
 }
 
-Value searchValue(Board &board,Value alpha,Value beta, Move &best, int depth, uint32_t time, bool print) {
+Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -148,7 +149,7 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
                 break;
 
             if (value > alpha) {
-                alpha=value;
+                alpha = value;
                 pv.concat(moves[i], localPV);
             }
 
@@ -276,7 +277,6 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             if (value >= beta) {
                 if (sucessors.length() > 1u)
                     Statistics::mPicker.update_scores(&sucessors[0], i, board.getMover(), depth);
-
                 break;
             }
 
@@ -407,8 +407,7 @@ namespace Search {
         //updating search stats
         if (local.best_score >= local.beta) {
             if (liste.length() > 1) {
-                Statistics::mPicker.updateHHScore(local.move, local.board.getMover(), local.depth);
-                Statistics::mPicker.updateBFScore(liste.liste.begin(), local.i, local.board.getMover(),
+                Statistics::mPicker.update_scores(liste.liste.begin(), local.i, local.board.getMover(),
                                                   local.depth);
             }
         }

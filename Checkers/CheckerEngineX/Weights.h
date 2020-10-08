@@ -22,7 +22,6 @@ constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 namespace fs = std::filesystem;
 
 
-
 inline bool is_root_user();
 
 
@@ -111,10 +110,10 @@ struct Weights {
         auto w_direc = has_directory(home_path, "CWeights");
         if (!w_direc.has_value()) {
             const fs::path tmp_path("/tmp");
-            w_direc = has_directory(tmp_path,"CWeights");
+            w_direc = has_directory(tmp_path, "CWeights");
         }
-        if(!w_direc.has_value()){
-            std::cerr<<"Could not find the weights_folder"<<std::endl;
+        if (!w_direc.has_value()) {
+            std::cerr << "Could not find the weights_folder" << std::endl;
             return;
         }
         auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
@@ -126,7 +125,7 @@ struct Weights {
 
         std::ifstream stream(path_string, std::ios::binary);
         if (!stream.good()) {
-            std::cerr<<"Error"<<std::endl;
+            std::cerr << "Error" << std::endl;
             return;
         }
         using DataType = double;

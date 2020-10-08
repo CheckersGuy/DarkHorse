@@ -53,6 +53,7 @@ int main(int argl, const char **argc) {
 
 
 
+
     std::cout << "Starting Match" << std::endl;
     std::cout << "Parallelism: " << std::endl;
     int threads;
@@ -61,7 +62,7 @@ int main(int argl, const char **argc) {
     int max_games;
     std::cin >> max_games;
 
-    Match engine_match("dumbmaybe", "narrowasp", "../Training/TrainData/output_file");
+    Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(max_games);
     engine_match.setNumThreads(threads);
@@ -73,18 +74,22 @@ int main(int argl, const char **argc) {
 
 
 
+
+
 /*
 
-    Match engine_match("test4", "test3", "match_file");
+    Match engine_match("testx1", "test4", "match_file");
     engine_match.setTime(100);
-    engine_match.setMaxGames(20000);
+    engine_match.setMaxGames(50000);
     engine_match.setNumThreads(12);
     engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();
+
+
+
+
 */
-
-
 
 
 
@@ -101,6 +106,7 @@ int main(int argl, const char **argc) {
        //0.197482
        auto loss = trainer.calculateLoss();
        std::cout << "Loss: " << loss << std::endl;
+
 */
 
 
