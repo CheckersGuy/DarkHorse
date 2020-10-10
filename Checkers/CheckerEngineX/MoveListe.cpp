@@ -14,6 +14,10 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 }
 
 void MoveListe::help_sort(int start_index) {
+
+    if (liste.size() <= 1)
+        return;
+
     for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
