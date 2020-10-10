@@ -145,12 +145,12 @@ Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply) {
         board.undoMove();
         if (value > bestValue) {
             bestValue = value;
+            pv.concat(moves[i], localPV);
             if (value >= beta)
                 break;
 
             if (value > alpha) {
                 alpha = value;
-                pv.concat(moves[i], localPV);
             }
 
         }
@@ -206,16 +206,18 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
     }
 #endif
 
+
     if (!inPVLine && prune && depth >= 3 && isEval(beta)) {
         Value margin = (10 * scalfac * depth);
-        Value newBeta = addSafe(beta, margin);
+        Value newBeta = addSafe(beta,margin);
         int newDepth = (depth * 40) / 100;
         Line local;
         Value value = alphaBeta<type>(board, newBeta - 1, newBeta, local, ply, newDepth, false);
         if (value >= newBeta) {
-            value = addSafe(value, -margin);
+            value = addSafe(value,-margin);
             return value;
         }
+        pv = local;
     }
 
 
@@ -260,7 +262,7 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
             if (depth >= 2 && !sucessors[i].isCapture() && i > ((inPVLine) ? 3 : 1) &&
                 !is_promotion) {
                 reduce = 1;
-                if (i >= 4 && depth > 2) {
+                if (i >= 4 && depth >2) {
                     reduce = 2;
                 }
             }
@@ -274,18 +276,15 @@ alphaBeta(Board &board, Value alpha, Value beta, Line &pv, int ply, int depth, b
         if (value > bestValue) {
             bestValue = value;
             bestMove = sucessors[i];
+            pv.concat(bestMove, localPV);
             if (value >= beta) {
-                if (sucessors.length() > 1u)
-                    Statistics::mPicker.update_scores(&sucessors[0], i, board.getMover(), depth);
+                Statistics::mPicker.update_scores(&sucessors[0], i, board.getMover(), depth);
                 break;
             }
 
             if (value > alpha) {
-                pv.concat(bestMove, localPV);
                 alpha = bestValue;
             }
-
-
         }
     }
 #ifndef TRAIN
