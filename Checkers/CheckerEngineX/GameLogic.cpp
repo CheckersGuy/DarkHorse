@@ -321,7 +321,6 @@ namespace Search {
             //return Search::qs<type>(local, pv, alpha, beta, ply)
             return 0;
         }
-        local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
@@ -329,11 +328,12 @@ namespace Search {
         local.prune = prune;
         local.move = Move{};
         local.skip_move = Move{};
-        local.pv_line.clear();
 
-        getMoves(local.board.getPosition(), local.liste);
+        MoveListe liste;
+
+        getMoves(local.board.getPosition(), liste);
         //checking win condition
-        if (local.liste.isEmpty()) {
+        if (liste.isEmpty()) {
             return loss(ply);
         }
 
@@ -377,7 +377,7 @@ namespace Search {
 
 
         //single move extension
-        if (local.liste.length() == 1) {
+        if (liste.length() == 1) {
             //local.depth++;
         }
 
@@ -385,7 +385,10 @@ namespace Search {
         //local.liste.sort(info.move, in_pv_line, local.board.getMover());
 
         //move-loop
-        Search::move_loop<type>(local);
+        Search::move_loop<type>(local, pv, liste);
+
+
+
 
         //updating search stats
         /*     if (local.best_score >= local.beta) {
@@ -406,7 +409,6 @@ namespace Search {
             TT.storeHash(tt_value, local.board.getPosition(), TT_EXACT, depth, local.move);
         }
 
-        pv = local.pv_line;
         return local.best_score;
     }
 
@@ -521,30 +523,20 @@ namespace Search {
     }
 
     template<NodeType type>
-    void move_loop(Local &local) {
+    void move_loop(Local &local, Line &pv, MoveListe &liste) {
+        Value bestValue=-INFINITE;
         local.i = 0;
-        auto num_moves = local.liste.length();
-        while (local.i < num_moves) {
-            Move move = local.liste[local.i];
+        const auto num_moves = liste.length();
+        while (local.best_score < local.beta && local.i < num_moves) {
+            Move move = liste[local.i];
             Line local_pv;
             Value value = searchMove<type>(move, local, local_pv);
-
-            //need to update if there wasn't a fail high
-            if (value > local.best_score) {
-                local.best_score = value;
+            if (value > bestValue) {
+                bestValue = value;
                 local.move = move;
-                if (value >= local.beta) {
-                    if (local.liste.length() > 1u)
-                        Statistics::mPicker.update_scores(&local.liste[0], local.i, local.board.getMover(),
-                                                          local.depth);
-
-                    break;
-                }
-
+                pv.concat(move, local_pv);
                 if (value > local.alpha) {
-                    std::cout<<"From: "<<local.move.getFromIndex()<<std::endl;
-                    local.pv_line.concat(move, local_pv);
-                    local.alpha = local.best_score;
+                    local.alpha = bestValue;
                 }
 
 
@@ -558,7 +550,6 @@ namespace Search {
 
 
     void search_root(Local &local, Value alpha, Value beta, Depth depth) {
-        local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = 0;
@@ -575,9 +566,9 @@ namespace Search {
 
         //other things will go here too
 
-
-        getMoves(local.board.getPosition(), local.liste);
-        move_loop<PVNode>(local);
+        MoveListe liste;
+        getMoves(local.board.getPosition(), liste);
+        move_loop<PVNode>(local, local.pv_line, liste);
 
     }
 
