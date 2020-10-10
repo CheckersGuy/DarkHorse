@@ -34,6 +34,8 @@ public:
 
     bool operator!=(const Line &other) const;
 
+    Line& operator=(const Line& other);
+
     const Move &operator[](int index) const;
 
     Move &operator[](int index);
