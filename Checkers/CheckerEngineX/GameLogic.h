@@ -45,10 +45,10 @@ namespace Search {
     Value search(Local &local,Line& line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
 
     template<NodeType type>
-    void move_loop(Local &local, Line& line);
+    void move_loop(Local &local);
 
     template<NodeType type>
-    Value qs(Local &local, Line& line, Ply ply);
+    Value qs( Local& local,Line& pv,Value alpha, Value beta, Ply ply);
 
     template<NodeType type>
     Value searchMove(Move move, Local &local, Line& line);

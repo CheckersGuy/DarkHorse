@@ -36,6 +36,8 @@ public:
 
     const Move &operator[](int index) const;
 
+    Line& operator =(const Line& other);
+
     Move &operator[](int index);
 
     auto begin();
