@@ -32,6 +32,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
+/*
     board = Position::getStartPosition();
     //board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
@@ -47,8 +48,9 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-
+*/
     std::string current;
+
 
 
     while (std::cin >> current) {
