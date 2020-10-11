@@ -79,7 +79,7 @@ int main(int argl, const char **argc) {
 
 
     Match engine_match("test_new", "testx1", "match_file");
-    engine_match.setTime(100);
+    engine_match.setTime(300);
     engine_match.setMaxGames(50000);
     engine_match.setNumThreads(6);
     engine_match.setHashSize(22);
