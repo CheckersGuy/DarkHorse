@@ -52,6 +52,7 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
     std::cout << "Starting Match" << std::endl;
     std::cout << "Parallelism: " << std::endl;
@@ -69,20 +70,21 @@ int main(int argl, const char **argc) {
     engine_match.set_play_reverse(false);
     engine_match.start();
 
+*/
 
 
 
 
-/*
 
-    Match engine_match("test4", "test3", "match_file");
+
+    Match engine_match("test_new", "test3", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(12);
     engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();
-*/
+
 
 
 
