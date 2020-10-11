@@ -29,7 +29,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("checkers7.weights");
+    gameWeights.loadWeights<uint32_t>("checkers8.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -48,17 +48,14 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
     nodeCounter = 0;
     mainPV.clear();
     TT.clear();
-    timeOut = false;
     endTime = getSystemTime() + time;
     int i = 1;
-    Value value;
-    Value eval = DRAW;
-
+    Value eval = -INFINITE-1;
     Local local;
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
-        Search::search_root(local, new_pv, board, alpha, beta, i);
-        if (timeOut)
+        Search::search_asp(local, new_pv, board,eval, i);
+        if (!isEval(local.best_score))
             break;
 
         eval = local.best_score;
@@ -102,8 +99,7 @@ namespace Search {
         pv.clear();
         //checking time-used
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-            timeOut = true;
-            return 0;
+            return -board.getMover() * TIME_OUT;
         }
         //Repetition check
         if (ply > 0 && board.isRepetition()) {
@@ -293,7 +289,6 @@ namespace Search {
                       extension = 1;
               }*/
 
-        board.makeMove(move);
         Value val;
         if (local.i == 0) {
             val = -Search::search<type>(board, line, -local.beta, -local.alpha, local.ply + 1, new_depth,
@@ -306,7 +301,6 @@ namespace Search {
                                              local.prune);
             }
         }
-        board.undoMove();
         return val;
 
     }
@@ -318,7 +312,9 @@ namespace Search {
         while (local.best_score < local.beta && local.i < num_moves) {
             Move move = liste[local.i];
             Line local_pv;
+            board.makeMove(move);
             Value value = searchMove<type>(move, local, board, local_pv);
+            board.undoMove();
             if (value > local.best_score) {
                 local.best_score = value;
                 local.move = move;
@@ -335,7 +331,8 @@ namespace Search {
     }
 
 
-    void search_root(Local &local,Line&line, Board &board, Value alpha, Value beta, Depth depth) {
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {
+        line.clear();
         local.best_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
@@ -353,7 +350,67 @@ namespace Search {
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
+        liste.putFront(mainPV[0]);
+        liste.sort(Move{}, true, board.getMover());
         move_loop<PVNode>(local, board, line, liste);
+
+    }
+
+    void search_asp(Local &local, Line &line, Value last_score, Board &board, Depth depth) {
+        if (depth >= 3 && isEval(last_score)) {
+            Value margin = 10 * scalfac;
+            Value alpha_margin = margin;
+            Value beta_margin = margin;
+
+            while (std::max(alpha_margin, beta_margin) < 100 * scalfac) {
+                Value alpha = last_score - alpha_margin;
+                Value beta = last_score + beta_margin;
+
+                search_root(local, line, board, alpha, beta, depth);
+
+                Value score = local.best_score;
+                if (!isEval(score)) {
+                    break;
+                } else if (score <= alpha) {
+                    alpha_margin *= 2;
+                } else if (score >= beta) {
+                    beta_margin *= 2;
+                } else {
+                    return;
+                }
+            }
+        }
+
+        search_root(local, line, board, -INFINITE, INFINITE, depth);
+
+    }
+
+    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth) {
+        if (depth >= 5 && isEval(last_score)) {
+            Value margin = 10 * scalfac;
+            Value alpha_margin = margin;
+            Value beta_margin = margin;
+
+            while (std::max(alpha_margin, beta_margin) < 200 * scalfac) {
+                Value alpha = last_score - alpha_margin;
+                Value beta = last_score + beta_margin;
+
+                search_root(local, line, board, alpha, beta, depth);
+
+                Value score = local.best_score;
+                if (!isEval(score)) {
+                    break;
+                } else if (score <= alpha) {
+                    alpha_margin *= 2;
+                } else if (score >= beta) {
+                    beta_margin *= 2;
+                } else {
+                    return;
+                }
+            }
+        }
+
+        search_root(local, line, board, -INFINITE, INFINITE, depth);
 
     }
 

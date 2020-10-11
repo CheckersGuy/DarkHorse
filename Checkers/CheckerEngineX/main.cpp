@@ -1,20 +1,9 @@
 #include <vector>
-#include <future>
 #include <bitset>
-#include <map>
 #include "Transposition.h"
 #include "GameLogic.h"
-#include <list>
 #include <iterator>
-#include <algorithm>
 #include "Perft.h"
-#include  <sys/types.h>
-#include <sys/wait.h>
-#include  <sys/types.h>
-#include <unistd.h>
-#include "fcntl.h"
-#include <regex>
-
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -54,7 +43,7 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board, best, 20, 30000000, true);
+    searchValue(board, best, 20, 200000, true);
     board.makeMove(best);
     board.printBoard();
 

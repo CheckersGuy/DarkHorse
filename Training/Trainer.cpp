@@ -76,7 +76,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
         return;
 
     Line local;
-    Value qStatic = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
+    Value qStatic = Search::qs<NONPV>(board,local, -INFINITE, INFINITE, 0);
     if (isWin(qStatic))
         return;
     auto mover = static_cast<double>(board.getPosition().getColor());
@@ -177,7 +177,8 @@ double Trainer::calculateLoss() {
         double current = getWinValue(pos.result());
         auto color = static_cast<double>(board.getPosition().getColor());
         Line local;
-        double quiesc = color * static_cast<double>(quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0));
+        double quiesc = color * static_cast<double>(Search::qs<NONPV>(board,local, -INFINITE, INFINITE, 0)
+        );
         current = current - sigmoid(cValue, quiesc);
         current = current * current;
         return current;
@@ -193,7 +194,7 @@ double Trainer::calculateLoss() {
 double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t index, double offset) {
     weights[index] += offset;
     Line local;
-    Value qDiff = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0);
+    Value qDiff = Search::qs<NONPV>(board,local, -INFINITE, INFINITE, 0);
     weights[index] -= offset;
     auto qDiffValue = static_cast<double>(qDiff);
 
