@@ -33,10 +33,10 @@ namespace Statistics {
     void MovePicker::update_scores(Move *list, int move_index, Color color, int depth) {
         const int colorIndex = (color + 1) / 2;
         const Move move = list[move_index];
-        history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth*depth;
+        history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
 
-        for (auto i = 1; i < move_index; ++i) {
-            bfScore[32 * 32 * colorIndex + 32 * list[i].getToIndex() + list[i].getFromIndex()] += depth*depth;
+        for (auto i = 0; i < move_index; ++i) {
+            bfScore[32 * 32 * colorIndex + 32 * list[i].getToIndex() + list[i].getFromIndex()] += depth * depth;
         }
 
     }
