@@ -54,7 +54,7 @@ enum Score : int {
     LOSS = -1550000,
     INFINITE = 15000000,
     INVALID = 10000000,
-    TIME_OUT = 2 * INFINITE,
+    TIME_OUT = INFINITE-1,
     DRAW = 0
 };
 enum SEARCH : int {

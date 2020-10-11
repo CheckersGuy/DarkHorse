@@ -55,7 +55,7 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
         Search::search_asp(local, new_pv, board, eval, i);
-        if (!isEval(local.best_score))
+        if (std::abs(local.best_score) == TIME_OUT)
             break;
 
         eval = local.best_score;
@@ -99,7 +99,7 @@ namespace Search {
         pv.clear();
         //checking time-used
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-            return -board.getMover() * TIME_OUT;
+            return board.getMover() * TIME_OUT;
         }
         //Repetition check
         if (ply > 0 && board.isRepetition()) {
@@ -289,6 +289,7 @@ namespace Search {
                       extension = 1;
               }*/
 
+        board.makeMove(move);
         Value val;
         if (local.i == 0) {
             val = -Search::search<type>(board, line, -local.beta, -local.alpha, local.ply + 1, new_depth,
@@ -301,6 +302,7 @@ namespace Search {
                                              local.prune);
             }
         }
+        board.undoMove();
         return val;
 
     }
@@ -309,21 +311,22 @@ namespace Search {
     void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste) {
         local.i = 0;
         const auto num_moves = liste.length();
-        while (local.best_score < local.beta && local.i < num_moves) {
+        while (local.i < num_moves) {
             Move move = liste[local.i];
             Line local_pv;
-            board.makeMove(move);
             Value value = searchMove<type>(move, local, board, local_pv);
-            board.undoMove();
             if (value > local.best_score) {
                 local.best_score = value;
                 local.move = move;
                 pv.concat(move, local_pv);
+
+                if(value>=local.beta){
+                    break;
+                }
                 if (value > local.alpha) {
                     local.alpha = local.best_score;
                 }
             }
-
 
             local.i++;
         }
@@ -354,11 +357,14 @@ namespace Search {
         liste.sort(Move{}, true, board.getMover());
         move_loop<PVNode>(local, board, line, liste);
 
+        if(local.best_score==TIME_OUT)
+            std::cout<<"TEST"<<std::endl;
+
     }
 
-    void search_asp(Local &local, Line &line, Value last_score, Board &board, Depth depth) {
-        if (depth >= 3 && isEval(last_score)) {
-            Value margin = 10 * scalfac;
+    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth) {
+        if (depth >= 5 && isEval(last_score)) {
+            Value margin = 7 * scalfac;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
@@ -369,36 +375,7 @@ namespace Search {
                 search_root(local, line, board, alpha, beta, depth);
 
                 Value score = local.best_score;
-                if (!isEval(score)) {
-                    break;
-                } else if (score <= alpha) {
-                    alpha_margin *= 2;
-                } else if (score >= beta) {
-                    beta_margin *= 2;
-                } else {
-                    return;
-                }
-            }
-        }
-
-        search_root(local, line, board, -INFINITE, INFINITE, depth);
-
-    }
-
-    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth) {
-        if (depth >= 5 && isEval(last_score)) {
-            Value margin = 10 * scalfac;
-            Value alpha_margin = margin;
-            Value beta_margin = margin;
-
-            while (std::max(alpha_margin, beta_margin) < 200 * scalfac) {
-                Value alpha = last_score - alpha_margin;
-                Value beta = last_score + beta_margin;
-
-                search_root(local, line, board, alpha, beta, depth);
-
-                Value score = local.best_score;
-                if (!isEval(score)) {
+                if (std::abs(score)== TIME_OUT) {
                     break;
                 } else if (score <= alpha) {
                     alpha_margin *= 2;
