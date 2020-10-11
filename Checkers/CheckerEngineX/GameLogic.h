@@ -17,11 +17,12 @@
 #include <iterator>
 
 struct Local {
+
+
     uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
     Value sing_score;
-    Line pv_line;
     Depth depth;
     Ply ply;
     int i;
@@ -29,30 +30,29 @@ struct Local {
     Move sing_move;
     Move move;
     bool prune{false};
-    Board board;
 };
 
 namespace Search {
 
-    void search_root(Local &local, Value alpha, Value beta, Depth depth);
+    void search_root(Local &local,Line&line, Board &board, Value alpha, Value beta, Depth depth);
 
     //aspiration search
 
 
 
     template<NodeType type>
-    Value search(Local &local, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
+    Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
 
     template<NodeType type>
-    void move_loop(Local &local, Line &pv, MoveListe &liste);
+    void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
 
     template<NodeType type>
-    Value qs(Local &local, Line &pv, Value alpha, Value beta, Ply ply);
+    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply);
 
     template<NodeType type>
-    Value searchMove(Move move, Local &local, Line &line);
+    Value searchMove(Move move, Local &local, Board &board, Line &line);
 
-    Depth reduce(Local &local, Move move, bool in_pv_line);
+    Depth reduce(Local &local, Board &board, Move move, bool in_pv_line);
 
 }
 
