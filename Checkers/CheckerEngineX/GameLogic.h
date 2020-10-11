@@ -36,9 +36,7 @@ namespace Search {
 
     void search_root(Local &local,Line&line, Board &board, Value alpha, Value beta, Depth depth);
 
-    //aspiration search
-
-
+    void search_asp(Local &local,Line&line, Board &board,Value last_score,Depth depth);
 
     template<NodeType type>
     Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
@@ -58,12 +56,6 @@ namespace Search {
 
 
 void setHashSize(uint32_t hash);
-
-template<NodeType type>
-Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply);
-
-template<NodeType type>
-Value alphaBeta(Board &board, Value alpha, Value beta, Line &localPV, int ply, int depth, bool prune);
 
 Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print);
 

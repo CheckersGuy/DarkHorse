@@ -16,9 +16,9 @@ namespace Statistics {
 
     int MovePicker::getMoveScore(Move move, Color color) {
         const int colorIndex = (color + 1) / 2;
-        const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
+        const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] + 1;
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
-        const int score = (bScore == 0) ? 0 : ((hhScore / bScore));
+        const int score = hhScore / bScore;
         return score;
     }
 

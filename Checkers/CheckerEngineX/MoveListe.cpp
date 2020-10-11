@@ -45,21 +45,6 @@ MoveListe &MoveListe::operator=(const MoveListe &other) {
 }
 
 void MoveListe::sort_static(Color mover, const Position &pos, const Move &ttMove) {
-    for (auto i = 0; i < moveCounter; ++i) {
-        Position copy = pos;
-        copy.makeMove(liste[i]);
-        Board board;
-        board = copy;
 
-        auto eval = Statistics::mPicker.getMoveScore(liste[i], mover, ttMove);
-        Line local;
-        auto score = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0) / scalfac;
-
-        eval += score;
-
-        scores[i] = eval;
-    }
-    auto start_index = 1;
-    help_sort(start_index);
 
 }
