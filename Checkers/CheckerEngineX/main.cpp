@@ -54,7 +54,7 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board, best, 3, 30000000, true);
+    searchValue(board, best, 20, 30000000, true);
     board.makeMove(best);
     board.printBoard();
 

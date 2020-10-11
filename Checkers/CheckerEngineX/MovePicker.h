@@ -22,11 +22,7 @@ namespace Statistics {
 
         void clearScores();
 
-        void updateHHScore(Move move, Color color, int depth);
-
-        void updateBFScore(Move* list, int moveIndex, Color color, int depth);
-
-        void update_scores(Move* list, int move_index,Color color, int depth);
+        void update_scores(Move* list, Move move,Color color, int depth);
 
     };
 
