@@ -78,7 +78,7 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("blobby", "testx1", "match_file");
+    Match engine_match("test_new", "testx1", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(50000);
     engine_match.setNumThreads(6);
