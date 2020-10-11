@@ -50,11 +50,11 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
     TT.clear();
     endTime = getSystemTime() + time;
     int i = 1;
-    Value eval = -INFINITE-1;
+    Value eval = -INFINITE - 1;
     Local local;
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
-        Search::search_asp(local, new_pv, board,eval, i);
+        Search::search_asp(local, new_pv, board, eval, i);
         if (!isEval(local.best_score))
             break;
 
@@ -280,7 +280,7 @@ namespace Search {
 
         /*      if (local.skip_move.isEmpty() && extension == 0 && local.depth >= 8 && move == local.sing_move) {
                   //there will be some other conditions added
-                  constexpr Value margin = 40;
+                  constexpr Value margin = 40*scalfac;
                   Value new_alpha = local.sing_score - margin;
                   Line new_pv;
                   Value value = Search::search<type>(local, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4,
