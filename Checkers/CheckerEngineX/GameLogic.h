@@ -48,7 +48,7 @@ namespace Search {
     Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply);
 
     template<NodeType type>
-    Value searchMove(Move move, Local &local, Board &board, Line &line);
+    Value searchMove(Move move, Local &local, Board &board, Line &line,int extension);
 
     Depth reduce(Local &local, Board &board, Move move, bool in_pv_line);
 
