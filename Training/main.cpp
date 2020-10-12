@@ -78,11 +78,11 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("test_new", "testx1", "match_file");
-    engine_match.setTime(300);
+    Match engine_match("testx1", "test_new", "match_file");
+    engine_match.setTime(500);
     engine_match.setMaxGames(50000);
-    engine_match.setNumThreads(6);
-    engine_match.setHashSize(22);
+    engine_match.setNumThreads(12);
+    engine_match.setHashSize(24);
     engine_match.set_play_reverse(true);
     engine_match.start();
 
