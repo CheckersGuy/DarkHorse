@@ -46,6 +46,7 @@ int main(int argl, const char **argc) {
 
     board = Position::getStartPosition();
     board = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
+
     board = Position::getStartPosition();
 
     board.printBoard();
