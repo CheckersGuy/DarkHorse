@@ -72,7 +72,7 @@ enum Flag : uint8_t {
 
 
 inline bool isInRange(Value val, Value a, Value b) {
-    return val >= a && val <= b;
+    return val > a && val < b;
 }
 
 inline bool isEval(Value val) {
