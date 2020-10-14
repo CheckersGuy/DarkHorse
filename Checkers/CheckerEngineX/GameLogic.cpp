@@ -379,17 +379,17 @@ namespace Search {
             }*/
         }
         //probcut
-        if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (10 * scalfac * local.depth);
+    /*    if (!in_pv_line && local.prune && local.depth >= 3 && isEval(local.beta)) {
+            Value margin = ( 10*scalfac * local.depth);
             Value newBeta = addSafe(local.beta, margin);
             Depth newDepth = (local.depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search<type>(local, new_pv, newBeta, newBeta - 1, local.ply, newDepth, false);
+            Value value = Search::search<type>(local, new_pv, newBeta-1, newBeta, local.ply, newDepth, false);
             if (value >= newBeta) {
                 value = addSafe(value, -margin);
                 return value;
             }
-        }
+        }*/
 
         //move-loop
 
