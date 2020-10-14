@@ -220,10 +220,10 @@ namespace Search {
                 return loss(ply);
             }
             //loss-distance pruning
-            /*    if (loss(ply + 2) >= beta) {
+                if (loss(ply + 2) >= beta) {
                     return loss(ply + 2);
                 }
-    */
+    
             //threat-detection -> 1 ply search
             if (board.getPosition().hasThreat()) {
                 return Search::search<type>(board, pv, alpha, beta, ply, 1,
@@ -275,18 +275,23 @@ namespace Search {
 
         //singular move extension
 
-        if (local.skip_move.isEmpty() && extension == 0 && local.depth >= 8 && move == local.sing_move) {
+        if (local.skip_move.isEmpty() && extension == 0 && local.depth >= 7 && move == local.sing_move) {
             //there will be some other conditions added
             constexpr Value margin = 40 * scalfac;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search<type>(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4,
                                                local.prune);
+
+          
+
             if (value <= local.alpha)
                 extension = 1;
+
+                line = new_pv;
         }
 
-        Depth new_depth = local.depth - 1;
+        Depth new_depth = local.depth - 1+extension;
 
         Value new_alpha = std::max(local.alpha, local.best_score);
 

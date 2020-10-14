@@ -33,7 +33,7 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-/*
+
 
     board = Position::getStartPosition();
     board = posFromString("00034030000040000000000000100000B");
@@ -46,10 +46,10 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board, best, 128, 200000, true);
+    searchValue(board, best, 128, 20, true);
     board.makeMove(best);
     board.printBoard();
-*/
+
 
 
 
