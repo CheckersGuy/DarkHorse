@@ -49,13 +49,9 @@ enum NodeType {
 };
 
 enum Score : int {
-
-    WIN = 1550000,
-    LOSS = -1550000,
-    INFINITE = 15000000,
-    INVALID = 10000000,
-    TIME_OUT = INFINITE-1,
-    DRAW = 0
+    INFINITE = 150000,
+    EVAL_INFINITE = INFINITE - 4000,
+    NONE = -INFINITE - 1,
 };
 enum SEARCH : int {
     MAX_PLY = 128
@@ -71,16 +67,12 @@ enum Flag : uint8_t {
 };
 
 
-inline bool isInRange(Value val, Value a, Value b) {
-    return val > a && val < b;
-}
-
 inline bool isEval(Value val) {
-    return isInRange(val, -INFINITE, INFINITE);
+    return std::abs(val) <= EVAL_INFINITE;
 }
 
 inline Value loss(int ply) {
-    return LOSS + ply;
+    return -INFINITE + ply;
 }
 
 constexpr Color operator~(Color color) {
@@ -88,11 +80,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val - MAX_PLY <= LOSS;
+    return val <= -INFINITE;
 }
 
 inline bool isWin(Value val) {
-    return val + MAX_PLY >= WIN;
+    return val  >= INFINITE;
 }
 
 inline Value valueFromTT(Value val, int ply) {
@@ -116,9 +108,9 @@ inline Value toTT(Value val, int ply) {
 
 inline Value clampScore(Value val) {
     if (isLoss(val)) {
-        return LOSS;
+        return -INFINITE;
     } else if (isWin(val)) {
-        return WIN;
+        return INFINITE;
     }
     return val;
 }

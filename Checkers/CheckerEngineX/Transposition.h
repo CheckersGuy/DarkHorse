@@ -58,7 +58,7 @@ public:
 
     void storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, Move move);
 
-    bool findHash(const Position &pos, NodeInfo &info);
+    bool findHash(uint64_t key, NodeInfo &info);
 };
 
 

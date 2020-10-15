@@ -30,25 +30,23 @@ struct Local {
     Move sing_move;
     Move move;
     bool prune{false};
+    bool pv_node;
 };
 
 namespace Search {
 
-    void search_root(Local &local,Line&line, Board &board, Value alpha, Value beta, Depth depth);
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);
 
-    void search_asp(Local &local,Line&line, Board &board,Value last_score,Depth depth);
+    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth);
 
-    template<NodeType type>
-    Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
+    Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune);
 
-    template<NodeType type>
     void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
 
-    template<NodeType type>
+
     Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply);
 
-    template<NodeType type>
-    Value searchMove(Move move, Local &local, Board &board, Line &line,int extension);
+    Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
 
     Depth reduce(Local &local, Board &board, Move move, bool in_pv_line);
 
