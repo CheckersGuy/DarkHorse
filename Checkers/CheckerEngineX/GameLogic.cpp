@@ -50,12 +50,12 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
     TT.clear();
     endTime = getSystemTime() + time;
     int i = 1;
-    Value eval = -INFINITE - 1;
+    Value eval = NONE;
     Local local;
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
         Search::search_asp(local, new_pv, board, eval, i);
-        if (std::abs(local.best_score) == TIME_OUT)
+        if (!isEval(local.best_score))
             break;
 
         eval = local.best_score;
@@ -80,12 +80,12 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
 
 namespace Search {
 
-    Depth reduce(Local &local, Board &board, Move move, bool in_pv_line) {
+    Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
         const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((in_pv_line) ? 3 : 1)) {
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = 1;
-            if (!in_pv_line && local.i >= 4 && local.depth > 2) {
+            if (!local.pv_node && local.i >= 4) {
                 red = 2;
             }
         }
@@ -93,141 +93,165 @@ namespace Search {
     }
 
 
-    template<NodeType type>
-    Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, bool prune) {
-        constexpr bool in_pv_line = (type == PVNode);
+    Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {
         pv.clear();
         //checking time-used
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-            return board.getMover() * TIME_OUT;
+            return board.getMover() * NONE;
         }
         //Repetition check
-        if (ply > 0 && board.isRepetition()) {
+        if (board.isRepetition()) {
             return 0;
         }
 
-        //qs
-        if (depth == 0) {
-            return Search::qs<type>(board, pv, alpha, beta, ply);
+        if (ply >= MAX_PLY) {
+            return board.getMover() * gameWeights.evaluate(board.getPosition());
         }
+
+        //qs
+        if (depth <= 0) {
+            return Search::qs(board, pv, alpha, beta, ply);
+        }
+        MoveListe liste;
+
+        getMoves(board.getPosition(), liste);
+
+        if (liste.isEmpty()) {
+            return loss(ply);
+        }
+        if (loss(ply + 2) >= beta) {
+            return loss(ply + 2);
+        }
+
         Local local;
-        local.best_score = -INFINITE;
+        local.best_score = NONE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
         local.depth = depth;
         local.prune = prune;
         local.move = Move{};
-        local.skip_move = Move{};
+        local.skip_move = skip_move;
+        local.sing_score = NONE;
+        local.pv_node = (beta != alpha + 1);
 
-        MoveListe liste;
 
-        getMoves(board.getPosition(), liste);
         //checking win condition
-        if (liste.isEmpty()) {
-            return loss(ply);
-        }
+
 
         NodeInfo info;
-        Value alphaOrig = local.alpha;
+
+
+        uint64_t pos_key = board.getPosition().key;
+
+
+        if (!local.skip_move.isEmpty()) {
+            pos_key ^= Zobrist::get_move_key(board.getPosition(), local.skip_move);
+        }
+
+
 
         // tb-probing
-        if (ply > 0 && TT.findHash(board.getPosition(), info)) {
+        if (TT.findHash(pos_key, info)) {
+
             auto tt_score = valueFromTT(info.score, ply);
-            if (info.depth >= depth) {
-                if ((info.flag == TT_LOWER && info.score >= beta)
-                    || (info.flag == TT_UPPER && info.score <= alpha)
+            if (info.depth >= depth && isEval(tt_score)) {
+                if ((info.flag == TT_LOWER && tt_score >= local.beta)
+                    || (info.flag == TT_UPPER && tt_score <= local.alpha)
                     || info.flag == TT_EXACT) {
                     return tt_score;
                 }
             }
 
-            if ((info.flag == TT_LOWER && isWin(info.score) && info.score >= beta)
-                || (info.flag == TT_UPPER && isLoss(info.score) && info.score <= alpha)) {
+            if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta)
+                || (info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)) {
                 return tt_score;
             }
             //here would go the code for  doing singular move extensions
-            if (info.flag == TT_LOWER && info.depth - 4 >= depth &&
+            if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
                 std::find(liste.begin(), liste.end(), info.move) != liste.end()) {
-                local.sing_score = info.score;
+                local.sing_score = tt_score;
                 local.sing_move = info.move;
             }
         }
         //probcut
 
-        if (!in_pv_line && prune && depth >= 5 && isEval(beta)) {
-            Value margin = (20 * scalfac * depth);
+
+        if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
+            Value margin = (10 * scalfac * depth);
             Value newBeta = beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search<type>(board, new_pv, newBeta - 1, newBeta, ply, newDepth, false);
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
             if (value >= newBeta) {
                 value = value - margin;
+                pv = new_pv;
                 return value;
             }
-            pv = new_pv;
         }
 
 
-        if (in_pv_line && ply < mainPV.length()) {
+        if (local.pv_node && ply < mainPV.length()) {
             liste.putFront(mainPV[ply]);
         }
 
         //sorting
-        liste.sort(info.move, in_pv_line, board.getMover());
+        liste.sort(info.move, local.pv_node, board.getMover());
         //move-loop
-        Search::move_loop<type>(local, board, pv, liste);
-
+        Search::move_loop(local, board, pv, liste);
 
 
 
         //updating search stats
-        if (local.best_score >= local.beta) {
+        if (local.best_score >= local.beta && liste.length() > 1 && local.skip_move.isEmpty()) {
             Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
                                               local.depth);
         }
 
         //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
-        if (local.best_score <= alphaOrig) {
-            TT.storeHash(tt_value, board.getPosition(), TT_UPPER, depth, local.move);
-        } else if (local.best_score >= beta) {
-            TT.storeHash(tt_value, board.getPosition(), TT_LOWER, depth, local.move);
+        Flag flag;
+        if (local.best_score > local.alpha) {
+            flag = TT_LOWER;
+        } else if (local.best_score < local.beta) {
+            flag = TT_UPPER;
         } else {
-            TT.storeHash(tt_value, board.getPosition(), TT_EXACT, depth, local.move);
+            flag = TT_EXACT;
         }
+
+
+        TT.storeHash(tt_value, board.getPosition(), flag, depth, local.move);
+
 
         return local.best_score;
     }
 
-
-    template<NodeType type>
     Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply) {
-        constexpr bool in_pv_line = type == PVNode;
+        bool in_pv_line = (beta != alpha + 1);
         nodeCounter++;
         pv.clear();
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition());
         }
 
+        if (board.getPosition().isWipe()) {
+            return loss(ply);
+        }
+
+        if (loss(ply + 2) >= beta) {
+            return loss(ply + 2);
+        }
+
         MoveListe moves;
         getCaptures(board.getPosition(), moves);
-        Value bestValue = -INFINITE;
+        Value bestValue = NONE;
 
         if (moves.isEmpty()) {
 
-            if (board.getPosition().isWipe()) {
-                return loss(ply);
-            }
-            //loss-distance pruning
-                if (loss(ply + 2) >= beta) {
-                    return loss(ply + 2);
-                }
-    
             //threat-detection -> 1 ply search
             if (board.getPosition().hasThreat()) {
-                return Search::search<type>(board, pv, alpha, beta, ply, 1,
-                                            false);
+                return Search::search(board, pv, alpha, beta, ply + 1, 1, Move{},
+                                      false);
             }
 
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -242,21 +266,13 @@ namespace Search {
         for (int i = 0; i < moves.length(); ++i) {
             Line localPV;
             board.makeMove(moves.liste[i]);;
-            Value value;
-            if (i == 0) {
-                value = -Search::qs<type>(board, localPV, -beta, -alpha, ply + 1);
-            } else {
-                value = -Search::qs<NONPV>(board, localPV, -beta, -alpha, ply + 1);
-            }
+            Value value = -Search::qs(board, localPV, -beta, -std::max(alpha, bestValue), ply + 1);
             board.undoMove();
             if (value > bestValue) {
                 bestValue = value;
                 pv.concat(moves[i], localPV);
                 if (value >= beta)
                     break;
-                if (value > alpha) {
-                    alpha = value;
-                }
 
             }
         }
@@ -264,50 +280,51 @@ namespace Search {
         return bestValue;
     }
 
-    template<NodeType type>
+
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension) {
-        constexpr bool in_pv_line = (type == PVNode);
-        //everything that is specific to a move goes into search_move
-        //that includes reductions and extensions (lmr and probuct and jump extension)
-        Depth reduction = Search::reduce(local, board, move, in_pv_line);
-
-
+        Depth reduction = Search::reduce(local, board, move);
 
         //singular move extension
 
-        if (local.skip_move.isEmpty() && extension == 0 && local.depth >= 7 && move == local.sing_move) {
+
+       if (local.pv_node
+            && local.depth >= 8
+            && move == local.sing_move
+            && local.skip_move.isEmpty()
+            && extension == 0
+                ) {
             //there will be some other conditions added
+            //values tested: 25 <- Seemed to be better than no extension
             constexpr Value margin = 40 * scalfac;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search<type>(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4,
-                                               local.prune);
+            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
+                                         local.prune);
 
-          
 
-            if (value <= local.alpha)
+            if (value <= new_alpha)
                 extension = 1;
 
-                line = new_pv;
         }
 
-        Depth new_depth = local.depth - 1+extension;
+
+        Depth new_depth = local.depth - 1 + extension;
 
         Value new_alpha = std::max(local.alpha, local.best_score);
 
         board.makeMove(move);
         Value val;
 
-        if ((in_pv_line && local.i != 0) || reduction != 0) {
-            val = -Search::search<NONPV>(board, line, -new_alpha - 1, -new_alpha, local.ply + 1, new_depth - reduction,
-                                         local.prune);
+        if ((local.pv_node && local.i != 0) || reduction != 0) {
+            val = -Search::search(board, line, -new_alpha - 1, -new_alpha, local.ply + 1, new_depth - reduction, Move{},
+                                  local.prune);
             if (val > new_alpha) {
-                val = -Search::search<NONPV>(board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,
-                                             local.prune);
+                val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1, new_depth, Move{},
+                                      local.prune);
             }
         } else {
-            val = -Search::search<type>(board, line, -local.beta, -local.alpha, local.ply + 1, new_depth,
-                                        local.prune);
+            val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1, new_depth, Move{},
+                                  local.prune);
         }
 
         board.undoMove();
@@ -315,17 +332,15 @@ namespace Search {
 
     }
 
-    template<NodeType type>
     void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste) {
         local.i = 0;
         const auto num_moves = liste.length();
         int extension = (liste.length() == 1) ? 1 : 0;
         while (local.i < num_moves) {
             Move move = liste[local.i];
-
             if (move != local.skip_move) {
                 Line local_pv;
-                Value value = searchMove<type>(move, local, board, local_pv,extension);
+                Value value = searchMove(move, local, board, local_pv, extension);
                 if (value > local.best_score) {
                     local.best_score = value;
                     local.move = move;
@@ -334,9 +349,7 @@ namespace Search {
                     if (value >= local.beta) {
                         break;
                     }
-                    if (value > local.alpha) {
-                        local.alpha = local.best_score;
-                    }
+
                 }
             }
 
@@ -348,7 +361,8 @@ namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {
         line.clear();
-        local.best_score = -INFINITE;
+        local.best_score = NONE;
+        local.sing_score = NONE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = 0;
@@ -357,20 +371,15 @@ namespace Search {
         local.sing_move = Move{};
         local.move = Move{};
         local.prune = true;
-        //little bit more work on this
+        local.pv_node = (beta != alpha + 1);
 
-        //generating the moves
-
-        //other things will go here too
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
         liste.putFront(mainPV[0]);
         liste.sort(Move{}, true, board.getMover());
-        move_loop<PVNode>(local, board, line, liste);
+        move_loop(local, board, line, liste);
 
-        if (local.best_score == TIME_OUT)
-            std::cout << "TEST" << std::endl;
 
     }
 
@@ -387,7 +396,7 @@ namespace Search {
                 search_root(local, line, board, alpha, beta, depth);
 
                 Value score = local.best_score;
-                if (std::abs(score) == TIME_OUT) {
+                if (!isEval(score)) {
                     break;
                 } else if (score <= alpha) {
                     alpha_margin *= 2;

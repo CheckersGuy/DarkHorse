@@ -63,10 +63,10 @@ namespace Zobrist {
         auto toIndex = move.getToIndex();
         auto fromIndex = move.getFromIndex();
         constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
-        if (((move.from & pos.K) == 0u) && (move.to & promo_squares) != 0) {
+        if (((move.from & pos.K) == 0u) && (move.to & promo_squares) != 0u) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
             pos.key ^= Zobrist::ZOBRIST_KEYS[fromIndex][pawn_index];
-        } else if (((move.from & pos.K) != 0)) {
+        } else if (((move.from & pos.K) != 0u)) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
             pos.key ^= Zobrist::ZOBRIST_KEYS[fromIndex][king_index];
         } else {
@@ -86,6 +86,38 @@ namespace Zobrist {
 
         pos.key ^= Zobrist::colorBlack;
 
+    }
+
+    uint64_t get_move_key(Position &cur_pos, Move move) {
+        uint64_t move_key = 0ull;
+        const int pawn_index = (cur_pos.getColor() == BLACK) ? BPAWN : WPAWN;
+        const int king_index = (cur_pos.getColor() == BLACK) ? BKING : WKING;
+        const int opp_king_index = (cur_pos.getColor() == BLACK) ? WKING : BKING;
+        const int opp_pawn_index = (cur_pos.getColor() == BLACK) ? WPAWN : BPAWN;
+        auto toIndex = move.getToIndex();
+        auto fromIndex = move.getFromIndex();
+        constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
+        if (((move.from & cur_pos.K) == 0u) && (move.to & promo_squares) != 0u) {
+            move_key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
+            move_key ^= Zobrist::ZOBRIST_KEYS[fromIndex][pawn_index];
+        } else if (((move.from & cur_pos.K) != 0u)) {
+            move_key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
+            move_key ^= Zobrist::ZOBRIST_KEYS[fromIndex][king_index];
+        } else {
+            move_key ^= Zobrist::ZOBRIST_KEYS[toIndex][pawn_index];
+            move_key ^= Zobrist::ZOBRIST_KEYS[fromIndex][pawn_index];
+        }
+        uint32_t captures = move.captures;
+        while (captures) {
+            const uint32_t index = Bits::bitscan_foward(captures);
+            if (((1u << index) & move.captures & cur_pos.K) != 0) {
+                move_key ^= Zobrist::ZOBRIST_KEYS[index][opp_king_index];
+            } else {
+                move_key ^= Zobrist::ZOBRIST_KEYS[index][opp_pawn_index];
+            }
+            captures &= captures - 1u;
+        }
+        return move_key;
     }
 
 }
