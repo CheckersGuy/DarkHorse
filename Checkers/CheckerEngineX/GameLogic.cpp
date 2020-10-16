@@ -177,7 +177,7 @@ namespace Search {
         //probcut
 
 
-        if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
+        if (!local.pv_node && prune && depth >= 3 && isEval(local.beta)) {
             Value margin = (10 * scalfac * depth);
             Value newBeta = beta + margin;
             Depth newDepth = (depth * 40) / 100;
@@ -295,7 +295,7 @@ namespace Search {
                 ) {
             //there will be some other conditions added
             //values tested: 25 <- Seemed to be better than no extension
-            constexpr Value margin = 40 * scalfac;
+            constexpr Value margin = 25 * scalfac;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,

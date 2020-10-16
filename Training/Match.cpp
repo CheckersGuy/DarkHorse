@@ -351,7 +351,6 @@ void Match::start() {
 
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
-
                 if (inter.pos.isEmpty()) {
                     if (!inter.played_reverse) {
                         start_index = (start_index >= positions.positions().size() - 1) ? 0 : start_index + 1;
@@ -400,7 +399,7 @@ void Match::start() {
                             addPosition(p, Training::DRAW);
                         }
                     }
-                    if (inter.history.size() >= 400) {
+                    if (inter.history.size() >= 800) {
                         logger << "Reached max move" << "\n";
                     }
                     logger << inter.pos.position_str() << "\n";
@@ -412,6 +411,7 @@ void Match::start() {
 
 
                 inter.process();
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
 
             }

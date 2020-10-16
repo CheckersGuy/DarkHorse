@@ -49,8 +49,8 @@ enum NodeType {
 };
 
 enum Score : int {
-    INFINITE = 150000,
-    EVAL_INFINITE = INFINITE - 4000,
+    INFINITE = 1500000,
+    EVAL_INFINITE = INFINITE - 20000,
     NONE = -INFINITE - 1,
 };
 enum SEARCH : int {

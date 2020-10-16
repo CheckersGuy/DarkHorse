@@ -39,10 +39,10 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
-/*    board = Position::getStartPosition();
+   board = Position::getStartPosition();
     board = posFromString("00034030000040000000000000100000B");
-    board = Position::getStartPosition();
     board.printBoard();
     std::cout << std::endl;
 
@@ -52,10 +52,11 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board, best, 128, 200, true);
+    searchValue(board, best, 128, 2000000, true);
     board.makeMove(best);
-    board.printBoard();*/
+    board.printBoard();
 
+*/
 
 
 
