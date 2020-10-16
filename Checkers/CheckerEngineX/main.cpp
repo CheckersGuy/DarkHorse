@@ -113,7 +113,7 @@ int main(int argl, const char **argc) {
             if (liste.length() == 1) {
                 bestMove = liste[0];
             } else {
-                auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), true);
+                auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";
