@@ -1,19 +1,9 @@
 #include <vector>
-#include <future>
 #include <bitset>
-#include <map>
 #include "Transposition.h"
 #include "GameLogic.h"
-#include <list>
 #include <iterator>
-#include <algorithm>
 #include "Perft.h"
-#include  <sys/types.h>
-#include <sys/wait.h>
-#include  <sys/types.h>
-#include <unistd.h>
-#include "fcntl.h"
-#include <regex>
 
 inline Position posFromString(const std::string &pos) {
     Position result;
@@ -45,11 +35,9 @@ int main(int argl, const char **argc) {
 
 
 /*
-    board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
 
-   // board = Position::getStartPosition();
-
+   board = Position::getStartPosition();
+    board = posFromString("00034030000040000000000000100000B");
     board.printBoard();
 
     std::cout << std::endl;
@@ -61,11 +49,10 @@ int main(int argl, const char **argc) {
     setHashSize(23);
 
     Move best;
-    searchValue(board, best, MAX_PLY, 30000000, true);
+    searchValue(board, best, 128, 20000000, true);
     board.makeMove(best);
     board.printBoard();
 */
-
 
 
     std::string current;
@@ -113,7 +100,7 @@ int main(int argl, const char **argc) {
             if (liste.length() == 1) {
                 bestMove = liste[0];
             } else {
-                auto value = searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+                searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";

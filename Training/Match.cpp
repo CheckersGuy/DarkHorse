@@ -164,8 +164,8 @@ void Engine::new_move(Move move) {
 
 
 void Interface::process() {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     auto &logger = Logger::get_instance();
-
     for (auto &engine : engines) {
         engine.initEngine();
         engine.newGame(pos);
@@ -351,7 +351,6 @@ void Match::start() {
 
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
-
                 if (inter.pos.isEmpty()) {
                     if (!inter.played_reverse) {
                         start_index = (start_index >= positions.positions().size() - 1) ? 0 : start_index + 1;
@@ -375,9 +374,7 @@ void Match::start() {
                 if (inter.is_terminal_state()) {
                     game_count++;
                     printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-                    printf("\r");
-                    std::cout.flush();
-
+                    std::cout<<std::endl;
                     MoveListe liste;
                     getMoves(inter.pos, liste);
                     if (liste.length() == 0) {
@@ -400,7 +397,7 @@ void Match::start() {
                             addPosition(p, Training::DRAW);
                         }
                     }
-                    if (inter.history.size() >= 400) {
+                    if (inter.history.size() >= 800) {
                         logger << "Reached max move" << "\n";
                     }
                     logger << inter.pos.position_str() << "\n";
@@ -412,8 +409,6 @@ void Match::start() {
 
 
                 inter.process();
-
-
             }
             if (game_count >= maxGames)
                 break;

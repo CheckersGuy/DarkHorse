@@ -62,9 +62,9 @@ void Transposition::storeHash(Value value, const Position &pos, Flag flag, uint8
     cluster[0].bestMove = move;
 }
 
-bool Transposition::findHash(const Position&pos, NodeInfo &info) {
-    const uint32_t index = pos.key & (this->capacity - 1);
-    auto currKey = static_cast<uint32_t >(pos.key>> 32u);
+bool Transposition::findHash(uint64_t key, NodeInfo &info) {
+    const uint32_t index = key & (this->capacity - 1);
+    auto currKey = static_cast<uint32_t >(key>> 32u);
     for (int i = 0; i <= 1; ++i) {
         if (this->entries[index][i].key == currKey) {
             info.move = this->entries[index][i].bestMove;

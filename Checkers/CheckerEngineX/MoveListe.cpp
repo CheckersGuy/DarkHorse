@@ -1,6 +1,9 @@
 #include "MoveListe.h"
 #include "Weights.h"
 
+void MoveListe::reset() {
+    moveCounter = 0;
+}
 
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
     for (auto i = 0; i < liste.size(); ++i) {
@@ -11,6 +14,10 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 }
 
 void MoveListe::help_sort(int start_index) {
+
+    if (liste.size() <= 1)
+        return;
+
     for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
@@ -38,21 +45,6 @@ MoveListe &MoveListe::operator=(const MoveListe &other) {
 }
 
 void MoveListe::sort_static(Color mover, const Position &pos, const Move &ttMove) {
-    for (auto i = 0; i < moveCounter; ++i) {
-        Position copy = pos;
-        copy.makeMove(liste[i]);
-        Board board;
-        board = copy;
 
-        auto eval = Statistics::mPicker.getMoveScore(liste[i], mover, ttMove);
-        Line local;
-        auto score = quiescene<NONPV>(board, -INFINITE, INFINITE, local, 0) / scalfac;
-
-        eval += score;
-
-        scores[i] = eval;
-    }
-    auto start_index = 1;
-    help_sort(start_index);
 
 }

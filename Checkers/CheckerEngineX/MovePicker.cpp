@@ -30,15 +30,14 @@ namespace Statistics {
     }
 
 
-    void MovePicker::update_scores(Move *list, int move_index, Color color, int depth) {
+    void MovePicker::update_scores(Move *liste, Move move, Color color, int depth) {
         const int colorIndex = (color + 1) / 2;
-        const Move move = list[move_index];
         history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
-
-        for (auto i = 0; i < move_index; ++i) {
-            bfScore[32 * 32 * colorIndex + 32 * list[i].getToIndex() + list[i].getFromIndex()] += depth * depth;
+        while (move != (*liste)) {
+            Move top = *liste;
+            bfScore[32 * 32 * colorIndex + 32 * top.getToIndex() + top.getFromIndex()] += depth * depth;
+            liste++;
         }
 
     }
-
 }
