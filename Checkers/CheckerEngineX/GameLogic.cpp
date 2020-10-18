@@ -100,9 +100,7 @@ namespace Search {
             return board.getMover() * NONE;
         }
         //Repetition check
-        if (board.isRepetition()) {
-            return 0;
-        }
+
 
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -112,6 +110,11 @@ namespace Search {
         if (depth <= 0) {
             return Search::qs(board, pv, alpha, beta, ply);
         }
+
+        if (board.isRepetition()) {
+            return 0;
+        }
+
         MoveListe liste;
 
         getMoves(board.getPosition(), liste);
@@ -177,7 +180,7 @@ namespace Search {
         //probcut
 
 
-        if (!local.pv_node && prune && depth >= 3 && isEval(local.beta)) {
+        if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
             Value margin = (10 * scalfac * depth);
             Value newBeta = beta + margin;
             Depth newDepth = (depth * 40) / 100;
@@ -203,7 +206,7 @@ namespace Search {
 
 
         //updating search stats
-        if (local.best_score >= local.beta && liste.length() > 1 && local.skip_move.isEmpty()) {
+        if (local.best_score >= local.beta && liste.length() > 1) {
             Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
                                               local.depth);
         }
@@ -240,6 +243,10 @@ namespace Search {
 
         if (loss(ply + 2) >= beta) {
             return loss(ply + 2);
+        }
+
+        if (board.isRepetition()) {
+            return 0;
         }
 
         MoveListe moves;
@@ -389,7 +396,7 @@ namespace Search {
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 100 * scalfac) {
+            while (std::max(alpha_margin, beta_margin) < 250 * scalfac) {
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
 
