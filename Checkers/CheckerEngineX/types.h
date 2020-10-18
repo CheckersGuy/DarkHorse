@@ -80,11 +80,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val <= -INFINITE;
+    return val <= -INFINITE+MAX_PLY;
 }
 
 inline bool isWin(Value val) {
-    return val  >= INFINITE;
+    return val  >= INFINITE-MAX_PLY;
 }
 
 inline Value valueFromTT(Value val, int ply) {

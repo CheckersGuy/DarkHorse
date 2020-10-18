@@ -35,10 +35,6 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
 /*
 
    board = Position::getStartPosition();
@@ -52,10 +48,9 @@ int main(int argl, const char **argc) {
     setHashSize(25);
 
     Move best;
-    searchValue(board, best, 128, 2000000, true);
+    searchValue(board, best, 128, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
 */
 
 

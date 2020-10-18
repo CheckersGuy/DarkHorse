@@ -16,6 +16,11 @@
 #include "Bits.h"
 #include <iterator>
 
+
+struct SearchGlobal{
+
+};
+
 struct Local {
 
 
