@@ -36,6 +36,8 @@ public:
 
     void putFront(const Move& other);
 
+    void reset();
+
     auto begin(){
         return liste.begin();
     }

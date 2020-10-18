@@ -77,3 +77,13 @@ const Move &Line::operator[](int index) const {
 Move &Line::operator[](int index) {
     return this->myArray[index];
 }
+
+Line &Line::operator=(const Line &other) {
+    for (auto i = 0; i < other.counter; ++i) {
+        myArray[i] = other.myArray[i];
+    }
+    counter = other.counter;
+
+    return *this;
+
+}

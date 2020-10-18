@@ -34,9 +34,10 @@ constexpr uint32_t LEFT_HALF = 3435973836u;
 constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2u;
 
 
-constexpr std::array<uint32_t,32> S= {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u, 17u, 16u,
-                            23u, 22u, 21u, 20u, 27u, 26u,
-                            25u, 24u, 31u, 30u, 29u, 28u};
+constexpr std::array<uint32_t, 32> S = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u,
+                                        17u, 16u,
+                                        23u, 22u, 21u, 20u, 27u, 26u,
+                                        25u, 24u, 31u, 30u, 29u, 28u};
 
 using Depth = int;
 using Ply = int;
@@ -48,11 +49,9 @@ enum NodeType {
 };
 
 enum Score : int {
-    WIN = 1550000,
-    LOSS = -1550000,
-    INFINITE = 15000000,
-    INVALID = 100000000,
-    DRAW = 0
+    INFINITE = 1500000,
+    EVAL_INFINITE = INFINITE - 20000,
+    NONE = -INFINITE - 1,
 };
 enum SEARCH : int {
     MAX_PLY = 128
@@ -67,17 +66,12 @@ enum Flag : uint8_t {
     None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u
 };
 
-
-inline bool isInRange(Value val, Value a, Value b) {
-    return val > a && val < b;
-}
-
 inline bool isEval(Value val) {
-    return isInRange(val, -INFINITE, INFINITE);
+    return std::abs(val) <= EVAL_INFINITE;
 }
 
 inline Value loss(int ply) {
-    return LOSS + ply;
+    return -INFINITE + ply;
 }
 
 constexpr Color operator~(Color color) {
@@ -85,11 +79,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val - MAX_PLY <= LOSS;
+    return val <= -INFINITE+MAX_PLY;
 }
 
 inline bool isWin(Value val) {
-    return val + MAX_PLY >= WIN;
+    return val  >= INFINITE-MAX_PLY;
 }
 
 inline Value valueFromTT(Value val, int ply) {
@@ -113,9 +107,9 @@ inline Value toTT(Value val, int ply) {
 
 inline Value clampScore(Value val) {
     if (isLoss(val)) {
-        return LOSS;
+        return -INFINITE;
     } else if (isWin(val)) {
-        return WIN;
+        return INFINITE;
     }
     return val;
 }

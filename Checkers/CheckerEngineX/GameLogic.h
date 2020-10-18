@@ -16,12 +16,18 @@
 #include "Bits.h"
 #include <iterator>
 
+
+struct SearchGlobal{
+
+};
+
 struct Local {
+
+
     uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
     Value sing_score;
-    Line pv_line;
     Depth depth;
     Ply ply;
     int i;
@@ -29,41 +35,30 @@ struct Local {
     Move sing_move;
     Move move;
     bool prune{false};
-    Board board;
+    bool pv_node;
 };
 
 namespace Search {
 
-    void search_root(Local& local, Value alpha, Value beta, Depth depth);
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);
 
-    //aspiration search
+    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth);
+
+    Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune);
+
+    void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
 
 
+    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply);
 
-    template<NodeType type>
-    Value search(Local &local,Line& line, Value alpha, Value beta, Ply ply, Depth depth, bool prune);
+    Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
 
-    template<NodeType type>
-    void move_loop(Local &local,const MoveListe& liste, Line& line);
-
-    template<NodeType type>
-    Value qs(Local &local, Line& line, Ply ply);
-
-    template<NodeType type>
-    void searchMove(Move move, Local &local, Line& line);
-
-    Depth reduce(Local &local, Move move, bool in_pv_line);
+    Depth reduce(Local &local, Board &board, Move move, bool in_pv_line);
 
 }
 
 
 void setHashSize(uint32_t hash);
-
-template<NodeType type>
-Value quiescene(Board &board, Value alpha, Value beta, Line &pv, int ply);
-
-template<NodeType type>
-Value alphaBeta(Board &board, Value alpha, Value beta, Line &localPV, int ply, int depth, bool prune);
 
 Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print);
 

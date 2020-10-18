@@ -24,6 +24,8 @@ namespace Zobrist {
     uint64_t generateKey(const Position &pos);
 
     void doUpdateZobristKey( Position &pos, Move move);
+
+    uint64_t get_move_key(Position& cur_pos, Move move);
 }
 
 
