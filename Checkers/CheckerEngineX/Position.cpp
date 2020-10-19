@@ -9,7 +9,7 @@ Position Position::pos_from_fen(std::string fen_string) {
     std::array<char, 4> tokens = {'B', 'b', 'W', 'w'};
 
 
-    if (fen_string[0] == 'B')
+    /*if (fen_string[0] == 'B')
         position.color = BLACK;
     else
         position.color = WHITE;
@@ -27,7 +27,7 @@ Position Position::pos_from_fen(std::string fen_string) {
             current=""
         }else if(c=='')
     }
-
+*/
     //needs to be redone
     //treat the problem as a simple state machine
 
