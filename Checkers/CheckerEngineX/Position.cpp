@@ -1,65 +1,35 @@
 #include <sstream>
 #include "Position.h"
 #include "Zobrist.h"
-#include "iterator"
 
-std::vector<std::string> split_by(std::string input, char delim) {
-    std::string output;
-    std::vector<std::string> splits;
-    for (char c : input) {
-        if (c == delim) {
-            splits.emplace_back(output);
-            output = "";
-        } else {
-            output += c;
-        }
-    }
-    splits.emplace_back(output);
-    return splits;
-}
 
 Position Position::pos_from_fen(std::string fen_string) {
     //we are assuming that fen_string is a valid pdn notation
     Position position;
-    std::string output;
-    std::vector<std::string> splits = split_by(fen_string, ':');
+    std::array<char, 4> tokens = {'B', 'b', 'W', 'w'};
 
-    const std::string mover = splits[0];
 
-    if (mover == "W")
-        position.color = WHITE;
-    else
+    if (fen_string[0] == 'B')
         position.color = BLACK;
+    else
+        position.color = WHITE;
 
-    const std::string white_tmp = splits[1];
-    const std::string black_tmp = splits[2];
+    std::string current;
 
-    std::vector<std::string> white_pieces = split_by(white_tmp, ',');
-    std::vector<std::string> black_pieces = split_by(black_tmp, ',');
+    Color cur_color = BLACK;
+    bool is_king =false;
 
-    for (auto piece : white_pieces) {
-        //this should be the square
-        auto index = piece.find_first_not_of("BWbwKk");
-        auto square_num = piece.substr(index, 2);
-        uint32_t s = std::stoi(square_num) - 1;
-        std::cout << S[s] << std::endl;
-        position.WP |= 1u << s;
-        if (piece.find('K') != std::string::npos) {
-            position.K |= 1u << s;
-        }
+    for (auto i = 1; i < fen_string.length(); ++i) {
+        char c = fen_string[i];
+        if(c==','){
+            //
+            is_king =false;
+            current=""
+        }else if(c=='')
     }
 
-    for (auto piece : black_pieces) {
-        //this should be the square
-        auto index = piece.find_first_not_of("BWbwKk");
-        auto square_num = piece.substr(index, 2);
-        uint32_t s = std::stoi(square_num) - 1;
-        position.BP |= 1u << s;
-        if (piece.find('K') != std::string::npos) {
-            position.K |= 1u << s;
-        }
-    }
-
+    //needs to be redone
+    //treat the problem as a simple state machine
 
     return position;
 }

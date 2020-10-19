@@ -22,6 +22,8 @@ struct NodeInfo {
 
 
 struct Entry {
+    //currently 22 byte
+    //which I'd like to reduce to 16 byte
     Move bestMove;
     Value value;
     uint32_t key;
