@@ -72,6 +72,9 @@ int main(int argl, const char **argc) {
     engine_match.start();
 */
 
+
+    std::cout<<"SearchExp Branch"<<std::endl;
+
     Match engine_match("testasp", "old", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
