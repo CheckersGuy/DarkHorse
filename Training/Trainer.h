@@ -14,10 +14,6 @@
 #include "Utilities.h"
 #include "proto/Training.pb.h"
 
-#ifdef TRAIN
-extern Weights<double> gameWeights;
-#endif
-
 
 class Trainer {
 

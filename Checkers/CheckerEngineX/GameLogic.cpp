@@ -1,7 +1,3 @@
-//
-// Created by Robin on 10.06.2017.
-//
-
 #include "GameLogic.h"
 
 
@@ -18,12 +14,11 @@ void setHashSize(uint32_t hash) {
 }
 
 
-#ifdef TRAIN
-Weights<double> gameWeights;
-#else
+#ifndef TRAIN
 Weights<short> gameWeights;
+#else
+Weights<double> gameWeights;
 #endif
-
 
 void initialize() {
 #ifdef __EMSCRIPTEN__
@@ -60,7 +55,6 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
 
         eval = local.best_score;
         mainPV = new_pv;
-
         if (print) {
             std::string temp = std::to_string(eval) + "  ";
             temp += " Depth:" + std::to_string(i) + " | ";
@@ -81,12 +75,10 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
 
 namespace Search {
 
-
     Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
         const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion &&
-            local.i >= ((local.pv_node) ? 3 : 1)) {
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = 1;
             if (!local.pv_node && local.i >= 4) {
                 red = 2;
@@ -96,14 +88,14 @@ namespace Search {
     }
 
 
-    Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move,
-                 bool prune) {
+    Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {
         pv.clear();
         //checking time-used
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
             return board.getMover() * NONE;
         }
         //Repetition check
+
 
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition());
@@ -181,20 +173,20 @@ namespace Search {
             }
         }
         //probcut
-        /*
-            if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
-                Value margin = (10 * scalfac * depth);
-                Value newBeta = beta + margin;
-                Depth newDepth = (depth * 40) / 100;
-                Line new_pv;
-                Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
-                if (value >= newBeta) {
-                    value = value - margin;
-                    pv = new_pv;
-                    return value;
-                }
+
+
+        if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
+            Value margin = (10 * scalfac * depth);
+            Value newBeta = beta + margin;
+            Depth newDepth = (depth * 40) / 100;
+            Line new_pv;
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
+            if (value >= newBeta) {
+                value = value - margin;
+                pv = new_pv;
+                return value;
             }
-            */
+        }
 
 
         if (local.pv_node && ply < mainPV.length()) {
@@ -209,7 +201,6 @@ namespace Search {
 
 
         //updating search stats
-
         if (local.best_score >= local.beta && liste.length() > 1) {
             Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
                                               local.depth);
@@ -276,9 +267,8 @@ namespace Search {
         }
         for (int i = 0; i < moves.length(); ++i) {
             Line localPV;
-            board.makeMove(moves.liste[i]);;
-            Value value = -Search::qs(board, localPV, -beta, -std::max(alpha, bestValue),
-                                      ply + 1);
+            board.makeMove(moves.liste[i]);
+            Value value = -Search::qs(board, localPV, -beta, -std::max(alpha, bestValue), ply + 1);
             board.undoMove();
             if (value > bestValue) {
                 bestValue = value;
@@ -310,8 +300,7 @@ namespace Search {
             constexpr Value margin = 25 * scalfac;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply,
-                                         local.depth - 4, move,
+            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
                                          local.prune);
 
 
@@ -329,17 +318,14 @@ namespace Search {
         Value val;
 
         if ((local.pv_node && local.i != 0) || reduction != 0) {
-            val = -Search::search(board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
-                                  new_depth - reduction, Move{},
+            val = -Search::search(board, line, -new_alpha - 1, -new_alpha, local.ply + 1, new_depth - reduction, Move{},
                                   local.prune);
             if (val > new_alpha) {
-                val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1,
-                                      new_depth, Move{},
+                val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1, new_depth, Move{},
                                       local.prune);
             }
         } else {
-            val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1,
-                                  new_depth, Move{},
+            val = -Search::search(board, line, -local.beta, -new_alpha, local.ply + 1, new_depth, Move{},
                                   local.prune);
         }
 
@@ -375,8 +361,7 @@ namespace Search {
     }
 
 
-    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta,
-                     Depth depth) {
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {
         line.clear();
         local.best_score = NONE;
         local.sing_score = NONE;

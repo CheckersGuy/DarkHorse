@@ -21,6 +21,8 @@ struct SearchGlobal{
 
 };
 
+
+
 struct Local {
 
 

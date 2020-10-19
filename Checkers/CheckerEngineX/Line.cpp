@@ -58,14 +58,6 @@ bool Line::operator==(const Line &other) const {
     return true;
 }
 
-Line &Line::operator=(const Line &other) {
-    for (auto i = 0; i < other.length(); ++i) {
-        myArray[i] = other.myArray[i];
-    }
-    counter = other.counter;
-    return *this;
-}
-
 bool Line::operator!=(const Line &other) const {
     return !(*this == other);
 }
