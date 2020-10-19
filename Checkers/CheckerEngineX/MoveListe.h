@@ -9,13 +9,12 @@
 #include <array>
 #include <iterator>
 #include "Position.h"
+
 class MoveListe {
 
 private:
     uint32_t moveCounter = 0;
-    std::array<int16_t ,40> scores;
-
-    void help_sort(int start_index);
+    std::array<int16_t, 40> scores;
 
 public:
     std::array<Move, 40> liste;
@@ -26,7 +25,7 @@ public:
 
     void sort(Move ttMove, bool inPVLine, Color color);
 
-    void sort_static(Color mover, const Position &pos,const Move& ttMove);
+    void sort_static(Color mover, const Position &pos, const Move &ttMove);
 
     bool isEmpty() const;
 
@@ -34,19 +33,21 @@ public:
 
     Move &operator[](int index);
 
-    void putFront(const Move& other);
+    void putFront(const Move other);
 
     void reset();
 
-    auto begin(){
+    auto begin() {
         return liste.begin();
     }
 
-    auto end(){
+    std::optional<uint8_t> get_move_index(Move move) const;
+
+    auto end() {
         return liste.end();
     }
 
-    MoveListe& operator=(const MoveListe& other);
+    MoveListe &operator=(const MoveListe &other);
 
 };
 
@@ -63,13 +64,13 @@ inline Move &MoveListe::operator[](int index) {
 }
 
 inline void MoveListe::addMove(Move next) {
+    assert(moveCounter<40);
     liste[this->moveCounter++] = next;
 }
 
 inline uint32_t MoveListe::length() const {
     return moveCounter;
 }
-
 
 
 #endif //CHECKERSTEST_MOVELISTE_H

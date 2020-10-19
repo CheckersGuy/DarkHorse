@@ -17,13 +17,7 @@
 #include <iterator>
 
 
-struct SearchGlobal{
-
-};
-
 struct Local {
-
-
     uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
