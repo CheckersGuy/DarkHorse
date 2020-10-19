@@ -37,22 +37,23 @@ int main(int argl, const char **argc) {
 
 /*
 
-   board = Position::getStartPosition();
+    board = Position::getStartPosition();
     board = posFromString("00034030000040000000000000100000B");
+   // board = Position::getStartPosition();
     board.printBoard();
     std::cout << std::endl;
 
 
     initialize();
     std::cout << "non-zero-weights: " << gameWeights.numNonZeroValues() << std::endl;
-    setHashSize(25);
+    setHashSize(24);
 
     Move best;
     searchValue(board, best, 128, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-*/
 
+*/
 
 
 

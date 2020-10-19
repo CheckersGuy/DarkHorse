@@ -14,22 +14,26 @@
 
 
 struct NodeInfo {
-    Move move;
+    uint8_t move_index = std::numeric_limits<uint8_t>::max();
     Value score;
     uint8_t depth;
     uint8_t flag{Flag::None};
 };
 
-
+//given a cache-line of 64 bytes, we can efficiently use a bucket-size of 4 !
 struct Entry {
-    Move bestMove;
+    //total of 16 bytes
     Value value;
     uint32_t key;
+    uint32_t p1; //padding
     Flag flag;
     uint8_t depth;
+    uint8_t bestMove;
+    uint8_t age; //padding
 };
+constexpr size_t bucket_size = 2;
 
-using Cluster=std::array<Entry, 2>;
+using Cluster = std::array<Entry, bucket_size>;
 
 class Transposition {
 
@@ -56,7 +60,7 @@ public:
 
     void resize(uint32_t capa);
 
-    void storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, Move move);
+    void storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, uint8_t move_index);
 
     bool findHash(uint64_t key, NodeInfo &info);
 };
