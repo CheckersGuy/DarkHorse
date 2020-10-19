@@ -34,7 +34,7 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-    board = Position::getStartPosition();
+/*    board = Position::getStartPosition();
     board = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
     //board = Position::getStartPosition();
     board.printBoard();
@@ -51,10 +51,9 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 2000000, true);
     board.makeMove(best);
-    board.printBoard();
-
-
+    board.printBoard();*/
     std::string current;
+
     while (std::cin >> current) {
         if (current == "init") {
             initialize();
