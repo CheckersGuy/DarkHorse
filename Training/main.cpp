@@ -72,10 +72,19 @@ int main(int argl, const char **argc) {
     engine_match.start();
 */
 
+<<<<<<< HEAD
     Match engine_match("testasp", "old", "match_file");
+=======
+
+
+
+
+
+    Match engine_match("t3", "t1", "match_file");
+>>>>>>> new_search
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
-    engine_match.setNumThreads(12);
+    engine_match.setNumThreads(5);
     engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();

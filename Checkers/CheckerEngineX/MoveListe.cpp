@@ -6,17 +6,15 @@ void MoveListe::reset() {
 }
 
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
-    for (auto i = 0; i < liste.size(); ++i) {
-        scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
-    }
-    auto start_index = (inPVLine) ? 1 : 0;
-    help_sort(start_index);
-}
-
-void MoveListe::help_sort(int start_index) {
 
     if (liste.size() <= 1)
         return;
+
+    for (auto i = 0; i < liste.size(); ++i) {
+        scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
+    }
+
+    int start_index = (inPVLine) ? 1 : 0;
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
@@ -31,7 +29,9 @@ void MoveListe::help_sort(int start_index) {
     }
 }
 
-void MoveListe::putFront(const Move &move) {
+void MoveListe::putFront(const Move move) {
+    //more elegant solution since putFront is rarely ever used
+
     auto it = std::find(liste.begin(), liste.end(), move);
     if (it != liste.end()) {
         std::swap(*liste.begin(), *it);
@@ -39,9 +39,17 @@ void MoveListe::putFront(const Move &move) {
 }
 
 MoveListe &MoveListe::operator=(const MoveListe &other) {
-    this->moveCounter = other.moveCounter;
     std::copy(other.liste.begin(), other.liste.begin() + other.moveCounter, liste.begin());
+    this->moveCounter = other.moveCounter;
     return *this;
+}
+
+std::optional<uint8_t> MoveListe::get_move_index(Move move) const {
+    for (uint8_t i = 0; i < moveCounter; ++i) {
+        if (move == liste[i])
+            return std::make_optional(i);
+    }
+    return std::nullopt;
 }
 
 void MoveListe::sort_static(Color mover, const Position &pos, const Move &ttMove) {
