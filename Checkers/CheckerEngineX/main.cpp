@@ -4,6 +4,7 @@
 #include "GameLogic.h"
 #include <iterator>
 #include "Perft.h"
+
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -32,14 +33,11 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
-
-
-
 /*
 
     board = Position::getStartPosition();
     board = posFromString("00034030000040000000000000100000B");
-   // board = Position::getStartPosition();
+    board = Position::getStartPosition();
     board.printBoard();
     std::cout << std::endl;
 
@@ -54,10 +52,6 @@ int main(int argl, const char **argc) {
     board.printBoard();
 
 */
-
-
-
-
 
 
     std::string current;
@@ -105,7 +99,7 @@ int main(int argl, const char **argc) {
             if (liste.length() == 1) {
                 bestMove = liste[0];
             } else {
-               searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+                searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";
