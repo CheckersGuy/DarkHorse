@@ -138,10 +138,10 @@ namespace Search {
 
 
         NodeInfo info;
+        Move tt_move;
 
 
         uint64_t pos_key = board.getPosition().key;
-
 
         if (!local.skip_move.isEmpty()) {
             pos_key ^= Zobrist::get_move_key(board.getPosition(), local.skip_move);
@@ -151,7 +151,7 @@ namespace Search {
 
         // tb-probing
         if (TT.findHash(pos_key, info)) {
-
+            tt_move = (info.move_index == std::numeric_limits<uint8_t>::max()) ? Move{} : liste[info.move_index];
             auto tt_score = valueFromTT(info.score, ply);
             if (info.depth >= depth && isEval(tt_score)) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
@@ -167,9 +167,9 @@ namespace Search {
             }
             //here would go the code for  doing singular move extensions
             if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
-                std::find(liste.begin(), liste.end(), info.move) != liste.end()) {
+                std::find(liste.begin(), liste.end(), tt_move) != liste.end()) {
                 local.sing_score = tt_score;
-                local.sing_move = info.move;
+                local.sing_move = tt_move;
             }
         }
         //probcut
@@ -194,11 +194,9 @@ namespace Search {
         }
 
         //sorting
-        liste.sort(info.move, local.pv_node, board.getMover());
+        liste.sort(tt_move, local.pv_node, board.getMover());
         //move-loop
         Search::move_loop(local, board, pv, liste);
-
-
 
         //updating search stats
         if (local.best_score >= local.beta && liste.length() > 1) {
@@ -217,9 +215,15 @@ namespace Search {
             flag = TT_EXACT;
         }
 
+        {
+            uint8_t tt_m = std::numeric_limits<uint8_t>::max();
+            if (local.best_score > local.alpha) {
+                auto index = liste.get_move_index(local.move);
+                tt_m = (index.has_value()) ? index.value() : tt_m;
+            }
 
-        TT.storeHash(tt_value, board.getPosition(), flag, depth, local.move);
-
+            TT.storeHash(tt_value, board.getPosition(), flag, depth, tt_m);
+        }
 
         return local.best_score;
     }
@@ -347,7 +351,6 @@ namespace Search {
                     local.best_score = value;
                     local.move = move;
                     pv.concat(move, local_pv);
-
                     if (value >= local.beta) {
                         break;
                     }
