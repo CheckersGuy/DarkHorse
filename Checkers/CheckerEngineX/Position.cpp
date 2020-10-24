@@ -6,30 +6,60 @@
 Position Position::pos_from_fen(std::string fen_string) {
     //we are assuming that fen_string is a valid pdn notation
     Position position;
-    std::array<char, 4> tokens = {'B', 'b', 'W', 'w'};
+    auto lambda = [](Position &pos, std::string &current, Color &temp) {
+        bool is_king = false;
+        int start_index = 0;
+        if (current[start_index] == 'B' || current[start_index] == 'b') {
+            temp = BLACK;
+            start_index += 1;
+        } else if (current[start_index] == 'W' || current[start_index] == 'w') {
+            temp = WHITE;
+            start_index += 1;
+        }
+
+        if (current[start_index] == 'K' || current[start_index] == 'k') {
+            is_king = true;
+            start_index += 1;
+        }
+        std::string square = current.substr(start_index, current.size());
+        uint32_t sq_index = std::stoi(square) - 1u;
 
 
-    /*if (fen_string[0] == 'B')
+        if (temp == BLACK)
+            pos.BP |= 1u << sq_index;
+        else
+            pos.WP |= 1u << sq_index;
+
+        if (is_king) {
+            pos.K |= 1u << sq_index;
+        }
+    };
+
+    if (fen_string[0] == 'B')
         position.color = BLACK;
     else
         position.color = WHITE;
 
     std::string current;
-
-    Color cur_color = BLACK;
-    bool is_king =false;
+    Color temp = BLACK;
 
     for (auto i = 1; i < fen_string.length(); ++i) {
         char c = fen_string[i];
-        if(c==','){
-            //
-            is_king =false;
-            current=""
-        }else if(c=='')
+        if (c == ',' || c == ':') {
+            if (current.empty())
+                continue;
+
+            lambda(position, current, temp);
+            current = "";
+        } else {
+            current += c;
+        }
+
     }
-*/
-    //needs to be redone
-    //treat the problem as a simple state machine
+
+    lambda(position, current, temp);
+
+    position.key = Zobrist::generateKey(position);
 
     return position;
 }

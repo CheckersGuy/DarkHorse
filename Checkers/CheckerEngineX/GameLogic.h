@@ -53,8 +53,6 @@ namespace Search {
 
 void setHashSize(uint32_t hash);
 
-Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print);
-
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print);
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print);

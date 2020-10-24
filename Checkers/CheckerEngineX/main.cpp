@@ -33,22 +33,28 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
-/*    board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
+    Position pos = Position::pos_from_fen("W:W10,K18:BK4,5,K21");
     //board = Position::getStartPosition();
+
+    pos.printPosition();
+    board = pos;
+
+
+
     board.printBoard();
 
     std::cout << std::endl;
-    std::cout << board.getPosition().get_fen_string() << std::endl;
 
 
     initialize();
-    std::cout << "non-zero-weights: " << gameWeights.numNonZeroValues() << std::endl;
     setHashSize(23);
+
+    std::cout<<"NonZeroWeights: "<<gameWeights.numNonZeroValues()<<std::endl;
+
     Move best;
     searchValue(board, best, MAX_PLY, 2000000, true);
     board.makeMove(best);
-    board.printBoard();*/
+    board.printBoard();
 
     std::string current;
 
