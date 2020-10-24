@@ -7,10 +7,10 @@ void MoveListe::reset() {
 
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
-    if (liste.size() <= 1)
+    if (moveCounter <= 1)
         return;
 
-    for (auto i = 0; i < liste.size(); ++i) {
+    for (auto i = 0; i < moveCounter; ++i) {
         scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
     }
 
@@ -31,6 +31,9 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
 void MoveListe::putFront(const Move move) {
     //more elegant solution since putFront is rarely ever used
+
+    if (moveCounter <= 1)
+        return;
 
     auto it = std::find(liste.begin(), liste.end(), move);
     if (it != liste.end()) {

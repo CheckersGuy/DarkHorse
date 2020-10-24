@@ -51,7 +51,7 @@ enum NodeType {
 enum Score : int {
     INFINITE = 1500000,
     EVAL_INFINITE = INFINITE - 20000,
-    NONE = -INFINITE - 1,
+    NONE = -10000000,
 };
 enum SEARCH : int {
     MAX_PLY = 128
@@ -70,6 +70,10 @@ inline bool isEval(Value val) {
     return std::abs(val) <= EVAL_INFINITE;
 }
 
+inline bool isMateVal(Value val) {
+    return std::abs(val) >= INFINITE - MAX_PLY;
+}
+
 inline Value loss(int ply) {
     return -INFINITE + ply;
 }
@@ -79,11 +83,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val <= -INFINITE+MAX_PLY;
+    return val <= -INFINITE + MAX_PLY;
 }
 
 inline bool isWin(Value val) {
-    return val  >= INFINITE-MAX_PLY;
+    return val >= INFINITE - MAX_PLY;
 }
 
 inline Value valueFromTT(Value val, int ply) {

@@ -35,10 +35,6 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 }
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
-    return searchValue(board, -INFINITE, INFINITE, best, depth, time, print);
-}
-
-Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     nodeCounter = 0;
     mainPV.clear();
@@ -47,6 +43,7 @@ Value searchValue(Board &board, Value alpha, Value beta, Move &best, int depth, 
     int i = 1;
     Value eval = NONE;
     Local local;
+
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
         Search::search_asp(local, new_pv, board, eval, i);
@@ -291,8 +288,6 @@ namespace Search {
         Depth reduction = Search::reduce(local, board, move);
 
         //singular move extension
-
-
         if (local.pv_node
             && local.depth >= 8
             && move == local.sing_move
@@ -381,8 +376,12 @@ namespace Search {
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
+
+
         liste.putFront(mainPV[0]);
         liste.sort(Move{}, true, board.getMover());
+
+
         move_loop(local, board, line, liste);
 
 
