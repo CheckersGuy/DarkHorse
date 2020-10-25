@@ -74,7 +74,7 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("t3", "t1", "match_file");
+    Match engine_match("t4", "old", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(5);
