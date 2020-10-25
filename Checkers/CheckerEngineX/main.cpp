@@ -33,8 +33,13 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
-    Position pos = Position::pos_from_fen("W:W10,K18:BK4,5,K21");
+    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
     //board = Position::getStartPosition();
+
+    std::cout<<"BP: "<<pos.BP<<std::endl;
+    std::cout<<"WP: "<<pos.WP<<std::endl;
+    std::cout<<"K: "<<pos.K<<std::endl;
+
 
     pos.printPosition();
     board = pos;
