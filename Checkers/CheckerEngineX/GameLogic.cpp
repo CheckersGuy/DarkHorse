@@ -47,7 +47,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     while (i <= depth && i <= MAX_PLY) {
         Line new_pv;
         Search::search_asp(local, new_pv, board, eval, i);
-        if (!isEval(local.best_score))
+        if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
 
         eval = local.best_score;
@@ -66,6 +66,9 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
 
         best = mainPV.getFirstMove();
         ++i;
+        if (isMateVal(local.best_score)) {
+            break;
+        }
     }
     return eval;
 }
