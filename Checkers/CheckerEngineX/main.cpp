@@ -33,7 +33,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     Board board;
 
-    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K10,K32");
+    /*Position pos = Position::pos_from_fen("W:W17:BK7,K14,K32,K31");
     //board = Position::getStartPosition();
 
     std::cout<<"BP: "<<pos.BP<<std::endl;
@@ -60,7 +60,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 2000000, true);
     board.makeMove(best);
     board.printBoard();
-
+*/
     std::string current;
 
     while (std::cin >> current) {
