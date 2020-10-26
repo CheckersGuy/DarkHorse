@@ -18,6 +18,18 @@ struct HelpInserter {
 };
 
 
+struct Hasher{
+
+    uint64_t xorshift(const uint64_t& n,int i){
+        return n^(n>>i);
+    }
+
+    uint64_t operator()(uint64_t n){
+        uint64_t p = 0x5555555555555555ull; // pattern of alternating 0 and 1
+        uint64_t c = 17316035218449499591ull;// random uneven integer constant;
+        return c*xorshift(p*xorshift(n,32),32);
+    }
+};
 
 
 int main(int argl, const char **argc) {
@@ -56,22 +68,22 @@ int main(int argl, const char **argc) {
 
 
 
-  /*  std::cout << "Starting Match" << std::endl;
-    std::cout << "Parallelism: " << std::endl;
-    int threads;
-    std::cin >> threads;
-    std::cout << "MaxGames: " << std::endl;
-    int max_games;
-    std::cin >> max_games;
+    /*  std::cout << "Starting Match" << std::endl;
+      std::cout << "Parallelism: " << std::endl;
+      int threads;
+      std::cin >> threads;
+      std::cout << "MaxGames: " << std::endl;
+      int max_games;
+      std::cin >> max_games;
 
-    Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(max_games);
-    engine_match.setNumThreads(threads);
-    engine_match.setHashSize(20);
-    engine_match.set_play_reverse(false);
-    engine_match.start();
-*/
+      Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
+      engine_match.setTime(100);
+      engine_match.setMaxGames(max_games);
+      engine_match.setNumThreads(threads);
+      engine_match.setHashSize(20);
+      engine_match.set_play_reverse(false);
+      engine_match.start();
+  */
 
 
 
@@ -87,8 +99,24 @@ int main(int argl, const char **argc) {
     engine_match.start();
 
 */
+    size_t unique_counter =0;
+    std::unordered_set<uint64_t > hash_set;
 
+    std::mt19937_64 generator(231231u);
+    std::uniform_int_distribution<uint64_t> distrib(0,1000000000ull);
 
+    HyperLog< uint64_t,10,Hasher> log;
+    for (int i = 1; i <= 100080005ull; ++i) {
+        auto value = distrib(generator);
+        log.insert(value);
+        if(hash_set.find(value)==hash_set.end()){
+            unique_counter++;
+            hash_set.insert(value);
+        }
+
+    }
+    std::cout<<"Unique_Counter: "<<unique_counter<<std::endl;
+    std::cout << "Count: " << log.get_count() << std::endl;
 
 
 
