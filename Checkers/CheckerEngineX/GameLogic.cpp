@@ -53,7 +53,8 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
         eval = local.best_score;
         mainPV = new_pv;
         if (print) {
-            std::string temp = std::to_string(eval) + "  ";
+            std::string temp = (isMateVal(eval)) ? "Mate in " + std::to_string(getMateInX(eval)) :
+                               std::to_string(eval) + " ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
             temp += mainPV.toString();

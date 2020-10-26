@@ -15,8 +15,8 @@
 
 struct NodeInfo {
     uint8_t move_index {std::numeric_limits<uint8_t>::max()};
-    Value score;
-    uint8_t depth;
+    Value score{NONE};
+    uint8_t depth{0};
     uint8_t flag{Flag::None};
 };
 

@@ -71,7 +71,15 @@ inline bool isEval(Value val) {
 }
 
 inline bool isMateVal(Value val) {
-    return std::abs(val)>=INFINITE-MAX_PLY && std::abs(val)<=INFINITE;
+    return std::abs(val) >= INFINITE - MAX_PLY && std::abs(val) <= INFINITE;
+}
+
+inline int getMateInX(Value val) {
+    if (isMateVal(val)) {
+        return INFINITE - std::abs(val);
+    } else {
+        return INFINITE;
+    }
 }
 
 inline Value loss(int ply) {
