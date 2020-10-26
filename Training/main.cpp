@@ -1,6 +1,7 @@
 #include <iostream>
 #include "Match.h"
 #include "Trainer.h"
+#include <HyperLog.h>
 
 struct HelpInserter {
     Training::TrainData &data;
@@ -15,6 +16,8 @@ struct HelpInserter {
     }
 
 };
+
+
 
 
 int main(int argl, const char **argc) {
@@ -52,8 +55,6 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-
 
   /*  std::cout << "Starting Match" << std::endl;
     std::cout << "Parallelism: " << std::endl;
@@ -74,6 +75,9 @@ int main(int argl, const char **argc) {
 
 
 
+
+
+/*
     Match engine_match("t4", "old", "match_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
@@ -82,6 +86,7 @@ int main(int argl, const char **argc) {
     engine_match.set_play_reverse(true);
     engine_match.start();
 
+*/
 
 
 
