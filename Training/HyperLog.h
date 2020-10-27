@@ -11,43 +11,38 @@
 #include "immintrin.h"
 
 //default is around 8kb of memory
-template< typename T,size_t num_bucket_bits =10, typename Hasher = std::hash<T>>
+//Notes:
+
+/*the maximum value of any bucket is obviously bounded by numbits-num_bucket_bits
+ * 1. I dont need to use double here at all
+ * 2. There is still work left to be done
+ * 3. Sparse Representation, bias correction ...
+ *
+ *
+ */
+
+
+template<typename T, size_t num_bucket_bits = 10, typename Hasher = std::hash<T>>
 class HyperLog {
 
 private:
-    std::array<double, (1u << num_bucket_bits)> buckets{0};
+    static constexpr size_t num_buckets = (1u << num_bucket_bits) - 1u;
+    static constexpr size_t m = 1u << num_bucket_bits;
+
+    std::array<uint8_t, num_buckets> buckets{0};
     size_t count{0};
     Hasher hash;
     double alpha;
-
-    template<typename S>
-    void print_bit_string(S value) {
-        static_assert(std::is_unsigned_v<S>);
-        for (uint32_t i = 0; i < sizeof(S) * 8; ++i) {
-            const S maske = S{1u} << (sizeof(S) * 8 - i - 1);
-            if ((maske & value) != 0u)
-                std::cout << "1";
-            else
-                std::cout << "0";
-
-        }
-        std::cout << std::endl;
-
-    }
-
 public:
 
     HyperLog() {
-        constexpr auto num_buckets = 1u << num_bucket_bits;
-        static_assert(num_buckets>=16);
-
-        if (num_buckets >= 128) {
-            alpha = 0.7213 / (1 + 1.079 / ((double) num_buckets));
-        } else if (num_buckets == 16) {
+        if (m >= 128) {
+            alpha = 0.7213 / (1 + 1.079 / ((double) m));
+        } else if (m == 16) {
             alpha = 0.673;
-        } else if (num_buckets == 32) {
+        } else if (m == 32) {
             alpha = 0.697;
-        } else if (num_buckets == 64) {
+        } else if (m == 64) {
             alpha = 0.709;
         }
 
@@ -62,7 +57,7 @@ public:
         auto hash_value = hash(std::forward<T>(value));
         HashType maske{0u};
 
-        for (uint32_t i = 0; i < num_bucket_bits; ++i) {
+        for (uint64_t i = 0; i < num_bucket_bits; ++i) {
             maske |= HashType{1u} << (num_bits - i - 1);
         }
 
@@ -71,59 +66,45 @@ public:
         HashType bucket_index = maske & hash_value;
         bucket_index = bucket_index >> (num_bits - num_bucket_bits);
 
-        //adding the 1...1 of the bucket index so we never have the value 0
-        hash_value |= maske;
-
-
         //computing trailing zeros the old fashioned way
-        size_t trailing_zeros;
-        if constexpr(num_bits==32){
-            trailing_zeros = __tzcnt_u32(hash_value)+1u;
-        }else if(num_bits==64){
-            trailing_zeros=__tzcnt_u64(hash_value)+1u;
-        }else{
-            trailing_zeros=1u;
-            for (auto i = 0; i <num_bits-num_bucket_bits; ++i) {
-                const HashType m = HashType{1u} << i;
-                if ((hash_value & m) == 0) {
-                    trailing_zeros ++;
-                }else{
-                    break;
-                }
+        size_t trailing_zeros = 1u;
+
+        for (int i = num_bits - num_bucket_bits - 1; i >= 0; --i) {
+            const HashType ml = HashType{1u} << i;
+            if ((hash_value & ml) == 0) {
+                trailing_zeros++;
+            } else {
+                break;
             }
         }
-        buckets[bucket_index] = std::max(buckets[bucket_index], (double) trailing_zeros);
+        if (buckets[bucket_index] < trailing_zeros)
+            buckets[bucket_index] = trailing_zeros;
     }
 
     size_t get_count() {
         double result;
-        const auto num_buckets = 1u << num_bucket_bits;
-        double m = num_buckets;
         double temp = 0;
-        for (auto i = 0; i < num_buckets; ++i) {
-            temp += 1.0/std::pow(2.0,buckets[i]);
+        for (auto i = 0; i < buckets.size(); ++i) {
+            temp += std::pow(2.0, -((double) buckets[i]));
         }
-        temp = 1.0 / temp;
-
-
-        double eta = alpha * m * m * temp;
+        double eta = (alpha * ((double)m)*((double)m)) / temp;
 
         int num_zero_buckets = 0;
-        for (auto i = 0; i < num_buckets; ++i) {
-            if(buckets[i]==0)
+        for (auto i = 0; i < buckets.size(); ++i) {
+            if (buckets[i] == 0)
                 num_zero_buckets++;
         }
-        if (eta <= (5.0 / 2.0) * ((double) num_buckets)) {
+        if (eta <= (5.0 / 2.0) * ((double) m)) {
             if (num_zero_buckets != 0) {
-                result = ((double) num_buckets) *
-                         std::log(((double) num_buckets) / ((double) num_zero_buckets));
+                result = ((double) m) *
+                         std::log(((double) m) / ((double) num_zero_buckets));
             } else {
                 result = eta;
             }
-        } else if(eta<=(1.0/30.0)*std::pow(2.0,32.0)){
+        } else if (eta <= (1.0 / 30.0) * std::pow(2.0, 32.0)) {
             result = eta;
-        }else{
-            result = -std::pow(2.0,32.0)*std::log(1-eta/std::pow(2.0,32.0));
+        } else {
+            result = -std::pow(2.0, 32.0) * std::log(1.0 - eta * std::pow(2.0, -32.0));
         }
 
         return std::round(result);
@@ -132,7 +113,7 @@ public:
     HyperLog &operator+=(const HyperLog &other) {
         //merging the buckets
         for (auto i = 0; i < buckets.size(); ++i) {
-            buckets[i] += other.buckets[i];
+            buckets[i] = std::max(buckets[i], other.buckets[i]);
         }
         return *this;
     }
