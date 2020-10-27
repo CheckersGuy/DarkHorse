@@ -14,6 +14,7 @@
 #include <sys/resource.h>
 #include "proto/Training.pb.h"
 #include <filesystem>
+#include <HyperLog.h>
 
 inline std::string getPositionString(Position pos) {
     std::string position;
@@ -39,6 +40,12 @@ inline std::string getPositionString(Position pos) {
     return position;
 }
 
+struct TrainHasher{
+
+    uint64_t operator()(Position p){
+        return p.key;
+    }
+};
 
 class Logger {
 
@@ -47,7 +54,6 @@ private:
     std::ofstream stream;
     const std::string log_file = "log.txt";
     bool logging{false};
-
     Logger() {
         stream = std::ofstream(log_file);
         if (!stream.good()) {
@@ -158,11 +164,9 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     bool play_reverse{false};
-    std::string openingBook{"../Training/Positions/3move.book"};
+    std::string openingBook{"../Training/Positions/genBook1.book"};
     std::string output_file;
     Training::TrainData data;
-
-
     void addPosition(Position pos, Training::Result result);
 
 public:

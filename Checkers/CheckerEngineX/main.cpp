@@ -32,7 +32,7 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
     Board board;
-
+/*
     Position pos = Position::pos_from_fen("W:WK8:BK4,K3,K11");
     board = Position::getStartPosition();
 
@@ -51,7 +51,7 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 2000000, true);
     board.makeMove(best);
-    board.printBoard();
+    board.printBoard();*/
     std::string current;
 
     while (std::cin >> current) {
@@ -63,7 +63,7 @@ int main(int argl, const char **argc) {
             setHashSize(hash_size);
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
-            board.pCounter = 0;
+            board= Board{};
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);
@@ -102,8 +102,8 @@ int main(int argl, const char **argc) {
             }
 
             std::cout << "new_move" << "\n";
-            std::cout << std::to_string(__tzcnt_u32(bestMove.from)) << "\n";
-            std::cout << std::to_string(__tzcnt_u32(bestMove.to)) << "\n";
+            std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
+            std::cout << std::to_string(bestMove.getToIndex()) << "\n";
             uint32_t captures = bestMove.captures;
             while (captures) {
                 std::cout << std::to_string(__tzcnt_u32(captures)) << "\n";

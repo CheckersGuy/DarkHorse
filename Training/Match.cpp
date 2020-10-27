@@ -10,10 +10,15 @@ bool Interface::is_n_fold(int n) {
         return false;
 
     const Position other = history.back();
-    auto count = std::count_if(history.begin(), history.end(), [&other](Position &p) {
-        return p == other;
-    });
-    return count >= n;
+    int count =0;
+    for (int i = (int)history.size() - 2; i >= 0; --i) {
+        if(history[i]==other)
+            count ++;
+        if(count>=n)
+            return true;
+    }
+
+    return false;
 }
 
 
@@ -141,19 +146,19 @@ void Engine::initEngine() {
 }
 
 bool Interface::is_terminal_state() {
-    if (is_n_fold(3))
+    if (is_n_fold(3) || history.size() >= 800)
         return true;
 
     MoveListe liste;
     getMoves(pos, liste);
-    return liste.length() == 0 || history.size() >= 400;
+    return liste.length() == 0;
 
 }
 
 void Engine::new_move(Move move) {
     writeMessage("new_move");
-    writeMessage(std::to_string(__tzcnt_u32(move.from)));
-    writeMessage(std::to_string(__tzcnt_u32(move.to)));
+    writeMessage(std::to_string(move.getFromIndex()));
+    writeMessage(std::to_string(move.getToIndex()));
     uint32_t captures = move.captures;
     while (captures) {
         writeMessage(std::to_string(__tzcnt_u32(captures)));
@@ -275,6 +280,7 @@ void Interface::terminate_engines() {
 
 
 void Match::start() {
+    HyperLog<Position, 10, TrainHasher> counter;
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
@@ -341,8 +347,8 @@ void Match::start() {
                 fcntl(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
             }
         }
-        printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
-        printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
+        printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws", "Uniq_Counter");
+        printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
         printf("\r");
         std::cout.flush();
         int start_index = 0;
@@ -373,8 +379,8 @@ void Match::start() {
 
                 if (inter.is_terminal_state()) {
                     game_count++;
-                    printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-                    std::cout<<std::endl;
+                    printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
+                    std::cout << std::endl;
                     MoveListe liste;
                     getMoves(inter.pos, liste);
                     if (liste.length() == 0) {
@@ -387,14 +393,18 @@ void Match::start() {
                         Training::Result result;
                         result = (inter.pos.color == BLACK) ? Training::WHITE_WON : Training::BLACK_WON;
                         for (Position &p : inter.history) {
+                            p.key = Zobrist::generateKey(p);
                             addPosition(p, result);
+                            counter.insert(p);
                         }
                     }
                     if (inter.is_n_fold(3)) {
                         logger << "Repetition" << "\n";
                         draws++;
                         for (Position &p : inter.history) {
+                            p.key = Zobrist::generateKey(p);
                             addPosition(p, Training::DRAW);
+                            counter.insert(p);
                         }
                     }
                     if (inter.history.size() >= 800) {
