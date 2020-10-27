@@ -5,12 +5,10 @@
 #ifndef READING_HYPERLOG_H
 #define READING_HYPERLOG_H
 
-#include <cstdint>
 #include <cstddef>
 #include <array>
 #include <cmath>
 #include "immintrin.h"
-#include <bitset>
 
 //default is around 8kb of memory
 template< typename T,size_t num_bucket_bits =10, typename Hasher = std::hash<T>>
@@ -40,7 +38,9 @@ private:
 public:
 
     HyperLog() {
-        const auto num_buckets = 1u << num_bucket_bits;
+        constexpr auto num_buckets = 1u << num_bucket_bits;
+        static_assert(num_buckets>=16);
+
         if (num_buckets >= 128) {
             alpha = 0.7213 / (1 + 1.079 / ((double) num_buckets));
         } else if (num_buckets == 16) {
@@ -76,21 +76,23 @@ public:
 
 
         //computing trailing zeros the old fashioned way
-
-        size_t trailing_zeros = 1u;
-
-        for (auto i = (num_bits-num_bucket_bits-1); i >=0; --i) {
-            const HashType m = HashType{1u} << i;
-            if ((hash_value & m) == 0) {
-                trailing_zeros ++;
-            }else{
-                break;
+        size_t trailing_zeros;
+        if constexpr(num_bits==32){
+            trailing_zeros = __tzcnt_u32(hash_value)+1u;
+        }else if(num_bits==64){
+            trailing_zeros=__tzcnt_u64(hash_value)+1u;
+        }else{
+            trailing_zeros=1u;
+            for (auto i = 0; i <num_bits-num_bucket_bits; ++i) {
+                const HashType m = HashType{1u} << i;
+                if ((hash_value & m) == 0) {
+                    trailing_zeros ++;
+                }else{
+                    break;
+                }
             }
         }
         buckets[bucket_index] = std::max(buckets[bucket_index], (double) trailing_zeros);
-
-        //getting the number of trailing zeros
-
     }
 
     size_t get_count() {
@@ -111,7 +113,6 @@ public:
             if(buckets[i]==0)
                 num_zero_buckets++;
         }
-        std::cout<<num_zero_buckets<<std::endl;
         if (eta <= (5.0 / 2.0) * ((double) num_buckets)) {
             if (num_zero_buckets != 0) {
                 result = ((double) num_buckets) *

@@ -89,8 +89,8 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-    Match engine_match("t4", "old", "match_file");
+
+    Match engine_match("t4", "t4", "match_file2");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(5);
@@ -98,26 +98,27 @@ int main(int argl, const char **argc) {
     engine_match.set_play_reverse(true);
     engine_match.start();
 
-*/
-    size_t unique_counter =0;
-    std::unordered_set<uint64_t > hash_set;
 
-    std::mt19937_64 generator(231231u);
+
+/*
+    size_t unique_counter =0;
+
+    std::mt19937_64 generator(637231u);
     std::uniform_int_distribution<uint64_t> distrib(0,1000000000ull);
 
-    HyperLog< uint64_t,10,Hasher> log;
-    for (int i = 1; i <= 100080005ull; ++i) {
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    HyperLog< uint64_t,4,Hasher> log;
+    for (int i = 1; i <= 1000080005ull; ++i) {
         auto value = distrib(generator);
         log.insert(value);
-        if(hash_set.find(value)==hash_set.end()){
-            unique_counter++;
-            hash_set.insert(value);
-        }
-
     }
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto duration =t2-t1;
     std::cout<<"Unique_Counter: "<<unique_counter<<std::endl;
     std::cout << "Count: " << log.get_count() << std::endl;
-
+    std::cout<<"Time: "<<duration.count()/1000000<<std::endl;
+*/
 
 
 
