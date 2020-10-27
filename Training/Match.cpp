@@ -10,11 +10,11 @@ bool Interface::is_n_fold(int n) {
         return false;
 
     const Position other = history.back();
-    int count =0;
-    for (int i = (int)history.size() - 2; i >= 0; --i) {
-        if(history[i]==other)
-            count ++;
-        if(count>=n)
+    int count = 0;
+    for (int i = (int) history.size() - 2; i >= 0; --i) {
+        if (history[i] == other)
+            count++;
+        if (count >= n)
             return true;
     }
 
@@ -279,8 +279,22 @@ void Interface::terminate_engines() {
 }
 
 
+struct Position_Hash {
+
+
+    uint64_t operator()(const Position& p)const {
+        return p.key;
+    }
+
+};
+
 void Match::start() {
-    HyperLog<Position, 10, TrainHasher> counter;
+    HyperLog<Position, 20, TrainHasher> counter;
+
+    size_t uniq_counter = 0u;
+    std::unordered_set<Position,Position_Hash> hash_set;
+
+
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
@@ -354,7 +368,6 @@ void Match::start() {
         int start_index = 0;
         auto &logger = Logger::get_instance();
 
-
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 if (inter.pos.isEmpty()) {
@@ -370,16 +383,19 @@ void Match::start() {
                         inter.pos = pos;
                         inter.played_reverse = play_reverse;
                         inter.first_mover = 0;
+                        inter.history.clear();
                     } else {
                         inter.first_mover = 1;
                         inter.played_reverse = false;
                         inter.pos = inter.history.front();
+                        inter.history.clear();
                     }
                 }
 
                 if (inter.is_terminal_state()) {
                     game_count++;
                     printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
+                    std::cout<<"CheckCounter: "<<uniq_counter<<std::endl;
                     std::cout << std::endl;
                     MoveListe liste;
                     getMoves(inter.pos, liste);
@@ -396,6 +412,8 @@ void Match::start() {
                             p.key = Zobrist::generateKey(p);
                             addPosition(p, result);
                             counter.insert(p);
+                            if (hash_set.find(p) == hash_set.end())
+                                uniq_counter++;
                         }
                     }
                     if (inter.is_n_fold(3)) {
@@ -405,6 +423,8 @@ void Match::start() {
                             p.key = Zobrist::generateKey(p);
                             addPosition(p, Training::DRAW);
                             counter.insert(p);
+                            if (hash_set.find(p) == hash_set.end())
+                                uniq_counter++;
                         }
                     }
                     if (inter.history.size() >= 800) {
@@ -413,7 +433,6 @@ void Match::start() {
                     logger << inter.pos.position_str() << "\n";
 
                     logger << "End of the game with index: " << start_index << "\n";
-                    inter.history.clear();
                     inter.reset_engines();
                 }
 
