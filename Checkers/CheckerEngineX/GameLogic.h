@@ -17,7 +17,6 @@
 #include <iterator>
 
 struct Local {
-    uint64_t node_counter{0ull};
     Value alpha, beta;
     Value best_score;
     Value sing_score;
@@ -46,7 +45,7 @@ namespace Search {
 
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
 
-    Depth reduce(Local &local, Board &board, Move move, bool in_pv_line);
+    Depth reduce(Local &local, Board &board, Move move);
 
 }
 

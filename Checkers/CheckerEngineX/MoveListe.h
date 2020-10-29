@@ -1,13 +1,10 @@
 #ifndef CHECKERSTEST_MOVELISTE_H
 #define CHECKERSTEST_MOVELISTE_H
 
-#include <cstdio>
 #include "Move.h"
-#include <cassert>
 #include "types.h"
 #include "MovePicker.h"
 #include <array>
-#include <iterator>
 #include "Position.h"
 
 class MoveListe {
@@ -44,7 +41,9 @@ public:
     std::optional<uint8_t> get_move_index(Move move) const;
 
     auto end() {
-        return liste.end();
+        auto it = liste.begin();
+        std::advance(it,moveCounter);
+        return it;
     }
 
     MoveListe &operator=(const MoveListe &other);
@@ -64,7 +63,6 @@ inline Move &MoveListe::operator[](int index) {
 }
 
 inline void MoveListe::addMove(Move next) {
-    assert(moveCounter<40);
     liste[this->moveCounter++] = next;
 }
 

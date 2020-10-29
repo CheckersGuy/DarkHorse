@@ -68,35 +68,38 @@ int main(int argl, const char **argc) {
 
 
 
-    /*  std::cout << "Starting Match" << std::endl;
-      std::cout << "Parallelism: " << std::endl;
-      int threads;
-      std::cin >> threads;
-      std::cout << "MaxGames: " << std::endl;
-      int max_games;
-      std::cin >> max_games;
+/*
+    std::cout << "Starting Match" << std::endl;
+    std::cout << "Parallelism: " << std::endl;
+    int threads;
+    std::cin >> threads;
+    std::cout << "MaxGames: " << std::endl;
+    int max_games;
+    std::cin >> max_games;
 
-      Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
-      engine_match.setTime(100);
-      engine_match.setMaxGames(max_games);
-      engine_match.setNumThreads(threads);
-      engine_match.setHashSize(20);
-      engine_match.set_play_reverse(false);
-      engine_match.start();
-  */
+    Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
+    engine_match.setTime(100);
+    engine_match.setMaxGames(max_games);
+    engine_match.setNumThreads(threads);
+    engine_match.setHashSize(20);
+    engine_match.set_play_reverse(false);
+    engine_match.start();
 
-
-
-
+*/
 
 
-    Match engine_match("t4", "t4", "match_file2");
+
+
+
+
+    Match engine_match("t5", "old", "test_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
-    engine_match.setNumThreads(14);
-    engine_match.setHashSize(22);
+    engine_match.setNumThreads(6);
+    engine_match.setHashSize(21);
     engine_match.set_play_reverse(true);
     engine_match.start();
+
 
 
 

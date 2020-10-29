@@ -31,11 +31,19 @@ inline Position posFromString(const std::string &pos) {
 }
 
 int main(int argl, const char **argc) {
-    Board board;
-/*
-    Position pos = Position::pos_from_fen("W:WK8:BK4,K3,K11");
-    board = Position::getStartPosition();
 
+
+
+    Board board;
+
+/*
+
+
+    initialize();
+    Position pos = Position::pos_from_fen("W:W25:BK7,K15,K22,K32,K31");
+    board = Position::getStartPosition();
+    //board =pos;
+;
 
 
     board.printBoard();
@@ -43,19 +51,24 @@ int main(int argl, const char **argc) {
     std::cout << std::endl;
 
 
-    initialize();
-    setHashSize(23);
+
+    setHashSize(27);
 
     std::cout<<"NonZeroWeights: "<<gameWeights.numNonZeroValues()<<std::endl;
 
     Move best;
-    searchValue(board, best, MAX_PLY, 2000000, true);
+    searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();*/
-    std::string current;
+    board.printBoard();
 
+*/
+
+
+
+    std::string current;
     while (std::cin >> current) {
         if (current == "init") {
+            TT.age_counter=0u;
             initialize();
             std::string hash_string;
             std::cin >> hash_string;
@@ -63,6 +76,8 @@ int main(int argl, const char **argc) {
             setHashSize(hash_size);
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
+            TT.clear();
+            TT.age_counter=0u;
             board= Board{};
             std::string position;
             std::cin >> position;
@@ -70,6 +85,7 @@ int main(int argl, const char **argc) {
             board = pos;
             std::cout << "game_ready" << "\n";
         } else if (current == "new_move") {
+            TT.age_counter++;
             //opponent made a move and we need to update the board
             Move move;
             std::vector<uint32_t> squares;

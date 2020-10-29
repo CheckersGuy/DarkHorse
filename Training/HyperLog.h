@@ -61,7 +61,6 @@ public:
             maske |= HashType{1u} << (num_bits - i - 1);
         }
 
-
         //getting the index for the bucket
         HashType bucket_index = maske & hash_value;
         bucket_index = bucket_index >> (num_bits - num_bucket_bits);

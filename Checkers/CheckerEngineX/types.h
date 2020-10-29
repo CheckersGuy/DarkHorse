@@ -49,12 +49,12 @@ enum NodeType {
 };
 
 enum Score : int {
-    INFINITE = 1500000,
-    EVAL_INFINITE = INFINITE - 20000,
-    NONE = -10000000,
+    INFINITE = 15000000,
+    EVAL_INFINITE = INFINITE - 100000,
+    NONE = -INFINITE - 1,
 };
 enum SEARCH : int {
-    MAX_PLY = 128
+    MAX_PLY = 256
 };
 enum Color : int {
     BLACK = -1, WHITE = 1

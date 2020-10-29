@@ -4,9 +4,6 @@
 
 #ifndef CHECKERSTEST_MOVE_H
 #define CHECKERSTEST_MOVE_H
-
-
-#include <cstdint>
 #include "types.h"
 #include "Bits.h"
 

@@ -9,8 +9,8 @@ Position &Board::getPosition() {
 }
 
 Board::Board(const Board &other) {
-    std::copy(other.moves.begin(),other.moves.end(),moves.begin());
-    std::copy(other.pStack.begin(),other.pStack.end(),pStack.begin());
+    std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
+    std::copy(other.moves.begin(), other.moves.end(), moves.begin());
     this->pCounter = other.pCounter;
 }
 
@@ -25,7 +25,7 @@ void Board::makeMove(Move move) {
     this->pCounter++;
     Zobrist::doUpdateZobristKey(getPosition(), move);
     pStack[pCounter].makeMove(move);
-
+    moves[pCounter] = move;
 }
 
 void Board::undoMove() {
@@ -55,17 +55,25 @@ bool Board::hasJumps() {
 }
 
 uint64_t Board::getCurrentKey() {
-    return this->pStack[pCounter].key;
+    return getPosition().key;
 }
 
 bool Board::isRepetition() {
-    for (auto i = pCounter - 2; i > 0; i -= 2) {
-        Move &current = moves[i];
-        if (pStack[i] == getPosition()) {
-            return true;
-        }
-        if (current.isCapture() || current.isPromotion(pStack[i - 1].K))
+    if (pCounter < 4)
+        return false;
+
+    int counter = 0;
+
+    for (auto i = pCounter; i > 0; i -= 2) {
+
+        if(moves[i].isCapture() || moves[i].isPromotion(pStack[i-1].K))
             return false;
+
+        if (pStack[i] == getPosition()) {
+            counter++;
+        }
+        if (counter == 2)
+            return true;
 
     }
 
