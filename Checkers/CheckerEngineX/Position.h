@@ -6,9 +6,7 @@
 #ifndef CHECKERENGINEX_POSITION_H
 #define CHECKERENGINEX_POSITION_H
 
-#include <cstdint>
 #include "Move.h"
-#include <cassert>
 #include "types.h"
 
 inline uint32_t getHorizontalFlip(uint32_t b) {

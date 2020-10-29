@@ -36,6 +36,7 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
+    TT.age_counter++;
     nodeCounter = 0;
     mainPV.clear();
     TT.clear();
@@ -53,8 +54,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
         eval = local.best_score;
         mainPV = new_pv;
         if (print) {
-            std::string temp = (isMateVal(eval)) ? "Mate in " + std::to_string(getMateInX(eval)) :
-                               std::to_string(eval) + " ";
+            std::string temp = std::to_string(eval) + " ";
             temp += " Depth:" + std::to_string(i) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
             temp += mainPV.toString();
@@ -79,7 +79,7 @@ namespace Search {
     Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
         const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
+        if (local.depth > 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = 1;
             if (!local.pv_node && local.i >= 4) {
                 red = 2;
@@ -95,20 +95,21 @@ namespace Search {
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
             return board.getMover() * NONE;
         }
-        //Repetition check
-
 
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition());
         }
-
+        if (board.isRepetition()) {
+            return 0;
+        }
         //qs
-        if (depth <= 0) {
+        if (depth == 0) {
             return Search::qs(board, pv, alpha, beta, ply);
         }
 
-        if (board.isRepetition()) {
-            return 0;
+
+        if (loss(ply + 2) >= beta) {
+            return loss(ply + 2);
         }
 
         MoveListe liste;
@@ -118,12 +119,10 @@ namespace Search {
         if (liste.isEmpty()) {
             return loss(ply);
         }
-        if (loss(ply + 2) >= beta) {
-            return loss(ply + 2);
-        }
 
         Local local;
         local.best_score = NONE;
+        local.sing_score = NONE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
@@ -131,7 +130,7 @@ namespace Search {
         local.prune = prune;
         local.move = Move{};
         local.skip_move = skip_move;
-        local.sing_score = NONE;
+
         local.pv_node = (beta != alpha + 1);
 
 
@@ -151,10 +150,12 @@ namespace Search {
 
 
         // tb-probing
+#ifndef TRAIN
+
         if (TT.findHash(pos_key, info)) {
             tt_move = (info.move_index == std::numeric_limits<uint8_t>::max()) ? Move{} : liste[info.move_index];
             auto tt_score = valueFromTT(info.score, ply);
-            if (info.depth >= depth && isEval(tt_score)) {
+            if (info.depth >= depth && info.score != NONE) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
                     || (info.flag == TT_UPPER && tt_score <= local.alpha)
                     || info.flag == TT_EXACT) {
@@ -166,22 +167,23 @@ namespace Search {
                 || (info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)) {
                 return tt_score;
             }
-            //here would go the code for  doing singular move extensions
+
             if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
                 std::find(liste.begin(), liste.end(), tt_move) != liste.end()) {
                 local.sing_score = tt_score;
                 local.sing_move = tt_move;
             }
         }
+#endif
         //probcut
 
 
-        if (!local.pv_node && prune && depth >= 5 && isEval(local.beta)) {
-            Value margin = (10 * scalfac * depth);
-            Value newBeta = beta + margin;
+     if (!local.pv_node && local.prune && local.depth >= 5 && isEval(local.beta)) {
+            Value margin = (15 * scalfac * local.depth);
+            Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply+1, newDepth, Move{}, false);
             if (value >= newBeta) {
                 value = value - margin;
                 pv = new_pv;
@@ -189,22 +191,23 @@ namespace Search {
             }
         }
 
-
         if (local.pv_node && ply < mainPV.length()) {
             liste.putFront(mainPV[ply]);
         }
 
         //sorting
         liste.sort(tt_move, local.pv_node, board.getMover());
+
         //move-loop
         Search::move_loop(local, board, pv, liste);
 
-        //updating search stats
-        if (local.best_score >= local.beta && liste.length() > 1) {
-            Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
-                                              local.depth);
-        }
 
+        //updating search stats
+        if (local.best_score > local.alpha && liste.length() > 1) {
+            Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
+                                              depth);
+        }
+#ifndef TRAIN
         //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
         Flag flag;
@@ -225,7 +228,7 @@ namespace Search {
 
             TT.storeHash(tt_value, board.getPosition(), flag, depth, tt_m);
         }
-
+#endif
         return local.best_score;
     }
 
@@ -233,21 +236,16 @@ namespace Search {
         bool in_pv_line = (beta != alpha + 1);
         nodeCounter++;
         pv.clear();
+
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition());
         }
 
-        if (board.getPosition().isWipe()) {
-            return loss(ply);
-        }
 
         if (loss(ply + 2) >= beta) {
             return loss(ply + 2);
         }
 
-        if (board.isRepetition()) {
-            return 0;
-        }
 
         MoveListe moves;
         getCaptures(board.getPosition(), moves);
@@ -257,7 +255,7 @@ namespace Search {
 
             //threat-detection -> 1 ply search
             if (board.getPosition().hasThreat()) {
-                return Search::search(board, pv, alpha, beta, ply + 1, 1, Move{},
+                return Search::search(board, pv, alpha, beta, ply, 1, Move{},
                                       false);
             }
 
@@ -300,7 +298,7 @@ namespace Search {
                 ) {
             //there will be some other conditions added
             //values tested: 25 <- Seemed to be better than no extension
-            constexpr Value margin = 25 * scalfac;
+            constexpr Value margin = 15 * scalfac;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
@@ -347,8 +345,8 @@ namespace Search {
                 Line local_pv;
                 Value value = searchMove(move, local, board, local_pv, extension);
                 if (value > local.best_score) {
-                    local.best_score = value;
                     local.move = move;
+                    local.best_score = value;
                     pv.concat(move, local_pv);
                     if (value >= local.beta) {
                         break;
@@ -380,11 +378,8 @@ namespace Search {
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
-
-
         liste.putFront(mainPV[0]);
         liste.sort(Move{}, true, board.getMover());
-
 
         move_loop(local, board, line, liste);
 
@@ -397,7 +392,7 @@ namespace Search {
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 250 * scalfac) {
+            while (std::max(alpha_margin, beta_margin) < 500 * scalfac) {
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
 

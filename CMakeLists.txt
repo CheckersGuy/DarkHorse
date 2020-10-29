@@ -16,6 +16,8 @@ if (UNIX)
     file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp)
     file(GLOB PHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/proto/*.pb.h)
     file(GLOB PSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/proto/*.pb.cc)
+
+
     list(REMOVE_ITEM TSources "${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp")
 endif ()
 
@@ -23,9 +25,8 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 file(GLOB CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.h)
 file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 
-
-
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
+
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
