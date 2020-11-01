@@ -33,16 +33,16 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
 
 
-
     Board board;
 
-/*
+
+
 
 
     initialize();
-    Position pos = Position::pos_from_fen("W:W25:BK7,K15,K22,K32,K31");
+    Position pos = Position::pos_from_fen("W:WK19:B4,3,23");
     board = Position::getStartPosition();
-    //board =pos;
+    board =pos;
 ;
 
 
@@ -61,7 +61,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
 
 
 

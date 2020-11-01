@@ -41,7 +41,7 @@ namespace Search {
     void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
 
 
-    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply);
+    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply,Depth depth);
 
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
 

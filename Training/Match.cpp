@@ -365,13 +365,14 @@ void Match::start() {
                         pos.BP = temp.bp();
                         pos.K = temp.k();
                         pos.color = (temp.mover() == Training::BLACK) ? BLACK : WHITE;
-                        inter.pos = pos;
+                        inter.start_pos=pos;
+                        inter.pos = inter.start_pos;
                         inter.played_reverse = play_reverse;
                         inter.first_mover = 0;
                     } else {
                         inter.first_mover = 1;
                         inter.played_reverse = false;
-                        inter.pos = inter.history.front();
+                        inter.pos = inter.start_pos;
                     }
                 }
 

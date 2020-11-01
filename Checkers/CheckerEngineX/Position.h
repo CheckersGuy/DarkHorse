@@ -134,6 +134,8 @@ struct Position {
 
     bool isEmpty() const;
 
+    bool isEnd() const;
+
     std::string position_str() const;
 
     void makeMove(Move &move);

@@ -157,6 +157,10 @@ bool Position::isWipe() const {
     return ((getColor() == BLACK && getMovers<BLACK>() == 0u) || (getColor() == WHITE && getMovers<WHITE>() == 0u));
 }
 
+bool Position::isEnd() const {
+    return (BP == 0u && color == BLACK) || (WP == 0u && color == WHITE);
+}
+
 std::string Position::position_str() const {
     std::ostringstream out;
     uint32_t counter = 32u;
