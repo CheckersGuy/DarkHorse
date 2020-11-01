@@ -134,6 +134,7 @@ struct Engine {
 struct Interface {
 
     std::array<Engine, 2> engines;
+    Position start_pos;
     Position pos;
     int first_mover = 0;
     std::vector<Position> history;

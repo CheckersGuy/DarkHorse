@@ -174,8 +174,7 @@ struct Weights {
     }
 
 
-    Value evaluate(Position pos) const {
-
+    Value evaluate(Position pos, int ply) const {
         constexpr int pawnEval = 100 * scalfac;
         const Color color = pos.getColor();
         const int WP = __builtin_popcount(pos.WP & (~pos.K));
