@@ -84,7 +84,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     double c = getCValue();
 
     double qValue = mover * static_cast<double>(qStatic);
-    auto offset = static_cast<double>(scalfac * 1);
+    double offset = 1.0;
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {

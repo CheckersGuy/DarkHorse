@@ -43,7 +43,6 @@ using Depth = int;
 using Ply = int;
 using Value = int;
 
-constexpr int scalfac = 16;
 enum NodeType {
     PVNode, NONPV
 };
@@ -51,7 +50,7 @@ enum NodeType {
 enum Score : int {
     INFINITE = 15000000,
     EVAL_INFINITE = INFINITE - 100000,
-    NONE = -INFINITE - 1,
+    NONE = -INFINITE - 1000,
 };
 enum SEARCH : int {
     MAX_PLY = 256
