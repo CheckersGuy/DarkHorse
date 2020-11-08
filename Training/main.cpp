@@ -67,7 +67,6 @@ int main(int argl, const char **argc) {
 
 
 
-
 /*
     std::cout << "Starting Match" << std::endl;
     std::cout << "Parallelism: " << std::endl;
@@ -85,9 +84,7 @@ int main(int argl, const char **argc) {
     engine_match.set_play_reverse(false);
     engine_match.start();
 
-*/
-
-
+    */
 
 
 
@@ -99,6 +96,7 @@ int main(int argl, const char **argc) {
     engine_match.setHashSize(21);
     engine_match.set_play_reverse(true);
     engine_match.start();
+
 
 
 
@@ -125,20 +123,20 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+    //0.189519
 
        std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
        Trainer trainer("../Training/TrainData/output_file");
-       trainer.setLearningRate(10000);
+       trainer.setLearningRate(300);
        trainer.setEpochs(100);
        trainer.setl2Reg(0.000000000000);
-       trainer.setCValue(-5e-3);
+       trainer.setCValue(-10e-3);
        trainer.startTune();
        //0.197482
        auto loss = trainer.calculateLoss();
        std::cout << "Loss: " << loss << std::endl;
 
-*/
+
 
 
 

@@ -24,7 +24,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("checkers8.weights");
+    gameWeights.loadWeights<uint32_t>("test2.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -99,8 +99,17 @@ namespace Search {
             return 0;
         }
         //qs
-        if (depth <= 0) {
-            return Search::qs(board, pv, alpha, beta, ply, depth - 1);
+        MoveListe liste;
+
+        getMoves(board.getPosition(), liste);
+
+
+        if (liste.isEmpty()) {
+            return loss(ply);
+        }
+
+        if (depth == 0) {
+            return Search::qs(board, pv, alpha, beta, ply, depth);
         }
 
 
@@ -127,15 +136,14 @@ namespace Search {
 
         uint64_t pos_key = board.getPosition().key;
 
-        MoveListe liste;
-
-        getMoves(board.getPosition(), liste);
-
 
         if (!local.skip_move.isEmpty()) {
             pos_key ^= Zobrist::get_move_key(board.getPosition(), local.skip_move);
         }
 
+        if (ply >= MAX_PLY) {
+            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+        }
 
 
         // tb-probing
@@ -166,16 +174,13 @@ namespace Search {
 #endif
         //probcut
 
-        if (liste.isEmpty()) {
-            return loss(ply);
-        }
 
-        if (ply >= MAX_PLY) {
-            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
-        }
 
-        if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (15 * scalfac * local.depth);
+
+
+
+        if (!local.pv_node && local.prune && local.depth >= 5 && isEval(local.beta)) {
+            Value margin = (15 * local.depth);
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
@@ -186,6 +191,8 @@ namespace Search {
                 return value;
             }
         }
+
+
 
         if (local.pv_node && ply < mainPV.length()) {
             liste.putFront(mainPV[ply]);
@@ -243,16 +250,10 @@ namespace Search {
         Value bestValue = NONE;
 
         if (moves.isEmpty()) {
-
-            if (board.getPosition().isEnd()) {
-                return loss(ply);
-            }
-
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply + 1, 1, Move{},
                                       false);
             }
-
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             if (bestValue >= beta) {
                 return bestValue;
@@ -283,21 +284,20 @@ namespace Search {
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension) {
         Depth reduction = Search::reduce(local, board, move);
         //singular move extension
-/*
 
-        if (local.pv_node
-            && local.depth >= 8
+
+
+
+       if (local.pv_node
+            && local.depth >= 7
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            //there will be some other conditions added
-            //values tested: 25 <- Seemed to be better than no extension
-
-            constexpr Value margin = 45 * scalfac;
+            constexpr Value margin = 15;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha-1, new_alpha , local.ply, local.depth - 4, move,
+            Value value = Search::search(board, new_pv, new_alpha , new_alpha+1, local.ply, local.depth - 4, move,
                                          local.prune);
 
 
@@ -305,7 +305,7 @@ namespace Search {
                 extension = 1;
 
         }
-*/
+
 
 
         Depth new_depth = local.depth - 1 + extension;
@@ -336,7 +336,7 @@ namespace Search {
         local.i = 0;
         const auto num_moves = liste.length();
         int extension = (liste.length() == 1) ? 1 : 0;
-        while (local.i < num_moves) {
+        while (local.best_score < local.beta && local.i < num_moves) {
             Move move = liste[local.i];
             if (move != local.skip_move) {
                 Line local_pv;
@@ -345,10 +345,6 @@ namespace Search {
                     local.move = move;
                     local.best_score = value;
                     pv.concat(move, local_pv);
-                    if (value >= local.beta) {
-                        break;
-                    }
-
                 }
             }
 
@@ -384,21 +380,19 @@ namespace Search {
     }
 
     void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth) {
-        if (depth >= 5 && isEval(last_score)) {
-            Value margin = 10 * scalfac;
+    /*    if (depth >= 5 && isEval(last_score)) {
+            Value margin = 10;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 500 * scalfac) {
+            while (std::max(alpha_margin, beta_margin) < 500) {
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
 
                 search_root(local, line, board, alpha, beta, depth);
 
                 Value score = local.best_score;
-                if (!isEval(score)) {
-                    break;
-                } else if (score <= alpha) {
+                if (score <= alpha) {
                     alpha_margin *= 2;
                 } else if (score >= beta) {
                     beta_margin *= 2;
@@ -407,7 +401,7 @@ namespace Search {
                 }
             }
         }
-
+*/
         search_root(local, line, board, -INFINITE, INFINITE, depth);
 
     }
