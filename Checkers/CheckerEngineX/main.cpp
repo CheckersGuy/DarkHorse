@@ -42,14 +42,8 @@ int main(int argl, const char **argc) {
     Board board;
 
 
-
-
-/*
-
-
-
     initialize();
-    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K10,K9,K32");
+    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K32");
     board = Position::getStartPosition();
     board =pos;
 ;
@@ -70,7 +64,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
 
 
     std::string current;
