@@ -46,13 +46,11 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     Local local;
 
     while (i <= depth && i <= MAX_PLY) {
-        Line new_pv;
-        Search::search_asp(local, new_pv, board, eval, i);
+        Search::search_asp(local, board, eval, i);
         if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
 
         eval = local.best_score;
-        mainPV = new_pv;
         if (print) {
             std::string temp = std::to_string(eval) + " ";
             temp += " Depth:" + std::to_string(i) + " | ";
@@ -193,7 +191,6 @@ namespace Search {
         }
 
 
-
         if (local.pv_node && ply < mainPV.length()) {
             liste.putFront(mainPV[ply]);
         }
@@ -285,19 +282,16 @@ namespace Search {
         Depth reduction = Search::reduce(local, board, move);
         //singular move extension
 
-
-
-
-       if (local.pv_node
+        if (local.pv_node
             && local.depth >= 7
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 15;
+            constexpr Value margin = 25;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha , new_alpha+1, local.ply, local.depth - 4, move,
+            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
                                          local.prune);
 
 
@@ -305,7 +299,6 @@ namespace Search {
                 extension = 1;
 
         }
-
 
 
         Depth new_depth = local.depth - 1 + extension;
@@ -379,18 +372,18 @@ namespace Search {
 
     }
 
-    void search_asp(Local &local, Line &line, Board &board, Value last_score, Depth depth) {
-    /*    if (depth >= 5 && isEval(last_score)) {
+    void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
+        Line line;
+        if (depth >= 5 && isEval(last_score)) {
             Value margin = 10;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 500) {
+            while (std::max(alpha_margin, beta_margin) < 5000) {
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
-
                 search_root(local, line, board, alpha, beta, depth);
-
+                mainPV = line;
                 Value score = local.best_score;
                 if (score <= alpha) {
                     alpha_margin *= 2;
@@ -401,9 +394,9 @@ namespace Search {
                 }
             }
         }
-*/
-        search_root(local, line, board, -INFINITE, INFINITE, depth);
 
+        search_root(local, line, board, -INFINITE, INFINITE, depth);
+        mainPV = line;
     }
 
 
