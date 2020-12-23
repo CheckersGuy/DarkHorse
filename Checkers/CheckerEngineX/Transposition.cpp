@@ -50,25 +50,37 @@ void Transposition::storeHash(Value value, const Position &pos, Flag flag, uint8
     Cluster &cluster = this->entries[index];
     const uint32_t lock = (pos.key >> 32u);
 
-      for (auto i = 1; i < bucket_size; ++i) {
-          if (cluster[i].depth < depth || cluster[i].age !=age_counter) {
-              cluster[i].depth = depth;
-              cluster[i].flag = flag;
-              cluster[i].bestMove=move_index;
-              cluster[i].value = value;
-              cluster[i].key = lock;
-              cluster[i].age = age_counter;
-              return;
-          }
-      }
+
+    for (auto i = 1; i < bucket_size; ++i) {
+        if (cluster[i].key == lock) {
+            //hash_hit
+            cluster[i].age = age_counter;
+        }
+        const auto age_entry = age_counter - cluster[i].age;
 
 
-      cluster[0].depth = depth;
-      cluster[0].flag = flag;
-      cluster[0].bestMove = move_index;
-      cluster[0].value = value;
-      cluster[0].key = lock;
-      cluster[0].age = age_counter;
+        int remain_depth = cluster[i].depth - age_entry;
+
+        if (cluster[i].depth < depth || age_entry >= 7 || (remain_depth <=2 && age_entry!=0)) {
+            cluster[i].depth = depth;
+            cluster[i].flag = flag;
+            cluster[i].bestMove = move_index;
+            cluster[i].value = value;
+            cluster[i].key = lock;
+            cluster[i].age = age_counter;
+            return;
+        }
+    }
+
+
+    cluster[0].depth = depth;
+    cluster[0].flag = flag;
+    cluster[0].bestMove = move_index;
+    cluster[0].value = value;
+    cluster[0].key = lock;
+    cluster[0].age = age_counter;
+
+
 }
 
 bool Transposition::findHash(uint64_t key, NodeInfo &info) {

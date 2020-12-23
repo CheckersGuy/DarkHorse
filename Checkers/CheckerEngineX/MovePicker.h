@@ -22,7 +22,6 @@ namespace Statistics {
 
         void clearScores();
 
-
         void update_scores(Move* list, Move move,Color color, int depth);
 
     };

@@ -16,7 +16,6 @@
 #include <filesystem>
 
 constexpr uint32_t region = 13107u;
-constexpr std::array<uint64_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
 namespace fs = std::filesystem;
@@ -49,19 +48,26 @@ inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
     size_t index = 0ull;
     uint32_t pieces = reg & (pos.BP | pos.WP);
-    size_t counter = 0ull;
     const uint32_t BP = pos.BP & (~pos.K);
     const uint32_t WP = pos.WP & (~pos.K);
     const uint32_t BK = pos.BP & pos.K;
     const uint32_t WK = pos.WP & pos.K;
+
+    uint32_t last_piece = (pieces & ~(pieces - 1u));
+    pieces ^= last_piece;
+
+
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
         pieces &= pieces - 1u;
         size_t current = ((BP & lsb) != 0u) * 3ull + ((WP & lsb) != 0u) * 4ull + ((BK & lsb) != 0u) * 1ull +
                          ((WK & lsb) != 0u) * 2ull;
-        index += powers[counter++] * current;
-
+        index += current;
+        index = index * 5ull;
     }
+    index+=((BP & last_piece) != 0u) * 3ull + ((WP & last_piece) != 0u) * 4ull + ((BK & last_piece) != 0u) * 1ull +
+           ((WK & last_piece) != 0u) * 2ull;
+
     return index;
 }
 
@@ -176,11 +182,11 @@ struct Weights {
 
     Value evaluate(Position pos, int ply) const {
 
-        if(pos.isEnd()){
-            return pos.getColor()*loss(ply);
+        if (pos.isEnd()) {
+            return pos.getColor() * loss(ply);
         }
 
-        constexpr int pawnEval = 100 ;
+        constexpr int pawnEval = 100;
         const Color color = pos.getColor();
         const int WP = __builtin_popcount(pos.WP & (~pos.K));
         const int BP = __builtin_popcount(pos.BP & (~pos.K));

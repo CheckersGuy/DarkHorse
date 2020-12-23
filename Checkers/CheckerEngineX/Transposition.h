@@ -29,7 +29,7 @@ struct Entry {
     uint8_t bestMove{std::numeric_limits<uint8_t>::max()};
     uint8_t padding; //padding
 };
-constexpr size_t bucket_size = 2;
+constexpr size_t bucket_size = 4;
 
 using Cluster = std::array<Entry, bucket_size>;
 
