@@ -24,7 +24,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("test2.weights");
+    gameWeights.loadWeights<uint32_t>("giga.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -39,7 +39,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     TT.age_counter++;
     nodeCounter = 0;
     mainPV.clear();
-    TT.clear();
+    //TT.clear();
     endTime = getSystemTime() + time;
     int i = 1;
     Value eval = NONE;
@@ -174,10 +174,7 @@ namespace Search {
 
 
 
-
-
-
-        if (!local.pv_node && local.prune && local.depth >= 5 && isEval(local.beta)) {
+        if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
             Value margin = (15 * local.depth);
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
@@ -248,7 +245,7 @@ namespace Search {
 
         if (moves.isEmpty()) {
             if (depth == 0 && board.getPosition().hasThreat()) {
-                return Search::search(board, pv, alpha, beta, ply + 1, 1, Move{},
+                return Search::search(board, pv, alpha, beta, ply, 1, Move{},
                                       false);
             }
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
@@ -288,7 +285,7 @@ namespace Search {
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 25;
+            constexpr Value margin = 15;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
@@ -383,21 +380,20 @@ namespace Search {
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
                 search_root(local, line, board, alpha, beta, depth);
-                mainPV = line;
                 Value score = local.best_score;
                 if (score <= alpha) {
                     alpha_margin *= 2;
                 } else if (score >= beta) {
                     beta_margin *= 2;
                 } else {
+                    mainPV = line;
                     return;
                 }
             }
         }
-
         search_root(local, line, board, -INFINITE, INFINITE, depth);
         mainPV = line;
+
     }
-
-
 }
+
