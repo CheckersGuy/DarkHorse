@@ -12,7 +12,7 @@
 #include <iostream>
 
 struct NodeInfo {
-    uint8_t move_index {std::numeric_limits<uint8_t>::max()};
+    uint8_t move_index {Move_Index_None};
     Value score{NONE};
     uint8_t depth{0};
     uint8_t flag{Flag::None};
@@ -26,7 +26,7 @@ struct Entry {
     uint32_t age{100000u}; //age
     Flag flag{Flag::None};
     uint8_t depth{0};
-    uint8_t bestMove{std::numeric_limits<uint8_t>::max()};
+    uint8_t bestMove{Move_Index_None};
     uint8_t padding; //padding
 };
 constexpr size_t bucket_size = 4;

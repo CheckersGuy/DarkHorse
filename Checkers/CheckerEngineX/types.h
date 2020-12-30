@@ -33,6 +33,8 @@ constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 constexpr uint32_t LEFT_HALF = 3435973836u;
 constexpr uint32_t RIGHT_HALF = LEFT_HALF >> 2u;
 
+constexpr int stage_size = 48;
+constexpr uint8_t Move_Index_None = 150u;
 
 constexpr std::array<uint32_t, 32> S = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u,
                                         17u, 16u,
@@ -43,6 +45,7 @@ using Depth = int;
 using Ply = int;
 using Value = int;
 
+
 enum NodeType {
     PVNode, NONPV
 };
@@ -50,7 +53,7 @@ enum NodeType {
 enum Score : int {
     INFINITE = 15000000,
     EVAL_INFINITE = INFINITE - 100000,
-    NONE = -INFINITE - 1000,
+    NONE = -INFINITE - 100005,
 };
 enum SEARCH : int {
     MAX_PLY = 256
@@ -113,6 +116,13 @@ inline Value toTT(Value val, int ply) {
         return val + ply;
     }
     return val;
+}
+
+inline int div_round(int a, int b) {
+    a += b / 2;
+    int div = a / b;
+    if (a < 0 && a != b * div) div -= 1;
+    return div;
 }
 
 

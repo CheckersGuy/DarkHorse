@@ -24,7 +24,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("giga.weights");
+    gameWeights.loadWeights<uint32_t>("gigatempx22x.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -45,8 +45,16 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     Value eval = NONE;
     Local local;
 
+    //What are we supposed to do if we are given a depth zero search
+
+    if (depth == 0) {
+        //returning q-search
+        return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
+    }
+
     while (i <= depth && i <= MAX_PLY) {
-        Search::search_asp(local, board, eval, i);
+        Line line;
+        Search::search_asp(local,board, eval, i);
         if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
 
@@ -77,7 +85,7 @@ namespace Search {
     Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
         const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth > 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = 1;
             if (!local.pv_node && local.i >= 4) {
                 red = 2;
@@ -106,7 +114,7 @@ namespace Search {
             return loss(ply);
         }
 
-        if (depth == 0) {
+        if (depth <= 0) {
             return Search::qs(board, pv, alpha, beta, ply, depth);
         }
 
@@ -179,7 +187,7 @@ namespace Search {
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply, newDepth, Move{}, false);
             if (value >= newBeta) {
                 value = value - margin;
                 pv = new_pv;
@@ -217,7 +225,7 @@ namespace Search {
         }
 
         {
-            uint8_t tt_m = std::numeric_limits<uint8_t>::max();
+            uint8_t tt_m = Move_Index_None;
             if (local.best_score > local.alpha) {
                 auto index = liste.get_move_index(local.move);
                 tt_m = (index.has_value()) ? index.value() : tt_m;
@@ -244,6 +252,7 @@ namespace Search {
         Value bestValue = NONE;
 
         if (moves.isEmpty()) {
+
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply, 1, Move{},
                                       false);
@@ -264,9 +273,11 @@ namespace Search {
             board.undoMove();
             if (value > bestValue) {
                 bestValue = value;
-                pv.concat(moves[i], localPV);
                 if (value >= beta)
                     break;
+                if(value>alpha){
+                    pv.concat(moves[i], localPV);
+                }
 
             }
         }
@@ -280,7 +291,7 @@ namespace Search {
         //singular move extension
 
         if (local.pv_node
-            && local.depth >= 7
+            && local.depth >= 8
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
@@ -288,7 +299,7 @@ namespace Search {
             constexpr Value margin = 15;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
+            Value value = Search::search(board, new_pv, new_alpha, new_alpha+1, local.ply, local.depth - 4, move,
                                          local.prune);
 
 
@@ -361,7 +372,7 @@ namespace Search {
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
-        liste.putFront(mainPV[0]);
+        liste.putFront(mainPV[local.ply]);
         liste.sort(Move{}, true, board.getMover());
 
         move_loop(local, board, line, liste);
@@ -370,30 +381,35 @@ namespace Search {
     }
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
-        Line line;
         if (depth >= 5 && isEval(last_score)) {
-            Value margin = 10;
+            Value margin = 15;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 5000) {
+            while (std::max(alpha_margin, beta_margin) < 500) {
+                Line line;
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
                 search_root(local, line, board, alpha, beta, depth);
                 Value score = local.best_score;
+
+                if(!isEval(score))
+                    break;
+                //need to look at scans definition of isEval
+
                 if (score <= alpha) {
                     alpha_margin *= 2;
                 } else if (score >= beta) {
                     beta_margin *= 2;
                 } else {
-                    mainPV = line;
+                    mainPV=line;
                     return;
                 }
             }
         }
+        Line line;
         search_root(local, line, board, -INFINITE, INFINITE, depth);
-        mainPV = line;
-
+        mainPV=line;
     }
 }
 

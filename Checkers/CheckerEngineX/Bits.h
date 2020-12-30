@@ -22,6 +22,7 @@ namespace Bits {
 
     uint32_t bitscan_foward(uint32_t bits);
 
+    uint32_t count(uint32_t);
 
 }
 
