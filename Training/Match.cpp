@@ -351,6 +351,7 @@ void Match::start() {
         printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws", "Uniq_Counter");
         printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
         printf("\r");
+        printf("\r");
         int start_index = 0;
         auto &logger = Logger::get_instance();
 

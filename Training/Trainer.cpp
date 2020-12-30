@@ -75,39 +75,89 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     if (pos.result() == Training::UNKNOWN)
         return;
 
-    Line local;
-    Value qStatic = Search::qs(board,local, -INFINITE, INFINITE, 0,1);
-    if (isWin(qStatic))
+
+    Move best;
+    auto qStatic = searchValue(board, best, 0, 200000, false);
+
+    if (isWin(qStatic) || !isEval(qStatic))
         return;
     auto mover = static_cast<double>(board.getPosition().getColor());
     double result = getWinValue(pos.result());
     double c = getCValue();
 
     double qValue = mover * static_cast<double>(qStatic);
-    double offset = 1.0;
+    double offset = 5.0;
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8 * j + i);
+                const uint32_t curRegion = region << (8u * j + i);
                 size_t index = 18ull * getIndex(curRegion, board.getPosition()) + 9ull * p + 3ull * j + i;
-                double qDiffValue = mover * Trainer::evaluatePosition(board, gameWeights, index, offset);
-                double qDiffValue2 = mover * Trainer::evaluatePosition(board, gameWeights, index, -offset);
+                double qDiffValue = Trainer::evaluatePosition(board, gameWeights, index, offset);
+                double qDiffValue2 = Trainer::evaluatePosition(board, gameWeights, index, -offset);
                 double diff = ((sigmoid(c, qValue) - result) *
                                sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
+                diff *= mover;
                 gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
 
             }
         }
     }
     for (size_t index = SIZE; index < SIZE + 2; ++index) {
-        double qDiffValue = mover * Trainer::evaluatePosition(board, gameWeights, index, offset);
-        double qDiffValue2 = mover * Trainer::evaluatePosition(board, gameWeights, index, -offset);
+        double qDiffValue = Trainer::evaluatePosition(board, gameWeights, index, offset);
+        double qDiffValue2 = Trainer::evaluatePosition(board, gameWeights, index, -offset);
         double diff = ((sigmoid(c, qValue) - result) *
                        sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
+        diff *= mover;
         gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
     }
 
 
+    for (auto i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
+        for (auto j = 0; j < 16; ++j) {
+            gameWeights.tempo_ranks[i][j] += offset;
+            auto qDiffValue = searchValue(board, best, 0, 200000, false);
+            gameWeights.tempo_ranks[i][j] -= offset;
+
+            gameWeights.tempo_ranks[i][j] -= offset;
+            auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
+            gameWeights.tempo_ranks[i][j] += offset;
+
+            double diff = ((sigmoid(c, qValue) - result) *
+                           sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
+            diff *= mover;
+            gameWeights.tempo_ranks[i][j] = gameWeights.tempo_ranks[i][j] - getLearningRate() * diff;
+        }
+    }
+    {
+    //Denied-Squares
+    gameWeights.kingMobD += offset;
+    auto qDiffValue = searchValue(board, best, 0, 200000, false);
+    gameWeights.kingMobD -= offset;
+
+    gameWeights.kingMobD -= offset;
+    auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
+    gameWeights.kingMobD += offset;
+
+    double diff = ((sigmoid(c, qValue) - result) *
+                   sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
+    diff *= mover;
+    gameWeights.kingMobD = gameWeights.kingMobD - getLearningRate() * diff;
+}
+    //Safe-Squares
+    {
+    gameWeights.kingMobS += offset;
+    auto qDiffValue = searchValue(board, best, 0, 200000, false);
+    gameWeights.kingMobS -= offset;
+
+    gameWeights.kingMobS  -= offset;
+    auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
+    gameWeights.kingMobS += offset;
+
+    double diff = ((sigmoid(c, qValue) - result) *
+                   sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
+    diff *= mover;
+    gameWeights.kingMobS  = gameWeights.kingMobS  - getLearningRate() * diff;
+    }
 }
 
 
@@ -129,6 +179,15 @@ void Trainer::epoch() {
                           std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
                           std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
                           std::cout << "kingScore:" << gameWeights.kingOp << " | " << gameWeights.kingEnd << std::endl;
+                          std::cout<<"KingMobS: "<<gameWeights.kingMobS<<std::endl;
+                          std::cout<<"KingMobD: "<<gameWeights.kingMobD<<std::endl;
+
+                          std::cout << "TEMPO_RANKS" << std::endl;
+                          for (auto i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
+                              std::copy(gameWeights.tempo_ranks[i].begin(), gameWeights.tempo_ranks[i].end(),
+                                        std::ostream_iterator<double>(std::cout, ","));
+                              std::cout << std::endl;
+                          }
                           std::cout << std::endl;
                           std::cout << std::endl;
                       }
@@ -177,7 +236,7 @@ double Trainer::calculateLoss() {
         double current = getWinValue(pos.result());
         auto color = static_cast<double>(board.getPosition().getColor());
         Line local;
-        double quiesc = color * static_cast<double>(Search::qs(board,local, -INFINITE, INFINITE, 0,1)
+        double quiesc = color * static_cast<double>(searchValue(board, 0, 1000000, false)
         );
         current = current - sigmoid(cValue, quiesc);
         current = current * current;
@@ -194,7 +253,8 @@ double Trainer::calculateLoss() {
 double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t index, double offset) {
     weights[index] += offset;
     Line local;
-    Value qDiff = Search::qs(board,local, -INFINITE, INFINITE, 0,1);
+    Move best;
+    auto qDiff = searchValue(board, best, 0, 200000, false);
     weights[index] -= offset;
     auto qDiffValue = static_cast<double>(qDiff);
 

@@ -9,6 +9,9 @@
 #include "Move.h"
 #include "types.h"
 
+
+const uint32_t temp_mask = 0xf;
+
 inline uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;
     x |= (b & MASK_COL_3) >> 1u;
@@ -38,11 +41,11 @@ inline uint32_t getMirrored(uint32_t b) {
 struct Position {
 
 
-
     Color color{BLACK};
     uint32_t WP{0u}, BP{0u}, K{0u};
     uint64_t key{0ull};
 
+    uint32_t piece_count();
 
     template<Color color>
     constexpr uint32_t getCurrent() const {
@@ -77,7 +80,19 @@ struct Position {
             return __builtin_popcount(WP & K);
     }
 
-    uint32_t piece_count();
+    uint32_t getKingAttackSquares(uint32_t bit_mask);
+
+    template<Color color>
+    uint32_t attacks() {
+        //returns all the squares that are attacked by color
+        uint32_t attacks = 0u;
+        uint32_t empty = ~(BP | WP);
+        auto pawns = getCurrent<color>();
+        auto kings = getCurrent<color>() & K;
+        attacks |= (defaultShift<color>(pawns) | forwardMask<color>(pawns)) & empty;
+        attacks |= (defaultShift<~color>(kings) | forwardMask<~color>(kings)) & empty;
+        return attacks;
+    }
 
     template<Color color>
     uint32_t getMovers() const {
@@ -121,6 +136,7 @@ struct Position {
         }
         return movers;
     }
+
 
     std::string get_fen_string() const;
 
