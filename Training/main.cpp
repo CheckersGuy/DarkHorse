@@ -18,18 +18,6 @@ struct HelpInserter {
 };
 
 
-struct Hasher{
-
-    uint64_t xorshift(const uint64_t& n,int i){
-        return n^(n>>i);
-    }
-
-    uint64_t operator()(uint64_t n){
-        uint64_t p = 0x5555555555555555ull; // pattern of alternating 0 and 1
-        uint64_t c = 17316035218449499591ull;// random uneven integer constant;
-        return c*xorshift(p*xorshift(n,32),32);
-    }
-};
 
 
 int main(int argl, const char **argc) {
@@ -106,15 +94,21 @@ int main(int argl, const char **argc) {
 
 
 
+
+
+
 /*
-    Match engine_match("newtemp", "old", "test_file");
+    Match engine_match("mobbalan", "balance", "test_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(6);
     engine_match.setHashSize(21);
     engine_match.set_play_reverse(true);
     engine_match.start();
+
+
 */
+
 
 
 
@@ -151,7 +145,6 @@ int main(int argl, const char **argc) {
     std::cout << "Count: " << log.get_count() << std::endl;
     std::cout<<"Time: "<<duration.count()/1000000<<std::endl;
 */
-
 
 
 

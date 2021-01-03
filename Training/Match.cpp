@@ -345,7 +345,7 @@ void Match::start() {
             for (int k = 0; k < numEngines; ++k) {
                 close(mainPipe[p][k][0]);
                 close(enginePipe[p][k][1]);
-                fcntl(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
+                fcntl64(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
             }
         }
         printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws", "Uniq_Counter");

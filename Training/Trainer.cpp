@@ -86,7 +86,7 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     double c = getCValue();
 
     double qValue = mover * static_cast<double>(qStatic);
-    double offset = 5.0;
+    double offset = 1.0;
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
@@ -128,36 +128,6 @@ void Trainer::gradientUpdate(Training::Position &pos) {
             gameWeights.tempo_ranks[i][j] = gameWeights.tempo_ranks[i][j] - getLearningRate() * diff;
         }
     }
-    {
-    //Denied-Squares
-    gameWeights.kingMobD += offset;
-    auto qDiffValue = searchValue(board, best, 0, 200000, false);
-    gameWeights.kingMobD -= offset;
-
-    gameWeights.kingMobD -= offset;
-    auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
-    gameWeights.kingMobD += offset;
-
-    double diff = ((sigmoid(c, qValue) - result) *
-                   sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
-    diff *= mover;
-    gameWeights.kingMobD = gameWeights.kingMobD - getLearningRate() * diff;
-}
-    //Safe-Squares
-    {
-    gameWeights.kingMobS += offset;
-    auto qDiffValue = searchValue(board, best, 0, 200000, false);
-    gameWeights.kingMobS -= offset;
-
-    gameWeights.kingMobS  -= offset;
-    auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
-    gameWeights.kingMobS += offset;
-
-    double diff = ((sigmoid(c, qValue) - result) *
-                   sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
-    diff *= mover;
-    gameWeights.kingMobS  = gameWeights.kingMobS  - getLearningRate() * diff;
-    }
 }
 
 
@@ -179,17 +149,14 @@ void Trainer::epoch() {
                           std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
                           std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
                           std::cout << "kingScore:" << gameWeights.kingOp << " | " << gameWeights.kingEnd << std::endl;
-                          std::cout<<"KingMobS: "<<gameWeights.kingMobS<<std::endl;
-                          std::cout<<"KingMobD: "<<gameWeights.kingMobD<<std::endl;
-
+                          std::cout << "TEMPO_RANKS" << std::endl;
                           std::cout << "TEMPO_RANKS" << std::endl;
                           for (auto i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
-                              std::copy(gameWeights.tempo_ranks[i].begin(), gameWeights.tempo_ranks[i].end(),
+                              std::copy(gameWeights.tempo_ranks[i].begin(),
+                                        gameWeights.tempo_ranks[i].end(),
                                         std::ostream_iterator<double>(std::cout, ","));
                               std::cout << std::endl;
                           }
-                          std::cout << std::endl;
-                          std::cout << std::endl;
                       }
                   });
 }

@@ -232,7 +232,7 @@ void Position::makeMove(Move &move) {
 
 uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
     uint32_t squares = defaultShift<BLACK>(bit_mask) | forwardMask<BLACK>(bit_mask);
-    squares |= defaultShift<~BLACK>(bit_mask) | forwardMask<~BLACK>(bit_mask);
+    squares |= defaultShift<WHITE>(bit_mask) | forwardMask<WHITE>(bit_mask);
     squares &= ~(BP | WP);
     return squares;
 }
