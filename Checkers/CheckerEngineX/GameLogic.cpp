@@ -24,7 +24,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("gigatempx22x.weights");
+    gameWeights.loadWeights<uint32_t>("gigatemp.weights");
     Zobrist::initializeZobrisKeys();
 }
 

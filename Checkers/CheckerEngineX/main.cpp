@@ -40,7 +40,6 @@ int main(int argl, const char **argc) {
 
 
 
-
     Board board;
 
 
@@ -52,7 +51,7 @@ int main(int argl, const char **argc) {
     initialize();
     Position pos = Position::pos_from_fen("B:WK3,29:BK12,18");
     board = Position::getStartPosition();
-    board =pos;
+    //board =pos;
 ;
 
 
@@ -70,17 +69,6 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
-
-
-
-
-
-
 
 
     std::string current;

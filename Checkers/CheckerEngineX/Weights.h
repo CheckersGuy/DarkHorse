@@ -17,11 +17,8 @@
 
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
-
+constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 namespace fs = std::filesystem;
-
-
-inline bool is_root_user();
 
 
 inline std::optional<fs::path> has_directory(const fs::path &path, std::string directory_name) {
@@ -44,62 +41,56 @@ inline std::optional<fs::path> has_file(const fs::path &path, std::string file_n
     return std::nullopt;
 }
 
-inline size_t getTopBotIndex(uint32_t reg, const Position &pos) {
-    //we can save some memory by using the fact that
-    //we can not black/white-man on the promotion squares
-
-    //first we compute the index as we did before for the 6th squares
-    //and then we compute the other ones
-
-    size_t index = 0u;
-
-    const uint32_t promo_ring = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
-
-    const uint32_t BP = pos.BP & (~pos.K);
-    const uint32_t WP = pos.WP & (~pos.K);
-    const uint32_t BK = pos.BP & pos.K;
-    const uint32_t WK = pos.WP & pos.K;
-    uint32_t pieces = reg & (pos.BP | pos.WP) & (~promo_ring);
-
-    while (pieces) {
-        uint32_t lsb = (pieces & ~(pieces - 1u));
-        pieces &= pieces - 1u;
-        size_t current = ((BP & lsb) != 0u) * 3ull + ((WP & lsb) != 0u) * 4ull + ((BK & lsb) != 0u) * 1ull +
-                         ((WK & lsb) != 0u) * 2ull;
-        index += current;
-        index = index * 5ull;
-    }
-    //
-    constexpr size_t NUM_PIECES = 0;
-    //to be continued
-
-
-}
 
 inline size_t getIndex(uint32_t reg, const Position &pos) {
     //will return the index for a given position
+
+    uint32_t pieces = (pos.BP | pos.WP);
+    pieces = _pext_u32(pieces, reg);
+    uint32_t BP = pos.BP & (~pos.K);
+    BP = _pext_u32(BP, reg);
+    uint32_t WP = pos.WP & (~pos.K);
+    WP = _pext_u32(WP, reg);
+    uint32_t BK = pos.BP & pos.K;
+    BK = _pext_u32(BK, reg);
+    uint32_t WK = pos.WP & pos.K;
+    WK = _pext_u32(WK, reg);
     size_t index = 0ull;
-    uint32_t pieces = reg & (pos.BP | pos.WP);
-    const uint32_t BP = pos.BP & (~pos.K);
-    const uint32_t WP = pos.WP & (~pos.K);
-    const uint32_t BK = pos.BP & pos.K;
-    const uint32_t WK = pos.WP & pos.K;
-
-
-    uint32_t last_piece = (pieces & ~(pieces - 1u));
-    pieces ^= last_piece;
-
-
     while (pieces) {
         uint32_t lsb = (pieces & ~(pieces - 1u));
-        pieces &= pieces - 1u;
+        size_t temp_index = Bits::bitscan_foward(lsb);
         size_t current = ((BP & lsb) != 0u) * 3ull + ((WP & lsb) != 0u) * 4ull + ((BK & lsb) != 0u) * 1ull +
                          ((WK & lsb) != 0u) * 2ull;
-        index += current;
-        index = index * 5ull;
+        index += current * powers[temp_index];
+        pieces &= pieces - 1u;
     }
-    index += ((BP & last_piece) != 0u) * 3ull + ((WP & last_piece) != 0u) * 4ull + ((BK & last_piece) != 0u) * 1ull +
-             ((WK & last_piece) != 0u) * 2ull;
+
+    return index;
+}
+
+inline size_t getIndex2(uint32_t reg, const Position &pos,uint32_t shift) {
+    //will return the index for a given position
+
+
+    uint32_t pieces = reg&(pos.BP | pos.WP);
+    pieces =pieces>>shift;
+    uint32_t BP = reg&(pos.BP & (~pos.K));
+    BP=BP>>shift;
+    uint32_t WP = reg&(pos.WP & (~pos.K));
+    WP=WP>>shift;
+    uint32_t BK = reg&(pos.BP & pos.K);
+    BK=BK>>shift;
+    uint32_t WK = reg&(pos.WP & pos.K);
+    WK=WK>>shift;
+    size_t index = 0ull;
+    while (pieces) {
+        uint32_t lsb = (pieces & ~(pieces - 1u));
+        size_t temp_index = Bits::bitscan_foward(lsb);
+        size_t current = ((BP & lsb) != 0u) * 3ull + ((WP & lsb) != 0u) * 4ull + ((BK & lsb) != 0u) * 1ull +
+                         ((WK & lsb) != 0u) * 2ull;
+        index += current * powers[temp_index];
+        pieces &= pieces - 1u;
+    }
 
     return index;
 }
@@ -110,9 +101,10 @@ struct Weights {
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
     std::array<std::array<T, 16>, 7> tempo_ranks;
-    T kingMobD, kingMobS;
 
-    Weights() : kingOp(150), kingEnd(150), kingMobD(10), kingMobS(10), weights(std::make_unique<T[]>(SIZE)) {
+    T balance;
+
+    Weights() : kingOp(150), kingEnd(150), balance(-10), weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
@@ -145,36 +137,53 @@ struct Weights {
         return *std::min_element(weights.get(), weights.get() + SIZE);
     }
 
+    int tempi_eval(Position &pos) const {
+        uint32_t man = pos.BP & (~pos.K);
+        auto tempi = -tempo_ranks[0][(man) & temp_mask];
+        tempi -= tempo_ranks[1][(man >> 4u) & temp_mask];
+        tempi -= tempo_ranks[2][(man >> 8u) & temp_mask];
+        tempi -= tempo_ranks[3][(man >> 12u) & temp_mask];
+        tempi -= tempo_ranks[4][(man >> 16u) & temp_mask];
+        tempi -= tempo_ranks[5][(man >> 20u) & temp_mask];
+        tempi -= tempo_ranks[6][(man >> 24u) & temp_mask];
+
+        man = pos.WP & (~pos.K);
+        man = getVerticalFlip(man);
+        tempi += tempo_ranks[0][(man) & temp_mask];
+        tempi += tempo_ranks[1][(man >> 4u) & temp_mask];
+        tempi += tempo_ranks[2][(man >> 8u) & temp_mask];
+        tempi += tempo_ranks[3][(man >> 12u) & temp_mask];
+        tempi += tempo_ranks[4][(man >> 16u) & temp_mask];
+        tempi += tempo_ranks[5][(man >> 20u) & temp_mask];
+        tempi += tempo_ranks[6][(man >> 24u) & temp_mask];
+        return tempi;
+    }
 
     template<Color color>
-    int tempi(Position &pos) const {
-        const uint32_t man = pos.getCurrent<color>() & (~pos.K);
-
-        if constexpr(color == BLACK) {
-            auto tempi = tempo_ranks[0][(man) & temp_mask];
-            tempi += tempo_ranks[1][(man >> 4u) & temp_mask];
-            tempi += tempo_ranks[2][(man >> 8u) & temp_mask];
-            tempi += tempo_ranks[3][(man >> 12u) & temp_mask];
-            tempi += tempo_ranks[4][(man >> 16u) & temp_mask];
-            tempi += tempo_ranks[5][(man >> 20u) & temp_mask];
-            tempi += tempo_ranks[6][(man >> 24u) & temp_mask];
-            return tempi;
-        } else {
-            auto tempi = tempo_ranks[0][(man >> 28u) & temp_mask];
-            tempi += tempo_ranks[1][(man >> 24u) & temp_mask];
-            tempi += tempo_ranks[2][(man >> 20u) & temp_mask];
-            tempi += tempo_ranks[3][(man >> 16u) & temp_mask];
-            tempi += tempo_ranks[4][(man >> 12u) & temp_mask];
-            tempi += tempo_ranks[5][(man >> 8u) & temp_mask];
-            tempi += tempo_ranks[6][(man >> 4u) & temp_mask];
-            return tempi;
+    int balance_score(Position &pos) const {
+        int num = 0;
+        uint32_t men = pos.getCurrent<color>() & (~pos.K);
+        int score = 0;
+        for (auto i = 0; i < 8; ++i) {
+            uint32_t column = columns[i];
+            int num_pieces = __builtin_popcount(column & men);
+            num += num_pieces;
+            score += (i + 1) * num_pieces;
         }
+
+        if (num == 0)
+            return 0;
+
+        score = score / num;
+        return std::abs(4 - score);
     }
 
     int king_mobiility(Position &pos) const {
-        //first for white pieces
-        uint32_t kings_white = pos.WP & (~pos.K);
-        uint32_t kings_black = pos.BP & (~pos.K);
+        //I may replace this with a simple table approach
+        //where high values denote pieces a king should be on
+        //I might remove denied squares
+        uint32_t kings_white = pos.WP & pos.K;
+        uint32_t kings_black = pos.BP & pos.K;
         int count_denied = 0;
         int count_safe = 0;
 
@@ -204,7 +213,7 @@ struct Weights {
             }
         }
 
-        return count_denied * kingMobD + count_safe * kingMobS;
+        return -count_denied + 2 * count_safe;
 
     }
 
@@ -247,9 +256,8 @@ struct Weights {
             stream.read((char *) &first, sizeof(DataType));
             if (stream.eof())
                 break;
-            auto temp = static_cast<T>(first);
             for (RunType i = 0u; i < length; ++i) {
-                weights[counter] = temp;
+                weights[counter] = std::round(first);
                 counter++;
             }
         }
@@ -262,14 +270,9 @@ struct Weights {
             for (auto j = 0; j < 16; ++j) {
                 double temp;
                 stream.read((char *) &temp, sizeof(DataType));
-                tempo_ranks[i][j] = temp;
+                tempo_ranks[i][j] = std::round(temp);
             }
         }
-        DataType mob1, mob2;
-        stream.read((char *) &mob1, sizeof(DataType));
-        kingMobS = mob1;
-        stream.read((char *) &mob2, sizeof(DataType));
-        kingMobD = mob2;
         stream.close();
     }
 
@@ -295,8 +298,6 @@ struct Weights {
                 stream.write((char *) &tempo_ranks[i][j], sizeof(DataType));
             }
         }
-        stream.write((char *) &kingMobS, sizeof(DataType));
-        stream.write((char *) &kingMobD, sizeof(DataType));
         stream.close();
     }
 
@@ -312,8 +313,9 @@ struct Weights {
         const int BP = __builtin_popcount(pos.BP & (~pos.K));
 
 
-        int tpo = tempi<WHITE>(pos) - tempi<BLACK>(pos);
-        int mobility = king_mobiility(pos);
+        int tpo = tempi_eval(pos);
+        //int mobility = king_mobiility(pos);
+        int bala = (balance_score<WHITE>(pos) - balance_score<BLACK>(pos)) * balance;
 
         int phase = WP + BP;
 
@@ -334,6 +336,9 @@ struct Weights {
         for (uint32_t j = 0; j < 3; ++j) {
             for (uint32_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);
+            /*    if(getIndex2(curRegion,pos,(8u * j + i))!=getIndex(curRegion,pos)){
+                    std::cout<<"Error"<<std::endl;
+                }*/
                 size_t indexOpening = 18u * getIndex(curRegion, pos) + 3u * j + i;
                 size_t indexEnding = 18u * getIndex(curRegion, pos) + 9u + 3u * j + i;
                 opening += (weights[indexOpening]);
@@ -351,12 +356,14 @@ struct Weights {
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tpo;
-        opening += mobility;
+        opening += bala;
+        //opening += mobility;
 
         ending += kingEvalEnd;
         ending += pieceEval;
         ending += tpo;
-        ending += mobility;
+        ending += bala;
+        //ending += mobility;
 
 
         int score = (phase * opening + (stage_size - phase) * ending);
@@ -407,6 +414,7 @@ struct Weights {
 extern Weights<double> gameWeights;
 #else
 extern Weights<short> gameWeights;
+
 #endif
 
 #endif //CHECKERENGINEX_WEIGHTS_H

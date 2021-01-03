@@ -12,7 +12,7 @@
 
 const uint32_t temp_mask = 0xf;
 
-inline uint32_t getHorizontalFlip(uint32_t b) {
+inline constexpr uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;
     x |= (b & MASK_COL_3) >> 1u;
     x |= (b & MASK_COL_1) << 3u;
@@ -20,7 +20,7 @@ inline uint32_t getHorizontalFlip(uint32_t b) {
     return x;
 }
 
-inline uint32_t getVerticalFlip(uint32_t b) {
+inline constexpr uint32_t getVerticalFlip(uint32_t b) {
     uint32_t x = b >> 28u;
     x |= (b >> 20u) & 0xf0u;
     x |= (b >> 12u) & 0xf00u;
@@ -34,7 +34,7 @@ inline uint32_t getVerticalFlip(uint32_t b) {
 }
 
 
-inline uint32_t getMirrored(uint32_t b) {
+inline constexpr uint32_t getMirrored(uint32_t b) {
     return getHorizontalFlip(getVerticalFlip(b));
 }
 
