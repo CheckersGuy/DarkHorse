@@ -32,12 +32,13 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
 
+    //there is still a bug with aspiration search
+    //where the wrong mate is displayed/found
 
 
     //small list of problem positions
     //1. W:WK19:B4,3,23
     //2.W:WK8:B4,K11,K10,K9,K32
-
 
 
     Board board;
@@ -49,7 +50,7 @@ int main(int argl, const char **argc) {
 
 
     initialize();
-    Position pos = Position::pos_from_fen("B:WK3,29:BK12,18");
+    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K10,K9,K32");
     board = Position::getStartPosition();
     //board =pos;
 ;
@@ -61,7 +62,7 @@ int main(int argl, const char **argc) {
 
 
 
-    setHashSize(26);
+    setHashSize(25);
 
     std::cout<<"NonZeroWeights: "<<gameWeights.numNonZeroValues()<<std::endl;
 
@@ -69,6 +70,13 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
+
+
+
+
+
+
+
 
 
     std::string current;

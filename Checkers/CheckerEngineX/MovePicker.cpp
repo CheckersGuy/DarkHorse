@@ -24,7 +24,7 @@ namespace Statistics {
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         if (move == ttMove) {
-            return std::numeric_limits<int16_t>::max();
+            return std::numeric_limits<int32_t>::max()-1;
         }
         return getMoveScore(move, color);
     }
@@ -35,7 +35,7 @@ namespace Statistics {
         history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
         while (move != (*liste)) {
             Move top = *liste;
-            bfScore[32 * 32 * colorIndex + 32 * top.getToIndex() + top.getFromIndex()] += depth * depth;
+            bfScore[32 * 32 * colorIndex + 32 * top.getToIndex() + top.getFromIndex()] += depth;
             liste++;
         }
 

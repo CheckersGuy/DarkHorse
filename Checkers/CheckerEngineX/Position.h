@@ -12,6 +12,8 @@
 
 const uint32_t temp_mask = 0xf;
 
+
+
 inline constexpr uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;
     x |= (b & MASK_COL_3) >> 1u;
@@ -84,13 +86,14 @@ struct Position {
 
     template<Color color>
     uint32_t attacks() {
-        //returns all the squares that are attacked by color
+        //returns all empty squares that are attacked by color
         uint32_t attacks = 0u;
-        uint32_t empty = ~(BP | WP);
-        auto pawns = getCurrent<color>();
-        auto kings = getCurrent<color>() & K;
-        attacks |= (defaultShift<color>(pawns) | forwardMask<color>(pawns)) & empty;
-        attacks |= (defaultShift<~color>(kings) | forwardMask<~color>(kings)) & empty;
+        const uint32_t empty = ~(BP | WP);
+        auto pawns = getCurrent<color>(); //kings and pawns
+        auto kings = getCurrent<color>() & K; //only kings
+        attacks |= (defaultShift<color>(pawns) | forwardMask<color>(pawns));
+        attacks |= (defaultShift<~color>(kings) | forwardMask<~color>(kings));
+        attacks &= empty;
         return attacks;
     }
 

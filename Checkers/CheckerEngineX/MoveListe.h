@@ -22,8 +22,6 @@ public:
 
     void sort(Move ttMove, bool inPVLine, Color color);
 
-    void sort_static(Color mover, const Position &pos, const Move &ttMove);
-
     bool isEmpty() const;
 
     const Move &operator[](int index) const;
@@ -38,7 +36,7 @@ public:
         return liste.begin();
     }
 
-    std::optional<uint8_t> get_move_index(Move move) const;
+    uint32_t get_move_index(Move move) const;
 
     auto end() {
         auto it = liste.begin();

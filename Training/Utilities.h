@@ -17,9 +17,14 @@
 #include <iterator>
 #include <future>
 #include <algorithm>
+#include<proto/Training.pb.h>
 
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
+
+
+    void prepare_training_set(Training::TrainData &data);
+
 
     template<typename OutIter>
     void createNMoveBook(OutIter iter, int N, Board &board, Value lowerBound, Value upperBound) {
@@ -31,7 +36,7 @@ namespace Utilities {
             Move best;
             //will be reworked as well
             Value value = 0;
-            if (value>=lowerBound && value<=upperBound) {
+            if (value >= lowerBound && value <= upperBound) {
                 hashes.insert(board.getCurrentKey());
                 Position currentPos = board.getPosition();
                 *iter = currentPos;
