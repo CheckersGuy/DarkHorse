@@ -18,8 +18,6 @@ struct HelpInserter {
 };
 
 
-
-
 int main(int argl, const char **argc) {
     initialize();
     /*   Training::TrainData data;
@@ -35,27 +33,6 @@ int main(int argl, const char **argc) {
        std::ofstream stream("genBook2.book");
        data.SerializeToOstream(&stream);
        stream.close();*/
-
-/*
-
-
-    Training::TrainData data;
-    std::ifstream stream("output_file");
-    data.ParseFromIstream(&stream);
-    stream.close();
-    std::for_each(data.mutable_positions()->begin(), data.mutable_positions()->end(), [](Training::Position &pos) {
-        Board board;
-        board.getPosition().BP = pos.bp();
-        board.getPosition().WP = pos.wp();
-        board.getPosition().K = pos.k();
-        board.printBoard();
-        std::cout << std::endl;
-    });
-*/
-
-
-
-
 /*
 
     std::cout << "Starting Match" << std::endl;
@@ -83,30 +60,17 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*
-    Match engine_match("mobbalan", "balance", "test_file");
+
+
+    Match engine_match("bla", "old", "test_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(6);
-    engine_match.setHashSize(21);
+    engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();
 
-
 */
 
 
@@ -116,6 +80,9 @@ int main(int argl, const char **argc) {
 
 
 
+    //increase piece-value to 1000
+    //so I won't lose too much when rounding floating point-values
+    //to integers
 
 
 
@@ -124,40 +91,21 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-/*
-    size_t unique_counter =0;
-
-    std::mt19937_64 generator(637231u);
-    std::uniform_int_distribution<uint64_t> distrib(0,1000000000ull);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    HyperLog< uint64_t,4,Hasher> log;
-    for (int i = 1; i <= 1000080005ull; ++i) {
-        auto value = distrib(generator);
-        log.insert(value);
-    }
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto duration =t2-t1;
-    std::cout<<"Unique_Counter: "<<unique_counter<<std::endl;
-    std::cout << "Count: " << log.get_count() << std::endl;
-    std::cout<<"Time: "<<duration.count()/1000000<<std::endl;
-*/
 
 
 
 
       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-       Trainer trainer("../Training/TrainData/output_file");
-       trainer.setLearningRate(800);
-       trainer.setEpochs(100);
-       trainer.setl2Reg(0.000000000000);
-       trainer.setCValue(-10e-3);
-       trainer.startTune();
-       auto loss = trainer.calculateLoss();
-       std::cout << "Loss: " << loss << std::endl;
+      Trainer trainer("../Training/TrainData/output_file");
+      trainer.setLearningRate(16000);
+      trainer.setEpochs(100);
+      trainer.setl2Reg(0.000000000000);
+      trainer.setCValue(-1e-3);
+      trainer.startTune();
+      auto loss = trainer.calculateLoss();
+      std::cout << "Loss: " << loss << std::endl;
+
+
 
 
 

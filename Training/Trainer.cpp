@@ -50,13 +50,7 @@ double getWinValue(Training::Result result) {
 }
 
 double sigmoid(double c, double value) {
-
-    if (value > 0) {
-        return 1.0 / (1.0 + std::exp(c * value));
-    } else {
-        return std::exp(-c * value) / (1.0 + std::exp(-c * value));
-    }
-
+    return 1.0 / (1.0 + std::exp(c * value));
 }
 
 double sigmoidDiff(double c, double value) {
@@ -65,6 +59,7 @@ double sigmoidDiff(double c, double value) {
 
 
 void Trainer::gradientUpdate(Training::Position &pos) {
+    //one step of stochastic gradient descent
     //one step of stochastic gradient descent
     Board board;
     board.getPosition().BP = pos.bp();
@@ -75,28 +70,30 @@ void Trainer::gradientUpdate(Training::Position &pos) {
     if (pos.result() == Training::UNKNOWN)
         return;
 
+    if (board.getPosition().hasJumps(board.getMover()))
+        return;
 
-    Move best;
-    auto qStatic = searchValue(board, best, 0, 200000, false);
+
+    auto qStatic = gameWeights.evaluate<double>(board.getPosition(), 0);
+
 
     if (isWin(qStatic) || !isEval(qStatic))
         return;
-    auto mover = static_cast<double>(board.getPosition().getColor());
     double result = getWinValue(pos.result());
     double c = getCValue();
 
-    double qValue = mover * static_cast<double>(qStatic);
-    double offset = 1.0;
+    auto qValue = qStatic;
+    double offset = 0.01;
+
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);
-                size_t index = 18ull * getIndex(curRegion, board.getPosition()) + 9ull * p + 3ull * j + i;
+                size_t index = 18ull * getIndex2(curRegion, board.getPosition()) + 9ull * p + 3ull * j + i;
                 double qDiffValue = Trainer::evaluatePosition(board, gameWeights, index, offset);
                 double qDiffValue2 = Trainer::evaluatePosition(board, gameWeights, index, -offset);
                 double diff = ((sigmoid(c, qValue) - result) *
                                sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
-                diff *= mover;
                 gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
 
             }
@@ -107,27 +104,25 @@ void Trainer::gradientUpdate(Training::Position &pos) {
         double qDiffValue2 = Trainer::evaluatePosition(board, gameWeights, index, -offset);
         double diff = ((sigmoid(c, qValue) - result) *
                        sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
-        diff *= mover;
         gameWeights[index] = gameWeights[index] - getLearningRate() * diff;
     }
-
 
     for (auto i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
         for (auto j = 0; j < 16; ++j) {
             gameWeights.tempo_ranks[i][j] += offset;
-            auto qDiffValue = searchValue(board, best, 0, 200000, false);
+            auto qDiffValue = gameWeights.evaluate<double>(board.getPosition(), 0);
             gameWeights.tempo_ranks[i][j] -= offset;
 
             gameWeights.tempo_ranks[i][j] -= offset;
-            auto qDiffValue2 = searchValue(board, best, 0, 200000, false);
+            auto qDiffValue2 = gameWeights.evaluate<double>(board.getPosition(), 0);
             gameWeights.tempo_ranks[i][j] += offset;
 
-            double diff = ((sigmoid(c, qValue) - result) *
-                           sigmoidDiff(c, qValue) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
-            diff *= mover;
+            double diff = ((sigmoid(c, qStatic) - result) *
+                           sigmoidDiff(c, qStatic) * (qDiffValue - qDiffValue2)) / (2.0 * offset);
             gameWeights.tempo_ranks[i][j] = gameWeights.tempo_ranks[i][j] - getLearningRate() * diff;
         }
     }
+
 }
 
 
@@ -168,10 +163,10 @@ void Trainer::startTune() {
     while (counter < getEpochs()) {
         std::cout << "CValue: " << getCValue() << std::endl;
         double loss = calculateLoss();
-        if (loss > last_loss_value) {
-            learningRate = 0.5 * learningRate;
-            std::cout << "Dropped learning rate" << std::endl;
-        }
+        /*   if (loss > last_loss_value) {
+               learningRate = 0.5 * learningRate;
+               std::cout << "Dropped learning rate" << std::endl;
+           }*/
 
         last_loss_value = loss;
         std::cout << "Loss: " << loss << std::endl;
@@ -190,6 +185,8 @@ void Trainer::startTune() {
 }
 
 double Trainer::calculateLoss() {
+    //I dont get it
+
     auto evalLambda = [this](const Training::Position &pos) {
         if (pos.result() == Training::UNKNOWN)
             return 0.0;
@@ -200,12 +197,11 @@ double Trainer::calculateLoss() {
         board.getPosition().color = ((pos.mover() == Training::BLACK) ? BLACK : WHITE);
 
 
-        double current = getWinValue(pos.result());
+        double result = getWinValue(pos.result());
         auto color = static_cast<double>(board.getPosition().getColor());
         Line local;
-        double quiesc = color * static_cast<double>(searchValue(board, 0, 1000000, false)
-        );
-        current = current - sigmoid(cValue, quiesc);
+        double quiesc = color * searchValue(board, 0, 10000, false);
+        double current = result - sigmoid(cValue, quiesc);
         current = current * current;
         return current;
     };
@@ -219,9 +215,7 @@ double Trainer::calculateLoss() {
 
 double Trainer::evaluatePosition(Board &board, Weights<double> &weights, size_t index, double offset) {
     weights[index] += offset;
-    Line local;
-    Move best;
-    auto qDiff = searchValue(board, best, 0, 200000, false);
+    auto qDiff = gameWeights.evaluate<double>(board.getPosition(), 0);
     weights[index] -= offset;
     auto qDiffValue = static_cast<double>(qDiff);
 

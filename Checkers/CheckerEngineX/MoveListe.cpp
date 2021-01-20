@@ -34,14 +34,6 @@ void MoveListe::putFront(const Move move) {
     if (moveCounter <= 1)
         return;
 
-/*    auto result = get_move_index(move);
-    if (result.has_value()) {
-        const int tmp_score = scores[0];
-        liste[result.value()] = liste[0];
-        liste[0] = move;
-        scores[0] = scores[result.value()];
-        scores[result.value()] = tmp_score;
-    }*/
     auto it = std::find(begin(), end(), move);
     if (it != end()) {
         std::swap(*begin(), *it);
@@ -56,15 +48,10 @@ MoveListe &MoveListe::operator=(const MoveListe &other) {
     return *this;
 }
 
-std::optional<uint8_t> MoveListe::get_move_index(Move move) const {
-    for (auto i = 0; i < moveCounter; ++i) {
+uint32_t MoveListe::get_move_index(Move move) const {
+    for (uint32_t i = 0u; i < moveCounter; ++i) {
         if (move == liste[i])
-            return std::make_optional(i);
+            return i;
     }
-    return std::nullopt;
-}
-
-void MoveListe::sort_static(Color mover, const Position &pos, const Move &ttMove) {
-
-
+    return Move_Index_None;
 }

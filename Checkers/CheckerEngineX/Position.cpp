@@ -238,3 +238,5 @@ uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
 }
 
 
+
+

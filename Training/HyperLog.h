@@ -17,8 +17,6 @@
  * 1. I dont need to use double here at all
  * 2. There is still work left to be done
  * 3. Sparse Representation, bias correction ...
- *
- *
  */
 
 

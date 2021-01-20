@@ -29,8 +29,9 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
+constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 
-constexpr int stage_size = 48;
+constexpr int stage_size = 24;
 constexpr uint8_t Move_Index_None = 150u;
 
 constexpr std::array<uint32_t, 32> S = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u,
