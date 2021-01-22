@@ -49,10 +49,12 @@ int main(int argl, const char **argc) {
 
 
 
+
+
     initialize();
-    Position pos = Position::pos_from_fen("W:WK8:B4,K11,K10,K9,K32");
+    Position pos = Position::pos_from_fen("W:W5:BK32,K31");
     board = Position::getStartPosition();
-    //board =pos;
+   board =pos;
 ;
 
 
@@ -67,9 +69,14 @@ int main(int argl, const char **argc) {
     std::cout<<"NonZeroWeights: "<<gameWeights.numNonZeroValues()<<std::endl;
 
     Move best;
-    searchValue(board, best, MAX_PLY, 20000000, true);
+    searchValue(board, best, MAX_PLY, 2000000, true);
     board.makeMove(best);
     board.printBoard();
+
+
+
+
+
 
 
 

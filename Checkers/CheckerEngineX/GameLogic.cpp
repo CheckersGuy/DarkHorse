@@ -29,12 +29,12 @@ void initialize() {
 }
 
 
-Value searchValue(Board &board, int depth, uint32_t time, bool print) {
+Value searchValue(Board board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
 
-Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print) {
+Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
     TT.age_counter++;
     nodeCounter = 0;
@@ -42,7 +42,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     //TT.clear();
     endTime = getSystemTime() + time;
     int i = 1;
-    Value eval = NONE;
+    Value eval = INFINITE;
     Local local;
 
     //What are we supposed to do if we are given a depth zero search
@@ -53,12 +53,17 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
     }
 
     while (i <= depth && i <= MAX_PLY) {
-        Line line;
-        Search::search_asp(local, board, eval, i);
+        try {
+            Search::search_asp(local, board, eval, i);
+        } catch (std::string &msg) {
+            break;
+        }
+
         if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
 
         eval = local.best_score;
+        best = mainPV.getFirstMove();
         if (print) {
             std::string temp = std::to_string(eval) + " ";
             temp += " Depth:" + std::to_string(i) + " | ";
@@ -71,7 +76,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time, bool print
         }
 
 
-        best = mainPV.getFirstMove();
         ++i;
         if (isMateVal(local.best_score)) {
             break;
@@ -96,14 +100,16 @@ namespace Search {
         pv.clear();
         //checking time-used
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-            return board.getMover() * NONE;
+            throw std::string{"Time_out"};
         }
-        if (board.isRepetition()) {
-            return 0;
-        }
+
 
         if (board.getPosition().isEnd())
             return loss(ply);
+
+        if (board.isRepetition()) {
+            return 0;
+        }
 
         MoveListe liste;
 
@@ -119,8 +125,8 @@ namespace Search {
 
 
         Local local;
-        local.best_score = NONE;
-        local.sing_score = NONE;
+        local.best_score = -INFINITE;
+        local.sing_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = ply;
@@ -128,7 +134,6 @@ namespace Search {
         local.prune = prune;
         local.move = Move{};
         local.skip_move = skip_move;
-
         local.pv_node = (beta != alpha + 1);
 
 
@@ -159,7 +164,7 @@ namespace Search {
         if (TT.findHash(pos_key, info)) {
             tt_move = (info.move_index == Move_Index_None) ? Move{} : liste[info.move_index];
             auto tt_score = valueFromTT(info.score, ply);
-            if (info.depth >= depth && info.score != NONE) {
+            if (info.depth >= depth) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
                     || (info.flag == TT_UPPER && tt_score <= local.alpha)
                     || info.flag == TT_EXACT) {
@@ -167,11 +172,11 @@ namespace Search {
                 }
             }
 
-            /*      if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta)
-                    ) {
-                      return tt_score;
-                  }
-      */
+            /*     if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta)
+                   ) {
+                     return tt_score;
+                 }*/
+
             if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
                 std::find(liste.begin(), liste.end(), tt_move) != liste.end()) {
                 local.sing_score = tt_score;
@@ -250,16 +255,18 @@ namespace Search {
 
         MoveListe moves;
         getCaptures(board.getPosition(), moves);
-        Value bestValue = NONE;
+        Value bestValue = -INFINITE;
 
         if (moves.isEmpty()) {
+
+            if (board.getPosition().isEnd())
+                return loss(ply);
 
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply, 1, Move{},
                                       false);
             }
-            if (board.getPosition().isEnd())
-                return loss(ply);
+
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             if (bestValue >= beta) {
                 return bestValue;
@@ -280,7 +287,7 @@ namespace Search {
                 if (value >= beta)
                     break;
                 if (value > alpha) {
-                    pv.concat(move,localPV);
+                    pv.concat(move, localPV);
                 }
 
             }
@@ -361,8 +368,8 @@ namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {
         line.clear();
-        local.best_score = NONE;
-        local.sing_score = NONE;
+        local.best_score = -INFINITE;
+        local.sing_score = -INFINITE;
         local.alpha = alpha;
         local.beta = beta;
         local.ply = 0;
@@ -383,10 +390,10 @@ namespace Search {
 
 
     }
-
+    //there are various other things I will need to check
     void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
         if (depth >= 5 && isEval(last_score)) {
-            Value margin = 150;
+            Value margin = 200;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
@@ -394,16 +401,16 @@ namespace Search {
                 Line line;
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
+
+
+
                 search_root(local, line, board, alpha, beta, depth);
                 Value score = local.best_score;
-
                 if (!isEval(score))
                     break;
-                //need to look at scans definition of isEval
 
-                if (score <= alpha) {
+                if (score < alpha || score > beta) {
                     alpha_margin *= 2;
-                } else if (score >= beta) {
                     beta_margin *= 2;
                 } else {
                     mainPV = line;

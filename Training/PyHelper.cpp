@@ -4,10 +4,9 @@
 
 #include "PyHelper.h"
 
-//will include plenty of functions which are helpers
-//to deal with the bit-representation of the training-position
-//and convert those to an input format that can be used in the
-//tensorflow training loop
+
+
+
 
 
 inline size_t getIndex2(uint32_t reg, const Position &pos) {

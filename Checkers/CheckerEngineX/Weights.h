@@ -70,10 +70,9 @@ struct Weights {
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
     std::array<std::array<T, 16>, 7> tempo_ranks;
+    T mobility{0};
 
-    T balance;
-
-    Weights() : kingOp(1500), kingEnd(1500), balance(-10), weights(std::make_unique<T[]>(SIZE)) {
+    Weights() : kingOp(1500), kingEnd(1500), weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
@@ -106,28 +105,7 @@ struct Weights {
         return *std::min_element(weights.get(), weights.get() + SIZE);
     }
 
-
-
-    template<Color color>
-    int balance_score(Position &pos) const {
-        int num = 0;
-        uint32_t men = pos.getCurrent<color>() & (~pos.K);
-        int score = 0;
-        for (auto i = 0; i < 8; ++i) {
-            uint32_t column = columns[i];
-            int num_pieces = __builtin_popcount(column & men);
-            num += num_pieces;
-            score += (i + 1) * num_pieces;
-        }
-
-        if (num == 0)
-            return 0;
-
-        score = score / num;
-        return std::abs(4 - score);
-    }
-
-    int king_mobiility(Position &pos) const {
+    int king_mobility(Position &pos) const {
         uint32_t kings_white = pos.WP & pos.K;
         uint32_t kings_black = pos.BP & pos.K;
         int count_denied = 0;
@@ -158,7 +136,7 @@ struct Weights {
                 kings_black &= kings_black - 1u;
             }
         }
-        return -4 * count_denied + count_safe;
+        return count_denied;
     }
 
     template<typename RunType=uint32_t>
@@ -210,23 +188,14 @@ struct Weights {
         stream.read((char *) &kingEndVal, sizeof(DataType));
         this->kingOp = static_cast<T>(kingOpVal);
         this->kingEnd = static_cast<T>(kingEndVal);
-/*
 
-        for (auto i = 0; i < SIZE; ++i) {
-            DataType value;
-            stream.read((char *) &value, sizeof(DataType));
-            weights[i] = value;
+        for (auto i = 0; i < tempo_ranks.size(); ++i) {
+            for (auto j = 0; j < 16; ++j) {
+                double temp;
+                stream.read((char *) &temp, sizeof(DataType));
+                tempo_ranks[i][j] = temp;
+            }
         }
-*/
-
-
-          for (auto i = 0; i < tempo_ranks.size(); ++i) {
-              for (auto j = 0; j < 16; ++j) {
-                  double temp;
-                  stream.read((char *) &temp, sizeof(DataType));
-                  tempo_ranks[i][j] = temp;
-              }
-          }
         stream.close();
     }
 
@@ -254,35 +223,25 @@ struct Weights {
         }
         stream.close();
     }
+
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
+        U color = pos.getColor();
         constexpr U pawnEval = 1000;
         const U WP = __builtin_popcount(pos.WP & (~pos.K));
         const U BP = __builtin_popcount(pos.BP & (~pos.K));
 
-        uint32_t man = pos.BP & (~pos.K);
-        U tempi = -tempo_ranks[0][(man) & temp_mask];
-        tempi -= tempo_ranks[1][(man >> 4u) & temp_mask];
-        tempi -= tempo_ranks[2][(man >> 8u) & temp_mask];
-        tempi -= tempo_ranks[3][(man >> 12u) & temp_mask];
-        tempi -= tempo_ranks[4][(man >> 16u) & temp_mask];
-        tempi -= tempo_ranks[5][(man >> 20u) & temp_mask];
-        tempi -= tempo_ranks[6][(man >> 24u) & temp_mask];
-
-        man = pos.WP & (~pos.K);
-        man = getMirrored(man);
-        tempi += tempo_ranks[0][(man) & temp_mask];
-        tempi += tempo_ranks[1][(man >> 4u) & temp_mask];
-        tempi += tempo_ranks[2][(man >> 8u) & temp_mask];
-        tempi += tempo_ranks[3][(man >> 12u) & temp_mask];
-        tempi += tempo_ranks[4][(man >> 16u) & temp_mask];
-        tempi += tempo_ranks[5][(man >> 20u) & temp_mask];
-        tempi += tempo_ranks[6][(man >> 24u) & temp_mask];
-
-
-        /* int mobility = king_mobiility(pos);
-         int bala = (balance_score<WHITE>(pos) - balance_score<BLACK>(pos)) * balance;
- */
+        uint32_t man_black = pos.BP & (~pos.K);
+        uint32_t man_white = pos.WP & (~pos.K);
+        man_white = getMirrored(man_white);
+        U tempi = 0;
+        for (uint32_t i = 0; i < 7; ++i) {
+            uint32_t shift = 4u * i;
+            auto mask_white = (man_white >> shift) & temp_mask;
+            auto mask_black = (man_black >> shift) & temp_mask;
+            tempi -= tempo_ranks[i][mask_black];
+            tempi += tempo_ranks[i][mask_white];
+        }
         U phase = WP + BP;
 
         U WK = 0;
@@ -292,7 +251,6 @@ struct Weights {
             BK = __builtin_popcount(pos.BP & pos.K);
             phase += WK + BK;
         }
-
 
         U opening = 0, ending = 0;
 
@@ -306,22 +264,21 @@ struct Weights {
                 ending += (weights[indexEnding]);
             }
         }
+
         const U pieceEval = (WP - BP) * pawnEval;
         const U kingEvalOp = kingOp * (WK - BK);
         const U kingEvalEnd = kingEnd * (WK - BK);
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tempi;
-        /*   opening += bala;
-           opening += mobility;
-   */
+
+
         ending += kingEvalEnd;
         ending += pieceEval;
         ending += tempi;
-        /* ending += bala;
-         ending += mobility;*/
+
         U score = (phase * opening + (stage_size - phase) * ending);
-        if constexpr(std::is_floating_point_v<T>) {
+        if constexpr(std::is_floating_point_v<U>) {
             score = score / stage_size;
         } else {
             score = div_round(score, (int) stage_size);
