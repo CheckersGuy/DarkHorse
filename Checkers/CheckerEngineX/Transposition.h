@@ -13,7 +13,7 @@
 
 struct NodeInfo {
     uint8_t move_index {Move_Index_None};
-    Value score{NONE};
+    Value score{0};
     uint8_t depth{0};
     uint8_t flag{Flag::None};
 };
@@ -21,7 +21,7 @@ struct NodeInfo {
 //given a cache-line of 64 bytes, we can efficiently use a bucket-size of 4 !
 struct Entry {
     //total of 16 bytes
-    Value value{NONE};
+    Value value{0};
     uint32_t key{0u};
     uint32_t age{100000u}; //age
     Flag flag{Flag::None};

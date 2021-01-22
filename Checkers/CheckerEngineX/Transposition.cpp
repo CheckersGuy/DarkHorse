@@ -34,7 +34,7 @@ uint32_t Transposition::getHashHits() {
 
 void Transposition::clear() {
     hashHit = 0;
-    memset(this->entries.get(), 0, 2 * sizeof(Entry) * this->capacity);
+    std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 
 
@@ -55,9 +55,6 @@ void Transposition::storeHash(Value value, const Position &pos, Flag flag, uint8
               cluster[i].age = age_counter;
           }
           const auto age_entry = age_counter - cluster[i].age;
-
-
-          int remain_depth = cluster[i].depth - age_entry;
 
           if (cluster[i].depth < depth || (age_entry!=0)) {
               cluster[i].depth = depth;

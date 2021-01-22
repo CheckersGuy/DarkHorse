@@ -21,25 +21,33 @@ private:
     int epochs;
     Training::TrainData data;
     double learningRate, l2Reg, cValue;
+    double accu_loss{0};
     double last_loss_value;
+    double beta{0.9};
+    double decay{0.01};
+    std::unique_ptr<double[]> momentums;
 
 public:
 
 
-    Trainer(const std::string& data_path) : cValue(1.0),
-                                                                      learningRate(0.1),last_loss_value(std::numeric_limits<double>::max()), l2Reg(0.01){
+    Trainer(const std::string &data_path) : cValue(1.0),
+                                            learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
+                                            l2Reg(0.01) {
+
+        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
         std::ifstream stream(data_path);
-        if(!stream.good()){
-            std::cerr<<"Couldnt init training data"<<std::endl;
+        if (!stream.good()) {
+            std::cerr << "Couldnt init training data" << std::endl;
             std::exit(EXIT_FAILURE);
         }
         data.ParseFromIstream(&stream);
         stream.close();
     };
+
     void epoch();
 
 
-    void gradientUpdate(Training::Position& position);
+    void gradientUpdate(const Training::Position &position);
 
     void setEpochs(int epoch);
 
@@ -60,8 +68,6 @@ public:
     void startTune();
 
     double calculateLoss();
-
-    static double evaluatePosition( Board&board,Weights<double>& weights,size_t index,double offset);
 
 };
 

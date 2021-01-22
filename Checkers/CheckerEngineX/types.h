@@ -62,8 +62,8 @@ enum NodeType {
 
 enum Score : int {
     INFINITE = 15000000,
-    EVAL_INFINITE = INFINITE - 100000,
-    NONE = -INFINITE - 100005,
+    EVAL_INFINITE = INFINITE - 1000000,
+    TIME_OUT = EVAL_INFINITE+1
 };
 enum SEARCH : int {
     MAX_PLY = 256
@@ -71,7 +71,7 @@ enum SEARCH : int {
 enum Color : int {
     BLACK = -1, WHITE = 1
 };
-enum PieceType {
+enum PieceType : uint8_t {
     BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
 };
 enum Flag : uint8_t {
@@ -83,7 +83,7 @@ inline bool isEval(Value val) {
 }
 
 inline bool isMateVal(Value val) {
-    return std::abs(val) >= INFINITE - MAX_PLY && std::abs(val) <= INFINITE;
+    return std::abs(val) >= EVAL_INFINITE && std::abs(val) < INFINITE;
 }
 
 inline int getMateInX(Value val) {

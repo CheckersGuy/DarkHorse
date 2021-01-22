@@ -60,18 +60,19 @@ int main(int argl, const char **argc) {
 
 
 
-/*
 
 
-    Match engine_match("bla", "old", "test_file");
+
+
+
+
+    Match engine_match("ultronnext", "ultron", "test_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(6);
     engine_match.setHashSize(22);
     engine_match.set_play_reverse(true);
     engine_match.start();
-
-*/
 
 
 
@@ -98,7 +99,7 @@ int main(int argl, const char **argc) {
       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
       Trainer trainer("../Training/TrainData/output_file");
       trainer.setLearningRate(16000);
-      trainer.setEpochs(100);
+      trainer.setEpochs(1000);
       trainer.setl2Reg(0.000000000000);
       trainer.setCValue(-1e-3);
       trainer.startTune();
