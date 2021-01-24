@@ -19,12 +19,13 @@ namespace Statistics {
         const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] + 1;
         const int hhScore = history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
         const int score = hhScore / bScore;
+
         return score;
     }
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
         if (move == ttMove) {
-            return std::numeric_limits<int32_t>::max()-1;
+            return std::numeric_limits<int16_t>::max();
         }
         return getMoveScore(move, color);
     }

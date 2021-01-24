@@ -39,9 +39,9 @@ constexpr std::array<uint32_t, 32> S = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u
                                         23u, 22u, 21u, 20u, 27u, 26u,
                                         25u, 24u, 31u, 30u, 29u, 28u};
 
-constexpr std::array<uint32_t, 8> columns = {1u << S[0] | 1 << S[8] | 1 << S[16] | 1 << S[24],
-                                             1u << S[4] | 1 << S[12] | 1u << S[20] | 1u << S[28],
-                                             1u << S[1] | 1 << S[9] | 1 << S[17] | 1 << S[25],
+constexpr std::array<uint32_t, 8> columns = {1u << S[0] | 1u << S[8] | 1u << S[16] | 1u << S[24],
+                                             1u << S[4] | 1u << S[12] | 1u << S[20] | 1u << S[28],
+                                             1u << S[1] | 1u << S[9] | 1u << S[17] | 1u << S[25],
                                              1u << S[5] | 1u << S[13] | 1u << S[21] | 1u << S[29],
                                              1u << S[2] | 1u << S[10] | 1u << S[18] | 1u << S[26],
                                              1u << S[6] | 1u << S[14] | 1u << S[22] | 1u << S[30],
@@ -62,8 +62,7 @@ enum NodeType {
 
 enum Score : int {
     INFINITE = 15000000,
-    EVAL_INFINITE = INFINITE - 1000000,
-    TIME_OUT = EVAL_INFINITE+1
+    EVAL_INFINITE = INFINITE - 100000,
 };
 enum SEARCH : int {
     MAX_PLY = 256
@@ -86,13 +85,6 @@ inline bool isMateVal(Value val) {
     return std::abs(val) >= EVAL_INFINITE && std::abs(val) < INFINITE;
 }
 
-inline int getMateInX(Value val) {
-    if (isMateVal(val)) {
-        return INFINITE - std::abs(val);
-    } else {
-        return INFINITE;
-    }
-}
 
 inline Value loss(int ply) {
     return -INFINITE + ply;
@@ -103,11 +95,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val <= -INFINITE + MAX_PLY;
+    return val <= -EVAL_INFINITE;
 }
 
 inline bool isWin(Value val) {
-    return val >= INFINITE - MAX_PLY;
+    return val >= EVAL_INFINITE;
 }
 
 inline Value valueFromTT(Value val, int ply) {
@@ -135,19 +127,6 @@ inline int div_round(int a, int b) {
     return div;
 }
 
-
-inline Value clampScore(Value val) {
-    if (isLoss(val)) {
-        return -INFINITE;
-    } else if (isWin(val)) {
-        return INFINITE;
-    }
-    return val;
-}
-
-inline Value addSafe(Value val, Value incre) {
-    return clampScore(val + incre);
-}
 
 template<Color color>
 constexpr uint32_t defaultShift(const uint32_t maske) {

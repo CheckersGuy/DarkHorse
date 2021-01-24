@@ -91,9 +91,8 @@ void Trainer::gradientUpdate(const Training::Position &pos) {
     double result = getWinValue(pos.result());
     double c = getCValue();
 
-    auto qValue = qStatic;
-    double error = sigmoid(c, qValue) - result;
-    const double temp = error * sigmoidDiff(c, qValue);;
+    double error = sigmoid(c, qStatic) - result;
+    const double temp = error * sigmoidDiff(c, qStatic);;
     accu_loss += error * error;
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
@@ -201,7 +200,7 @@ void Trainer::startTune() {
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
         gameWeights.storeWeights("current.weights");
-        std::cout<<"LearningRate: "<<learningRate<<std::endl;
+        std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
         std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
@@ -214,6 +213,7 @@ void Trainer::startTune() {
                       std::ostream_iterator<double>(std::cout, ","));
             std::cout << std::endl;
         }
+        std::cout << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
 
