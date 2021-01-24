@@ -70,7 +70,6 @@ struct Weights {
     T kingOp, kingEnd;
     std::unique_ptr<T[]> weights;
     std::array<std::array<T, 16>, 7> tempo_ranks;
-    T mobility{0};
 
     Weights() : kingOp(1500), kingEnd(1500), weights(std::make_unique<T[]>(SIZE)) {
         std::fill(weights.get(), weights.get() + SIZE, T{0});
@@ -138,6 +137,7 @@ struct Weights {
         }
         return count_denied;
     }
+
 
     template<typename RunType=uint32_t>
     void loadWeights(const std::string &path) {
@@ -223,7 +223,6 @@ struct Weights {
         }
         stream.close();
     }
-
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
         U color = pos.getColor();
@@ -242,6 +241,8 @@ struct Weights {
             tempi -= tempo_ranks[i][mask_black];
             tempi += tempo_ranks[i][mask_white];
         }
+
+
         U phase = WP + BP;
 
         U WK = 0;
@@ -271,7 +272,6 @@ struct Weights {
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tempi;
-
 
         ending += kingEvalEnd;
         ending += pieceEval;

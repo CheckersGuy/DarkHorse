@@ -23,8 +23,8 @@ private:
     double learningRate, l2Reg, cValue;
     double accu_loss{0};
     double last_loss_value;
-    double beta{0.9};
-    double decay{0.01};
+    double beta{0.99};
+    double decay{0.001};
     std::unique_ptr<double[]> momentums;
 
 public:
@@ -34,7 +34,7 @@ public:
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.01) {
 
-        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
+        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u );
         std::ifstream stream(data_path);
         if (!stream.good()) {
             std::cerr << "Couldnt init training data" << std::endl;

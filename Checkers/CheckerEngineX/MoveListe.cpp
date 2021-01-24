@@ -5,16 +5,21 @@ void MoveListe::reset() {
     moveCounter = 0;
 }
 
+extern Line mainPV;
+
 void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
     if (moveCounter <= 1)
         return;
 
+    const int start_index = (inPVLine) ? 1 : 0;
+
+
+
     for (auto i = 0; i < moveCounter; ++i) {
         scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
     }
 
-    const int start_index = (inPVLine) ? 1 : 0;
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
@@ -55,3 +60,4 @@ uint32_t MoveListe::get_move_index(Move move) const {
     }
     return Move_Index_None;
 }
+

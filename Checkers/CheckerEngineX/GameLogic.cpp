@@ -29,7 +29,7 @@ void initialize() {
 }
 
 
-Value searchValue(Board board, int depth, uint32_t time, bool print) {
+Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
@@ -41,7 +41,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     mainPV.clear();
     //TT.clear();
     endTime = getSystemTime() + time;
-    int i = 1;
     Value eval = INFINITE;
     Local local;
 
@@ -52,7 +51,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
 
-    while (i <= depth && i <= MAX_PLY) {
+    for (int i = 0; i <= depth; ++i) {
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
@@ -75,8 +74,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
             std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
         }
 
-
-        ++i;
         if (isMateVal(local.best_score)) {
             break;
         }
@@ -99,10 +96,11 @@ namespace Search {
     Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {
         pv.clear();
         //checking time-used
+
+
         if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
             throw std::string{"Time_out"};
         }
-
 
         if (board.getPosition().isEnd())
             return loss(ply);
@@ -164,7 +162,7 @@ namespace Search {
         if (TT.findHash(pos_key, info)) {
             tt_move = (info.move_index == Move_Index_None) ? Move{} : liste[info.move_index];
             auto tt_score = valueFromTT(info.score, ply);
-            if (info.depth >= depth) {
+            if (info.depth >= depth && info.flag != Flag::None) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
                     || (info.flag == TT_UPPER && tt_score <= local.alpha)
                     || info.flag == TT_EXACT) {
@@ -189,7 +187,7 @@ namespace Search {
 
 
         if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (150 * local.depth);
+            Value margin = (100 * local.depth);
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
@@ -244,6 +242,7 @@ namespace Search {
     }
 
     Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth) {
+
         bool in_pv_line = (beta != alpha + 1);
         nodeCounter++;
         pv.clear();
@@ -276,7 +275,6 @@ namespace Search {
         if (in_pv_line && ply < mainPV.length()) {
             moves.putFront(mainPV[ply]);
         }
-        //moves.sort(Move{},in_pv_line,board.getMover());
         for (Move move : moves) {
             Line localPV;
             board.makeMove(move);
@@ -284,12 +282,9 @@ namespace Search {
             board.undoMove();
             if (value > bestValue) {
                 bestValue = value;
+                pv.concat(move, localPV);
                 if (value >= beta)
                     break;
-                if (value > alpha) {
-                    pv.concat(move, localPV);
-                }
-
             }
         }
 
@@ -300,24 +295,25 @@ namespace Search {
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension) {
         Depth reduction = Search::reduce(local, board, move);
         //singular move extension
-
+/*
         if (local.pv_node
             && local.depth >= 8
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 150;
+            constexpr Value margin = 650;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha, new_alpha + 1, local.ply, local.depth - 4, move,
+            Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 2, move,
                                          local.prune);
 
 
-            if (value <= new_alpha)
+            if (value <= new_alpha){
                 extension = 1;
+            }
 
-        }
+        }*/
 
 
         Depth new_depth = local.depth - 1 + extension;
@@ -390,27 +386,26 @@ namespace Search {
 
 
     }
+
     //there are various other things I will need to check
     void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
         if (depth >= 5 && isEval(last_score)) {
-            Value margin = 200;
+            Value margin = 150;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 5000) {
+            while (std::max(alpha_margin, beta_margin) < 3000) {
                 Line line;
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
-
-
-
                 search_root(local, line, board, alpha, beta, depth);
                 Value score = local.best_score;
                 if (!isEval(score))
                     break;
 
-                if (score < alpha || score > beta) {
+                if (score <= alpha) {
                     alpha_margin *= 2;
+                } else if (score >= beta) {
                     beta_margin *= 2;
                 } else {
                     mainPV = line;
