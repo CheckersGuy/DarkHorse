@@ -8,6 +8,8 @@
 #include <cstdint>
 #include "Position.h"
 
+extern "C" int has_piece(uint32_t index, uint32_t white_men, uint32_t black_men, uint32_t kings);
+
 extern "C" int has_black_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_white_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_white_king(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);

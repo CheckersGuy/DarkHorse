@@ -30,6 +30,15 @@ struct Local {
     bool pv_node;
 };
 
+struct SearchGlobal{
+    uint32_t sel_depth;
+    //will be called whenever we find a new move
+    void new_move();
+
+    // will be called when the evaluation changes
+    void score_update();
+};
+
 namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);

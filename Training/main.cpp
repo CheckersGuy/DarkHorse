@@ -61,13 +61,7 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
-    Match engine_match("ultronbase", "ultronlmrno", "test_file");
+    Match engine_match("ultronnext", "check", "test_file");
     engine_match.setTime(100);
     engine_match.setMaxGames(20000);
     engine_match.setNumThreads(12);

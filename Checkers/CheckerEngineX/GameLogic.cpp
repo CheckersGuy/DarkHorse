@@ -3,10 +3,6 @@
 
 uint64_t nodeCounter = 0;
 Line mainPV;
-Value last_evaluation = INFINITE;
-
-extern char *output;
-bool timeOut = false;
 uint64_t endTime = 1000000000;
 
 void setHashSize(uint32_t hash) {
@@ -19,6 +15,9 @@ Weights<int16_t> gameWeights;
 #else
 Weights<double> gameWeights;
 #endif
+
+
+SearchGlobal glob;
 
 void initialize() {
 #ifdef __EMSCRIPTEN__
@@ -34,8 +33,10 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     return searchValue(board, best, depth, time, print);
 }
 
+
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print) {
     Statistics::mPicker.clearScores();
+    glob.sel_depth = 0u;
     TT.age_counter++;
     nodeCounter = 0;
     mainPV.clear();
@@ -65,7 +66,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         best = mainPV.getFirstMove();
         if (print) {
             std::string temp = std::to_string(eval) + " ";
-            temp += " Depth:" + std::to_string(i) + " | ";
+            temp += " Depth:" + std::to_string(i) + " | " + std::to_string(glob.sel_depth) + " | ";
             temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
             temp += mainPV.toString();
             temp += "\n";
@@ -170,10 +171,9 @@ namespace Search {
                 }
             }
 
-            /*     if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta)
-                   ) {
-                     return tt_score;
-                 }*/
+      /*      if ((info.flag == TT_LOWER&& isWin(tt_score) && tt_score >= local.beta) ||
+                info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)
+                return tt_score;*/
 
             if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
                 std::find(liste.begin(), liste.end(), tt_move) != liste.end()) {
@@ -191,7 +191,7 @@ namespace Search {
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply, newDepth, Move{}, false);
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
             if (value >= newBeta) {
                 value = value - margin;
                 pv = new_pv;
@@ -251,6 +251,9 @@ namespace Search {
             return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
         }
 
+        if (ply > glob.sel_depth)
+            glob.sel_depth = ply;
+
 
         MoveListe moves;
         getCaptures(board.getPosition(), moves);
@@ -258,8 +261,6 @@ namespace Search {
 
         if (moves.isEmpty()) {
 
-            if (board.getPosition().isEnd())
-                return loss(ply);
 
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply, 1, Move{},
@@ -267,6 +268,10 @@ namespace Search {
             }
 
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            if (board.getPosition().isEnd())
+                bestValue = loss(ply);
+
+
             if (bestValue >= beta) {
                 return bestValue;
             }
@@ -295,25 +300,25 @@ namespace Search {
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension) {
         Depth reduction = Search::reduce(local, board, move);
         //singular move extension
-/*
+
         if (local.pv_node
             && local.depth >= 8
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 650;
+            constexpr Value margin = 550;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 2, move,
                                          local.prune);
 
 
-            if (value <= new_alpha){
+            if (value <= new_alpha) {
                 extension = 1;
             }
 
-        }*/
+        }
 
 
         Depth new_depth = local.depth - 1 + extension;
@@ -400,8 +405,7 @@ namespace Search {
                 Value beta = last_score + beta_margin;
                 search_root(local, line, board, alpha, beta, depth);
                 Value score = local.best_score;
-                if (!isEval(score))
-                    break;
+
 
                 if (score <= alpha) {
                     alpha_margin *= 2;
