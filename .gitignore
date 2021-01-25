@@ -137,3 +137,5 @@ fabric.properties
 **/CMakeScripts
 **/compile_commands.json
 build/**/*
+/Training/proto/*.h
+/Training/proto*.cpp

@@ -3,10 +3,12 @@ project(reading)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_COMPILER clang++-10)
 SET(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
-find_package(Threads REQUIRED)
+
+
 if (UNIX)
     find_package(Protobuf REQUIRED)
     include_directories(${PROTOBUF_INCLUDE_DIR})
+    include_directories(${PROTO_SRC_DIR})
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Training")
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Training/proto")
 
