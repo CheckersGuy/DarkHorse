@@ -45,7 +45,7 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
     initialize();
     Position pos = Position::pos_from_fen("W:WK12:BK4,K3");
     board = Position::getStartPosition();
@@ -67,7 +67,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-*/
+
 
 
 
