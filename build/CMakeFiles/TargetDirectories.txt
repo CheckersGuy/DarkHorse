@@ -1,6 +1,0 @@
-/home/robin/DarkHorse/build/CMakeFiles/edit_cache.dir
-/home/robin/DarkHorse/build/CMakeFiles/Train.dir
-/home/robin/DarkHorse/build/CMakeFiles/rebuild_cache.dir
-/home/robin/DarkHorse/build/CMakeFiles/Generator.dir
-/home/robin/DarkHorse/build/CMakeFiles/perft_check.dir
-/home/robin/DarkHorse/build/CMakeFiles/MainEngine.dir
