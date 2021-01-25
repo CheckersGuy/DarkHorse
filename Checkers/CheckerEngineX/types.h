@@ -71,7 +71,7 @@ enum Color : int {
     BLACK = -1, WHITE = 1
 };
 enum PieceType : uint8_t {
-    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,
+    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,EMPTY=6
 };
 enum Flag : uint8_t {
     None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u

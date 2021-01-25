@@ -44,6 +44,10 @@ double Transposition::getFillRate() {
 
 
 void Transposition::storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, uint32_t move_index) {
+ /*   if(isWin(value) || isLoss(value))
+        return;
+*/
+
     this->length++;
     const uint32_t index = (pos.key) & (this->capacity - 1);
     Cluster &cluster = this->entries[index];

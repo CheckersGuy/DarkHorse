@@ -5,8 +5,23 @@
 #include "PyHelper.h"
 
 
+int has_piece(uint32_t index, uint32_t white_men, uint32_t black_men, uint32_t kings) {
+    //check if there is a particular piece on a square
+
+    uint32_t maske = (1u << index);
+    if ((maske & kings & black_men))
+        return BKING;
+    if ((maske & kings & white_men))
+        return WKING;
+
+    if ((maske & (~kings) & black_men))
+        return BPAWN;
+    if ((maske & (~kings) & white_men))
+        return WPAWN;
 
 
+    return EMPTY;
+}
 
 
 inline size_t getIndex2(uint32_t reg, const Position &pos) {
@@ -75,4 +90,6 @@ extern "C" int get_pattern_index(int i, int j, int p, uint32_t white_men, uint32
     const auto region_index = getIndex2(curRegion, pos);
     return 18 * (int) region_index + 3 * j + i + 9 * p;
 }
+
+
 

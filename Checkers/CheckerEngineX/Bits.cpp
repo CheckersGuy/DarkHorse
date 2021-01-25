@@ -46,5 +46,9 @@ namespace Bits {
 #endif
     }
 
+    uint32_t pop_count(uint32_t val) {
+        return __builtin_popcount(val);
+    }
+
 
 }

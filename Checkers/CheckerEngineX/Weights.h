@@ -227,8 +227,8 @@ struct Weights {
     U evaluate(Position pos, int ply) const {
         U color = pos.getColor();
         constexpr U pawnEval = 1000;
-        const U WP = __builtin_popcount(pos.WP & (~pos.K));
-        const U BP = __builtin_popcount(pos.BP & (~pos.K));
+        const U WP = Bits::pop_count(pos.WP & (~pos.K));
+        const U BP = Bits::pop_count(pos.BP & (~pos.K));
 
         uint32_t man_black = pos.BP & (~pos.K);
         uint32_t man_white = pos.WP & (~pos.K);
@@ -248,8 +248,8 @@ struct Weights {
         U WK = 0;
         U BK = 0;
         if (pos.K != 0) {
-            WK = __builtin_popcount(pos.WP & pos.K);
-            BK = __builtin_popcount(pos.BP & pos.K);
+            WK = Bits::pop_count(pos.WP & pos.K);
+            BK = Bits::pop_count(pos.BP & pos.K);
             phase += WK + BK;
         }
 
