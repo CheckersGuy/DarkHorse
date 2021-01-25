@@ -1,8 +1,6 @@
 #include <vector>
-#include <bitset>
 #include "Transposition.h"
 #include "GameLogic.h"
-#include <iterator>
 #include "Perft.h"
 
 inline Position posFromString(const std::string &pos) {
