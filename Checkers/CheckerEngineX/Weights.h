@@ -67,12 +67,6 @@ struct Weights {
         return std::count_if(weights.get(), weights.get() + SIZE, [](T val) { return static_cast<int>(val) != 0; });
     }
 
-    T getNorm() const {
-        T current = std::transform_reduce(weights.get(), weights.get() + SIZE, weights.get(), 0.0,
-                                          [](T v1, T v2) { return v1 + v2; }, [](T v1) { return v1 * v1; });
-        return std::sqrt(current);
-    }
-
     T getMaxValue() const {
         return *std::max_element(weights.get(), weights.get() + SIZE);
     }
