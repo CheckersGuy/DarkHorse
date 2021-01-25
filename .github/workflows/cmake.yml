@@ -20,7 +20,7 @@ jobs:
     - name: install dependencies
       run: sudo apt-get update && sudo apt-get install protobuf-compiler && sudo apt-get install -y libprotobuf-dev && sudo apt-get install clang-10++   
     - name: test
-      working-directory: /Training/proto
+      working-directory: Training/proto
       run: | 
         echo "Compiling protobuf files"
         protoc -I=. --cpp_out=. Training.proto  
