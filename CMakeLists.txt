@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 set(CMAKE_CXX_STANDARD 17)
+SET(PLATFORM_SPECIFIC_LIBS "-lpthread")
 set(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -lpthread -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
 if (UNIX)
     find_package(Protobuf REQUIRED)
