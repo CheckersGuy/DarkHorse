@@ -22,6 +22,6 @@ jobs:
     - name: test
       run: | 
         echo "Running some test"
-        cd Training
-        cat | ls    
+        cd Training/proto
+        protoc -I=. --cpp_out=. Training.proto  
     
