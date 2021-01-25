@@ -13,32 +13,9 @@
 #include "GameLogic.h"
 #include <cstring>
 #include <iterator>
-#include <filesystem>
 
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
-namespace fs = std::filesystem;
-
-
-inline std::optional<fs::path> has_directory(const fs::path &path, std::string directory_name) {
-    if (fs::exists(path) && fs::is_directory(path)) {
-        for (const auto &entry : fs::directory_iterator(path)) {
-            if (fs::is_directory(entry.path()) && entry.path().filename() == directory_name)
-                return std::make_optional(entry.path());
-        }
-    }
-    return std::nullopt;
-}
-
-inline std::optional<fs::path> has_file(const fs::path &path, std::string file_name) {
-    if (fs::exists(path) && fs::is_directory(path)) {
-        for (const auto &entry: fs::directory_iterator(path)) {
-            if (fs::is_regular_file(entry.path()) && entry.path().filename() == file_name)
-                return std::make_optional(entry.path());
-        }
-    }
-    return std::nullopt;
-}
 
 inline size_t getIndex2(uint32_t reg, const Position &pos) {
     //trying to be a little bit more efficient with the pext instruction
@@ -143,26 +120,7 @@ struct Weights {
     void loadWeights(const std::string &path) {
         using DataType = double;
         static_assert(std::is_unsigned<RunType>::value);
-        fs::path home_path(getenv("HOME"));
-        home_path /= "Dokumente";
-
-        auto w_direc = has_directory(home_path, "CWeights");
-        if (!w_direc.has_value()) {
-            const fs::path tmp_path("/tmp");
-            w_direc = has_directory(tmp_path, "CWeights");
-        }
-        if (!w_direc.has_value()) {
-            std::cerr << "Could not find the weights_folder" << std::endl;
-            return;
-        }
-        auto weight_path = (w_direc.has_value()) ? has_file(w_direc.value(), path) : std::nullopt;
-        if (!weight_path.has_value()) {
-            std::cerr << "Could not load the weights";
-            return;
-        }
-        std::string path_string = weight_path.value().string();
-
-        std::ifstream stream(path_string, std::ios::binary);
+        std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Error" << std::endl;
             return;
