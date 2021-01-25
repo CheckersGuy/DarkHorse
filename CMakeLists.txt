@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.12)
 project(reading)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
-
-
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 if (UNIX)
     find_package(Protobuf REQUIRED)
     include_directories(${PROTOBUF_INCLUDE_DIR})
@@ -39,6 +39,7 @@ add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
 if (UNIX)
     add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} ${PSources} ${PHeaders} Training/HyperLog.h Training/PyHelper.cpp Training/PyHelper.h)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
+    target_link_libraries(Train Threads::Threads)
 endif ()
 
 set_target_properties(Generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training/Engines")
