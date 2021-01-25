@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -march=native -pthread  -flto -ffat-lto-objects -fuse-linker-plugin ")
 
 
