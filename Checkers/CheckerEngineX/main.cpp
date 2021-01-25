@@ -45,9 +45,9 @@ int main(int argl, const char **argc) {
 
 
     initialize();
-    Position pos = Position::pos_from_fen("W:WK12:BK4,K3");
+    Position pos = Position::pos_from_fen("W:WK6:B4,3");
     board = Position::getStartPosition();
-   // board =pos;
+    board =pos;
 ;
 
 
