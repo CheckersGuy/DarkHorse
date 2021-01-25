@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
+find_package(Threads REQUIRED)
 if (UNIX)
     find_package(Protobuf REQUIRED)
     include_directories(${PROTOBUF_INCLUDE_DIR})
@@ -47,5 +48,9 @@ if (UNIX)
     target_compile_definitions(Train PUBLIC "TRAIN")
 endif ()
 
-
 target_compile_definitions(Generator PUBLIC "GENERATOR")
+
+target_link_libraries(MainEngine Threads::Threads)
+target_link_libraries(perft_check Threads::Threads)
+target_link_libraries(Generator Threads::Threads)
+target_link_libraries(Train Threads::Threads)
