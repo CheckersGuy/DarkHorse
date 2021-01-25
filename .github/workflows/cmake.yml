@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install dependencies
-      run: sudo apt-get update && sudo apt-get install protobuf-compiler && sudo apt-get install -y libprotobuf-dev   
+      run: sudo apt-get update && sudo apt-get install protobuf-compiler && sudo apt-get install -y libprotobuf-dev && sudo apt-get install clang-10++   
     - name: Configure CMake
       # Use a bash shell so we can use the same syntax for environment variable
       # access regardless of the host operating system
@@ -34,7 +34,6 @@ jobs:
       # Execute the build.  You can specify a specific target with "--target <NAME>"
       run: cmake --build . --config $BUILD_TYPE
       env:
-        CC: clang-10
         CCX: clang-10++
     - name: Test
       working-directory: ${{github.workspace}}
