@@ -31,7 +31,7 @@ inline Position posFromString(const std::string &pos) {
 }
 
 int main(int argl, const char **argc) {
-
+    //test comment
     //there is still a bug with aspiration search
     //where the wrong mate is displayed/found
 
