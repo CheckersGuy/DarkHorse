@@ -59,7 +59,7 @@ public:
 
     void resize(size_t capa);
 
-    void storeHash(Value value, const Position &pos, Flag flag, uint8_t depth, uint32_t move_index);
+    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, uint32_t move_index);
 
     bool findHash(uint64_t key, NodeInfo &info);
 };
