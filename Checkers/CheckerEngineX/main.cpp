@@ -44,14 +44,16 @@ int main(int argl, const char **argc) {
 
 
 
+
     initialize();
-    Position pos = Position::pos_from_fen("W:WK6:B4,3");
+    Position pos = Position::pos_from_fen("B:WK5,K15,K13:BK3,K12,K17");
     board = Position::getStartPosition();
     board =pos;
 ;
 
 
     board.printBoard();
+
 
     std::cout << std::endl;
 

@@ -175,6 +175,7 @@ struct Weights {
         }
         stream.close();
     }
+
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
         U color = pos.getColor();
@@ -206,7 +207,6 @@ struct Weights {
         }
 
         U opening = 0, ending = 0;
-
         for (uint32_t j = 0; j < 3; ++j) {
             for (uint32_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);

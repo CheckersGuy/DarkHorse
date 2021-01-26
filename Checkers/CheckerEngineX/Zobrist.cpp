@@ -7,6 +7,7 @@
 namespace Zobrist {
     std::array<std::array<uint64_t, 4>, 32> ZOBRIST_KEYS;
     uint64_t colorBlack = 0ull;
+    uint64_t skip_hash = 0ull;
 
 
     uint64_t rand64() {
@@ -27,6 +28,7 @@ namespace Zobrist {
             }
         }
         colorBlack = rand64();
+        skip_hash = rand64();
     }
 
     uint64_t generateKey(const Position &pos) {

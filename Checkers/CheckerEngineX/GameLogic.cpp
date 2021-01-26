@@ -103,8 +103,10 @@ namespace Search {
             throw std::string{"Time_out"};
         }
 
+
         if (board.getPosition().isEnd())
             return loss(ply);
+
 
         if (board.isRepetition()) {
             return 0;
@@ -171,9 +173,9 @@ namespace Search {
                 }
             }
 
-      /*      if ((info.flag == TT_LOWER&& isWin(tt_score) && tt_score >= local.beta) ||
+            if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta) ||
                 info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)
-                return tt_score;*/
+                return tt_score;
 
             if (info.flag == TT_LOWER && info.depth >= depth - 4 && isEval(tt_score) &&
                 std::find(liste.begin(), liste.end(), tt_move) != liste.end()) {
@@ -187,11 +189,11 @@ namespace Search {
 
 
         if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (100 * local.depth);
+            Value margin = (150 * local.depth);
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
-            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply + 1, newDepth, Move{}, false);
+            Value value = Search::search(board, new_pv, newBeta - 1, newBeta, ply, newDepth, Move{}, false);
             if (value >= newBeta) {
                 value = value - margin;
                 pv = new_pv;
@@ -235,7 +237,7 @@ namespace Search {
                 tt_m = liste.get_move_index(local.move);
             }
 
-            TT.storeHash(tt_value, board.getPosition(), flag, depth, tt_m);
+            TT.storeHash(tt_value, pos_key, flag, depth, tt_m);
         }
 #endif
         return local.best_score;
@@ -261,6 +263,8 @@ namespace Search {
 
         if (moves.isEmpty()) {
 
+            if (board.getPosition().isEnd())
+                return loss(ply);
 
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply, 1, Move{},
@@ -268,9 +272,6 @@ namespace Search {
             }
 
             bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
-            if (board.getPosition().isEnd())
-                bestValue = loss(ply);
-
 
             if (bestValue >= beta) {
                 return bestValue;
@@ -307,7 +308,7 @@ namespace Search {
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 550;
+            constexpr Value margin = 650;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 2, move,
