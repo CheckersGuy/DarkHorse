@@ -3,6 +3,7 @@
 #include "GameLogic.h"
 #include "Perft.h"
 
+
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -28,6 +29,9 @@ inline Position posFromString(const std::string &pos) {
     return result;
 }
 
+//game-generation
+
+
 int main(int argl, const char **argc) {
     //test comment
     //there is still a bug with aspiration search
@@ -38,15 +42,15 @@ int main(int argl, const char **argc) {
     //1. W:WK19:B4,3,23
     //2.W:WK8:B4,K11,K10,K9,K32
 
+
+
     Board board;
-
-
 
 
     initialize();
     Position pos = Position::pos_from_fen("B:WK3,9,14,17,21,22:B5,7,10,11,15,K18");
     board = Position::getStartPosition();
-    board = pos;;
+
 
 
     board.printBoard();
@@ -63,6 +67,9 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
+
+
+
 
 
 

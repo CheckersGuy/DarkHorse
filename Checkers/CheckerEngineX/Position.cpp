@@ -237,6 +237,10 @@ uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
     return squares;
 }
 
+std::istream& operator>>(std::istream &stream, Position &pos) {
+    stream.read((char*)&pos,sizeof(Position));
+    return stream;
+}
 
 
 
