@@ -18,10 +18,10 @@
 #include <future>
 #include <algorithm>
 #include<proto/Training.pb.h>
+#include <fstream>
 
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
-
 
 
     template<typename OutIter>
@@ -32,8 +32,7 @@ namespace Utilities {
         if (N == 0) {
             Board copy(board);
             Move best;
-            //will be reworked as well
-            Value value = 0;
+            Value value = searchValue(board, best, MAX_PLY, 20, false);
             if (value >= lowerBound && value <= upperBound) {
                 hashes.insert(board.getCurrentKey());
                 Position currentPos = board.getPosition();
@@ -51,6 +50,8 @@ namespace Utilities {
             board.undoMove();
         }
     }
+
+
 
 /*    template<typename Iterator>
     void to_binary_data(Iterator begin, Iterator end, std::string output) {

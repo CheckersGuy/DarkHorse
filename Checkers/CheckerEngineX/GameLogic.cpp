@@ -23,12 +23,12 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/gigatemp.weights");
+    gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/gigatempuzgpzg.weights");
     Zobrist::initializeZobrisKeys();
 }
 
 
-Value searchValue(Board &board, int depth, uint32_t time, bool print) {
+Value searchValue(Board&board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
@@ -96,13 +96,6 @@ namespace Search {
     Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {
         pv.clear();
         //checking time-used
-
-
-        if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-            throw std::string{"Time_out"};
-        }
-
-
         if (board.getPosition().isEnd())
             return loss(ply);
 
@@ -243,7 +236,9 @@ namespace Search {
     }
 
     Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth) {
-
+        if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
+            throw std::string{"Time_out"};
+        }
         bool in_pv_line = (beta != alpha + 1);
         nodeCounter++;
         pv.clear();

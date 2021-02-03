@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_COMPILER clang++-10)
-SET(CMAKE_CXX_FLAGS "-Ofast -lm -lz -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
+SET(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
 
 
 if (UNIX)
@@ -34,7 +34,6 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
-add_executable(Generator ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
 #creating a shared library to be used by
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
 
@@ -43,12 +42,10 @@ if (UNIX)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 
-set_target_properties(Generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training/Engines")
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 if (UNIX)
     target_link_libraries(Train ${PROTOBUF_LIBRARY})
     target_compile_definitions(Train PUBLIC "TRAIN")
 endif ()
-target_compile_definitions(Generator PUBLIC "GENERATOR")
-target_link_libraries(MainEngine ZLIB::ZLIB)
+

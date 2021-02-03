@@ -14,6 +14,8 @@ const uint32_t temp_mask = 0xf;
 
 
 
+
+
 inline constexpr uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;
     x |= (b & MASK_COL_3) >> 1u;
@@ -175,6 +177,8 @@ struct Position {
     inline bool operator!=(const Position &other) const {
         return !(*this == other);
     }
+
+    friend std::istream& operator>>(std::istream& stream, Position& pos);
 
 
 };

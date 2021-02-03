@@ -41,8 +41,13 @@ int main(int argl, const char **argc) {
 */
 
 
-    Generator generator("","");
+/*
+
+    Generator generator("base", "3move.pos", "test.train");
+    generator.set_num_games(100000);
+    generator.set_parallelism(16);
     generator.start();
+*/
 
 
 
@@ -61,9 +66,6 @@ int main(int argl, const char **argc) {
 */
 
 
-
-
-
     /*  std::vector<Training::Position> set;
       std::ifstream stream("../Training/TrainData/output_file", std::ios::binary);
       Training::TrainData data;
@@ -78,7 +80,7 @@ int main(int argl, const char **argc) {
   */
 
 
-/*
+
 
 
 
@@ -91,7 +93,7 @@ int main(int argl, const char **argc) {
       trainer.startTune();
       auto loss = trainer.calculateLoss();
       std::cout << "Loss: " << loss << std::endl;
-*/
+
 
 
 
