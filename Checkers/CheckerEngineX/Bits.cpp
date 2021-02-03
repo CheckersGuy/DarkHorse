@@ -51,4 +51,8 @@ namespace Bits {
     }
 
 
+    uint32_t pext(uint32_t source, uint32_t mask) {
+        return _pext_u32(source,mask);
+    }
+
 }

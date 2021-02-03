@@ -23,8 +23,6 @@ namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
 
 
-    void prepare_training_set(Training::TrainData &data);
-
 
     template<typename OutIter>
     void createNMoveBook(OutIter iter, int N, Board &board, Value lowerBound, Value upperBound) {
@@ -53,6 +51,34 @@ namespace Utilities {
             board.undoMove();
         }
     }
+
+/*    template<typename Iterator>
+    void to_binary_data(Iterator begin, Iterator end, std::string output) {
+        std::ofstream stream(output, std::ios::binary | std::ios::app);
+        if (!stream.good()) {
+            throw std::ios::failure("Could not open the stream");
+        }
+        auto lambda = [&stream](const Training::Position &pos) {
+            int color = (pos.mover() == Training::BLACK) ? 0 : 1;
+            uint32_t WP =pos.wp();
+            uint32_t BP =pos.bp();
+            uint32_t K =pos.k();
+
+            int result;
+            if (pos.result() == Training::BLACK_WON)
+                result = -1;
+            else if (pos.result() == Training::WHITE_WON)
+                result = 1;
+            else
+                result = 0;
+            stream.write((char *) &WP, sizeof(uint32_t));
+            stream.write((char *) &BP, sizeof(uint32_t));
+            stream.write((char *) &K, sizeof(uint32_t));
+            stream.write((char *) &color, sizeof(int));
+            stream.write((char *) &result, sizeof(int));
+        };
+
+    }*/
 }
 
 

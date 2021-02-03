@@ -2,21 +2,7 @@
 #include "Match.h"
 #include "Trainer.h"
 #include <HyperLog.h>
-
-struct HelpInserter {
-    Training::TrainData &data;
-    using value_type = Position;
-
-    void push_back(const Position pos) {
-        auto p = data.add_positions();
-        p->set_mover((pos.color == BLACK) ? Training::BLACK : Training::WHITE);
-        p->set_wp(pos.WP);
-        p->set_bp(pos.BP);
-        p->set_k(pos.K);
-    }
-
-};
-
+#include "Generator.h"
 
 int main(int argl, const char **argc) {
     initialize();
@@ -55,38 +41,41 @@ int main(int argl, const char **argc) {
 */
 
 
+    Generator generator("","");
+    generator.start();
 
 
 
 
+/*
 
-
-    Match engine_match("ultronnext", "check", "test_file");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(20000);
-    engine_match.setNumThreads(12);
-    engine_match.setHashSize(22);
-    engine_match.set_play_reverse(true);
+    Match engine_match("base", "base", "test2_file");
+    engine_match.setTime(20);
+    engine_match.setMaxGames(100000);
+    engine_match.setNumThreads(16);
+    engine_match.setHashSize(21);
+    engine_match.set_play_reverse(false);
     engine_match.start();
 
 
+*/
 
 
 
 
 
+    /*  std::vector<Training::Position> set;
+      std::ifstream stream("../Training/TrainData/output_file", std::ios::binary);
+      Training::TrainData data;
+      data.ParseFromIstream(&stream);
+      std::mt19937_64 generator;
+      std::shuffle(data.mutable_positions()->begin(), data.mutable_positions()->end(), generator);
+      std::copy(data.mutable_positions()->begin(), data.mutable_positions()->begin() + 3000, std::back_inserter(set));
 
+      data.ParseFromIstream(&stream);
+      Utilities::to_binary_data(set.begin(), set.end(), "examples.data");
 
-    //increase piece-value to 1000
-    //so I won't lose too much when rounding floating point-values
-    //to integers
-
-
-
-
-
-
-
+  */
 
 
 /*

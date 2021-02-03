@@ -45,7 +45,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     Value eval = INFINITE;
     Local local;
 
-    //What are we supposed to do if we are given a depth zero search
 
     if (depth == 0) {
         //returning q-search
@@ -149,7 +148,7 @@ namespace Search {
 
 
         if (!local.skip_move.isEmpty()) {
-            pos_key ^= Zobrist::get_move_key(board.getPosition(), local.skip_move);
+            pos_key ^= Zobrist::skip_hash;
         }
 
         if (ply >= MAX_PLY) {
@@ -308,10 +307,10 @@ namespace Search {
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 650;
+            constexpr Value margin = 850;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
-            Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 2, move,
+            Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 4, move,
                                          local.prune);
 
 
