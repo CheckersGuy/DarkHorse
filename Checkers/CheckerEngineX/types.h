@@ -49,8 +49,6 @@ constexpr std::array<uint32_t, 8> columns = {1u << S[0] | 1u << S[8] | 1u << S[1
                                              1u << S[7] | 1u << S[15] | 1u << S[23] | 1u << S[31]};
 
 
-
-
 using Depth = int;
 using Ply = int;
 using Value = int;
@@ -71,7 +69,7 @@ enum Color : int {
     BLACK = -1, WHITE = 1
 };
 enum PieceType : uint8_t {
-    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5,EMPTY=6
+    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5, EMPTY = 6
 };
 enum Flag : uint8_t {
     None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u

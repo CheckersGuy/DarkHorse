@@ -15,9 +15,9 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
     const int start_index = (inPVLine) ? 1 : 0;
 
 
-
     for (auto i = 0; i < moveCounter; ++i) {
-        scores[i] = Statistics::mPicker.getMoveScore(liste[i], color, ttMove);
+        Move m = liste[i];
+        scores[i] = Statistics::mPicker.getMoveScore(m, color, ttMove);
     }
 
 

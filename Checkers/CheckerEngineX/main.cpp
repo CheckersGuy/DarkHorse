@@ -38,18 +38,15 @@ int main(int argl, const char **argc) {
     //1. W:WK19:B4,3,23
     //2.W:WK8:B4,K11,K10,K9,K32
 
-
     Board board;
 
 
 
 
-
     initialize();
-    Position pos = Position::pos_from_fen("B:WK5,K15,K13:BK3,K12,K17");
+    Position pos = Position::pos_from_fen("B:WK3,9,14,17,21,22:B5,7,10,11,15,K18");
     board = Position::getStartPosition();
-    board =pos;
-;
+    board = pos;;
 
 
     board.printBoard();
@@ -58,10 +55,9 @@ int main(int argl, const char **argc) {
     std::cout << std::endl;
 
 
-
     setHashSize(26);
 
-    std::cout<<"NonZeroWeights: "<<gameWeights.numNonZeroValues()<<std::endl;
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
 
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
@@ -70,13 +66,10 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {
-            TT.age_counter=0u;
+            TT.age_counter = 0u;
             initialize();
             std::string hash_string;
             std::cin >> hash_string;
@@ -85,8 +78,8 @@ int main(int argl, const char **argc) {
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
             TT.clear();
-            TT.age_counter=0u;
-            board= Board{};
+            TT.age_counter = 0u;
+            board = Board{};
             std::string position;
             std::cin >> position;
             Position pos = posFromString(position);

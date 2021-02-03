@@ -13,6 +13,7 @@
 #include "GameLogic.h"
 #include <cstring>
 #include <iterator>
+#include "zlib.h"
 
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
@@ -106,13 +107,12 @@ struct Weights {
                 kings_black &= kings_black - 1u;
             }
         }
-        return count_denied;
+        return 3 * count_safe;
     }
 
 
     template<typename RunType=uint32_t>
     void loadWeights(const std::string &path) {
-        using DataType = double;
         static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
@@ -125,9 +125,9 @@ struct Weights {
             if (counter >= SIZE)
                 break;
             RunType length;
-            DataType first;
+            double first;
             stream.read((char *) &length, sizeof(RunType));
-            stream.read((char *) &first, sizeof(DataType));
+            stream.read((char *) &first, sizeof(double));
             if (stream.eof())
                 break;
             for (RunType i = 0u; i < length; ++i) {
@@ -135,16 +135,16 @@ struct Weights {
                 counter++;
             }
         }
-        DataType kingOpVal, kingEndVal;
-        stream.read((char *) &kingOpVal, sizeof(DataType));
-        stream.read((char *) &kingEndVal, sizeof(DataType));
+        double kingOpVal, kingEndVal;
+        stream.read((char *) &kingOpVal, sizeof(double));
+        stream.read((char *) &kingEndVal, sizeof(double));
         this->kingOp = static_cast<T>(kingOpVal);
         this->kingEnd = static_cast<T>(kingEndVal);
 
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             for (auto j = 0; j < 16; ++j) {
                 double temp;
-                stream.read((char *) &temp, sizeof(DataType));
+                stream.read((char *) &temp, sizeof(double));
                 tempo_ranks[i][j] = temp;
             }
         }
@@ -178,7 +178,6 @@ struct Weights {
 
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
-        U color = pos.getColor();
         constexpr U pawnEval = 1000;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
@@ -256,19 +255,6 @@ struct Weights {
         }
         return weights[index];
     }
-
-    T averageWeight() const {
-        T accumulation = 0;
-        T counter = 0;
-        std::for_each(weights.get(), weights.get() + SIZE, [&](T value) {
-            if (value != 0) {
-                counter++;
-                accumulation += std::abs(value);
-            }
-        });
-        return accumulation / counter;
-    }
-
 
     size_t getSize() const {
         return SIZE;

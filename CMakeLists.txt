@@ -2,10 +2,11 @@ cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_COMPILER clang++-10)
-SET(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
+SET(CMAKE_CXX_FLAGS "-Ofast -lm -lz -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
 
 
 if (UNIX)
+    find_package(ZLIB)
     find_package(Protobuf REQUIRED)
     include_directories(${PROTOBUF_INCLUDE_DIR})
     include_directories(${PROTO_SRC_DIR})
@@ -31,7 +32,6 @@ file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 
 
-
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 add_executable(Generator ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
@@ -39,7 +39,7 @@ add_executable(Generator ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/mai
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
 
 if (UNIX)
-    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} ${PSources} ${PHeaders} Training/HyperLog.h Training/PyHelper.cpp Training/PyHelper.h)
+    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} ${PSources} ${PHeaders} Training/HyperLog.h Training/PyHelper.cpp Training/PyHelper.h Training/Generator.cpp Training/Generator.h)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 
@@ -50,10 +50,5 @@ if (UNIX)
     target_link_libraries(Train ${PROTOBUF_LIBRARY})
     target_compile_definitions(Train PUBLIC "TRAIN")
 endif ()
-
 target_compile_definitions(Generator PUBLIC "GENERATOR")
-
-target_link_libraries(MainEngine Threads::Threads)
-target_link_libraries(perft_check Threads::Threads)
-target_link_libraries(Generator Threads::Threads)
-target_link_libraries(Train Threads::Threads)
+target_link_libraries(MainEngine ZLIB::ZLIB)

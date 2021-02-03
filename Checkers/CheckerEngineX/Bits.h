@@ -26,6 +26,8 @@ namespace Bits {
 
     uint32_t pop_count(uint32_t val);
 
+    uint32_t pext(uint32_t source, uint32_t mask);
+
 }
 
 
