@@ -178,8 +178,8 @@ struct Position {
         return !(*this == other);
     }
 
-    friend std::istream& operator>>(std::istream& stream, Position& pos);
-
+    friend std::ostream& operator<<(std::ostream & stream, const Position& pos);
+    friend std::istream& operator>>(std::istream & stream, Position& pos);
 
 };
 

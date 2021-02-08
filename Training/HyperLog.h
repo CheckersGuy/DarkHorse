@@ -52,7 +52,7 @@ public:
         static_assert(std::is_unsigned_v<HashType>);
         constexpr auto num_bits = sizeof(HashType) * 8u;
 
-        auto hash_value = hash(std::forward<T>(value));
+        auto hash_value = hash(value);
         HashType maske{0u};
 
         for (uint64_t i = 0; i < num_bucket_bits; ++i) {

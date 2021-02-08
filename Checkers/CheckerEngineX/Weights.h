@@ -12,7 +12,6 @@
 #include "MGenerator.h"
 #include "GameLogic.h"
 #include <cstring>
-#include <iterator>
 #include "zlib.h"
 
 constexpr uint32_t region = 13107u;
@@ -44,13 +43,13 @@ inline size_t getIndex2(uint32_t reg, const Position &pos) {
 
 template<typename T>
 struct Weights {
-    static_assert(std::is_integral_v<T> || std::is_floating_point_v<T>);
     T kingOp, kingEnd;
-    std::unique_ptr<T[]> weights;
+    std::vector<T> weights;
+
     std::array<std::array<T, 16>, 7> tempo_ranks;
 
-    Weights() : kingOp(1500), kingEnd(1500), weights(std::make_unique<T[]>(SIZE)) {
-        std::fill(weights.get(), weights.get() + SIZE, T{0});
+    Weights() : kingOp(1500), kingEnd(1500) {
+        weights = std::vector<T>(SIZE,T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
         }
@@ -58,22 +57,22 @@ struct Weights {
 
     Weights(const Weights<T> &other) {
         this->weights = std::make_unique<T[]>(SIZE);
-        std::copy(other.weights.get(), other.weights.get() + SIZE, weights.get());
+        std::copy(other.weights.begin(),other.weights.end(), weights.begin());
         this->kingOp = other.kingOp;
         this->kingOp = other.kingOp;
     }
 
 
     size_t numNonZeroValues() {
-        return std::count_if(weights.get(), weights.get() + SIZE, [](T val) { return static_cast<int>(val) != 0; });
+        return std::count_if(weights.begin(), weights.end(), [](T val) { return static_cast<int>(val) != 0; });
     }
 
     T getMaxValue() const {
-        return *std::max_element(weights.get(), weights.get() + SIZE);
+        return *std::max_element(weights.begin(), weights.end());
     }
 
     T getMinValue() const {
-        return *std::min_element(weights.get(), weights.get() + SIZE);
+        return *std::min_element(weights.begin(), weights.end());
     }
 
     int king_mobility(Position &pos) const {
@@ -155,8 +154,8 @@ struct Weights {
     void storeWeights(const std::string &path) const {
         using DataType = double;
         std::ofstream stream(path, std::ios::binary);
-        auto end = weights.get() + SIZE;
-        for (auto it = weights.get(); it != end;) {
+        auto end = weights.end();
+        for (auto it = weights.begin(); it != end;) {
             RunType length{0};
             auto first = *it;
             while (it != end && length < std::numeric_limits<RunType>::max() && *(it) == first) {

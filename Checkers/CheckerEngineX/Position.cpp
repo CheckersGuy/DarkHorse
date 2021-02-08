@@ -237,10 +237,26 @@ uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
     return squares;
 }
 
-std::istream& operator>>(std::istream &stream, Position &pos) {
-    stream.read((char*)&pos,sizeof(Position));
+std::ostream &operator<<(std::ostream &stream, const Position &pos) {
+    stream.write((char *) &pos.WP, sizeof(uint32_t));
+    stream.write((char *) &pos.BP, sizeof(uint32_t));
+    stream.write((char *) &pos.K, sizeof(uint32_t));
+    int color = (pos.color == BLACK) ? -1 : 1;
+    stream.write((char *) &color, sizeof(int));
     return stream;
 }
+
+std::istream &operator>>(std::istream &stream, Position &pos) {
+    stream.read((char *) &pos.WP, sizeof(uint32_t));
+    stream.read((char *) &pos.BP, sizeof(uint32_t));
+    stream.read((char *) &pos.K, sizeof(uint32_t));
+    int color;
+    stream.read((char *) &color, sizeof(int));
+    pos.color = (color == -1) ? BLACK : WHITE;
+    return stream;
+}
+
+
 
 
 
