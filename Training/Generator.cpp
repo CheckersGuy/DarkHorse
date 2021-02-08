@@ -5,89 +5,149 @@
 #include "Generator.h"
 #include "Utilities.h"
 
-std::optional<std::vector<Position>> generate_game(Position start_pos, int time_c, int &result) {
-    TT.clear();
-    std::vector<Position> history;
-    result = 0;
-    Board board;
-    board = start_pos;
-    int i;
-    for (i = 0; i < 400; ++i) {
-        history.emplace_back(board.getPosition());
-        MoveListe liste;
-        getMoves(board.getPosition(), liste);
-        if (liste.isEmpty()) {
-            if (board.getPosition().getColor() == BLACK) {
-                result = 1;
-            } else {
-                result = -1;
-            }
-            break;
-        }
+std::ostream &operator<<(std::ostream &stream, const Sample &s) {
+    stream << s.position;
+    stream.write((char *) &s.result, sizeof(int));
+    return stream;
+}
 
-        if (liste.length() == 1) {
-            board.makeMove(liste[0]);
-            continue;
-        }
+std::istream &operator>>(std::istream &stream, Sample &s) {
+    Position pos;
+    stream >> pos;
+    int result;
+    stream.read((char *) &result, sizeof(int));
+    s.result = result;
+    return stream;
+}
 
-        //checking for 3 fold repetition
-        const auto current = board.getPosition();
-        auto count = std::count_if(history.begin(), history.end(), [&current](Position pos) {
-            return current == pos;
-        });
-        if (count >= 3)
-            break;
+void Instance::write_message(std::string msg) {
+    const std::string ex_message = msg + "\n";
+    write(write_pipe, (char *) &ex_message.front(), sizeof(char) * (ex_message.size()));
+}
 
-        Move best;
-        searchValue(board, best, MAX_PLY, time_c, false);
-        board.makeMove(best);
-    }
-    if (i < 400)
-        return std::make_optional(history);
-    return std::nullopt;
+void Generator::set_time(int time) {
+    time_control = time;
+}
+
+void Generator::print_stats() {
+    std::cout<<"num_games: "<<game_counter<<"\n";
+    std::cout<<"num_wins: "<<num_wins<<"\n";
+    double ratio =((double)num_wins)/((double)game_counter);
+    std::cout<<"decisive_ratio: "<<ratio<<"\n";
+    std::cout<<"\n";
+    std::cout<<"\n";
+    std::flush(std::cout);
 }
 
 void Generator::clearBuffer() {
-    if (buffer.size() < BUFFER_SIZE)
-        return;
-    std::cout << "Cleared Buffer" << std::endl;
-    std::ofstream stream(output, std::ios::binary | std::ios::app);
-    //same format that's being used in the pytorch trainer
-    auto lambda = [&](Sample s) {
-        Position pos;
-        pos = s.first;
-        stream.write((char *) &pos.WP, sizeof(uint32_t));
-        stream.write((char *) &pos.BP, sizeof(uint32_t));
-        stream.write((char *) &pos.K, sizeof(uint32_t));
-
-        int color = (pos.color == BLACK) ? 0 : 1;
-        int result = s.second;
-
-        stream.write((char *) &color, sizeof(int));
-        stream.write((char *) &result, sizeof(int));
-    };
-    std::for_each(buffer.begin(), buffer.end(), lambda);
+    std::string path{"../Training/TrainData/"};
+    path.append(output);
+    std::ofstream stream(path, std::ios::binary | std::ios::app);
+    if(!stream.good()){
+        std::cerr<<"Could not clear buffer"<<std::endl;
+        std::exit(-1);
+    }
+    std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(stream));
+    //appending to the file
+    std::cout<<"Cleared buffer"<<std::endl;
     buffer.clear();
-    stream.close();
+}
+
+Position Generator::get_start_pos() {
+    if (opening_index >= openings.size() - 1) {
+        opening_index = 0;
+    }
+    return openings[opening_index++];
+}
+
+std::string Instance::read_message() {
+    std::string message;
+    char c;
+    int result;
+    do {
+        result = read(read_pipe, (char *) (&c), sizeof(char));
+        if (c == char(0) || c == '\n') {
+            break;
+        } else {
+            message += c;
+        }
+
+    } while (result != -1);
+    return message;
+}
+
+void Generator::process() {
+    for (auto &instance : instances) {
+        if (instance.state == Instance::Idle) {
+            if (!instance.waiting_response) {
+                instance.write_message("init");
+                instance.write_message("21");
+                instance.waiting_response = true;
+            }
+            auto msg = instance.read_message();
+            if (msg == "init_ready") {
+                std::cout << "initialized engine" << std::endl;
+                instance.state = Instance::Init;
+                instance.waiting_response = false;
+            }
+        }
+        if (instance.state == Instance::Init) {
+            if (!instance.waiting_response) {
+                Position start_pos = get_start_pos();
+                instance.write_message("generate");
+                instance.write_message(start_pos.get_fen_string());
+                instance.write_message(std::to_string(time_control));
+                instance.waiting_response = true;
+            }
+            auto msg = instance.read_message();
+            if (msg == "game_start") {
+                int result = 1000;
+                std::cout << "Receiving game" << std::endl;
+                do {
+                    msg = instance.read_message();
+                    if (msg != "game_end") {
+                        Position pos;
+                        if (msg == "result") {
+                            msg = instance.read_message();
+                            result = std::stoi(msg);
+                        } else {
+                            pos = Position::pos_from_fen(msg);
+                            Sample s;
+                            s.position = pos;
+                            s.result = result;
+                            if (result != 1000)
+                                buffer.emplace_back(s);
+                          /*  pos.printPosition();
+                            std::cout<<result<<std::endl;
+                            std::cout << std::endl;*/
+                        }
+                    }
+                } while (msg != "game_end");
+                if(result == -1 || result == 1)
+                    num_wins++;
+                if(buffer.size()>=BUFFER_SIZE){
+                    clearBuffer();
+                }
+                game_counter++;
+                print_stats();
+                instance.waiting_response = false;
+            }
+        }
+
+    }
+
 }
 
 void Generator::start() {
 
     //opening book
-
-    std::vector<Position> openings;
-    std::ifstream stream("../Training/Positions/new.book");
-    std::istream_iterator<Position> begin(stream);
-    std::istream_iterator<Position> end;
-    std::copy(begin, end, std::back_inserter(openings));
-
     //creating pipes
     constexpr int max_parallelism = 128;
     int read_pipes[max_parallelism][2];
     int write_pipes[max_parallelism][2];
     std::array<bool, max_parallelism> is_busy{false};
-
     pid_t pid;
+
     for (auto i = 0; i < parallelism; ++i) {
         pipe(read_pipes[i]);
         pipe(write_pipes[i]);
@@ -97,78 +157,40 @@ void Generator::start() {
             std::exit(-1);
         } else if (pid == 0) {
             //child process
-            initialize();
-            setHashSize(21);
-            while (true) {
-                Position pos;
-                read(write_pipes[i][0], (char *) &pos, sizeof(Position));
-                if (pos.isEmpty())
-                    std::exit(1);
-                int result;
-                auto game = generate_game(pos, 20, result);
-                if (!game.has_value()) {
-                    Sample s{};
-                    write(read_pipes[i][1], (char *) &s, sizeof(Sample));
-                } else {
-                    for (Position p : game.value()) {
-                        Sample s = std::make_pair(p, result);
-                        write(read_pipes[i][1], (char *) &s, sizeof(Sample));
-                    }
-                }
-
-            }
-            std::exit(1);
-
+            close(read_pipes[i][0]);
+            close(write_pipes[i][1]);
+            dup2(write_pipes[i][0], STDIN_FILENO);
+            dup2(read_pipes[i][1], STDOUT_FILENO);
+            //will be changed to call a different executable
+            //will work on that tomorrow
+            const std::string e = "../Training/Engines/base";
+            const std::string command = "./" + e;
+            auto result = execlp(command.c_str(), e.c_str(), NULL);
+            std::exit(result);
         }
     }
 
     if (pid > 0) {
+
+        for (auto i = 0; i < parallelism; ++i) {
+            instances.emplace_back(Instance{read_pipes[i][0], write_pipes[i][1]});
+        }
+
         //main_process
         for (auto i = 0; i < parallelism; ++i) {
             close(read_pipes[i][1]);
             close(write_pipes[i][0]);
             fcntl64(read_pipes[i][0], F_SETFL, O_NONBLOCK | O_RDONLY);
         }
-
-        int counter = 0;
-        int index = 0;
-        while (counter < num_games) {
-            for (auto k = 0; k < parallelism; ++k) {
-                if (!is_busy[k]) {
-                    Position start_pos;
-                    if (index >= openings.size() - 1)
-                        index = 0;
-                    start_pos = openings[index];
-                    start_pos.printPosition();
-                    write(write_pipes[k][1], (char *) &start_pos, sizeof(Position));
-                    is_busy[k] = true;
-                    index++;
-                } else {
-                    //trying to read samples
-                    Sample s;
-                    int bytes_read;
-                    do {
-                        bytes_read = read(read_pipes[k][0], (char *) &s, sizeof(Sample));
-                        if (!s.first.isEmpty()) {
-                            if (is_busy[k]) {
-                                std::cout << ++counter << std::endl;
-                            }
-
-                            if (!s.first.isEnd()) {
-                                buffer.emplace_back(s);
-                            }
-                            is_busy[k] = false;
-                        }
-                    } while (bytes_read != -1);
-                }
-            }
-            clearBuffer();
+        while (game_counter < num_games) {
+            process();
         }
 
-        for (int p = 0; p < parallelism; ++p) {
-            Position pos{};
-            write(write_pipes[p][1], (char *) &pos, sizeof(Position));
+        for (auto &instance : instances) {
+            instance.write_message("terminate");
         }
+        clearBuffer();
+
 
         //at the end we need for the child-processes
         int status;

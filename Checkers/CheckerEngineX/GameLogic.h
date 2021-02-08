@@ -14,7 +14,6 @@
 #include "Line.h"
 #include <algorithm>
 #include "Bits.h"
-#include <iterator>
 
 struct Local {
     Value alpha, beta;

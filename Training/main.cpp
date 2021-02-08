@@ -3,67 +3,52 @@
 #include "Trainer.h"
 #include <HyperLog.h>
 #include "Generator.h"
+#include <ostream>
 
 int main(int argl, const char **argc) {
+
     initialize();
-    /*   Training::TrainData data;
-       HelpInserter inserter{data};
-       Board board;
-       board = Position::getStartPosition();
-       Utilities::createNMoveBook(std::back_inserter(inserter),4,board,-30*scalfac,30*scalfac);
-       inserter.push_back(Position::getStartPosition());
 
 
-       std::cout<<"Test: "<<data.positions_size()<<std::endl;
-
-       std::ofstream stream("genBook2.book");
-       data.SerializeToOstream(&stream);
-       stream.close();*/
 /*
 
-    std::cout << "Starting Match" << std::endl;
-    std::cout << "Parallelism: " << std::endl;
-    int threads;
-    std::cin >> threads;
-    std::cout << "MaxGames: " << std::endl;
-    int max_games;
-    std::cin >> max_games;
-
-    Match engine_match("Generator", "Generator", "../Training/TrainData/output_file");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(max_games);
-    engine_match.setNumThreads(threads);
-    engine_match.setHashSize(21);
-    engine_match.set_play_reverse(false);
-    engine_match.start();
-
-
+    std::vector<Position> position;
+    initialize();
+    setHashSize(21);
+    Board board;
+    board = Position::getStartPosition();
+    Utilities::createNMoveBook(std::back_inserter(position),5,board,-650,650);
+    position.emplace_back(Position::getStartPosition());
+    Utilities::write_to_binary<Position>(position.begin(),position.end(),"../Training/Positions/train2.pos");
 */
 
 
-/*
 
-    Generator generator("base", "3move.pos", "test.train");
-    generator.set_num_games(100000);
-    generator.set_parallelism(16);
+    Generator generator("base", "train2.pos", "test.train");
+    generator.set_num_games(1000);
+    generator.set_parallelism(15);
+    generator.set_time(100);
     generator.start();
-*/
+
+
+
 
 
 
 
 /*
-
-    Match engine_match("base", "base", "test2_file");
-    engine_match.setTime(20);
+    Match engine_match("check", "old", "test2_file");
+    engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(16);
+    engine_match.setNumThreads(1);
     engine_match.setHashSize(21);
-    engine_match.set_play_reverse(false);
+    engine_match.set_play_reverse(true);
     engine_match.start();
-
-
 */
+
+
+
+
 
 
     /*  std::vector<Training::Position> set;
@@ -79,11 +64,22 @@ int main(int argl, const char **argc) {
 
   */
 
+/*
+    std::ifstream stream("test.train");
+    if(!stream.good())
+        std::cerr<<"Error"<<std::endl;
+    std::istream_iterator<Generator::Sample> begin(stream);
+    std::istream_iterator<Generator::Sample> end;
+
+    std::for_each(begin,end,[](Generator::Sample test){
+       test.first.printPosition();
+       std::cout<<"Result: "<<test.second<<std::endl;
+    });
+
+*/
 
 
-
-
-
+/*
       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
       Trainer trainer("../Training/TrainData/output_file");
       trainer.setLearningRate(16000);
@@ -93,6 +89,7 @@ int main(int argl, const char **argc) {
       trainer.startTune();
       auto loss = trainer.calculateLoss();
       std::cout << "Loss: " << loss << std::endl;
+*/
 
 
 

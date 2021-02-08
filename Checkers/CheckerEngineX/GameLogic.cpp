@@ -23,7 +23,7 @@ void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/gigatempuzgpzg.weights");
+    gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/gigatemp.weights");
     Zobrist::initializeZobrisKeys();
 }
 

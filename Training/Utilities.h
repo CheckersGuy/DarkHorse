@@ -6,22 +6,32 @@
 #define TRAINING_UTILITIES_H
 
 
-#include <filesystem>
-#include "Utilities.h"
-
 #include <fstream>
 #include "Board.h"
 #include "GameLogic.h"
 #include "MGenerator.h"
 #include <unordered_set>
-#include <iterator>
-#include <future>
-#include <algorithm>
 #include<proto/Training.pb.h>
-#include <fstream>
+#include <ostream>
+#include <istream>
 
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
+
+    template<typename T, typename Iterator>
+    void write_to_binary(Iterator begin, Iterator end, std::string output) {
+        std::ofstream stream(output, std::ios::binary);
+        std::copy(begin, end, std::ostream_iterator<T>(stream));
+    }
+
+
+    template<typename T, typename OutIter>
+    void read_binary(OutIter out, std::string input) {
+        std::ifstream stream(input, std::ios::binary);
+        std::istream_iterator<T> begin(stream);
+        std::istream_iterator<T> end{};
+        std::copy(begin, end, out);
+    }
 
 
     template<typename OutIter>
@@ -53,7 +63,7 @@ namespace Utilities {
 
 
 
-/*    template<typename Iterator>
+   /*template<typename Iterator>
     void to_binary_data(Iterator begin, Iterator end, std::string output) {
         std::ofstream stream(output, std::ios::binary | std::ios::app);
         if (!stream.good()) {
