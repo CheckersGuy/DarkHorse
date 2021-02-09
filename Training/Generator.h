@@ -32,8 +32,7 @@ struct Instance {
     enum State {
         Idle, Generating, Error, Init
     };
-
-
+    
     const int &read_pipe;
     const int &write_pipe;
     bool waiting_response = false;

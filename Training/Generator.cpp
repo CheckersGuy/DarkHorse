@@ -13,7 +13,7 @@ std::ostream &operator<<(std::ostream &stream, const Sample &s) {
 
 std::istream &operator>>(std::istream &stream, Sample &s) {
     Position pos;
-    stream >>  s.position;
+    stream >> s.position;
     int result;
     stream.read((char *) &result, sizeof(int));
     s.result = result;
@@ -30,12 +30,12 @@ void Generator::set_time(int time) {
 }
 
 void Generator::print_stats() {
-    std::cout<<"num_games: "<<game_counter<<"\n";
-    std::cout<<"num_wins: "<<num_wins<<"\n";
-    double ratio =((double)num_wins)/((double)game_counter);
-    std::cout<<"decisive_ratio: "<<ratio<<"\n";
-    std::cout<<"\n";
-    std::cout<<"\n";
+    std::cout << "num_games: " << game_counter << "\n";
+    std::cout << "num_wins: " << num_wins << "\n";
+    double ratio = ((double) num_wins) / ((double) game_counter);
+    std::cout << "decisive_ratio: " << ratio << "\n";
+    std::cout << "\n";
+    std::cout << "\n";
     std::flush(std::cout);
 }
 
@@ -43,13 +43,13 @@ void Generator::clearBuffer() {
     std::string path{"../Training/TrainData/"};
     path.append(output);
     std::ofstream stream(path, std::ios::binary | std::ios::app);
-    if(!stream.good()){
-        std::cerr<<"Could not clear buffer"<<std::endl;
+    if (!stream.good()) {
+        std::cerr << "Could not clear buffer" << std::endl;
         std::exit(-1);
     }
     std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(stream));
     //appending to the file
-    std::cout<<"Cleared buffer"<<std::endl;
+    std::cout << "Cleared buffer" << std::endl;
     buffer.clear();
 }
 
@@ -111,23 +111,23 @@ void Generator::process() {
                             msg = instance.read_message();
                             result = std::stoi(msg);
                         } else {
-                            if(!msg.empty()){
+                            if (!msg.empty()) {
                                 pos = Position::pos_from_fen(msg);
                                 Sample s;
                                 s.position = pos;
                                 s.result = result;
                                 if (result != 1000)
                                     buffer.emplace_back(s);
-                           /*     pos.printPosition();
-                                std::cout << result << std::endl;
-                                std::cout << std::endl;*/
+                                /*     pos.printPosition();
+                                     std::cout << result << std::endl;
+                                     std::cout << std::endl;*/
                             }
                         }
                     }
                 } while (msg != "game_end");
-                if(result == -1 || result == 1)
+                if (result == -1 || result == 1)
                     num_wins++;
-                if(buffer.size()>=BUFFER_SIZE){
+                if (buffer.size() >= BUFFER_SIZE) {
                     clearBuffer();
                 }
                 game_counter++;
@@ -165,7 +165,8 @@ void Generator::start() {
             dup2(read_pipes[i][1], STDOUT_FILENO);
             //will be changed to call a different executable
             //will work on that tomorrow
-            const std::string e = "../Training/Engines/base";
+            std::string e = "../Training/Engines/";
+            e += engine_path;
             const std::string command = "./" + e;
             auto result = execlp(command.c_str(), e.c_str(), NULL);
             std::exit(result);
