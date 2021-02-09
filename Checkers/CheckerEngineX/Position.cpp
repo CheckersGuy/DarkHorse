@@ -2,69 +2,163 @@
 #include "Position.h"
 #include "Zobrist.h"
 
+Position Position::posFromString(const std::string &pos) {
+    Position result;
+    for (uint32_t i = 0; i < 32u; ++i) {
+        uint32_t current = 1u << i;
+        if (pos[i] == '1') {
+            result.BP |= current;
+        } else if (pos[i] == '2') {
+            result.WP |= current;
+        } else if (pos[i] == '3') {
+            result.K |= current;
+            result.BP |= current;
+        } else if (pos[i] == '4') {
+            result.K |= current;
+            result.WP |= current;
+        }
+    }
+    if (pos[32] == 'B') {
+        result.color = BLACK;
+    } else {
+        result.color = WHITE;
+    }
+    result.key = Zobrist::generateKey(result);
+    return result;
+}
+
+std::string Position::getPositionString()const {
+    std::string position;
+    for (uint32_t i = 0; i < 32u; ++i) {
+        uint32_t current = 1u << i;
+        if ((current & (BP & K))) {
+            position += "3";
+        } else if ((current & (WP & K))) {
+            position += "4";
+        } else if ((current & BP)) {
+            position += "1";
+        } else if ((current & WP)) {
+            position += "2";
+        } else {
+            position += "0";
+        }
+    }
+    if (getColor() == BLACK) {
+        position += "B";
+    } else {
+        position += "W";
+    }
+    return position;
+}
+
+
+struct Scanner {
+    std::string msg;
+    int index{0};
+
+    std::string get_token() {
+        if (msg.empty())
+            return "";
+        if (index >= msg.size())
+            return "";
+
+        std::string token = "";
+        char c = msg[index];
+        if (isdigit(c) && index < msg.size() - 1 && isdigit(msg[index + 1])) {
+            token += c;
+            token += msg[index + 1];
+            index += 2;
+            return token;
+        } else if (isdigit(c)) {
+            token += c;
+            index += 1;
+            return token;
+        }
+
+        if (c == ':' || c == ',' || c == 'B' || c == 'W' || c == 'K') {
+            token += c;
+            index++;
+            return token;
+        }
+        throw std::domain_error("Invalid input for fen");
+
+    }
+
+    bool is_square(std::string token) {
+        for (char c : token) {
+            if (!isdigit(c))
+                return false;
+        }
+        int num_square = std::stoi(token);
+        if (1 <= num_square && num_square <= 32)
+            return true;
+        else
+            throw std::domain_error("Invalid input for fen");
+    }
+
+};
+
+Position &append_square(Position &pos, bool is_king, Color mover, int num_square) {
+    int index = num_square - 1;
+
+    if (mover == BLACK) {
+        pos.BP |= 1u << index;
+    } else if (mover == WHITE) {
+        pos.WP |= 1u << index;
+    }
+    if (is_king)
+        pos.K |= 1u << index;
+    return pos;
+}
+
 
 Position Position::pos_from_fen(std::string fen_string) {
-    //we are assuming that fen_string is a valid pdn notation
+
     Position position;
-    auto lambda = [](Position &pos, std::string &current, Color &temp) {
-        bool is_king = false;
-        int start_index = 0;
-        if (current[start_index] == 'B' || current[start_index] == 'b') {
-            temp = BLACK;
-            start_index += 1;
-        } else if (current[start_index] == 'W' || current[start_index] == 'w') {
-            temp = WHITE;
-            start_index += 1;
-        }
+    Scanner scanner{fen_string};
+    bool saw_king = false;
 
-        if (current[start_index] == 'K' || current[start_index] == 'k') {
-            is_king = true;
-            start_index += 1;
-        }
-        std::string square = current.substr(start_index, current.size());
-        uint32_t sq_index = std::stoi(square) - 1u;
-
-
-        if (temp == BLACK)
-            pos.BP |= 1u << sq_index;
-        else
-            pos.WP |= 1u << sq_index;
-
-        if (is_king) {
-            pos.K |= 1u << sq_index;
-        }
-    };
-
-    if (fen_string[0] == 'B')
+    auto first_token = scanner.get_token();
+    if (first_token == "B")
         position.color = BLACK;
     else
         position.color = WHITE;
 
-    std::string current;
-    Color temp = BLACK;
+    Color mover;
 
-    for (auto i = 1; i < fen_string.length(); ++i) {
-        char c = fen_string[i];
-        if (c == ',' || c == ':') {
-            if (current.empty())
-                continue;
+    while (true) {
+        auto token = scanner.get_token();
+        if (token.empty())
+            break;
 
-            lambda(position, current, temp);
-            current = "";
-        } else {
-            current += c;
+        if (token == "K") {
+            saw_king = true;
+        }
+        if (token == "B") {
+            mover = BLACK;
+        }
+        if (token == "W") {
+            mover = WHITE;
+        }
+        if(token ==":"){
+            saw_king=false;
         }
 
+        if (token == ",") {
+            saw_king = false;
+        }
+        if (scanner.is_square(token)) {
+            int num_square = std::stoi(token);
+            append_square(position, saw_king, mover, num_square);
+        }
     }
-
-    lambda(position, current, temp);
-
-    position.key = Zobrist::generateKey(position);
 
     return position;
 }
 
 std::string Position::get_fen_string() const {
+    if(isEnd() || isEmpty())
+        return std::string{};
     std::ostringstream stream;
     stream << ((color == BLACK) ? "B" : "W");
 
@@ -161,7 +255,7 @@ bool Position::isEnd() const {
     return (BP == 0u && color == BLACK) || (WP == 0u && color == WHITE);
 }
 
-std::string Position::position_str() const {
+void Position::printPosition() const {
     std::ostringstream out;
     uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
@@ -190,11 +284,7 @@ std::string Position::position_str() const {
             out << "\n";
         }
     }
-    return out.str();
-}
-
-void Position::printPosition() const {
-    std::cout << position_str() << std::endl;
+    std::cout << out.str()<< std::endl;
 }
 
 void Position::makeMove(Move &move) {
@@ -241,7 +331,7 @@ std::ostream &operator<<(std::ostream &stream, const Position &pos) {
     stream.write((char *) &pos.WP, sizeof(uint32_t));
     stream.write((char *) &pos.BP, sizeof(uint32_t));
     stream.write((char *) &pos.K, sizeof(uint32_t));
-    int color = (pos.color == BLACK) ? -1 : 1;
+    int color = (pos.color == BLACK) ? 0 : 1;
     stream.write((char *) &color, sizeof(int));
     return stream;
 }
@@ -252,7 +342,7 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
     stream.read((char *) &pos.K, sizeof(uint32_t));
     int color;
     stream.read((char *) &color, sizeof(int));
-    pos.color = (color == -1) ? BLACK : WHITE;
+    pos.color = (color == 0) ? BLACK : WHITE;
     return stream;
 }
 

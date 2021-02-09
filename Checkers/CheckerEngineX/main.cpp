@@ -8,13 +8,6 @@ using Game = std::pair<std::vector<Position>, int>;
 Game generate_game(Position start_pos, int time_c, bool print = false) {
     //generates a game given the start_pos and
     //the time per move
-    static bool is_initialized = false;
-
-    if (!is_initialized) {
-        setHashSize(21);
-        initialize();
-        is_initialized = true;
-    }
     std::vector<Position> history;
 
     TT.clear();
@@ -88,139 +81,124 @@ inline Position posFromString(const std::string &pos) {
 
 
 
+
+
 //game-generation
 
 
 int main(int argl, const char **argc) {
-    //test comment
-    //there is still a bug with aspiration search
-    //where the wrong mate is displayed/found
+
+    Board board;
+    /*
+    initialize();
+    setHashSize(26);
+
+    Position pos = Position::pos_from_fen("W:W14,15,20,21:B5,9,12,K23");
+    board = Position::getStartPosition();
+    board = pos;
 
 
-    //small list of problem positions
-    //1. W:WK19:B4,3,23
-    //2.W:WK8:B4,K11,K10,K9,K32
+    board.printBoard();
 
-/*
 
-    auto game = generate_game(Position::pos_from_fen("W:W5,29:BK3,K12"), 100, true);
+    std::cout << std::endl;
 
+
+
+
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+
+    Move best;
+    searchValue(board, best, MAX_PLY, 20000000, true);
+    board.makeMove(best);
+    board.printBoard();
 */
 
 
-      Board board;
+    std::string current;
+    while (std::cin >> current) {
+        if (current == "init") {
+            TT.age_counter = 0u;
+            initialize();
+            std::string hash_string;
+            std::cin >> hash_string;
+            const int hash_size = std::stoi(hash_string);
+            setHashSize(hash_size);
+            std::cout << "init_ready" << "\n";
+        } else if (current == "new_game") {
+            TT.clear();
+            TT.age_counter = 0u;
+            board = Board{};
+            std::string position;
+            std::cin >> position;
+            Position pos = posFromString(position);
+            board = pos;
+            std::cout << "game_ready" << "\n";
+        } else if (current == "new_move") {
+            //opponent made a move and we need to update the board
+            Move move;
+            std::vector<uint32_t> squares;
+            std::string line;
+            std::cin >> line;
+            while (!line.empty()) {
+                if (line == "end_move")
+                    break;
+                squares.emplace_back(std::stoi(line));
+                std::cin >> line;
+            }
+            move.from = 1u << squares[0];
+            move.to = 1u << squares[1];
+            for (auto i = 2; i < squares.size(); ++i) {
+                move.captures |= 1u << squares[i];
+            }
+            board.makeMove(move);
+            std::cout << "update_ready" << "\n";
+        } else if (current == "search") {
+            std::string time_string;
+            std::cin >> time_string;
+            Move bestMove;
 
-/*
+            MoveListe liste;
+            getMoves(board.getPosition(), liste);
+            if (liste.length() == 1) {
+                bestMove = liste[0];
+            } else {
+                searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+            }
 
-      initialize();
-      Position pos = Position::pos_from_fen("W:WK6:B4,3");
-      board = Position::getStartPosition();
-      board = pos;
+            std::cout << "new_move" << "\n";
+            std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
+            std::cout << std::to_string(bestMove.getToIndex()) << "\n";
+            uint32_t captures = bestMove.captures;
+            while (captures) {
+                std::cout << std::to_string(__tzcnt_u32(captures)) << "\n";
+                captures &= captures - 1u;
+            }
+            std::cout << "end_move" << "\n";
+            board.makeMove(bestMove);
+        } else if (current == "terminate") {
+            //terminating the program
+            break;
+        } else if (current == "generate") {
+            std::string fen_string;
+            std::cin >> fen_string;
+            std::string time_string;
+            std::cin >> time_string;
 
+            int time = std::stoi(time_string);
+            Position start_pos = Position::pos_from_fen(fen_string);
+            auto game = generate_game(start_pos, time, false);
+            std::cout << "game_start" << "\n";
+            std::cout << "result" << "\n";
+            std::cout << std::to_string(game.second) << "\n";
+            for (Position p : game.first) {
+                if (!p.isEnd() && !p.isEmpty())
+                    std::cout << p.get_fen_string() << "\n";
+            }
+            std::cout << "game_end" << "\n";
 
-
-      board.printBoard();
-
-
-      std::cout << std::endl;
-
-
-      setHashSize(26);
-
-      std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-
-      Move best;
-      searchValue(board, best, MAX_PLY, 20000000, true);
-      board.makeMove(best);
-      board.printBoard();*/
-
-
-
-
-
-      std::string current;
-      while (std::cin >> current) {
-          if (current == "init") {
-              TT.age_counter = 0u;
-              initialize();
-              std::string hash_string;
-              std::cin >> hash_string;
-              const int hash_size = std::stoi(hash_string);
-              setHashSize(hash_size);
-              std::cout << "init_ready" << "\n";
-          } else if (current == "new_game") {
-              TT.clear();
-              TT.age_counter = 0u;
-              board = Board{};
-              std::string position;
-              std::cin >> position;
-              Position pos = posFromString(position);
-              board = pos;
-              std::cout << "game_ready" << "\n";
-          } else if (current == "new_move") {
-              //opponent made a move and we need to update the board
-              Move move;
-              std::vector<uint32_t> squares;
-              std::string line;
-              std::cin >> line;
-              while (!line.empty()) {
-                  if (line == "end_move")
-                      break;
-                  squares.emplace_back(std::stoi(line));
-                  std::cin >> line;
-              }
-              move.from = 1u << squares[0];
-              move.to = 1u << squares[1];
-              for (auto i = 2; i < squares.size(); ++i) {
-                  move.captures |= 1u << squares[i];
-              }
-              board.makeMove(move);
-              std::cout << "update_ready" << "\n";
-          } else if (current == "search") {
-              std::string time_string;
-              std::cin >> time_string;
-              Move bestMove;
-
-              MoveListe liste;
-              getMoves(board.getPosition(), liste);
-              if (liste.length() == 1) {
-                  bestMove = liste[0];
-              } else {
-                  searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-              }
-
-              std::cout << "new_move" << "\n";
-              std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
-              std::cout << std::to_string(bestMove.getToIndex()) << "\n";
-              uint32_t captures = bestMove.captures;
-              while (captures) {
-                  std::cout << std::to_string(__tzcnt_u32(captures)) << "\n";
-                  captures &= captures - 1u;
-              }
-              std::cout << "end_move" << "\n";
-              board.makeMove(bestMove);
-          } else if (current == "terminate") {
-              //terminating the program
-              break;
-          }else if (current == "generate"){
-              std::string fen_string;
-              std::cin>>fen_string;
-              std::string time_string;
-              std::cin >> time_string;
-
-              int time = std::stoi(time_string);
-              Position start_pos = Position::pos_from_fen(fen_string);
-              auto game =generate_game(start_pos,time,false);
-              std::cout<<"game_start"<<"\n";
-              std::cout<<"result"<<"\n";
-              std::cout<<std::to_string(game.second)<<"\n";
-              for(Position p : game.first){
-                  std::cout<<p.get_fen_string()<<"\n";
-              }
-              std::cout<<"game_end"<<"\n";
-
-          }
-      }
+        }
+    }
 
     return 0;
 }

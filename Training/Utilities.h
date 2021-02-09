@@ -11,10 +11,9 @@
 #include "GameLogic.h"
 #include "MGenerator.h"
 #include <unordered_set>
-#include<proto/Training.pb.h>
 #include <ostream>
 #include <istream>
-
+#include <iterator>
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
 
@@ -61,35 +60,6 @@ namespace Utilities {
         }
     }
 
-
-
-   /*template<typename Iterator>
-    void to_binary_data(Iterator begin, Iterator end, std::string output) {
-        std::ofstream stream(output, std::ios::binary | std::ios::app);
-        if (!stream.good()) {
-            throw std::ios::failure("Could not open the stream");
-        }
-        auto lambda = [&stream](const Training::Position &pos) {
-            int color = (pos.mover() == Training::BLACK) ? 0 : 1;
-            uint32_t WP =pos.wp();
-            uint32_t BP =pos.bp();
-            uint32_t K =pos.k();
-
-            int result;
-            if (pos.result() == Training::BLACK_WON)
-                result = -1;
-            else if (pos.result() == Training::WHITE_WON)
-                result = 1;
-            else
-                result = 0;
-            stream.write((char *) &WP, sizeof(uint32_t));
-            stream.write((char *) &BP, sizeof(uint32_t));
-            stream.write((char *) &K, sizeof(uint32_t));
-            stream.write((char *) &color, sizeof(int));
-            stream.write((char *) &result, sizeof(int));
-        };
-
-    }*/
 }
 
 

@@ -9,79 +9,63 @@ int main(int argl, const char **argc) {
 
     initialize();
 
+    /*  Board board;
 
-/*
+      std::vector<Sample> samples;
+      Utilities::read_binary<Sample>(std::back_inserter(samples),"../Training/TrainData/test.train");
+      std::cout<<samples.size()<<std::endl;
 
-    std::vector<Position> position;
-    initialize();
-    setHashSize(21);
-    Board board;
-    board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(position),5,board,-650,650);
-    position.emplace_back(Position::getStartPosition());
-    Utilities::write_to_binary<Position>(position.begin(),position.end(),"../Training/Positions/train2.pos");
-*/
-
-
-
-    Generator generator("base", "train2.pos", "test.train");
-    generator.set_num_games(1000);
-    generator.set_parallelism(15);
-    generator.set_time(100);
-    generator.start();
-
-
-
-
-
-
-
-/*
-    Match engine_match("check", "old", "test2_file");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(1);
-    engine_match.setHashSize(21);
-    engine_match.set_play_reverse(true);
-    engine_match.start();
-*/
-
-
-
-
-
-
-    /*  std::vector<Training::Position> set;
-      std::ifstream stream("../Training/TrainData/output_file", std::ios::binary);
-      Training::TrainData data;
-      data.ParseFromIstream(&stream);
-      std::mt19937_64 generator;
-      std::shuffle(data.mutable_positions()->begin(), data.mutable_positions()->end(), generator);
-      std::copy(data.mutable_positions()->begin(), data.mutable_positions()->begin() + 3000, std::back_inserter(set));
-
-      data.ParseFromIstream(&stream);
-      Utilities::to_binary_data(set.begin(), set.end(), "examples.data");
-
+      for(Sample s : samples){
+          Position pos = s.position;
+          if(pos.isEnd())
+              continue;
+          Position temp = Position::pos_from_fen(pos.get_fen_string());
+          if(pos!=temp){
+              std::cerr<<"Error"<<std::endl;
+              std::cerr<<pos.get_fen_string()<<std::endl;
+              pos.printPosition();
+              std::cout<<std::endl;
+              temp.printPosition();
+              std::exit(-1);
+          }
+      }
   */
 
+    /* Generator generator("generator", "train2.pos", "test.train");
+     generator.set_num_games(20000);
+     generator.set_parallelism(15);
+     generator.set_time(100);
+     generator.start();
+     */
+
+    //check uses strongest weights gigatemp so far
+    //no-eval doesnt use any weights at all <- used for sanity checks
+
+
+
+
+
+    Match engine_match("weird2", "check");
+    engine_match.setTime(100);
+    engine_match.setMaxGames(100000);
+    engine_match.setNumThreads(7);
+    engine_match.setHashSize(21);
+    engine_match.start();
+
+
+
+
+
+
+
+
+
+
+
 /*
-    std::ifstream stream("test.train");
-    if(!stream.good())
-        std::cerr<<"Error"<<std::endl;
-    std::istream_iterator<Generator::Sample> begin(stream);
-    std::istream_iterator<Generator::Sample> end;
 
-    std::for_each(begin,end,[](Generator::Sample test){
-       test.first.printPosition();
-       std::cout<<"Result: "<<test.second<<std::endl;
-    });
-
-*/
-
-
-/*
       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-      Trainer trainer("../Training/TrainData/output_file");
+      Trainer trainer("../Training/TrainData/test.train");
       trainer.setLearningRate(16000);
       trainer.setEpochs(1000);
       trainer.setl2Reg(0.000000000000);
@@ -89,6 +73,9 @@ int main(int argl, const char **argc) {
       trainer.startTune();
       auto loss = trainer.calculateLoss();
       std::cout << "Loss: " << loss << std::endl;
+
+
+
 */
 
 

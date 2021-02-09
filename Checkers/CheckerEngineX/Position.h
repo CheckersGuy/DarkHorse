@@ -13,9 +13,6 @@
 const uint32_t temp_mask = 0xf;
 
 
-
-
-
 inline constexpr uint32_t getHorizontalFlip(uint32_t b) {
     uint32_t x = ((b & MASK_COL_4)) >> 3u;
     x |= (b & MASK_COL_3) >> 1u;
@@ -157,7 +154,7 @@ struct Position {
 
     bool isEnd() const;
 
-    std::string position_str() const;
+    std::string getPositionString() const;
 
     void makeMove(Move &move);
 
@@ -169,6 +166,7 @@ struct Position {
 
     static Position pos_from_fen(std::string fen_string);
 
+    static Position posFromString(const std::string &pos);
 
     inline bool operator==(const Position &pos) const {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color);
@@ -178,8 +176,9 @@ struct Position {
         return !(*this == other);
     }
 
-    friend std::ostream& operator<<(std::ostream & stream, const Position& pos);
-    friend std::istream& operator>>(std::istream & stream, Position& pos);
+    friend std::ostream &operator<<(std::ostream &stream, const Position &pos);
+
+    friend std::istream &operator>>(std::istream &stream, Position &pos);
 
 };
 

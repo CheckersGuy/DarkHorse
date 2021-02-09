@@ -12,14 +12,13 @@
 #include <numeric>
 #include <execution>
 #include "Utilities.h"
-#include "proto/Training.pb.h"
-
+#include "Generator.h"
 
 class Trainer {
 
 private:
     int epochs;
-    Training::TrainData data;
+    std::vector<Sample> data;
     double learningRate, l2Reg, cValue;
     double accu_loss{0};
     double last_loss_value;
@@ -33,21 +32,15 @@ public:
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.01) {
-
-        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u );
-        std::ifstream stream(data_path);
-        if (!stream.good()) {
-            std::cerr << "Couldnt init training data" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-        data.ParseFromIstream(&stream);
-        stream.close();
+        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
+        Utilities::read_binary<Sample>(std::back_inserter(data), data_path);
+        std::cout<<"Number of samples "<<data.size()<<std::endl;
     };
 
     void epoch();
 
 
-    void gradientUpdate(const Training::Position &position);
+    void gradientUpdate(const Sample &sample);
 
     void setEpochs(int epoch);
 
