@@ -43,9 +43,9 @@ int main(int argl, const char **argc) {
 
 
 
+    
 
-
-    Match engine_match("weird2", "check");
+    Match engine_match("weird2", "old");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(7);

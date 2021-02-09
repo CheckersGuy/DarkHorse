@@ -5,6 +5,7 @@
 #ifndef READING_GENERATOR_H
 #define READING_GENERATOR_H
 
+#include <unistd.h>
 #include "Utilities.h"
 #include <iostream>
 #include <string>
