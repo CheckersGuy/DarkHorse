@@ -9,6 +9,8 @@
 
 
 #specific folder which are used locally
+**/TrainData/*
+!**/TrainData/.gitkeep
 
 **/Engines/*
 !**/Engines/.gitkeep
