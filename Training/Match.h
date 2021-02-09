@@ -12,7 +12,6 @@
 #include "fcntl.h"
 #include "Utilities.h"
 #include <sys/resource.h>
-#include "proto/Training.pb.h"
 #include <filesystem>
 #include <HyperLog.h>
 
@@ -45,57 +44,6 @@ struct TrainHasher{
     uint64_t operator()(Position p){
         return p.key;
     }
-};
-
-class Logger {
-
-private:
-
-    std::ofstream stream;
-    const std::string log_file = "log.txt";
-    bool logging{false};
-    Logger() {
-        stream = std::ofstream(log_file);
-        if (!stream.good()) {
-            std::cerr << "Couldnt initialize logger" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-    }
-
-    ~Logger() {
-        stream.close();
-    }
-
-public:
-
-    void turn_on() {
-        logging = true;
-    }
-
-    void turn_off() {
-        logging = false;
-    }
-
-    template<typename T>
-    void write_log_message(T arg) {
-        if (!logging)
-            return;
-        stream << arg;
-    }
-
-
-    template<typename T>
-    Logger &operator<<(T msg) {
-        write_log_message(msg);
-        return *this;
-    }
-
-
-    static Logger &get_instance() {
-        static Logger logger;
-        return logger;
-    }
-
 };
 
 struct Engine {
@@ -138,7 +86,6 @@ struct Interface {
     Position pos;
     int first_mover = 0;
     std::vector<Position> history;
-    bool played_reverse = false;
 
     void process();
 
@@ -157,6 +104,7 @@ struct Interface {
 class Match {
 
 private:
+    size_t opening_counter{0};
     const std::string &first;
     const std::string &second;
     int time{100};
@@ -164,21 +112,13 @@ private:
     int maxGames{1000};
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
-    bool play_reverse{false};
-    std::string openingBook{"../Training/Positions/3move.book"};
-    std::string output_file;
-    Training::TrainData data;
-    void addPosition(Position pos, Training::Result result);
+    std::vector<Position> positions;
+    std::string openingBook{"../Training/Positions/3move.pos"};
 
 public:
-    explicit Match(const std::string &first, const std::string &second, std::string output) : first(
-            first), output_file(output),
-                                                                                              second(second) {
-        std::ifstream stream(output.c_str(), std::ios::binary);
-        if (stream.good()) {
-            data.ParseFromIstream(&stream);
-        }
-        stream.close();
+    explicit Match(const std::string &first, const std::string &second) : first(
+            first),second(second) {
+        Utilities::read_binary<Position>(std::back_inserter(positions), openingBook);
     };
 
     void setMaxGames(int games);
@@ -193,15 +133,13 @@ public:
 
     void setNumThreads(int threads);
 
-    void set_play_reverse(bool flag);
-
-    const std::string&get_output_file();
-
     int getNumThreads();
 
     const std::string &getOpeningBook();
 
     void setOpeningBook(std::string book);
+
+    Position get_start_pos() ;
 
 
 };

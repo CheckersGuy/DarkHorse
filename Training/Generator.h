@@ -5,7 +5,7 @@
 #ifndef READING_GENERATOR_H
 #define READING_GENERATOR_H
 
-
+#include "Utilities.h"
 #include <iostream>
 #include <string>
 #include "Position.h"
@@ -14,7 +14,6 @@
 #include  <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include <Utilities.h>
 #include <types.h>
 
 struct Sample {

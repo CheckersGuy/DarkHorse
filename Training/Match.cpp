@@ -111,7 +111,6 @@ void Engine::newGame(const Position &pos) {
         if (answer == "game_ready") {
             state = State::Game_Ready;
             waiting_response = false;
-            Logger::get_instance() << "Game ready" << "\n";
         }
     }
 }
@@ -123,7 +122,6 @@ void Engine::update() {
         if (answer == "update_ready") {
             waiting_response = false;
             state = State::Game_Ready;
-            Logger::get_instance() << "Updated" << "\n";
         }
     }
 }
@@ -139,7 +137,6 @@ void Engine::initEngine() {
         if (answer == "init_ready") {
             state = State::Init_Ready;
             waiting_response = false;
-            Logger::get_instance() << "Init ready" << "\n";
         }
     }
 
@@ -170,7 +167,6 @@ void Engine::new_move(Move move) {
 
 void Interface::process() {
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    auto &logger = Logger::get_instance();
     for (auto &engine : engines) {
         engine.initEngine();
         engine.newGame(pos);
@@ -190,26 +186,12 @@ void Interface::process() {
     if (!move.isEmpty()) {
 
         if (!Interface::is_legal_move(move)) {
-            logger << "Error: Illegal move" << "\n";
-            logger << "From: " << move.getFromIndex() << "\n";
-            logger << "To: " << move.getToIndex() << "\n";
             std::exit(EXIT_FAILURE);
         }
         pos.makeMove(move);
         history.emplace_back(pos);
         engines[second_mover].new_move(move);
         first_mover = second_mover;
-
-
-        logger << pos.position_str() << "\n";
-        logger << getPositionString(pos) << "\n";
-        if (liste.length() == 1)
-            logger << "Easy_move" << "\n";
-        logger << "Move: [" << std::to_string(move.getFromIndex()) << ", "
-               << std::to_string(move.getToIndex()) << "]"
-               << "\n";
-        logger << "Engine " << first_mover << ": " << engines[first_mover].engine_name << "\n";
-        logger << "\n";
     }
 }
 
@@ -254,28 +236,18 @@ void Interface::reset_engines() {
     pos = Position{};
 }
 
-const std::string& Match::get_output_file() {
-    return output_file;
-}
-
-
-void Match::addPosition(Position p, Training::Result result) {
-    auto pos = data.add_positions();
-    pos->set_k(p.K);
-    pos->set_bp(p.BP);
-    pos->set_wp(p.WP);
-    pos->set_mover((p.color == BLACK) ? Training::BLACK : Training::WHITE);
-    pos->set_result(result);
-}
-
-void Match::set_play_reverse(bool flag) {
-    play_reverse = flag;
-}
 
 void Interface::terminate_engines() {
     for (auto &engine : engines) {
         engine.writeMessage("terminate");
     }
+}
+
+Position Match::get_start_pos() {
+    if (opening_counter >= positions.size() - 1)
+        opening_counter = 0u;
+
+    return positions[opening_counter++];
 }
 
 
@@ -287,21 +259,9 @@ void Match::start() {
     const int numEngines = 2;
     const int num_matches = this->threads;
 
-    if (num_matches == 1) {
-        Logger::get_instance().turn_on();
-    }
-
-
     std::vector<Interface> interfaces;
-
-    Training::TrainData positions;
-    std::ifstream in(openingBook);
-    positions.ParseFromIstream(&in);
-    in.close();
-
     std::cout << "OpeningBook: " << openingBook << std::endl;
-    std::cout << "Number of Positions: " << positions.positions_size() << std::endl;
-    std::cout << "Output_File: " << output_file << std::endl;
+    std::cout << "Number of Positions: " << positions.size() << std::endl;
     std::vector<std::string> engine_paths{first, second};
 
 
@@ -334,7 +294,6 @@ void Match::start() {
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
                 const std::string e = "../Training/Engines/" + engine_paths[i];
                 const std::string command = "./" + e;
-                Logger::get_instance() << command << "\n";
                 execlp(command.c_str(), e.c_str(), NULL);
                 exit(EXIT_SUCCESS);
             }
@@ -352,29 +311,13 @@ void Match::start() {
         printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
         printf("\r");
         printf("\r");
-        int start_index = 0;
-        auto &logger = Logger::get_instance();
-
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 if (inter.pos.isEmpty()) {
-                    if (!inter.played_reverse) {
-                        start_index = (start_index >= positions.positions().size() - 1) ? 0 : start_index + 1;
-                        const Training::Position &temp = positions.positions(start_index);
-                        Position pos;
-                        pos.WP = temp.wp();
-                        pos.BP = temp.bp();
-                        pos.K = temp.k();
-                        pos.color = (temp.mover() == Training::BLACK) ? BLACK : WHITE;
-                        inter.start_pos=pos;
-                        inter.pos = inter.start_pos;
-                        inter.played_reverse = play_reverse;
-                        inter.first_mover = 0;
-                    } else {
-                        inter.first_mover = 1;
-                        inter.played_reverse = false;
-                        inter.pos = inter.start_pos;
-                    }
+                    Position temp = get_start_pos();
+                    inter.start_pos = temp;
+                    inter.pos = inter.start_pos;
+                    inter.first_mover = 0;
                 }
 
                 if (inter.is_terminal_state()) {
@@ -384,35 +327,19 @@ void Match::start() {
                     MoveListe liste;
                     getMoves(inter.pos, liste);
                     if (liste.length() == 0) {
-                        logger << "End game" << "\n";
                         if (inter.first_mover == 0) {
                             wins_two++;
                         } else {
                             wins_one++;
                         }
-                        Training::Result result;
-                        result = (inter.pos.color == BLACK) ? Training::WHITE_WON : Training::BLACK_WON;
-                        for (Position &p : inter.history) {
-                            p.key = Zobrist::generateKey(p);
-                            addPosition(p, result);
-                            counter.insert(p);
-                        }
                     }
                     if (inter.is_n_fold(3)) {
-                        logger << "Repetition" << "\n";
                         draws++;
-                        for (Position &p : inter.history) {
-                            p.key = Zobrist::generateKey(p);
-                            addPosition(p, Training::DRAW);
-                            counter.insert(p);
-                        }
                     }
                     if (inter.history.size() >= 400) {
-                        logger << "Reached max move" << "\n";
+                        //reached max move
                     }
-                    logger << inter.pos.position_str() << "\n";
 
-                    logger << "End of the game with index: " << start_index << "\n";
                     inter.reset_engines();
                     inter.history.clear();
                 }
@@ -433,11 +360,5 @@ void Match::start() {
             wait(&status);
         }
     }
-    Logger::get_instance().turn_off();
-    std::ofstream stream(this->output_file);
-    if (!stream.good())
-        std::cerr << "Could not save the training-data" << std::endl;
-    data.SerializeToOstream(&stream);
-    stream.close();
     std::cout << "Finished the match" << std::endl;
 }

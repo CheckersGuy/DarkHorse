@@ -3,7 +3,7 @@
 //
 
 #include "Generator.h"
-#include "Utilities.h"
+
 
 std::ostream &operator<<(std::ostream &stream, const Sample &s) {
     stream << s.position;
@@ -13,7 +13,7 @@ std::ostream &operator<<(std::ostream &stream, const Sample &s) {
 
 std::istream &operator>>(std::istream &stream, Sample &s) {
     Position pos;
-    stream >> pos;
+    stream >>  s.position;
     int result;
     stream.read((char *) &result, sizeof(int));
     s.result = result;
@@ -111,15 +111,17 @@ void Generator::process() {
                             msg = instance.read_message();
                             result = std::stoi(msg);
                         } else {
-                            pos = Position::pos_from_fen(msg);
-                            Sample s;
-                            s.position = pos;
-                            s.result = result;
-                            if (result != 1000)
-                                buffer.emplace_back(s);
-                          /*  pos.printPosition();
-                            std::cout<<result<<std::endl;
-                            std::cout << std::endl;*/
+                            if(!msg.empty()){
+                                pos = Position::pos_from_fen(msg);
+                                Sample s;
+                                s.position = pos;
+                                s.result = result;
+                                if (result != 1000)
+                                    buffer.emplace_back(s);
+                           /*     pos.printPosition();
+                                std::cout << result << std::endl;
+                                std::cout << std::endl;*/
+                            }
                         }
                     }
                 } while (msg != "game_end");

@@ -38,17 +38,6 @@ void Trainer::setLearningRate(double learn) {
     learningRate = learn;
 }
 
-
-double getWinValue(Training::Result result) {
-    if (result == Training::BLACK_WON)
-        return 0.0;
-    else if (result == Training::WHITE_WON)
-        return 1.0;
-
-    return 0.5;
-
-}
-
 double sigmoid(double c, double value) {
     return 1.0 / (1.0 + std::exp(c * value));
 }
@@ -58,17 +47,10 @@ double sigmoidDiff(double c, double value) {
 }
 
 
-void Trainer::gradientUpdate(const Training::Position &pos) {
+void Trainer::gradientUpdate(const Sample &sample) {
     //one step of stochastic gradient descent
     //one step of stochastic gradient descent
-    Position x;
-    x.BP = pos.bp();
-    x.WP = pos.wp();
-    x.K = pos.k();
-    x.color = (pos.mover() == Training::BLACK) ? BLACK : WHITE;
-
-    if (pos.result() == Training::UNKNOWN)
-        return;
+    Position x = sample.position;
 
     if (x.hasJumps(x.getColor()))
         return;
@@ -88,7 +70,13 @@ void Trainer::gradientUpdate(const Training::Position &pos) {
     if (isWin(qStatic) || !isEval(qStatic))
         return;
 
-    double result = getWinValue(pos.result());
+    double result;
+    if (sample.result == -1)
+        result = 0.0;
+    else if (sample.result == 1)
+        result = 1.0;
+    else
+        result = 0.5;
     double c = getCValue();
 
     double error = sigmoid(c, qStatic) - result;
@@ -170,26 +158,26 @@ void Trainer::gradientUpdate(const Training::Position &pos) {
 void Trainer::epoch() {
     static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     std::cout << "Start shuffling" << std::endl;
-    std::shuffle(data.mutable_positions()->begin(), data.mutable_positions()->end(), generator);
+    std::shuffle(data.begin(), data.end(), generator);
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
 
 
-    std::for_each(data.mutable_positions()->begin(), data.mutable_positions()->end(),
-                  [this, &counter](Training::Position &pos) {
+    std::for_each(data.begin(), data.end(),
+                  [this, &counter](Sample sample) {
                       counter++;
-                      gradientUpdate(pos);
+                      gradientUpdate(sample);
                   });
 }
 
 
 void Trainer::startTune() {
     int counter = 0;
-    std::cout << "Data_size: " << data.positions_size() << std::endl;
+    std::cout << "Data_size: " << data.size() << std::endl;
     while (counter < getEpochs()) {
         std::cout << "Start of epoch: " << counter << "\n\n" << std::endl;
         std::cout << "CValue: " << getCValue() << std::endl;
-        double num_games = data.positions().size();
+        double num_games = data.size();
         double loss = accu_loss / ((double) num_games);
         loss = sqrt(loss);
         accu_loss = 0.0;
@@ -224,17 +212,23 @@ void Trainer::startTune() {
 double Trainer::calculateLoss() {
     //I dont get it
 
-    auto evalLambda = [this](const Training::Position &pos) {
-        if (pos.result() == Training::UNKNOWN)
+    auto evalLambda = [this](const Sample sample) {
+        if (sample.result == 1000)
             return 0.0;
+        Position pos = sample.position;
         Board board;
-        board.getPosition().BP = pos.bp();
-        board.getPosition().WP = pos.wp();
-        board.getPosition().K = pos.k();
-        board.getPosition().color = ((pos.mover() == Training::BLACK) ? BLACK : WHITE);
+        board.getPosition().BP = pos.BP;
+        board.getPosition().WP = pos.WP;
+        board.getPosition().K = pos.K;
+        board.getPosition().color = pos.color;
 
-
-        double result = getWinValue(pos.result());
+        double result;
+        if (sample.result == -1)
+            result = 0.0;
+        else if (sample.result == 1)
+            result = 1.0;
+        else
+            result = 0.5;
         auto color = static_cast<double>(board.getPosition().getColor());
         Line local;
         double quiesc = color * searchValue(board, 0, 10000, false);
@@ -243,10 +237,10 @@ double Trainer::calculateLoss() {
         return current;
     };
     double result = 0.0;
-    std::for_each(data.mutable_positions()->begin(), data.mutable_positions()->end(), [&](Training::Position &pos) {
-        result += evalLambda(pos);
+    std::for_each(data.begin(), data.end(), [&](const Sample &sample) {
+        result += evalLambda(sample);
     });
 
-    return std::sqrt(result / static_cast<double>(data.positions_size()));
+    return std::sqrt(result / static_cast<double>(data.size()));
 }
 
