@@ -12,7 +12,7 @@
 #include "MGenerator.h"
 #include "GameLogic.h"
 #include <cstring>
-#include "zlib.h"
+
 
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
