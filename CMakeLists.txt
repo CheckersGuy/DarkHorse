@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 17)
-SET(CMAKE_CXX_COMPILER clang++-10)
-SET(CMAKE_CXX_FLAGS "-Ofast -DNDEBUG -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
-
+SET(CMAKE_CXX_FLAGS "-Ofast -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin ")
+SET(CMAKE_BUILD_TYPE "Release")
 
 if (UNIX)
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Training")

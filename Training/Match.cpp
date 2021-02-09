@@ -336,8 +336,12 @@ void Match::start() {
                     if (inter.is_n_fold(3)) {
                         draws++;
                     }
-                    if (inter.history.size() >= 400) {
+                    if (inter.history.size() <=400) {
                         //reached max move
+                        for(Position p : inter.history){
+                            p.key = Zobrist::generateKey(p);
+                            counter.insert(p);
+                        }
                     }
 
                     inter.reset_engines();
