@@ -31,26 +31,25 @@ int main(int argl, const char **argc) {
       }
   */
 
-    /* Generator generator("generator", "train2.pos", "test.train");
+     Generator generator("Generator", "train2.pos", "temp");
      generator.set_num_games(20000);
-     generator.set_parallelism(15);
+     generator.set_parallelism(7);
      generator.set_time(100);
      generator.start();
-     */
-
-    //check uses strongest weights gigatemp so far
-    //no-eval doesnt use any weights at all <- used for sanity checks
 
 
 
-    
 
-    Match engine_match("weird2", "old");
+
+
+/*
+    Match engine_match("weird2", "ultron");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(7);
     engine_match.setHashSize(21);
-    engine_match.start();
+    engine_match.start();*/
+
 
 
 

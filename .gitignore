@@ -7,6 +7,12 @@
 *.o
 *.obj
 
+
+#specific folder which are used locally
+
+**/Engines
+**/Positions
+
 #Games/Positions/Weights/Training-Data
 
 **/output_file
