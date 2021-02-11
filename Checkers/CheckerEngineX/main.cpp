@@ -90,12 +90,14 @@ int main(int argl, const char **argc) {
 
     Board board;
 
-  /*  initialize();
+
+    /*initialize();
     setHashSize(26);
 
-    Position pos = Position::pos_from_fen("W:W14,15,20,21:B5,9,12,K23");
+    Position pos = Position::pos_from_fen("B:W30:B25");
     board = Position::getStartPosition();
-    //board = pos;
+    board = pos;
+    std::cout<<pos.WP<<","<<pos.BP<<", "<<pos.K<<std::endl;
 
 
     board.printBoard();
@@ -112,6 +114,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();*/
+
 
 
     std::string current;

@@ -3,6 +3,7 @@
 //
 
 #include "Bits.h"
+
 namespace Bits {
 
 #ifdef __EMSCRIPTEN__

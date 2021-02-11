@@ -255,6 +255,8 @@ void Match::start() {
     //this probably needs to be reworked
     HyperLog<Position, 14, TrainHasher> counter;
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
+    std::cout<<"Engine1: "<<first<<std::endl;
+    std::cout<<"Engine2: "<<second<<std::endl;
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
     const int num_matches = this->threads;

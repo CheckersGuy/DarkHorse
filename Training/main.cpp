@@ -31,24 +31,27 @@ int main(int argl, const char **argc) {
       }
   */
 
-     Generator generator("Generator", "train2.pos", "temp");
-     generator.set_num_games(20000);
-     generator.set_parallelism(7);
-     generator.set_time(100);
-     generator.start();
+    /*  Generator generator("Generator", "train2.pos", "temp");
+      generator.set_num_games(20000);
+      generator.set_parallelism(7);
+      generator.set_time(100);
+      generator.start();
 
-
-
-
+ */
 
 
 /*
-    Match engine_match("weird2", "ultron");
+
+    Match engine_match("moredata", "check");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(7);
     engine_match.setHashSize(21);
-    engine_match.start();*/
+    engine_match.start();
+
+
+
+*/
 
 
 
@@ -58,21 +61,21 @@ int main(int argl, const char **argc) {
 
 
 
-
-
+    //figuring out a good value for the constant c
+    //1. try -2e-3 -> loss: 0.205374
+    //2. try -1e-3 -> loss:
 
 /*
 
       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-      Trainer trainer("../Training/TrainData/test.train");
-      trainer.setLearningRate(16000);
+      Trainer trainer("../Training/TrainData/test2.train");
+      trainer.setLearningRate(5000);
       trainer.setEpochs(1000);
       trainer.setl2Reg(0.000000000000);
       trainer.setCValue(-1e-3);
       trainer.startTune();
       auto loss = trainer.calculateLoss();
       std::cout << "Loss: " << loss << std::endl;
-
 
 
 */
