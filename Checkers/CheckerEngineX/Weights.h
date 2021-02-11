@@ -17,11 +17,12 @@
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
+
 inline size_t getIndex2(uint32_t reg, const Position &pos) {
     //trying to be a little bit more efficient with the pext instruction
     uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
     uint32_t pieces = (pos.BP | pos.WP);
-    pieces = _pext_u32(pieces, reg);
+    pieces = Bits::pext(pieces, reg);
 
     uint32_t BP = pos.BP & (~pos.K);
     uint32_t WP = pos.WP & (~pos.K);
@@ -49,7 +50,7 @@ struct Weights {
     std::array<std::array<T, 16>, 7> tempo_ranks;
 
     Weights() : kingOp(1500), kingEnd(1500) {
-        weights = std::vector<T>(SIZE,T{0});
+        weights = std::vector<T>(SIZE, T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
         }
@@ -57,7 +58,7 @@ struct Weights {
 
     Weights(const Weights<T> &other) {
         this->weights = std::make_unique<T[]>(SIZE);
-        std::copy(other.weights.begin(),other.weights.end(), weights.begin());
+        std::copy(other.weights.begin(), other.weights.end(), weights.begin());
         this->kingOp = other.kingOp;
         this->kingOp = other.kingOp;
     }

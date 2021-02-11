@@ -23,7 +23,7 @@ private:
     double accu_loss{0};
     double last_loss_value;
     double beta{0.99};
-    double decay{0.001};
+    double decay{0.01};
     std::unique_ptr<double[]> momentums;
 
 public:
