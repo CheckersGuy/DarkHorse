@@ -77,7 +77,7 @@ std::string Instance::read_message() {
 }
 
 void Generator::set_hash_size(int size) {
-    hash_size=size;
+    hash_size = size;
 }
 
 void Generator::process() {
@@ -116,15 +116,25 @@ void Generator::process() {
                             result = std::stoi(msg);
                         } else {
                             if (!msg.empty()) {
-                                pos = Position::pos_from_fen(msg);
-                                Sample s;
-                                s.position = pos;
-                                s.result = result;
-                                if (result != 1000)
-                                    buffer.emplace_back(s);
-                                /*     pos.printPosition();
+                                try {
+                                    pos = Position::pos_from_fen(msg);
+                                    Sample s;
+                                    s.position = pos;
+                                    s.result = result;
+                                    if (result != 1000)
+                                        buffer.emplace_back(s);
+                                    /*     pos.printPosition();
                                      std::cout << result << std::endl;
                                      std::cout << std::endl;*/
+                                } catch (std::domain_error &error) {
+                                    //write something to a log file
+                                    //I don't expect this to happen very often though
+                                    std::ofstream stream("Generator_log", std::ios::app);
+                                    stream << "Error occured when parsing the message '" << msg << "'";
+                                    stream << "\n" << "\n";
+                                    stream.close();
+                                }
+
                             }
                         }
                     }
@@ -151,7 +161,6 @@ void Generator::start() {
     constexpr int max_parallelism = 128;
     int read_pipes[max_parallelism][2];
     int write_pipes[max_parallelism][2];
-    std::array<bool, max_parallelism> is_busy{false};
     pid_t pid;
 
     for (auto i = 0; i < parallelism; ++i) {
