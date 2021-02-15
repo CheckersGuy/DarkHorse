@@ -14,6 +14,7 @@
 #include <ostream>
 #include <istream>
 #include <iterator>
+
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
 
@@ -31,7 +32,6 @@ namespace Utilities {
         std::istream_iterator<T> end{};
         std::copy(begin, end, out);
     }
-
 
     template<typename OutIter>
     void createNMoveBook(OutIter iter, int N, Board &board, Value lowerBound, Value upperBound) {

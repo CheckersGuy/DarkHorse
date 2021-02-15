@@ -23,11 +23,7 @@ Game generate_game(Position start_pos, int time_c, bool print = false) {
             board.printBoard();
             std::cout << std::endl;
         }
-        if (liste.length() == 1) {
-            //easy move
-            board.makeMove(liste[0]);
-            continue;
-        }
+
         //checking for 3 fold repetition
         auto count = std::count_if(history.begin(), history.end(), [&](Position pos) {
             return board.getPosition() == pos;
@@ -35,6 +31,12 @@ Game generate_game(Position start_pos, int time_c, bool print = false) {
         if (count >= 3) {
             result = 0;
             break;
+        }
+
+        if (liste.length() == 1) {
+            //easy move
+            board.makeMove(liste[0]);
+            continue;
         }
         if (liste.isEmpty()) {
             result = (board.getMover() == BLACK) ? 1 : -1;
@@ -90,13 +92,13 @@ int main(int argl, const char **argc) {
 
     Board board;
 
-
-    /*initialize();
+    initialize();
     setHashSize(26);
 
-    Position pos = Position::pos_from_fen("B:W30:B25");
-    board = Position::getStartPosition();
+    Position pos = Position::pos_from_fen("W:WK5,K10,20:B4,11,K15,26");
     board = pos;
+    pos = pos.getColorFlip();
+    //board = pos;
     std::cout<<pos.WP<<","<<pos.BP<<", "<<pos.K<<std::endl;
 
 
@@ -113,7 +115,7 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();*/
+    board.printBoard();
 
 
 

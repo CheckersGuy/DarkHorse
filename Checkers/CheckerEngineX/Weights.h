@@ -107,7 +107,7 @@ struct Weights {
                 kings_black &= kings_black - 1u;
             }
         }
-        return 3 * count_safe;
+        return 10 * count_safe-10*count_denied;
     }
 
 
@@ -178,6 +178,7 @@ struct Weights {
 
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
+        const U color =pos.color;
         constexpr U pawnEval = 1000;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
@@ -204,7 +205,9 @@ struct Weights {
             BK = Bits::pop_count(pos.BP & pos.K);
             phase += WK + BK;
         }
-
+        if(pos.getColor() == BLACK){
+            pos = pos.getColorFlip();
+        }
         U opening = 0, ending = 0;
         for (uint32_t j = 0; j < 3; ++j) {
             for (uint32_t i = 0; i < 3; ++i) {
@@ -216,6 +219,8 @@ struct Weights {
                 ending += (weights[indexEnding]);
             }
         }
+        opening*=color;
+        ending*=color;
 
         const U pieceEval = (WP - BP) * pawnEval;
         const U kingEvalOp = kingOp * (WK - BK);
