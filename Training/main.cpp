@@ -34,7 +34,7 @@ int main(int argl, const char **argc) {
 
     Generator generator("Generator", "train2.pos", "temp");
     generator.set_num_games(1000000);
-    generator.set_hash_size(23);
+    generator.set_hash_size(25);
     generator.set_parallelism(7);
     generator.set_time(100);
     generator.start();
