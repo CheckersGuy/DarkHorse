@@ -58,6 +58,7 @@ private:
     std::vector<Position> openings;
     size_t opening_index{0};
     int time_control{100};
+    int hash_size{21};
 public:
     Generator(std::string engine, std::string opening, std::string output)
             : engine_path(engine), output(output) {
@@ -80,6 +81,8 @@ public:
     void set_num_games(size_t num_games);
 
     void print_stats();
+
+    void set_hash_size(int size);
 
     Position get_start_pos();
 

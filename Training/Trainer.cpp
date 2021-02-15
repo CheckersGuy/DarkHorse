@@ -52,7 +52,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
     //one step of stochastic gradient descent
     Position x = sample.position;
 
-    if (x.hasJumps(x.getColor()))
+    if (x.hasJumps(x.getColor()) || x.hasJumps(~x.getColor()))
         return;
     auto qStatic = gameWeights.evaluate<double>(x, 0);
 
@@ -80,20 +80,22 @@ void Trainer::gradientUpdate(const Sample &sample) {
     double c = getCValue();
 
     double error = sigmoid(c, qStatic) - result;
+    double color = x.color;
     const double temp = error * sigmoidDiff(c, qStatic);;
     accu_loss += error * error;
+    auto x_flipped = (x.getColor() == BLACK)? x.getColorFlip() : x;
     for (size_t p = 0; p < 2; ++p) {
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);
-                size_t index = 18ull * getIndex2(curRegion, x) + 9ull * p + 3ull * j + i;
+                size_t index = 18ull * getIndex2(curRegion, x_flipped) + 9ull * p + 3ull * j + i;
                 double diff = temp;
                 if (p == 0) {
-                    //derivative for the openi
-                    diff *= phase;
+                    //derivative for the opening
+                    diff *= phase*color;
                 } else {
                     //derivative for the oending
-                    diff *= end_phase;
+                    diff *= end_phase*color;
                 }
                 momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
                 //need to update the momentum term

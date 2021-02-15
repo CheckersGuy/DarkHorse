@@ -76,12 +76,16 @@ std::string Instance::read_message() {
     return message;
 }
 
+void Generator::set_hash_size(int size) {
+    hash_size=size;
+}
+
 void Generator::process() {
     for (auto &instance : instances) {
         if (instance.state == Instance::Idle) {
             if (!instance.waiting_response) {
                 instance.write_message("init");
-                instance.write_message("21");
+                instance.write_message(std::to_string(hash_size));
                 instance.waiting_response = true;
             }
             auto msg = instance.read_message();
