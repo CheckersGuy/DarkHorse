@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cassert>
 #include <thread>
+#include <array>
 
 //Utility functions and other stuff
 
@@ -33,21 +34,6 @@ constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 312
 
 constexpr int stage_size = 24;
 constexpr uint8_t Move_Index_None = 150u;
-
-constexpr std::array<uint32_t, 32> S = {3u, 2u, 1u, 0u, 7u, 6u, 5u, 4u, 11u, 10u, 9u, 8u, 15u, 14u, 13u, 12u, 19u, 18u,
-                                        17u, 16u,
-                                        23u, 22u, 21u, 20u, 27u, 26u,
-                                        25u, 24u, 31u, 30u, 29u, 28u};
-
-constexpr std::array<uint32_t, 8> columns = {1u << S[0] | 1u << S[8] | 1u << S[16] | 1u << S[24],
-                                             1u << S[4] | 1u << S[12] | 1u << S[20] | 1u << S[28],
-                                             1u << S[1] | 1u << S[9] | 1u << S[17] | 1u << S[25],
-                                             1u << S[5] | 1u << S[13] | 1u << S[21] | 1u << S[29],
-                                             1u << S[2] | 1u << S[10] | 1u << S[18] | 1u << S[26],
-                                             1u << S[6] | 1u << S[14] | 1u << S[22] | 1u << S[30],
-                                             1u << S[3] | 1u << S[11] | 1u << S[19] | 1u << S[27],
-                                             1u << S[7] | 1u << S[15] | 1u << S[23] | 1u << S[31]};
-
 
 using Depth = int;
 using Ply = int;

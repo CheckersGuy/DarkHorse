@@ -4,7 +4,6 @@
 
 
 #include "Transposition.h"
-#include <string.h>
 
 Transposition TT;
 

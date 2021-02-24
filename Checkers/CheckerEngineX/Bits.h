@@ -13,13 +13,6 @@
 #endif
 
 namespace Bits {
-#ifdef __EMSCRIPTEN__
-
-
-    void set_up_bitscan();
-
-#endif
-
     uint32_t bitscan_foward(uint32_t bits);
 
 

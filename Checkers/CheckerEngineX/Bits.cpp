@@ -48,12 +48,18 @@ namespace Bits {
     }
 
     uint32_t pop_count(uint32_t val) {
+#if defined(__clang__)
         return __builtin_popcount(val);
+#elif defined(_MSC_VER)
+#endif
     }
 
 
     uint32_t pext(uint32_t source, uint32_t mask) {
-        return _pext_u32(source,mask);
+#if defined(__clang__)
+        return _pext_u32(source, mask);
+#elif defined(_MSC_VER)
+#endif
     }
 
 }

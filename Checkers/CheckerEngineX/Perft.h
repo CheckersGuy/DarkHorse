@@ -7,15 +7,11 @@
 #define CHECKERENGINEX_PERFT_H
 
 #include "Position.h"
-#include <mutex>
-#include <atomic>
 #include <deque>
 #include "MGenerator.h"
-#include "SMPLock.h"
 #include <optional>
 #include <vector>
 #include <deque>
-#include <thread>
 #include <cstring>
 
 namespace Perft {

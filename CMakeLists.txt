@@ -23,8 +23,10 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
+
 
 if (UNIX)
     add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources}  Training/HyperLog.h Training/Generator.cpp Training/Generator.h)
