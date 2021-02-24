@@ -4,7 +4,7 @@
 int main(){
     //Checking if the moveGenerator still works
 
-    std::array<uint64_t,29> node_counts = {
+    constexpr std::array<uint64_t,29> node_counts = {
             1ull,7ull,49ull,302ull,1469ull,7361ull,36768ull,
             179740ull,845931ull,3963680ull,18391564ull,
             85242128ull,388623673ull,1766623630ull,

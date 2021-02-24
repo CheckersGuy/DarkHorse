@@ -213,11 +213,12 @@ Position Position::getColorFlip() const {
 
 Position Position::getStartPosition() {
     Position pos{};
+    pos.color = BLACK;
     for (int i = 0; i <= 11; i++) {
-        pos.BP |= 1u << S[i];
+        pos.BP |= 1u << i;
     }
     for (int i = 20; i <= 31; i++) {
-        pos.WP |= 1u << S[i];
+        pos.WP |= 1u << i;
     }
     pos.key = Zobrist::generateKey(pos);
     return pos;
@@ -256,35 +257,35 @@ bool Position::isEnd() const {
 }
 
 void Position::printPosition() const {
-    std::ostringstream out;
+    std::string out;
     uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
         int row = i / 8;
         int col = i % 8;
         if ((row + col) % 2 == 0) {
-            out << "[ ]";
+            out +="[ ]";
         } else {
             if ((row + col + 1) % 2 == 0) {
                 counter--;
             }
             uint32_t maske = 1u << (counter);
             if (((BP & K) & maske) == maske) {
-                out << "[B]";
+                out += "[B]";
             } else if (((BP) & maske) == maske) {
-                out << "[0]";
+                out += "[0]";
             } else if (((WP & K) & maske) == maske) {
-                out << "[W]";
+                out +="[W]";
             } else if (((WP) & maske) == maske) {
-                out << "[X]";
+                out += "[X]";
             } else {
-                out << "[ ]";
+                out += "[ ]";
             }
         }
         if ((i + 1) % 8 == 0) {
-            out << "\n";
+            out += "\n";
         }
     }
-    std::cout << out.str()<< std::endl;
+    std::cout << out<< std::endl;
 }
 
 void Position::makeMove(Move &move) {

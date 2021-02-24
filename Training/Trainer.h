@@ -6,7 +6,6 @@
 #define TRAINING_TRAINER_H
 
 #include <condition_variable>
-#include <SMPLock.h>
 #include "Weights.h"
 #include "queue"
 #include <numeric>

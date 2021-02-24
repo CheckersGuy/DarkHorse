@@ -10,6 +10,11 @@ int main(int argl, const char **argc) {
 
     initialize();
 
+
+
+
+
+
     /*  Board board;
 
       std::vector<Sample> samples;
@@ -32,6 +37,7 @@ int main(int argl, const char **argc) {
       }
   */
 
+
     Generator generator("Generator", "train2.pos", "temp");
     generator.set_num_games(1000000);
     generator.set_hash_size(25);
@@ -41,32 +47,16 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-    std::vector<Sample> data;
-    Utilities::read_binary<Sample>(std::back_inserter(data), "../Training/TrainData/examples.data");
 
-    std::for_each(data.begin(),data.end(),[](Sample&sample){
-        Color color=sample.position.getColor();
-        Position flipped=sample.position;
-        if(sample.position.getColor()==BLACK)
-            flipped = sample.position.getColorFlip();
-        sample.position = flipped;
-        sample.result = color*sample.result;
-    });
-    Utilities::write_to_binary<Sample>(data.begin(),data.end(),"../Training/TrainData/flipped-examples.train");
-*/
-/*
 
-       Match engine_match("moredata2", "moredata2");
+/*
+       Match engine_match("moredata3", "moredata2");
        engine_match.setTime(100);
        engine_match.setMaxGames(100000);
        engine_match.setNumThreads(6);
        engine_match.setHashSize(23);
-       engine_match.start();
+       engine_match.start();*/
 
-
-
-*/
 
 
 
@@ -80,16 +70,16 @@ int main(int argl, const char **argc) {
 
 
 
-/*      std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-      Trainer trainer("../Training/TrainData/test2.train");
+  /*   std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+      Trainer trainer("../Training/TrainData/test3.train");
       trainer.setLearningRate(15000);
       trainer.setEpochs(1000);
       trainer.setl2Reg(0.000000000000);
       trainer.setCValue(-1e-3);
       trainer.startTune();
       auto loss = trainer.calculateLoss();
-      std::cout << "Loss: " << loss << std::endl;*/
-
+      std::cout << "Loss: " << loss << std::endl;
+*/
 
 
 
