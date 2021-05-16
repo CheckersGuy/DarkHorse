@@ -7,15 +7,11 @@
 
 #include <cstdint>
 #include <array>
-
-#ifndef __EMSCRIPTEN__
 #include <immintrin.h>
-#endif
+
 
 namespace Bits {
     uint32_t bitscan_foward(uint32_t bits);
-
-
 
     uint32_t pop_count(uint32_t val);
 

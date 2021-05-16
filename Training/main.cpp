@@ -5,10 +5,77 @@
 #include "Generator.h"
 #include <ostream>
 #include <iterator>
-
+#include "Network.h"
 int main(int argl, const char **argc) {
 
     initialize();
+    TT.resize(20);
+/*
+
+
+    Network net;
+
+    net.load("test.weights");;
+    net.addLayer(Layer{121, 256});
+    net.addLayer(Layer{256, 32});
+    net.addLayer(Layer{32, 32});
+    net.addLayer(Layer{32, 1});
+
+    net.init();
+
+    //checking if net output is correct
+
+    std::vector<Sample> positions;
+
+    Utilities::read_binary<Sample>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/TrainData/examples.data");
+
+    for(Sample p : positions){
+        p.position.printPosition();
+        net.set_input(p.position);
+        std::cout<<"Net_eval: "<<sigmoid(net.forward_pass())<<std::endl;
+        std::cout<<std::endl;
+        std::cout<<std::endl;
+    }
+
+*/
+
+
+
+    //playing a simple game using only the eval
+/*
+    std::vector<Position>openings;
+
+    Utilities::read_binary<Position>(std::back_inserter(openings), "/home/robin/DarkHorse/Training/Positions/train2.pos");
+    Position start = Position::getStartPosition();
+    Board board;
+    board = start;
+    for (auto i = 0; i < 500; ++i) {
+        board.getPosition().printPosition();
+        std::cout << std::endl;
+        std::cout << std::endl;
+        MoveListe liste;
+        getMoves(board.getPosition(), liste);
+        Move best;
+
+        int min_value = std::numeric_limits<int>::max();
+        for (Move m : liste) {
+            Position copy = board.getPosition();
+            copy.makeMove(m);
+            int temp = (i % 2 == 0) ? net.evaluate(copy) : gameWeights.evaluate(copy, 0);
+            temp*=copy.getColor();
+            std::cout << temp << std::endl;
+            if (temp < min_value) {
+                min_value = temp;
+                best = m;
+            }
+        }
+
+        board.makeMove(best);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
+
+
+    std::cout << std::endl;*/
 
 
 
@@ -38,7 +105,7 @@ int main(int argl, const char **argc) {
   */
 
 
-    Generator generator("Generator", "train2.pos", "temp");
+   /* Generator generator("Generator", "train2.pos", "temp");
     generator.set_num_games(1000000);
     generator.set_hash_size(25);
     generator.set_parallelism(7);
@@ -46,16 +113,18 @@ int main(int argl, const char **argc) {
     generator.start();
 
 
+*/
 
 
 
-/*
-       Match engine_match("moredata3", "moredata2");
-       engine_match.setTime(100);
+
+      /* Match engine_match("network", "dummy");
+       engine_match.setTime(500);
        engine_match.setMaxGames(100000);
-       engine_match.setNumThreads(6);
+       engine_match.setNumThreads(4);
        engine_match.setHashSize(23);
-       engine_match.start();*/
+       engine_match.start();
+*/
 
 
 

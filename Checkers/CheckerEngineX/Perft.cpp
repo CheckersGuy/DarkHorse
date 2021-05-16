@@ -23,35 +23,39 @@ namespace Perft {
         //Probably best to check
     }
 
+    void Table::clear() {
+        Cluster clust{};
+        std::fill(entries.begin(),entries.end(),clust);
+    }
+
     void Table::setCapacity(uint32_t capacity) {
         this->capacity = capacity;
-        entries = std::make_unique<Cluster[]>(capacity);
-        std::memset(entries.get(), 0, sizeof(Entry) * 2 * capacity);
+        entries.resize(capacity);
+        clear();
     }
 
     std::optional<uint64_t> Table::probe(Position pos, int depth) {
-        std::optional<uint64_t> returnValue;
         auto key = static_cast<uint32_t >(pos.key >> 32u);
         const uint32_t index = (key) & (this->capacity - 1);
-        if (entries[index].entries[1].pos == pos && entries[index].entries[1].depth == depth) {
-            returnValue = entries[index].entries[1].nodes;
-        } else if (entries[index].entries[0].pos == pos && entries[index].entries[0].depth == depth) {
-            returnValue = entries[index].entries[0].nodes;
+        if (entries[index][0].pos == pos && entries[index][0].depth == depth) {
+            return std::make_optional(entries[index][0].nodes);
+        } else if (entries[index][1].pos == pos && entries[index][1].depth == depth) {
+            return std::make_optional(entries[index][1].nodes);
         }
-        return returnValue;
+        return std::nullopt;
     }
 
     void Table::store(Position pos, int depth, uint64_t nodes) {
         auto key = static_cast<uint32_t >(pos.key >> 32u);
         const uint32_t index = (key) & (this->capacity - 1u);
-        if (depth > entries[index].entries[0].depth) {
-            entries[index].entries[0].pos = pos;
-            entries[index].entries[0].depth = depth;
-            entries[index].entries[0].nodes = nodes;
+        if (depth > entries[index][0].depth) {
+            entries[index][0].pos = pos;
+            entries[index][0].depth = depth;
+            entries[index][0].nodes = nodes;
         } else {
-            entries[index].entries[1].pos = pos;
-            entries[index].entries[1].depth = depth;
-            entries[index].entries[1].nodes = nodes;
+            entries[index][1].pos = pos;
+            entries[index][1].depth = depth;
+            entries[index][1].nodes = nodes;
         };
     }
 

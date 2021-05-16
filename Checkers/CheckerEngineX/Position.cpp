@@ -115,7 +115,7 @@ Position &append_square(Position &pos, bool is_king, Color mover, int num_square
 Position Position::pos_from_fen(std::string fen_string) {
 
     Position position;
-    Scanner scanner{fen_string};
+    Scanner scanner{std::move(fen_string)};
     bool saw_king = false;
 
     auto first_token = scanner.get_token();
@@ -157,7 +157,7 @@ Position Position::pos_from_fen(std::string fen_string) {
 }
 
 std::string Position::get_fen_string() const {
-    if(isEnd() || isEmpty())
+    if(isEmpty())
         return std::string{};
     std::ostringstream stream;
     stream << ((color == BLACK) ? "B" : "W");
@@ -233,7 +233,7 @@ Color Position::getColor() const {
 }
 
 uint32_t Position::piece_count() {
-    return __builtin_popcount(WP | BP);
+    return Bits::pop_count(WP | BP);
 }
 
 bool Position::hasJumps(Color col) const {
@@ -253,7 +253,7 @@ bool Position::isWipe() const {
 }
 
 bool Position::isEnd() const {
-    return (BP == 0u && color == BLACK) || (WP == 0u && color == WHITE);
+    return ( color == BLACK && getMovers<BLACK>() == 0u ) || (color == WHITE && getMovers<WHITE>()==0u);
 }
 
 void Position::printPosition() const {

@@ -5,10 +5,6 @@ uint64_t nodeCounter = 0;
 Line mainPV;
 uint64_t endTime = 1000000000;
 
-void setHashSize(uint32_t hash) {
-    TT.resize(hash);
-}
-
 
 #ifndef TRAIN
 Weights<int16_t> gameWeights;
@@ -18,7 +14,7 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-
+Network network;
 void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
@@ -28,7 +24,7 @@ void initialize() {
 }
 
 
-Value searchValue(Board&board, int depth, uint32_t time, bool print) {
+Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
 }
@@ -96,9 +92,6 @@ namespace Search {
     Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {
         pv.clear();
         //checking time-used
-        if (board.getPosition().isEnd())
-            return loss(ply);
-
 
         if (board.isRepetition()) {
             return 0;
@@ -155,7 +148,7 @@ namespace Search {
 #ifndef TRAIN
 
         if (TT.findHash(pos_key, info)) {
-            tt_move = (info.move_index == Move_Index_None) ? Move{} : liste[info.move_index];
+            tt_move = info.tt_move;
             auto tt_score = valueFromTT(info.score, ply);
             if (info.depth >= depth && info.flag != Flag::None) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
@@ -224,12 +217,7 @@ namespace Search {
         }
 
         {
-            uint32_t tt_m = Move_Index_None;
-            if (local.best_score > local.alpha) {
-                tt_m = liste.get_move_index(local.move);
-            }
-
-            TT.storeHash(tt_value, pos_key, flag, depth, tt_m);
+            TT.storeHash(tt_value, pos_key, flag, depth, local.move);
         }
 #endif
         return local.best_score;
@@ -242,6 +230,7 @@ namespace Search {
         bool in_pv_line = (beta != alpha + 1);
         nodeCounter++;
         pv.clear();
+
 
         if (ply >= MAX_PLY) {
             return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
@@ -257,15 +246,15 @@ namespace Search {
 
         if (moves.isEmpty()) {
 
-            if (board.getPosition().isEnd())
-                return loss(ply);
-
             if (depth == 0 && board.getPosition().hasThreat()) {
                 return Search::search(board, pv, alpha, beta, ply, 1, Move{},
                                       false);
             }
-
-            bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            if (board.getPosition().isEnd()) {
+                return loss(ply);
+            }
+            //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            bestValue = board.getMover() * network.evaluate(board.getPosition());
 
             if (bestValue >= beta) {
                 return bestValue;
@@ -296,6 +285,7 @@ namespace Search {
         Depth reduction = Search::reduce(local, board, move);
         //singular move extension
 
+
         if (local.pv_node
             && local.depth >= 8
             && move == local.sing_move
@@ -314,6 +304,7 @@ namespace Search {
             }
 
         }
+
 
 
         Depth new_depth = local.depth - 1 + extension;

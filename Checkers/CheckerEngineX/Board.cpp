@@ -66,13 +66,13 @@ bool Board::isRepetition() {
 
     for (auto i = pCounter; i > 0; i -= 2) {
 
-        if(moves[i].isCapture() || moves[i].isPromotion(pStack[i-1].K))
-            return false;
+        /*if(moves[i].isCapture() || moves[i].isPromotion(pStack[i-1].K))
+            return false;*/
 
         if (pStack[i] == getPosition()) {
             counter++;
         }
-        if (counter == 2)
+        if (counter >= 2)
             return true;
 
     }

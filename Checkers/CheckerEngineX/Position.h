@@ -68,17 +68,17 @@ struct Position {
     template<Color color>
     constexpr uint32_t pawn_count() {
         if constexpr (color == BLACK)
-            return __builtin_popcount(BP & (~K));
+            return Bits::pop_count(BP & (~K));
         else
-            return __builtin_popcount(WP & (~K));;
+            return Bits::pop_count(WP & (~K));;
     }
 
     template<Color color>
     constexpr uint32_t king_count() {
         if constexpr (color == BLACK)
-            return __builtin_popcount(BP & K);
+            return  Bits::pop_count(BP & K);
         else
-            return __builtin_popcount(WP & K);
+            return Bits::pop_count(WP & K);
     }
 
     uint32_t getKingAttackSquares(uint32_t bit_mask);

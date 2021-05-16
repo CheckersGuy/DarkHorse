@@ -14,7 +14,7 @@
 #include "Line.h"
 #include <algorithm>
 #include "Bits.h"
-
+#include <Network.h>
 struct Local {
     Value alpha, beta;
     Value best_score;
@@ -56,14 +56,12 @@ namespace Search {
 
 }
 
-
-void setHashSize(uint32_t hash);
-
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print);
 
 Value searchValue(Board&board, int depth, uint32_t time, bool print);
 
 void initialize();
 
+extern Network network;
 
 #endif //CHECKERSTEST_GAMELOGIC_H
