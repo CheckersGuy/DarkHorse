@@ -16,7 +16,7 @@ int main(){
     };
 
     Zobrist::initializeZobrisKeys();
-    Perft::table.setCapacity(1u<<26u);
+    Perft::table.setCapacity(1u<<23u);
     Board board;
     board=Position::getStartPosition();
     board.printBoard();

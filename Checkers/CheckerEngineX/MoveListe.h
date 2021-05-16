@@ -11,10 +11,8 @@ class MoveListe {
 
 private:
     uint32_t moveCounter = 0;
-    std::array<int16_t, 40> scores{0};
+    std::array<int16_t, 40> scores;
 public:
-
-
     std::array<Move, 40> liste;
 
     uint32_t length() const;
@@ -37,7 +35,7 @@ public:
         return liste.begin();
     }
 
-    uint32_t get_move_index(Move move) const;
+    uint8_t get_move_index(Move move) const;
 
     auto end() {
         auto it = liste.begin();

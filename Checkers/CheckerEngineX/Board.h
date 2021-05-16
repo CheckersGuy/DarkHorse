@@ -14,8 +14,8 @@
 class Board {
 
 private:
-    std::array<Position, MAX_PLY+400> pStack{};
-    std::array<Move, MAX_PLY+400> moves{};
+    std::array<Position, MAX_PLY+400> pStack;
+    std::array<Move, MAX_PLY+400> moves;
 
 public:
     int pCounter = 0;

@@ -19,7 +19,6 @@ constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
 
 inline size_t getIndex2(uint32_t reg, const Position &pos) {
-    //trying to be a little bit more efficient with the pext instruction
     uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
     uint32_t pieces = (pos.BP | pos.WP);
     pieces = Bits::pext(pieces, reg);
@@ -107,7 +106,7 @@ struct Weights {
                 kings_black &= kings_black - 1u;
             }
         }
-        return 10 * count_safe-10*count_denied;
+        return  count_safe-count_denied;
     }
 
 
@@ -237,7 +236,7 @@ struct Weights {
         if constexpr(std::is_floating_point_v<U>) {
             score = score / stage_size;
         } else {
-            score = div_round(score, (int) stage_size);
+            score = div_round(score,stage_size);
         }
         return score;
     }

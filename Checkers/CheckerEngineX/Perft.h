@@ -13,7 +13,6 @@
 #include <vector>
 #include <deque>
 #include <cstring>
-
 namespace Perft {
 
     struct Entry {
@@ -26,22 +25,22 @@ namespace Perft {
         Entry(Position pos, int depth, uint64_t nodes) : pos(pos), depth(depth), nodes(nodes) {}
     };
 
-    struct Cluster {
-        Entry entries[2];
-    };
 
+    using Cluster = std::array<Entry,2>;
 
     class Table {
 
     private:
         uint32_t capacity;
-        std::unique_ptr<Cluster[]> entries;
+        std::vector<Cluster>entries;
     public:
-        Table(uint32_t capacity) : capacity(capacity), entries(std::make_unique<Cluster[]>(capacity)) {
-            std::memset(entries.get(), 0, sizeof(Entry) * 2 * capacity);
+        Table(uint32_t capacity) : capacity(capacity) {
+            setCapacity(capacity);
         }
 
         Table() = default;
+
+        void clear();
 
         uint64_t getCapacity();
 

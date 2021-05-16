@@ -33,16 +33,12 @@ constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 
 constexpr int stage_size = 24;
-constexpr uint8_t Move_Index_None = 150u;
+constexpr uint8_t Move_Index_None = 100u;
 
 using Depth = int;
 using Ply = int;
 using Value = int;
 
-
-enum NodeType {
-    PVNode, NONPV
-};
 
 enum Score : int {
     INFINITE = 15000000,
@@ -106,9 +102,8 @@ inline Value toTT(Value val, int ply) {
 
 inline int div_round(int a, int b) {
     a += b / 2;
-    int div = a / b;
-    if (a < 0 && a != b * div) div -= 1;
-    return div;
+    const int div = a / b;
+    return (a < 0 && a != b * div) ? div - 1 : div;
 }
 
 

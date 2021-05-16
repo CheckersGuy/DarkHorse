@@ -21,6 +21,7 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
     }
 
 
+
     for (int i = start_index + 1; i < moveCounter; ++i) {
         int tmp = scores[i];
         Move tmpMove = liste[i];
@@ -32,6 +33,7 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
         liste[j] = tmpMove;
         scores[j] = tmp;
     }
+
 }
 
 void MoveListe::putFront(const Move move) {
@@ -53,7 +55,7 @@ MoveListe &MoveListe::operator=(const MoveListe &other) {
     return *this;
 }
 
-uint32_t MoveListe::get_move_index(Move move) const {
+uint8_t MoveListe::get_move_index(Move move) const {
     for (uint32_t i = 0u; i < moveCounter; ++i) {
         if (move == liste[i])
             return i;

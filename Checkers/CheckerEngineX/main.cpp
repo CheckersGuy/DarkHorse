@@ -6,8 +6,6 @@
 using Game = std::pair<std::vector<Position>, int>;
 
 Game generate_game(Position start_pos, int time_c, bool print = false) {
-    //generates a game given the start_pos and
-    //the time per move
     std::vector<Position> history;
 
     TT.clear();
@@ -33,18 +31,13 @@ Game generate_game(Position start_pos, int time_c, bool print = false) {
             break;
         }
 
-        if (liste.length() == 1) {
-            //easy move
-            board.makeMove(liste[0]);
-            continue;
-        }
         if (liste.isEmpty()) {
             result = (board.getMover() == BLACK) ? 1 : -1;
             break;
         }
 
         Move best;
-        auto value = searchValue(board, best, MAX_PLY, time_c, print);
+        searchValue(board, best, MAX_PLY, time_c, print);
         board.makeMove(best);
     }
     //What to do if we reached 500 moves ?
@@ -82,23 +75,39 @@ inline Position posFromString(const std::string &pos) {
 }
 
 
-
-
-
 //game-generation
 
+#include <Network.h>
 
 int main(int argl, const char **argc) {
 
+
+
     Board board;
 
+    network.load("test.weights");;
+    network.addLayer(Layer{121, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
+    network.addLayer(Layer{32, 1});
+
+    network.init();
+
+
+
+    //
+
+
+
+/*
 
     initialize();
-    setHashSize(26);
+    TT.resize(23);
 
-    Position pos = Position::pos_from_fen("W:WK6:B4,3");
-    board = pos;
-    //board = Position::getStartPosition();
+
+
+    board = Position::getStartPosition();
+    //board = Position::pos_from_fen("W:WK6:B4,3");
 
 
     board.printBoard();
@@ -116,6 +125,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
+*/
 
 
     std::string current;
@@ -126,7 +136,7 @@ int main(int argl, const char **argc) {
             std::string hash_string;
             std::cin >> hash_string;
             const int hash_size = std::stoi(hash_string);
-            setHashSize(hash_size);
+            TT.resize(hash_size);
             std::cout << "init_ready" << "\n";
         } else if (current == "new_game") {
             TT.clear();
@@ -202,6 +212,7 @@ int main(int argl, const char **argc) {
 
         }
     }
+
 
     return 0;
 }

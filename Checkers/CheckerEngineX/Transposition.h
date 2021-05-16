@@ -12,22 +12,20 @@
 #include <iostream>
 
 struct NodeInfo {
-    uint8_t move_index {Move_Index_None};
+    Move tt_move;
     Value score{0};
     uint8_t depth{0};
     uint8_t flag{Flag::None};
 };
 
-//given a cache-line of 64 bytes, we can efficiently use a bucket-size of 4 !
 struct Entry {
     //total of 16 bytes
     Value value{0};
+    Move bestMove;
     uint32_t key{0u};
     uint32_t age{100000u}; //age
     Flag flag{Flag::None};
     uint8_t depth{0};
-    uint8_t bestMove{Move_Index_None};
-    uint8_t padding; //padding
 };
 constexpr size_t bucket_size = 4;
 
@@ -36,10 +34,9 @@ using Cluster = std::array<Entry, bucket_size>;
 class Transposition {
 
 public:
-    size_t length{0u};
-    size_t capacity{0u};
     size_t hashHit{0u};
     uint32_t age_counter{0};
+    size_t capacity{0};
     std::unique_ptr<Cluster[]> entries;
 
 public:
@@ -47,11 +44,7 @@ public:
 
     Transposition() = default;
 
-    uint32_t getLength();
-
-    double getFillRate();
-
-    uint32_t getCapacity();
+    size_t getCapacity();
 
     uint32_t getHashHits();
 
@@ -59,7 +52,7 @@ public:
 
     void resize(size_t capa);
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, uint32_t move_index);
+    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
 
     bool findHash(uint64_t key, NodeInfo &info);
 };
