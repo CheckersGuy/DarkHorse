@@ -12,7 +12,6 @@ std::ostream &operator<<(std::ostream &stream, const Sample &s) {
 }
 
 std::istream &operator>>(std::istream &stream, Sample &s) {
-    Position pos;
     stream >> s.position;
     int result;
     stream.read((char *) &result, sizeof(int));

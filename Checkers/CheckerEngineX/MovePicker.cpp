@@ -7,7 +7,12 @@
 namespace Statistics {
 
 
+#ifndef TRAIN
     MovePicker mPicker;
+#else
+    thread_local MovePicker mPicker;
+#endif
+
 
     void MovePicker::clearScores() {
         std::fill(bfScore.begin(), bfScore.end(), 0);

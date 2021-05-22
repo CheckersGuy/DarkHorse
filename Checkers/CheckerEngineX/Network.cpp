@@ -20,9 +20,6 @@ void Network::load(std::string file) {
     stream.read((char *) &num_bias, sizeof(float));
     biases = std::make_unique<float[]>(num_bias);
     stream.read((char *) biases.get(), sizeof(float) * num_bias);
-    /*for(auto i=0;i<num_bias;++i){
-        std::cout<<biases[i]<<std::endl;;
-    }*/
 
 }
 
@@ -31,7 +28,6 @@ void Network::addLayer(Layer layer) {
 }
 
 void Network::init() {
-    int max_units = 0;
     for (Layer l : layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
@@ -44,8 +40,6 @@ void Network::init() {
 }
 
 float Network::forward_pass() {
-    //seperate computation for the first layer
-
     size_t weight_index_offset = 0u;
     size_t bias_index_offset = 0u;
     for (auto k = 0; k < layers.size(); ++k) {
@@ -55,10 +49,11 @@ float Network::forward_pass() {
             for (auto j = 0; j < l.in_features; ++j) {
                 t += weights[weight_index_offset + i * l.in_features + j] * input[j];
             }
+            t+=biases[bias_index_offset + i];
             if (k < layers.size() - 1)
-                temp[i] = std::clamp(t + biases[bias_index_offset + i], 0.0f, 1.0f);
+                temp[i] = std::clamp(t , 0.0f, t);
             else
-                temp[i] = t + biases[bias_index_offset + i];
+                temp[i] = t;
         }
         for (auto i = 0; i < l.out_features; ++i) {
             input[i] = temp[i];
@@ -72,16 +67,17 @@ float Network::forward_pass() {
 
 int Network::evaluate(Position pos) {
     set_input(pos);
-    float val = forward_pass() * 8000;
+    float val = forward_pass();
     return static_cast<int>(val);
 }
 
 void Network::set_input(Position p) {
-
     constexpr size_t INPUT_SIZE = 121;
     //clearing the input first
-    for (auto i = 0; i < INPUT_SIZE; ++i) {
+
+    for (auto i = 0; i < max_units; ++i) {
         input[i] = 0;
+        temp[i]=0;
     }
     uint32_t white_men = p.WP & (~p.K);
     uint32_t black_men = p.BP & (~p.K);
@@ -113,9 +109,11 @@ void Network::set_input(Position p) {
         input[offset + index] = 1;
     }
     input[INPUT_SIZE - 1] = (p.getColor() == BLACK) ? 0 : 1;
+/*
     for (auto i = 0; i < INPUT_SIZE; ++i) {
         std::cout << input[i] << " ";
     }
     std::cout << std::endl;
+*/
 
 }

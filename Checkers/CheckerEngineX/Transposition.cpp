@@ -5,15 +5,20 @@
 
 #include "Transposition.h"
 
+#ifndef TRAIN
 Transposition TT;
+#else
+thread_local Transposition TT;
+#endif
+
 
 Transposition::Transposition(size_t capacity) {
-    size_t size= 1u << capacity;
+    size_t size = 1u << capacity;
     resize(size);
 }
 
 void Transposition::resize(size_t capa) {
-    capacity = 1u<<capa;
+    capacity = 1u << capa;
     entries = std::make_unique<Cluster[]>(capacity);
     clear();
 }
@@ -28,7 +33,7 @@ uint32_t Transposition::getHashHits() {
 
 void Transposition::clear() {
     hashHit = 0;
-    std::fill(entries.get(), entries.get()+capacity, Cluster{});
+    std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 
 void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {

@@ -28,8 +28,7 @@ public:
     std::vector<Layer> layers;
     std::unique_ptr<float[]>input;
     std::unique_ptr<float[]>temp;
-    std::unique_ptr<float[]>pre_activ;
-
+    int max_units{0};
 public:
     //adding layers etc.
     //loading weights and so on
