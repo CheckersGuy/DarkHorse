@@ -84,8 +84,10 @@ int main(int argl, const char **argc) {
 
 
     Board board;
+    use_classical(false);
 
-    network.load("test.weights");;
+
+    network.load("test2.weights");;
     network.addLayer(Layer{121, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -95,19 +97,16 @@ int main(int argl, const char **argc) {
 
 
 
-    //
 
 
 
-/*
 
     initialize();
     TT.resize(23);
 
 
-
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:WK6:B4,3");
+    board = Position::pos_from_fen("W:WK6:B4,3");
 
 
     board.printBoard();
@@ -125,7 +124,10 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
+
+
+
 
 
     std::string current;

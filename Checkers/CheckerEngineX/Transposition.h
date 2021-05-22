@@ -57,7 +57,10 @@ public:
     bool findHash(uint64_t key, NodeInfo &info);
 };
 
-
+#ifndef TRAIN
 extern Transposition TT;
+#else
+extern thread_local Transposition TT;
+#endif
 
 #endif //CHECKERSTEST_TRANSPOSITION_H

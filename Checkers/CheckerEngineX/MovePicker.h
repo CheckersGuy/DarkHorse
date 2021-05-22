@@ -26,8 +26,12 @@ namespace Statistics {
 
     };
 
-
+#ifndef TRAIN
     extern MovePicker mPicker;
+#else
+    extern thread_local MovePicker mPicker;
+#endif
+
 
 
 }

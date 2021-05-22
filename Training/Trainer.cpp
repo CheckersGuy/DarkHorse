@@ -94,7 +94,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
                     //derivative for the opening
                     diff *= phase*color;
                 } else {
-                    //derivative for the oending
+                    //derivative for the ending
                     diff *= end_phase*color;
                 }
                 momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;

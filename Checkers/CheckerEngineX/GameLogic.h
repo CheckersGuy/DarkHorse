@@ -38,6 +38,8 @@ struct SearchGlobal{
     void score_update();
 };
 
+void use_classical(bool flag);
+
 namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);

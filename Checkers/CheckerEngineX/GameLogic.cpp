@@ -15,6 +15,7 @@ Weights<double> gameWeights;
 
 SearchGlobal glob;
 Network network;
+bool u_classical=false;
 void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
@@ -27,6 +28,10 @@ void initialize() {
 Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
     return searchValue(board, best, depth, time, print);
+}
+
+void use_classical(bool flag){
+    u_classical=flag;
 }
 
 
@@ -254,7 +259,11 @@ namespace Search {
                 return loss(ply);
             }
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
-            bestValue = board.getMover() * network.evaluate(board.getPosition());
+            if(!u_classical){
+                bestValue = board.getMover() * network.evaluate(board.getPosition());
+            }else{
+                bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            }
 
             if (bestValue >= beta) {
                 return bestValue;
