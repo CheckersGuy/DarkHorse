@@ -17,9 +17,8 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
 
     for (auto i = 0; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] = Statistics::mPicker.getMoveScore(m, color, ttMove);
+        scores[i] = (short) Statistics::mPicker.getMoveScore(m, color, ttMove);
     }
-
 
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
@@ -31,8 +30,24 @@ void MoveListe::sort(Move ttMove, bool inPVLine, Color color) {
             scores[j] = scores[j - 1];
         }
         liste[j] = tmpMove;
-        scores[j] = tmp;
+        scores[j] = (short) tmp;
     }
+
+}
+
+void MoveListe::remove(Move move) {
+
+    int i;
+    for (i = 0; i < moveCounter; ++i) {
+        if (liste[i] == move)
+            break;
+    }
+
+    for (int k = i + 1; k < moveCounter; ++k) {
+        liste[k - 1] = liste[k];
+    }
+
+    moveCounter = moveCounter - 1;
 
 }
 

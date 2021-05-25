@@ -9,6 +9,16 @@ float sigmoid(float value) {
     return 1.0f / (1.0f + std::exp(-value));
 }
 
+std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
+    //computes the indices which need to be either set to 0
+    //or for which we need to compute the matrix-vec multiply
+    uint32_t changed_to_ones = next & (~previous);
+    uint32_t n_previous = ~previous;
+    uint32_t n_next = ~next;
+    uint32_t changed_to_zeros = n_next&(~n_previous);
+    return std::pair<uint32_t, uint32_t>(changed_to_zeros,changed_to_ones);
+}
+
 void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
     if (!stream.good())
@@ -20,6 +30,7 @@ void Network::load(std::string file) {
     stream.read((char *) &num_bias, sizeof(float));
     biases = std::make_unique<float[]>(num_bias);
     stream.read((char *) biases.get(), sizeof(float) * num_bias);
+    stream.close();
 
 }
 
@@ -36,6 +47,7 @@ void Network::init() {
 
     for (auto i = 0; i < max_units; ++i) {
         temp[i] = 0;
+        input[i] = 0;
     }
 }
 
@@ -44,19 +56,22 @@ float Network::forward_pass() {
     size_t bias_index_offset = 0u;
     for (auto k = 0; k < layers.size(); ++k) {
         Layer &l = layers[k];
-        for (auto i = 0; i < l.out_features; ++i) {
-            float t = 0;
-            for (auto j = 0; j < l.in_features; ++j) {
-                t += weights[weight_index_offset + i * l.in_features + j] * input[j];
+        for (auto j = 0; j < l.in_features; ++j) {
+            if (input[j] == 0)
+                continue;
+            for (auto i = 0; i < l.out_features; ++i) {
+                temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
             }
-            t+=biases[bias_index_offset + i];
-            if (k < layers.size() - 1)
-                temp[i] = std::clamp(t , 0.0f, t);
-            else
-                temp[i] = t;
         }
         for (auto i = 0; i < l.out_features; ++i) {
+            temp[i] += biases[bias_index_offset + i];
+            if (k < layers.size() - 1)
+                temp[i] = std::clamp(temp[i], 0.0f, temp[i]);
+        }
+
+        for (auto i = 0; i < l.out_features; ++i) {
             input[i] = temp[i];
+            temp[i] = 0;
         }
         weight_index_offset += l.out_features * l.in_features;
         bias_index_offset += l.out_features;
@@ -72,12 +87,16 @@ int Network::evaluate(Position pos) {
 }
 
 void Network::set_input(Position p) {
-    constexpr size_t INPUT_SIZE = 121;
+    //testing another network architecture
+    if (p.color == BLACK) {
+        p = p.getColorFlip();
+    }
+    constexpr size_t INPUT_SIZE = 120;
     //clearing the input first
 
     for (auto i = 0; i < max_units; ++i) {
         input[i] = 0;
-        temp[i]=0;
+        temp[i] = 0;
     }
     uint32_t white_men = p.WP & (~p.K);
     uint32_t black_men = p.BP & (~p.K);
@@ -108,7 +127,7 @@ void Network::set_input(Position p) {
         black_kings &= black_kings - 1u;
         input[offset + index] = 1;
     }
-    input[INPUT_SIZE - 1] = (p.getColor() == BLACK) ? 0 : 1;
+    //input[INPUT_SIZE - 1] = (p.getColor() == BLACK) ? 0 : 1;
 /*
     for (auto i = 0; i < INPUT_SIZE; ++i) {
         std::cout << input[i] << " ";

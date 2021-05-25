@@ -21,4 +21,7 @@ extern "C" int count_white_kings(uint32_t white_men, uint32_t black_men, uint32_
 extern "C" int count_black_kings(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int count_white_pawn(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int count_black_pawn(uint32_t white_men, uint32_t black_men, uint32_t kings);
+extern "C" int invert_pieces(uint32_t pieces);
+
+
 #endif //READING_PYHELPER_H

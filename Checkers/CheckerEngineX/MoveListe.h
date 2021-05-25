@@ -29,6 +29,9 @@ public:
 
     void putFront(const Move other);
 
+    void remove(Move move);
+
+
     void reset();
 
     auto begin() {

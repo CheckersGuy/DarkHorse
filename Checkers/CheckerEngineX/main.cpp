@@ -82,13 +82,12 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
 
 
-
     Board board;
     use_classical(false);
 
 
-    network.load("test2.weights");;
-    network.addLayer(Layer{121, 256});
+    network.load("nocolor2col.weights");
+    network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
@@ -96,17 +95,37 @@ int main(int argl, const char **argc) {
     network.init();
 
 
-
-
-
-
-
     initialize();
     TT.resize(23);
 
 
+    Position pos = Position::getStartPosition();
+    pos.printPosition();
+    std::cout<<std::endl;
+
+    MoveListe liste;
+    getMoves(pos,liste);
+
+    Position next =pos;
+    next.makeMove(liste[0]);
+    next.printPosition();
+    std::cout<<std::endl;
+
+    auto pair = compute_difference(pos.BP,next.BP);
+
+    Position test;
+    test.BP = pair.first;
+    test.printPosition();
+
+
+
+
+
+    return 0;
+
+
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK6:B4,3");
+   // board = Position::pos_from_fen( "W:WK9,K31:BK4,K7,K6,K12,K21");
 
 
     board.printBoard();
@@ -115,20 +134,12 @@ int main(int argl, const char **argc) {
     std::cout << std::endl;
 
 
-
-
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
 
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
-
 
     std::string current;
     while (std::cin >> current) {

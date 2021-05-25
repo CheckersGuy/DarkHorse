@@ -27,10 +27,12 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     const size_t size = samples.size();
     Sample *some_data;
     TrainSample *buffer;
-    std::atomic<int>* atomic_counter;
+    std::atomic<int> *atomic_counter;
     some_data = (Sample *) mmap(NULL, sizeof(Sample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    buffer = (TrainSample *) mmap(NULL, sizeof(TrainSample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    atomic_counter = (std::atomic<int> *) mmap(NULL, sizeof(std::atomic<int>), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    buffer = (TrainSample *) mmap(NULL, sizeof(TrainSample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
+                                  -1, 0);
+    atomic_counter = (std::atomic<int> *) mmap(NULL, sizeof(std::atomic<int>), PROT_READ | PROT_WRITE,
+                                               MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     atomic_counter->store(0);
 
     for (auto i = size_t{0}; i < size; ++i) {
@@ -77,7 +79,7 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
                 x.pos = pos;
                 x.evaluation = eval;
                 x.result = s.result;
-                buffer[k]=x;
+                buffer[k] = x;
             }
             std::exit(1);
         }
@@ -92,22 +94,22 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     if (pid > 0) {
 
 
-        while(atomic_counter->load()<size){
-            std::cout<<"Counter: "<<atomic_counter->load()<<std::endl;
+        while (atomic_counter->load() < size) {
+            std::cout << "Counter: " << atomic_counter->load() << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
 
 
         int status;
-        for(int j=0;j<parallelism;++j){
+        for (int j = 0; j < parallelism; ++j) {
             wait(&status);
         }
 
-        for(int j=0;j<size;++j){
-            TrainSample s =buffer[j];
+        for (int j = 0; j < size; ++j) {
+            TrainSample s = buffer[j];
             test_buffer.emplace_back(s);
         }
-        Utilities::write_to_binary<TrainSample>(test_buffer.begin(),test_buffer.end(),out_data);
+        Utilities::write_to_binary<TrainSample>(test_buffer.begin(), test_buffer.end(), out_data);
 
 
         munmap(some_data, size * sizeof(Sample));
@@ -125,20 +127,9 @@ int main(int argl, const char **argc) {
     TT.resize(20);
     use_classical(true);
 
+    //generate_depth_data(5, "/home/robin/DarkHorse/Training/TrainData/test3.train", "eval_next_data2");
 
-/*    std::vector<TrainSample> test;
 
-    Utilities::read_binary<TrainSample>(std::back_inserter(test),"eval_next_data");
-
-    for(TrainSample t : test){
-        t.pos.printPosition();
-        std::cout<<"Evaluation: "<<t.evaluation<<std::endl;
-        std::cout<<std::endl;
-    }*/
-
-    generate_depth_data(5, "/home/robin/DarkHorse/Training/TrainData/test3.train", "eval_next_data2");
-
-    return 0;
     /* std::vector<Sample> samples;
      Utilities::read_binary<Sample>(std::back_inserter(samples),
                                     "/home/robin/DarkHorse/Training/TrainData/small_dataset");
@@ -173,47 +164,37 @@ int main(int argl, const char **argc) {
     */
 
 
-   /* network.load("/home/robin/DarkHorse/cmake-build-debug/test2.weights");
-    network.addLayer(Layer{121, 256});
+    network.load("/home/robin/DarkHorse/cmake-build-debug/nocolor2col.weights");
+    network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();
 
 
-    Position test;
-    test = Position::getStartPosition();
-    network.set_input(test);
-    test.printPosition();
-    std::cout << network.forward_pass() << std::endl;
-*/
-    //checking if net output is correct
+    /*   Position test;
+       test = Position::getStartPosition();
+       network.set_input(test);
+       test.printPosition();
+       std::cout << network.forward_pass() << std::endl;
 
 
 
+          std::vector<Sample> positions;
 
 
+          Utilities::read_binary<Sample>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/TrainData/examples.data");
 
 
-
-    /*   std::vector<Sample> positions;
-
-
-       Utilities::read_binary<Sample>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/TrainData/examples.data");
-
-
-       for(Sample p : positions){
-           p.position.printPosition();
-           std::cout<<"Net_eval: "<<network.evaluate(p.position)<<std::endl;
-           std::cout<<"Weights_eval: "<<gameWeights.evaluate(p.position,0)<<std::endl;
-           std::cout<<std::endl;
-           std::cout<<std::endl;
-       }
-
-
-
-
+          for(Sample p : positions){
+              p.position.printPosition();
+              std::cout<<"Net_eval: "<<network.evaluate(p.position)<<std::endl;
+              std::cout<<"Weights_eval: "<<gameWeights.evaluate(p.position,0)<<std::endl;
+              std::cout<<std::endl;
+              std::cout<<std::endl;
+          }
    */
+
 
 
 
@@ -228,39 +209,39 @@ int main(int argl, const char **argc) {
 
 
 
-    std::vector<Position> openings;
-
 
 
 /*
+    std::vector<Position> openings;
 
-
-
-
-
-   Utilities::read_binary<Position>(std::back_inserter(openings), "/home/robin/DarkHorse/Training/Positions/train2.pos");
-    Position start = openings[36];
+    Utilities::read_binary<Position>(std::back_inserter(openings),
+                                     "/home/robin/DarkHorse/Training/Positions/3move.pos");
+    Position start = openings[32];
     Board board;
     board = start;
     for (auto i = 0; i < 500; ++i) {
         board.getPosition().printPosition();
-        std::cout<<"FenString: "<<board.getPosition().get_fen_string()<<std::endl;
+        std::cout << "FenString: " << board.getPosition().get_fen_string() << std::endl;
         std::cout << std::endl;
         std::cout << std::endl;
-        if(i%2!=0)
+        if (i % 2 == 0)
             use_classical(false);
         else
             use_classical(true);
 
         Move best;
-        searchValue(board,best,1,10000000,true);
+        searchValue(board, best, 1, 10000000, true);
         board.makeMove(best);
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        std::cout << std::endl;
+
+
     }
-
-
-    std::cout << std::endl;
 */
+
+
+
 
 
 
@@ -270,27 +251,33 @@ int main(int argl, const char **argc) {
 
 /*
 
-      Board board;
 
-      std::vector<Sample> samples;
-      Utilities::read_binary<Sample>(std::back_inserter(samples),"../Training/TrainData/test.train");
-      std::cout<<samples.size()<<std::endl;
 
-      for(Sample s : samples){
-          Position pos = s.position;
-          if(pos.isEnd())
-              continue;
-          Position temp = Position::pos_from_fen(pos.get_fen_string());
-          if(pos!=temp){
-              std::cerr<<"Error"<<std::endl;
-              std::cerr<<pos.get_fen_string()<<std::endl;
-              pos.printPosition();
-              std::cout<<std::endl;
-              temp.printPosition();
-              std::exit(-1);
-          }
-      }
+    Board board;
+
+    std::vector<Sample> samples;
+    Utilities::read_binary<Sample>(std::back_inserter(samples), "../Training/TrainData/small_dataset");
+    std::mt19937_64 generator(213231ull);
+    std::shuffle(samples.begin(),samples.end(),generator);
+    std::cout << samples.size() << std::endl;
+
+    int counter =0;
+    for (Sample s : samples) {
+
+        if(counter>=100)
+            break;
+        counter++;
+        Position pos = s.position;
+        if (pos.isEnd())
+            continue;
+
+        pos.printPosition();
+        std::cout<<"Evaluation: "<<network.evaluate(pos)<<std::endl;
+        std::cout << std::endl;
+    }
 */
+
+
 
 
 
@@ -310,18 +297,20 @@ int main(int argl, const char **argc) {
 
 
 
-    /**//*Match engine_match("network2", "network");
-       engine_match.setTime(200);
-       engine_match.setMaxGames(100000);
-       engine_match.setNumThreads(4);
-       engine_match.setHashSize(22);
-       engine_match.start();
+
+
+
+
+ /*   Match engine_match("testing", "moredata3");
+    engine_match.setTime(100);
+    engine_match.setMaxGames(100000);
+    engine_match.setNumThreads(6);
+    engine_match.setHashSize(22);
+    engine_match.start();
+
 
 
 */
-
-
-
 
 
 

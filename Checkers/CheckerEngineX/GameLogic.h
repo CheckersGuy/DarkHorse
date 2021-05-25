@@ -44,6 +44,8 @@ namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);
 
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,std::vector<Move>&exluded_moves);
+
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
     Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune);
