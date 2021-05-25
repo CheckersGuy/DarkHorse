@@ -10,16 +10,19 @@
 #include <fstream>
 #include <iostream>
 #include "Position.h"
-//this will be a neural network implementation intended to use
-//as an evaluation function !
-
 
 float sigmoid(float val);
+
+
+
 
 struct Layer {
     int in_features;
     int out_features;
 };
+
+std::pair<uint32_t ,uint32_t > compute_difference(uint32_t previous, uint32_t next);
+
 
 class Network {
 public:
@@ -30,8 +33,6 @@ public:
     std::unique_ptr<float[]>temp;
     int max_units{0};
 public:
-    //adding layers etc.
-    //loading weights and so on
 
     void addLayer(Layer layer);
 

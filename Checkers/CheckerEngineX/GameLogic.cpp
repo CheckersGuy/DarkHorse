@@ -15,7 +15,8 @@ Weights<double> gameWeights;
 
 SearchGlobal glob;
 Network network;
-bool u_classical=false;
+bool u_classical = false;
+
 void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
@@ -30,8 +31,8 @@ Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     return searchValue(board, best, depth, time, print);
 }
 
-void use_classical(bool flag){
-    u_classical=flag;
+void use_classical(bool flag) {
+    u_classical = flag;
 }
 
 
@@ -52,7 +53,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
 
-    for (int i = 0; i <= depth; ++i) {
+    for (int i = 1; i <= depth; ++i) {
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
@@ -259,9 +260,9 @@ namespace Search {
                 return loss(ply);
             }
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
-            if(!u_classical){
-                bestValue = board.getMover() * network.evaluate(board.getPosition());
-            }else{
+            if (!u_classical) {
+                bestValue = network.evaluate(board.getPosition());
+            } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }
 
@@ -315,7 +316,6 @@ namespace Search {
         }
 
 
-
         Depth new_depth = local.depth - 1 + extension;
 
         Value new_alpha = std::max(local.alpha, local.best_score);
@@ -361,8 +361,13 @@ namespace Search {
 
     }
 
-
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {
+        std::vector<Move> exluded_moves;
+        return search_root(local, line, board, alpha, beta, depth, exluded_moves);
+    }
+
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,
+                     std::vector<Move> &exluded_moves) {
         line.clear();
         local.best_score = -INFINITE;
         local.sing_score = -INFINITE;
@@ -379,6 +384,13 @@ namespace Search {
 
         MoveListe liste;
         getMoves(board.getPosition(), liste);
+
+        //removing the excluded moves from the list
+
+        for(Move m : exluded_moves){
+            liste.remove(m);
+        }
+
         liste.putFront(mainPV[local.ply]);
         liste.sort(Move{}, true, board.getMover());
 

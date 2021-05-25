@@ -4,6 +4,9 @@
 
 #include "PyHelper.h"
 
+extern "C" int invert_pieces(uint32_t pieces){
+    return static_cast<int>(getMirrored(pieces));
+}
 
 extern "C" void print_fen(int color, uint32_t white_men, uint32_t black_men, uint32_t kings) {
     Position pos;
