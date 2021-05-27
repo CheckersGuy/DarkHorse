@@ -15,8 +15,8 @@ std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t nex
     uint32_t changed_to_ones = next & (~previous);
     uint32_t n_previous = ~previous;
     uint32_t n_next = ~next;
-    uint32_t changed_to_zeros = n_next&(~n_previous);
-    return std::pair<uint32_t, uint32_t>(changed_to_zeros,changed_to_ones);
+    uint32_t changed_to_zeros = n_next & (~n_previous);
+    return std::pair<uint32_t, uint32_t>(changed_to_zeros, changed_to_ones);
 }
 
 void Network::load(std::string file) {
@@ -49,6 +49,162 @@ void Network::init() {
         temp[i] = 0;
         input[i] = 0;
     }
+    const size_t units = layers[0].out_features;
+    z_black = std::make_unique<float[]>(units);
+    z_white = std::make_unique<float[]>(units);
+    //initializing those two vectors
+    for (auto i = 0; i < units; ++i) {
+        z_black[i] = biases[i];
+        z_white[i] = biases[i];
+    }
+
+}
+
+
+float Network::compute_incre_forward_pass(Position next) {
+    //to be continued
+    float *z_previous;
+    Position previous;
+    if (next.color == BLACK) {
+        previous = p_black;
+        z_previous = z_black.get();
+        next = next.getColorFlip();
+    } else {
+        previous = p_white;
+        z_previous = z_white.get();
+    }
+    //computing the differences
+    Layer &l = layers[0];
+
+
+    size_t weight_index_offset = 0u;
+    size_t bias_index_offset = 0u;
+    size_t offset = 0u;
+
+    auto diff_men_b = compute_difference(previous.BP & (~previous.K), next.BP & (~next.K));
+    auto diff_men_w = compute_difference(previous.WP & (~previous.K), next.WP & (~next.K));
+    auto diff_men_bk = compute_difference(previous.BP & (previous.K), next.BP & (next.K));
+    auto diff_men_wk = compute_difference(previous.WP & (previous.K), next.WP & (next.K));
+    if (next.color == BLACK) {
+        p_black = next;
+    } else {
+        p_white = next;
+    }
+
+    {
+        uint32_t n = diff_men_w.second;
+        uint32_t p = diff_men_w.first;
+
+        while (n != 0) {
+            auto index = Bits::bitscan_foward(n) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] + weights[weight_index_offset + index * l.out_features + i];
+            }
+            n &= n - 1u;
+        }
+
+        while (p != 0) {
+            auto index = Bits::bitscan_foward(p) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
+            }
+            p &= p - 1u;
+        }
+        offset += 28;
+    }
+    {
+        uint32_t n = diff_men_b.second;
+        uint32_t p = diff_men_b.first;
+
+        while (n != 0) {
+            auto index = Bits::bitscan_foward(n) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] + weights[weight_index_offset + index * l.out_features + i];
+            }
+            n &= n - 1u;
+        }
+
+        while (p != 0) {
+            auto index = Bits::bitscan_foward(p) + offset;
+            std::cout << index << std::endl;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
+            }
+            p &= p - 1u;
+        }
+        offset += 28;
+    }
+
+    {
+        uint32_t n = diff_men_wk.second;
+        uint32_t p = diff_men_wk.first;
+
+        while (n != 0) {
+            auto index = Bits::bitscan_foward(n) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] + weights[weight_index_offset + index * l.out_features + i];
+            }
+            n &= n - 1u;
+        }
+
+        while (p != 0) {
+            auto index = Bits::bitscan_foward(p) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
+            }
+            p &= p - 1u;
+        }
+        offset += 32;
+    }
+
+    {
+        uint32_t n = diff_men_bk.second;
+        uint32_t p = diff_men_bk.first;
+
+        while (n != 0) {
+            auto index = Bits::bitscan_foward(n) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] + weights[weight_index_offset + index * l.out_features + i];
+            }
+            n &= n - 1u;
+        }
+
+        while (p != 0) {
+            auto index = Bits::bitscan_foward(p) + offset;
+            for (auto i = 0; i < l.out_features; ++i) {
+                z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
+            }
+            p &= p - 1u;
+        }
+    }
+
+    weight_index_offset += l.out_features * l.in_features;
+    bias_index_offset += l.out_features;
+    //computation for the remaining layers
+    for (auto k = 1; k < layers.size(); ++k) {
+        l = layers[k];
+        for (auto j = 0; j < l.in_features; ++j) {
+            if (input[j] == 0)
+                continue;
+            for (auto i = 0; i < l.out_features; ++i) {
+                temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
+            }
+        }
+        for (auto i = 0; i < l.out_features; ++i) {
+            temp[i] += biases[bias_index_offset + i];
+            if (k < layers.size() - 1)
+                temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
+        }
+
+        for (auto i = 0; i < l.out_features; ++i) {
+            input[i] = temp[i];
+            temp[i] = 0;
+        }
+        weight_index_offset += l.out_features * l.in_features;
+        bias_index_offset += l.out_features;
+
+    }
+    return input[0];
 }
 
 float Network::forward_pass() {
@@ -65,8 +221,12 @@ float Network::forward_pass() {
         }
         for (auto i = 0; i < l.out_features; ++i) {
             temp[i] += biases[bias_index_offset + i];
-            if (k < layers.size() - 1)
-                temp[i] = std::clamp(temp[i], 0.0f, temp[i]);
+            if (k < layers.size() - 1) {
+                //temp[i] = std::clamp(temp[i], 0.0f, temp[i]);
+                //some clipped relu experimentation
+                temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
+            }
+
         }
 
         for (auto i = 0; i < l.out_features; ++i) {

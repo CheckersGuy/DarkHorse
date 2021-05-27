@@ -81,12 +81,12 @@ inline Position posFromString(const std::string &pos) {
 
 int main(int argl, const char **argc) {
 
-
+    initialize();
     Board board;
     use_classical(false);
 
 
-    network.load("nocolor2col.weights");
+    network.load("test_op_scal2.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -94,9 +94,17 @@ int main(int argl, const char **argc) {
 
     network.init();
 
+    network2.load("test_end_scal2.weights");
+    network2.addLayer(Layer{120, 256});
+    network2.addLayer(Layer{256, 32});
+    network2.addLayer(Layer{32, 32});
+    network2.addLayer(Layer{32, 1});
 
-    initialize();
-    TT.resize(23);
+    network2.init();
+
+/*
+
+
 
 
     Position pos = Position::getStartPosition();
@@ -122,10 +130,12 @@ int main(int argl, const char **argc) {
 
 
     return 0;
+*/
 
+    TT.resize(23);
 
     board = Position::getStartPosition();
-   // board = Position::pos_from_fen( "W:WK9,K31:BK4,K7,K6,K12,K21");
+    //board = Position::pos_from_fen("W:W13:B4,K9,K32");
 
 
     board.printBoard();
@@ -133,14 +143,15 @@ int main(int argl, const char **argc) {
 
     std::cout << std::endl;
 
+    std::cout<<network.compute_incre_forward_pass(board.getPosition())<<std::endl;
+
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
 
     Move best;
-    searchValue(board, best, MAX_PLY, 20000000, true);
+   /* searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();
-
+    board.printBoard();*/
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {
