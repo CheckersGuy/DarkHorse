@@ -35,6 +35,18 @@ constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 312
 constexpr int stage_size = 24;
 constexpr uint8_t Move_Index_None = 100u;
 
+//constant for extensions and reductions
+/*constexpr int prob_cut = 150;
+constexpr int sing_ext = 850;
+constexpr int asp_wind =150;
+constexpr int MAX_ASP = 3000;*/
+
+constexpr int prob_cut = 15;
+constexpr int sing_ext = 85;
+constexpr int asp_wind =15;
+constexpr int MAX_ASP = 300;
+
+
 using Depth = int;
 using Ply = int;
 using Value = int;

@@ -67,5 +67,6 @@ Value searchValue(Board&board, int depth, uint32_t time, bool print);
 void initialize();
 
 extern Network network;
+extern Network network2;
 
 #endif //CHECKERSTEST_GAMELOGIC_H

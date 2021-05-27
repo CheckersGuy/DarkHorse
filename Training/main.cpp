@@ -19,7 +19,6 @@
 
 void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     //using processes instead of threads
-
     const int parallelism = 14;
 
     std::vector<Sample> samples;
@@ -71,8 +70,8 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
                 Board board;
                 board = pos;
                 auto eval = board.getMover() * searchValue(board, depth, 1000000, false);
-                if (std::abs(eval) >= 30000)
-                    eval = 30000 * ((eval >= 0) ? 1 : -1);
+                if (std::abs(eval) >= 9000)
+                    eval = 9000 * ((eval >= 0) ? 1 : -1);
 
                 atomic_counter->operator++();
                 TrainSample x;
@@ -127,49 +126,48 @@ int main(int argl, const char **argc) {
     TT.resize(20);
     use_classical(true);
 
-    //generate_depth_data(5, "/home/robin/DarkHorse/Training/TrainData/test3.train", "eval_next_data2");
+//generate_depth_data(7, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth7");
 
+    //creating a subset of the small-dataset consisting of only positions with >6 pieces
 
-    /* std::vector<Sample> samples;
-     Utilities::read_binary<Sample>(std::back_inserter(samples),
-                                    "/home/robin/DarkHorse/Training/TrainData/small_dataset");
+    std::vector<TrainSample> samples;
+    Utilities::read_binary<TrainSample>(std::back_inserter(samples),
+                                        "/home/robin/DarkHorse/cmake-build-debug/eval_data_depth7");
 
-     std::vector<TrainSample> new_samples;
+    samples.erase(std::remove_if(samples.begin(), samples.end(), [](TrainSample s) {
+        auto num_pieces = Bits::pop_count(s.pos.BP | s.pos.WP);
+        return num_pieces <=6 ;
+    }), samples.end());
+    std::cout<<samples.size()<<std::endl;
 
-     *//* generateDepthData(std::back_inserter(new_samples), 5, "/home/robin/DarkHorse/Training/TrainData/small_dataset",
-                       "eval_next_data");
- *//*
+    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data_depth7");
 
-    std::cout << "NumSamples: " << samples.size() << std::endl;
-    for (int i = 0; i < samples.size(); ++i) {
-        if (i % 10000 == 0)
-            std::cout << i << std::endl;
-        Sample s = samples[i];
-        Position pos = s.position;
-        Board board;
-        board = pos;
-        auto eval = board.getMover() * searchValue(board, 5, 1000000, false);
-        if (std::abs(eval) >= 30000)
-            eval = 30000 * ((eval >= 0) ? 1 : -1);
-        TrainSample x;
-        x.pos = pos;
-        x.evaluation = eval;
-        x.result = s.result;
-        new_samples.emplace_back(x);
-    }
+    std::cout<<"Samples: "<<samples.size()<<std::endl;
 
-    Utilities::write_to_binary<TrainSample>(new_samples.begin(), new_samples.end(), "eval_data4");
 
     return 0;
-    */
 
 
+/*
+ * VERY IMPORTANT I NEED TO REDO SOME OF THE TRAINING STUFF AND DEFINE SOME MAX_EVAL CONSTANT
+ * AS THIS BELOW SEEMED TO BE WORKING MUCH MUCH BETTER THAN I HAD EXPECTED
+    std::vector<TrainSample> samples;
+    Utilities::read_binary<TrainSample>(std::back_inserter(samples),"opening_data");
+    for(auto& data : samples){
+        data.evaluation = std::clamp(data.evaluation,-9000,9000);
+    }
+    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data2");
+*/
+
+
+/*
     network.load("/home/robin/DarkHorse/cmake-build-debug/nocolor2col.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();
+*/
 
 
     /*   Position test;
@@ -280,17 +278,15 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
-    /* Generator generator("Generator", "train2.pos", "temp");
+     Generator generator("Generator", "train2.pos", "temp");
      generator.set_num_games(1000000);
      generator.set_hash_size(25);
      generator.set_parallelism(7);
      generator.set_time(100);
      generator.start();
-
-
- */
-
+*/
 
 
 
@@ -301,16 +297,22 @@ int main(int argl, const char **argc) {
 
 
 
- /*   Match engine_match("testing", "moredata3");
-    engine_match.setTime(100);
-    engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(6);
-    engine_match.setHashSize(22);
-    engine_match.start();
 
 
+
+
+
+/*
+       Match engine_match("scal2", "moredata3");
+       engine_match.setTime(100);
+       engine_match.setMaxGames(100000);
+       engine_match.setNumThreads(6);
+       engine_match.setHashSize(22);
+       engine_match.start();
 
 */
+
+
 
 
 

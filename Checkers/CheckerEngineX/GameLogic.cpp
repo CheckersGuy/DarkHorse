@@ -14,14 +14,14 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network;
+Network network, network2;
 bool u_classical = false;
 
 void initialize() {
 #ifdef __EMSCRIPTEN__
     Bits::set_up_bitscan();
 #endif
-    gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/moredata3.weights");
+    // gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/moredata3.weights");
     Zobrist::initializeZobrisKeys();
 }
 
@@ -180,7 +180,7 @@ namespace Search {
 
 
         if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
-            Value margin = (150 * local.depth);
+            Value margin = (prob_cut * local.depth);
             Value newBeta = local.beta + margin;
             Depth newDepth = (depth * 40) / 100;
             Line new_pv;
@@ -261,7 +261,14 @@ namespace Search {
             }
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             if (!u_classical) {
-                bestValue = network.evaluate(board.getPosition());
+                auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
+
+                if (num_pieces > 6) {
+                    bestValue = network.evaluate(board.getPosition());
+                } else {
+                    bestValue = network2.evaluate(board.getPosition());
+                }
+
             } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }
@@ -302,7 +309,7 @@ namespace Search {
             && local.skip_move.isEmpty()
             && extension == 0
                 ) {
-            constexpr Value margin = 850;
+            constexpr Value margin = sing_ext;
             Value new_alpha = local.sing_score - margin;
             Line new_pv;
             Value value = Search::search(board, new_pv, new_alpha - 1, new_alpha, local.ply, local.depth - 4, move,
@@ -387,7 +394,7 @@ namespace Search {
 
         //removing the excluded moves from the list
 
-        for(Move m : exluded_moves){
+        for (Move m : exluded_moves) {
             liste.remove(m);
         }
 
@@ -402,11 +409,11 @@ namespace Search {
     //there are various other things I will need to check
     void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
         if (depth >= 5 && isEval(last_score)) {
-            Value margin = 150;
+            Value margin = asp_wind;
             Value alpha_margin = margin;
             Value beta_margin = margin;
 
-            while (std::max(alpha_margin, beta_margin) < 3000) {
+            while (std::max(alpha_margin, beta_margin) < MAX_ASP) {
                 Line line;
                 Value alpha = last_score - alpha_margin;
                 Value beta = last_score + beta_margin;
