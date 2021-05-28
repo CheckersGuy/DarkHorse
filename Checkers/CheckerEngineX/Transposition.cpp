@@ -5,12 +5,7 @@
 
 #include "Transposition.h"
 
-#ifndef TRAIN
 Transposition TT;
-#else
-thread_local Transposition TT;
-#endif
-
 
 Transposition::Transposition(size_t capacity) {
     size_t size = 1u << capacity;
