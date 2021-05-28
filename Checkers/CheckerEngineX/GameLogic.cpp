@@ -18,10 +18,7 @@ Network network, network2;
 bool u_classical = false;
 
 void initialize() {
-#ifdef __EMSCRIPTEN__
-    Bits::set_up_bitscan();
-#endif
-    // gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/moredata3.weights");
+    //gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/moredata3.weights");
     Zobrist::initializeZobrisKeys();
 }
 

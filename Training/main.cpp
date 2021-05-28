@@ -19,7 +19,7 @@
 
 void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     //using processes instead of threads
-    const int parallelism = 14;
+    const int parallelism = 16;
 
     std::vector<Sample> samples;
     Utilities::read_binary<Sample>(std::back_inserter(samples), in_data);
@@ -62,6 +62,7 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
         } else if (pid == 0) {
             initialize();
             use_classical(true);
+            TT.resize(20);
             //child process
             std::cout << "Child: " << i << std::endl;
             for (size_t k = start_index; k < start_index + chunks[i]; ++k) {
@@ -126,9 +127,10 @@ int main(int argl, const char **argc) {
     TT.resize(20);
     use_classical(true);
 
-//generate_depth_data(7, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth7");
+    generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
 
     //creating a subset of the small-dataset consisting of only positions with >6 pieces
+/*
 
     std::vector<TrainSample> samples;
     Utilities::read_binary<TrainSample>(std::back_inserter(samples),
@@ -136,16 +138,17 @@ int main(int argl, const char **argc) {
 
     samples.erase(std::remove_if(samples.begin(), samples.end(), [](TrainSample s) {
         auto num_pieces = Bits::pop_count(s.pos.BP | s.pos.WP);
-        return num_pieces <=6 ;
+        return num_pieces >6 ;
     }), samples.end());
     std::cout<<samples.size()<<std::endl;
 
-    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data_depth7");
+    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"endgame_data_depth7");
 
     std::cout<<"Samples: "<<samples.size()<<std::endl;
 
 
     return 0;
+*/
 
 
 /*
@@ -302,15 +305,15 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-       Match engine_match("scal2", "moredata3");
+
+    /*   Match engine_match("scal3", "moredata3");
        engine_match.setTime(100);
        engine_match.setMaxGames(100000);
        engine_match.setNumThreads(6);
        engine_match.setHashSize(22);
        engine_match.start();
-
 */
+
 
 
 
