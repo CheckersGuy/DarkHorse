@@ -83,7 +83,7 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
 
     network.load("test_op_scal3.weights");
@@ -135,7 +135,7 @@ int main(int argl, const char **argc) {
    TT.resize(23);
 
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:W13:B4,K9,K32");
+    board = Position::pos_from_fen("B:WK5,K15,K13:BK3,K12,K17");
 
 
     board.printBoard();

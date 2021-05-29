@@ -49,8 +49,6 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
         chunks[index] += 1;
     }
 
-    std::cout << "Test" << std::endl;
-    std::cout << "Sum: " << std::reduce(chunks.begin(), chunks.end()) << std::endl;
     std::copy(chunks.begin(), chunks.end(), std::ostream_iterator<size_t>(std::cout, " "));
     std::cout << std::endl;
     size_t start_index = 0u;
@@ -84,11 +82,6 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
             std::exit(1);
         }
         start_index += chunks[i];
-    }
-
-    if (pid < 0) {
-        std::cerr << "Error" << std::endl;
-        std::exit(-1);
     }
     std::vector<TrainSample> test_buffer;
     if (pid > 0) {
@@ -127,7 +120,7 @@ int main(int argl, const char **argc) {
     TT.resize(20);
     use_classical(true);
 
-    generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
+    //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
 
     //creating a subset of the small-dataset consisting of only positions with >6 pieces
 /*
@@ -161,93 +154,6 @@ int main(int argl, const char **argc) {
     }
     Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data2");
 */
-
-
-/*
-    network.load("/home/robin/DarkHorse/cmake-build-debug/nocolor2col.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
-    network.addLayer(Layer{32, 1});
-    network.init();
-*/
-
-
-    /*   Position test;
-       test = Position::getStartPosition();
-       network.set_input(test);
-       test.printPosition();
-       std::cout << network.forward_pass() << std::endl;
-
-
-
-          std::vector<Sample> positions;
-
-
-          Utilities::read_binary<Sample>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/TrainData/examples.data");
-
-
-          for(Sample p : positions){
-              p.position.printPosition();
-              std::cout<<"Net_eval: "<<network.evaluate(p.position)<<std::endl;
-              std::cout<<"Weights_eval: "<<gameWeights.evaluate(p.position,0)<<std::endl;
-              std::cout<<std::endl;
-              std::cout<<std::endl;
-          }
-   */
-
-
-
-
-
-
-
-
-    //playing a simple game using only the eval
-
-
-
-
-
-
-
-
-/*
-    std::vector<Position> openings;
-
-    Utilities::read_binary<Position>(std::back_inserter(openings),
-                                     "/home/robin/DarkHorse/Training/Positions/3move.pos");
-    Position start = openings[32];
-    Board board;
-    board = start;
-    for (auto i = 0; i < 500; ++i) {
-        board.getPosition().printPosition();
-        std::cout << "FenString: " << board.getPosition().get_fen_string() << std::endl;
-        std::cout << std::endl;
-        std::cout << std::endl;
-        if (i % 2 == 0)
-            use_classical(false);
-        else
-            use_classical(true);
-
-        Move best;
-        searchValue(board, best, 1, 10000000, true);
-        board.makeMove(best);
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-        std::cout << std::endl;
-
-
-    }
-*/
-
-
-
-
-
-
-
-
 
 
 /*
@@ -306,13 +212,13 @@ int main(int argl, const char **argc) {
 
 
 
-    /*   Match engine_match("scal3", "moredata3");
-       engine_match.setTime(100);
-       engine_match.setMaxGames(100000);
-       engine_match.setNumThreads(6);
-       engine_match.setHashSize(22);
-       engine_match.start();
-*/
+    Match engine_match("scal3", "scal2");
+    engine_match.setTime(100);
+    engine_match.setMaxGames(100000);
+    engine_match.setNumThreads(6);
+    engine_match.setHashSize(22);
+    engine_match.start();
+
 
 
 
