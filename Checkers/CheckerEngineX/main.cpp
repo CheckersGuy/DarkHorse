@@ -86,7 +86,7 @@ int main(int argl, const char **argc) {
     use_classical(false);
 
 
-    network.load("test_op_scal3.weights");
+    network.load("test_open_scalxx9.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -94,7 +94,7 @@ int main(int argl, const char **argc) {
 
     network.init();
 
-    network2.load("test_end_scal3.weights");
+    network2.load("test_end_scalxx9.weights");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
@@ -102,7 +102,7 @@ int main(int argl, const char **argc) {
 
     network2.init();
 
-/*
+
 
 
 
@@ -111,31 +111,19 @@ int main(int argl, const char **argc) {
     pos.printPosition();
     std::cout<<std::endl;
 
-    MoveListe liste;
-    getMoves(pos,liste);
 
-    Position next =pos;
-    next.makeMove(liste[0]);
-    next.printPosition();
-    std::cout<<std::endl;
-
-    auto pair = compute_difference(pos.BP,next.BP);
-
-    Position test;
-    test.BP = pair.first;
-    test.printPosition();
-
-
+    float test = network.compute_incre_forward_pass(pos);
+    network.set_input(pos);
+    std::cout<<test<<std::endl;
 
 
 
     return 0;
-*/
+
 
    TT.resize(23);
-
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("B:WK5,K15,K13:BK3,K12,K17");
+    board = Position::pos_from_fen("W:W17:B4,3,K6,K14");
 
 
     board.printBoard();
