@@ -96,7 +96,7 @@ float Network::compute_incre_forward_pass(Position next) {
         uint32_t p = diff_men_w.first;
 
         while (n != 0) {
-            auto index = Bits::bitscan_foward(n) + offset;
+            auto index = Bits::bitscan_foward(n) + offset - 4;
             for (auto i = 0; i < l.out_features; ++i) {
                 z_previous[i] = z_previous[i] + weights[weight_index_offset + index * l.out_features + i];
             }
@@ -104,7 +104,7 @@ float Network::compute_incre_forward_pass(Position next) {
         }
 
         while (p != 0) {
-            auto index = Bits::bitscan_foward(p) + offset;
+            auto index = Bits::bitscan_foward(p) + offset-4;
             for (auto i = 0; i < l.out_features; ++i) {
                 z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
             }
@@ -126,7 +126,6 @@ float Network::compute_incre_forward_pass(Position next) {
 
         while (p != 0) {
             auto index = Bits::bitscan_foward(p) + offset;
-            std::cout << index << std::endl;
             for (auto i = 0; i < l.out_features; ++i) {
                 z_previous[i] = z_previous[i] - weights[weight_index_offset + index * l.out_features + i];
             }
@@ -177,7 +176,13 @@ float Network::compute_incre_forward_pass(Position next) {
             p &= p - 1u;
         }
     }
-
+    for (auto i = 0; i < l.out_features; ++i) {
+        temp[i] = std::clamp(z_previous[i], 0.0f, 1.0f);
+    }
+    for (auto i = 0; i < l.out_features; ++i) {
+        input[i] = temp[i];
+        temp[i] = 0.0f;
+    }
     weight_index_offset += l.out_features * l.in_features;
     bias_index_offset += l.out_features;
     //computation for the remaining layers
@@ -222,8 +227,6 @@ float Network::forward_pass() {
         for (auto i = 0; i < l.out_features; ++i) {
             temp[i] += biases[bias_index_offset + i];
             if (k < layers.size() - 1) {
-                //temp[i] = std::clamp(temp[i], 0.0f, temp[i]);
-                //some clipped relu experimentation
                 temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
             }
 

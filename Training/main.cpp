@@ -123,25 +123,27 @@ int main(int argl, const char **argc) {
     //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
 
     //creating a subset of the small-dataset consisting of only positions with >6 pieces
-/*
+
+
 
     std::vector<TrainSample> samples;
     Utilities::read_binary<TrainSample>(std::back_inserter(samples),
-                                        "/home/robin/DarkHorse/cmake-build-debug/eval_data_depth7");
+                                        "/home/robin/DarkHorse/Training/TrainData/eval_data_depth9_big");
 
     samples.erase(std::remove_if(samples.begin(), samples.end(), [](TrainSample s) {
         auto num_pieces = Bits::pop_count(s.pos.BP | s.pos.WP);
-        return num_pieces >6 ;
+        return num_pieces <=6 ;
     }), samples.end());
     std::cout<<samples.size()<<std::endl;
 
-    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"endgame_data_depth7");
+    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data_depth9_big");
 
     std::cout<<"Samples: "<<samples.size()<<std::endl;
 
 
     return 0;
-*/
+
+
 
 
 /*
@@ -202,24 +204,14 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-    Match engine_match("scal3", "scal2");
+  /*  Match engine_match("scal4", "moredata3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(6);
     engine_match.setHashSize(22);
     engine_match.start();
 
-
+*/
 
 
 
