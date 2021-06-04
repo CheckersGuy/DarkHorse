@@ -14,29 +14,37 @@
 float sigmoid(float val);
 
 
-
-
 struct Layer {
     int in_features;
     int out_features;
 };
 
-std::pair<uint32_t ,uint32_t > compute_difference(uint32_t previous, uint32_t next);
+std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
 
 
-class Network {
-public:
-    Position p_black,p_white;
-    std::unique_ptr<float[]> biases;
-    std::unique_ptr<float[]> weights;
+struct Network {
+
+    Position p_black, p_white;
     std::vector<Layer> layers;
-    std::unique_ptr<float[]>input;
-    std::unique_ptr<float[]>temp;
-    std::unique_ptr<float[]>z_black;
-    std::unique_ptr<float[]>z_white;
-
+    float *biases;
+    float *weights;
+    float *input;
+    float *temp;
+    float *z_black;
+    float *z_white;
     int max_units{0};
-public:
+
+    ~Network() {
+        delete[] biases;
+        delete[] weights;
+        delete[] input;
+        delete[] temp;
+        delete[] z_black;
+        delete[] z_white;
+    };
+
+
+    float get_max_weight();
 
     void addLayer(Layer layer);
 

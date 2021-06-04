@@ -79,6 +79,13 @@ inline Position posFromString(const std::string &pos) {
 
 #include <Network.h>
 
+
+void invert_memory_layout(Network& network, std::string out_file){
+    std::ofstream stream(out_file,std::ios::binary);
+    //little helper function to test different memory layouts !
+    //from column major to row major layout !
+}
+
 int main(int argl, const char **argc) {
 
     initialize();
@@ -86,15 +93,14 @@ int main(int argl, const char **argc) {
     use_classical(false);
 
 
-    network.load("test_open_scalxx9.weights");
+    network.load("test_open_scalxx9_big.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
-
-    network2.load("test_end_scalxx9.weights");
+    network2.load("test_end_scalxx9_big.weights");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
@@ -104,26 +110,9 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-    Position pos = Position::getStartPosition();
-    pos.printPosition();
-    std::cout<<std::endl;
-
-
-    float test = network.compute_incre_forward_pass(pos);
-    network.set_input(pos);
-    std::cout<<test<<std::endl;
-
-
-
-    return 0;
-
-
-   TT.resize(23);
+   /* TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:W17:B4,3,K6,K14");
+    board = Position::pos_from_fen("W:W5:B4,3");
 
 
     board.printBoard();
@@ -136,7 +125,9 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();
+    board.printBoard();*/
+
+
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {

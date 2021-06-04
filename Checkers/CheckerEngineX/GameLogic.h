@@ -68,5 +68,6 @@ void initialize();
 
 extern Network network;
 extern Network network2;
+extern Network test_net,test_net2;
 
 #endif //CHECKERSTEST_GAMELOGIC_H

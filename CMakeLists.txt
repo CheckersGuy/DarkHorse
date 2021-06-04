@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_CXX_FLAGS "-Ofast -pthread -fprofile-use -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast -fopt-info-vec -ftree-vectorize -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
 SET(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_BUILD_TYPE Debug)
 if (UNIX)
@@ -22,7 +22,7 @@ file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 
 
-add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources} Checkers/CheckerEngineX/Network.cpp Checkers/CheckerEngineX/Network.h)
+add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources} Checkers/CheckerEngineX/Network.cpp Checkers/CheckerEngineX/Network.h Checkers/CheckerEngineX/SIMD.h)
 
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})

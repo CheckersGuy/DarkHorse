@@ -14,7 +14,7 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network, network2;
+Network network, network2, test_net, test_net2;
 bool u_classical = false;
 
 void initialize() {

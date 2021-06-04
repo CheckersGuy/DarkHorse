@@ -29,9 +29,19 @@ namespace Statistics {
     }
 
     int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
+        //testing something
+
+
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
+
+      /*  if (move.isCapture()) {
+            auto capt_pieces = Bits::pop_count(move.captures);
+            return capt_pieces;
+        }
+*/
+
         return getMoveScore(move, color);
     }
 
