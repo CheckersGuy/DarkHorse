@@ -118,7 +118,7 @@ int main(int argl, const char **argc) {
 
     initialize();
     TT.resize(20);
-    use_classical(true);
+    use_classical(false);
 
     //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
 
@@ -126,22 +126,31 @@ int main(int argl, const char **argc) {
 
 
 
-    std::vector<TrainSample> samples;
-    Utilities::read_binary<TrainSample>(std::back_inserter(samples),
-                                        "/home/robin/DarkHorse/Training/TrainData/eval_data_depth9_big");
+/*
 
-    samples.erase(std::remove_if(samples.begin(), samples.end(), [](TrainSample s) {
-        auto num_pieces = Bits::pop_count(s.pos.BP | s.pos.WP);
-        return num_pieces <=6 ;
+
+
+    std::vector<Sample> samples;
+    Utilities::read_binary<Sample>(std::back_inserter(samples),
+                                        "/home/robin/DarkHorse/Training/TrainData/test3.train");
+
+    size_t total = samples.size();
+    samples.erase(std::remove_if(samples.begin(), samples.end(), [](Sample s) {
+        auto num_pieces = Bits::pop_count(s.position.BP | s.position.WP);
+        return num_pieces  >6 ;
     }), samples.end());
     std::cout<<samples.size()<<std::endl;
 
-    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data_depth9_big");
+    Utilities::write_to_binary<Sample>(samples.begin(),samples.end(),"endinggdata");
 
-    std::cout<<"Samples: "<<samples.size()<<std::endl;
+    std::cout<<"Samples: "<<(double)samples.size()/((double)total)<<std::endl;
 
 
     return 0;
+*/
+
+
+
 
 
 
@@ -158,10 +167,8 @@ int main(int argl, const char **argc) {
 */
 
 
+
 /*
-
-
-
     Board board;
 
     std::vector<Sample> samples;
@@ -172,6 +179,10 @@ int main(int argl, const char **argc) {
 
     int counter =0;
     for (Sample s : samples) {
+
+        auto num_pices = Bits::pop_count(s.position.BP | s.position.WP);
+        if(num_pices<=6)
+            continue;
 
         if(counter>=100)
             break;
@@ -189,6 +200,7 @@ int main(int argl, const char **argc) {
 
 
 
+
 /*
 
      Generator generator("Generator", "train2.pos", "temp");
@@ -202,16 +214,55 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-  /*  Match engine_match("scal4", "moredata3");
+    Match engine_match("check", "scal5");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(6);
     engine_match.setHashSize(22);
     engine_match.start();
 
-*/
+
+
+
+    /*   network.load("test_open_scalxx9_big.weights");
+       network.addLayer(Layer{120, 256});
+       network.addLayer(Layer{256, 32});
+       network.addLayer(Layer{32, 32});
+       network.addLayer(Layer{32, 1});
+
+       network.init();
+
+       network2.load("test_end_scalxx9_big.weights");
+       network2.addLayer(Layer{120, 256});
+       network2.addLayer(Layer{256, 32});
+       network2.addLayer(Layer{32, 32});
+       network2.addLayer(Layer{32, 1});
+
+       network2.init();
+
+
+       Position pos = Position::pos_from_fen("W:W18,19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,11,12,13,15");
+
+       std::vector<Position> positions;
+       Utilities::read_binary<Position>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/Positions/train2.pos");
+
+
+
+       for(Position p : positions){
+           network.init();
+           network.set_input(p);
+           float test = network.forward_pass();
+           float test2 = network.compute_incre_forward_pass(p);
+           if(std::abs(test-test2)>=0.01f){
+               std::cout<<test<<std::endl;
+               std::cout<<test2<<std::endl;
+               p.printPosition();
+               std::cout<<p.get_fen_string()<<std::endl;
+
+           }
+       }
+
+   */
 
 
 
