@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_CXX_FLAGS "-Ofast -fopt-info-vec -ftree-vectorize -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast  -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
 SET(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_BUILD_TYPE Debug)
 if (UNIX)

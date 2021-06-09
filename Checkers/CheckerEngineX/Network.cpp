@@ -23,13 +23,13 @@ void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
     if (!stream.good())
         std::exit(-1);
-    uint32_t num_weights, num_bias;
-    stream.read((char *) &num_weights, sizeof(uint32_t));
-    weights = new(std::align_val_t{16}) float[num_weights];
-    stream.read((char *) weights, sizeof(float) * num_weights);
-    stream.read((char *) &num_bias, sizeof(float));
-    biases = new(std::align_val_t{16}) float[num_bias];
-    stream.read((char *) biases, sizeof(float) * num_bias);
+    int num_weights, num_bias;
+    stream.read((char *) &num_weights, sizeof(int));
+    weights = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_weights, 32));;
+    stream.read((char *) weights.get(), sizeof(float) * num_weights);
+    stream.read((char *) &num_bias, sizeof(int));
+    biases = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_bias, 32));
+    stream.read((char *) biases.get(), sizeof(float) * num_bias);
     stream.close();
 
 }
@@ -46,16 +46,17 @@ void Network::init() {
     for (Layer l : layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
-    temp = new(std::align_val_t{16}) float[max_units];
-    input = new(std::align_val_t{16}) float[max_units];
+    float *test;
+    temp = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
+    input = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
 
     for (auto i = 0; i < max_units; ++i) {
         temp[i] = 0;
         input[i] = 0;
     }
     const size_t units = layers[0].out_features;
-    z_black = new(std::align_val_t{16}) float[units];
-    z_white = new(std::align_val_t{16}) float[units];
+    z_black = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
+    z_white = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
     //initializing those two vectors
     for (auto i = 0; i < units; ++i) {
         z_black[i] = biases[i];
@@ -66,19 +67,17 @@ void Network::init() {
 
 float Network::get_max_weight() {
     float max_value = std::numeric_limits<float>::min();
-    size_t num_weights =0;
-    for(Layer l : layers){
-        num_weights+=l.out_features*l.in_features;
+    size_t num_weights = 0;
+    for (Layer l : layers) {
+        num_weights += l.out_features * l.in_features;
     }
-    for(int i=0;i<num_weights;++i){
-        max_value = std::max(weights[i],max_value);
+    for (int i = 0; i < num_weights; ++i) {
+        max_value = std::max(weights[i], max_value);
     }
 
     return max_value;
 
 }
-
-
 
 float Network::compute_incre_forward_pass(Position next) {
     //to be continued
@@ -87,11 +86,11 @@ float Network::compute_incre_forward_pass(Position next) {
     Position previous;
     if (color == BLACK) {
         previous = p_black;
-        z_previous = z_black;
+        z_previous = z_black.get();
         next = next.getColorFlip();
     } else {
         previous = p_white;
-        z_previous = z_white;
+        z_previous = z_white.get();
     }
 
     size_t weight_index_offset = 0u;
@@ -109,16 +108,14 @@ float Network::compute_incre_forward_pass(Position next) {
 
         while (n != 0) {
             auto j = Bits::bitscan_foward(n) + offset - 4;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] + weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, 1.0f,
+                     layers[0].out_features);
             n &= n - 1u;
         }
         while (p != 0) {
             auto j = Bits::bitscan_foward(p) + offset - 4;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] - weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, -1.0f,
+                     layers[0].out_features);
             p &= p - 1u;
         }
         offset += 28;
@@ -129,17 +126,15 @@ float Network::compute_incre_forward_pass(Position next) {
 
         while (n != 0) {
             auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] + weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, 1.0f,
+                     layers[0].out_features);
             n &= n - 1u;
         }
 
         while (p != 0) {
             auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] - weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, -1.0f,
+                     layers[0].out_features);
             p &= p - 1u;
         }
         offset += 28;
@@ -151,17 +146,15 @@ float Network::compute_incre_forward_pass(Position next) {
 
         while (n != 0) {
             auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] + weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, 1.0f,
+                     layers[0].out_features);
             n &= n - 1u;
         }
 
         while (p != 0) {
             auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] - weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, -1.0f,
+                     layers[0].out_features);
             p &= p - 1u;
         }
         offset += 32;
@@ -173,25 +166,23 @@ float Network::compute_incre_forward_pass(Position next) {
 
         while (n != 0) {
             auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] + weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, 1.0f,
+                     layers[0].out_features);
             n &= n - 1u;
         }
 
         while (p != 0) {
             auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; i ++) {
-                z_previous[i] = z_previous[i] - weights[weight_index_offset + j * layers[0].out_features + i];
-            }
+            add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, -1.0f,
+                     layers[0].out_features);
             p &= p - 1u;
         }
     }
-    for (auto i = 0; i < layers[0].out_features; i ++) {
+    for (auto i = 0; i < layers[0].out_features; i++) {
         temp[i] = std::clamp(z_previous[i], 0.0f, 1.0f);
-        input[i] = temp[i];
-        temp[i] = 0;
     }
+    memcpy(input.get(), temp.get(), sizeof(float) * layers[0].out_features);
+    memset(temp.get(), 0, sizeof(float) * layers[0].out_features);
 
     weight_index_offset += layers[0].out_features * layers[0].in_features;
     bias_index_offset += layers[0].out_features;
@@ -199,23 +190,22 @@ float Network::compute_incre_forward_pass(Position next) {
     for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
         for (auto j = 0; j < l.in_features; ++j) {
-            if (input[j] == 0)
-                continue;
             for (auto i = 0; i < l.out_features; i++) {
                 temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
             }
-        }
-        for (auto i = 0; i < l.out_features; i++) {
-            if (k < layers.size() - 1){
-                temp[i] = std::clamp(temp[i] + biases[bias_index_offset + i], 0.0f, 1.0f);
-            }
-
+            /* const float mul = input[j];
+             add_simd(temp.get(), weights.get() + weight_index_offset + j * l.out_features, temp.get(), mul,
+                      l.out_features);*/
         }
 
-        for (auto i = 0; i < l.out_features; ++i) {
-            input[i] = temp[i];
-            temp[i] = 0;
+        if (k < layers.size() - 1) {
+            add_bias_and_clamp_simd(temp.get(), biases.get() + bias_index_offset, l.out_features);
         }
+
+
+        memcpy(input.get(), temp.get(), sizeof(float) * l.out_features);
+        memset(temp.get(), 0, sizeof(float) * l.out_features);
+
         weight_index_offset += l.out_features * l.in_features;
         bias_index_offset += l.out_features;
 
@@ -266,6 +256,12 @@ int Network::evaluate(Position pos) {
     /*   set_input(pos);
        float val = forward_pass();*/
     float val = compute_incre_forward_pass(pos);
+    //testing some stuff
+    /*auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
+    if (num_pieces > 6) {
+        return static_cast<int>(val * 1000);
+    }
+    return static_cast<int>(val * 10);*/
     return static_cast<int>(val);
 }
 

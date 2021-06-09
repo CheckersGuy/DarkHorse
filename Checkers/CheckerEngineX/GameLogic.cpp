@@ -148,8 +148,6 @@ namespace Search {
 
 
         // tb-probing
-#ifndef TRAIN
-
         if (TT.findHash(pos_key, info)) {
             tt_move = info.tt_move;
             auto tt_score = valueFromTT(info.score, ply);
@@ -171,7 +169,7 @@ namespace Search {
                 local.sing_move = tt_move;
             }
         }
-#endif
+
         //probcut
 
 
