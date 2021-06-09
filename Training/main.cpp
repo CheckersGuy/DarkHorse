@@ -18,8 +18,25 @@
 #include <unistd.h>
 
 void generate_depth_data(int depth, std::string in_data, std::string out_data) {
+    //rewriting this a little to be using memory backed files
     //using processes instead of threads
     const int parallelism = 16;
+
+
+    network.load("test_open_scalxx9_big.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
+    network.addLayer(Layer{32, 1});
+
+    network.init();
+    network2.load("test_end_scalxx9_big.weights");
+    network2.addLayer(Layer{120, 256});
+    network2.addLayer(Layer{256, 32});
+    network2.addLayer(Layer{32, 32});
+    network2.addLayer(Layer{32, 1});
+
+    network2.init();
 
     std::vector<Sample> samples;
     Utilities::read_binary<Sample>(std::back_inserter(samples), in_data);
@@ -27,6 +44,8 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     Sample *some_data;
     TrainSample *buffer;
     std::atomic<int> *atomic_counter;
+
+
     some_data = (Sample *) mmap(NULL, sizeof(Sample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
     buffer = (TrainSample *) mmap(NULL, sizeof(TrainSample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
                                   -1, 0);
@@ -59,7 +78,7 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
             std::exit(-1);
         } else if (pid == 0) {
             initialize();
-            use_classical(true);
+            use_classical(false);
             TT.resize(20);
             //child process
             std::cout << "Child: " << i << std::endl;
@@ -68,9 +87,8 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
                 Position pos = s.position;
                 Board board;
                 board = pos;
-                auto eval = board.getMover() * searchValue(board, depth, 1000000, false);
-                if (std::abs(eval) >= 9000)
-                    eval = 9000 * ((eval >= 0) ? 1 : -1);
+                int eval = board.getMover() * searchValue(board, depth, 1000000, false);
+                eval = std::clamp(eval, -900, 900);
 
                 atomic_counter->operator++();
                 TrainSample x;
@@ -117,19 +135,29 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
 int main(int argl, const char **argc) {
 
     initialize();
-    TT.resize(20);
-    use_classical(false);
-
-    //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/small_dataset", "eval_data_depth12");
+    generate_depth_data(7, "/home/robin/DarkHorse/Training/TrainData/openingdata", "reinfdepth3");
 
     //creating a subset of the small-dataset consisting of only positions with >6 pieces
+
+    /* std::vector<Sample> samples;
+     Utilities::read_binary<Sample>(std::back_inserter(samples), "/home/robin/DarkHorse/Training/TrainData/openingdata");
+
+
+     for (auto &sample  : samples) {
+         sample.position.printPosition();
+         std::cout<<"res: "<<sample.result<<std::endl;
+     }*/
+    //Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"reinfopendepth9");
+
+
+
+
+
+
 
 
 
 /*
-
-
-
     std::vector<Sample> samples;
     Utilities::read_binary<Sample>(std::back_inserter(samples),
                                         "/home/robin/DarkHorse/Training/TrainData/test3.train");
@@ -137,17 +165,18 @@ int main(int argl, const char **argc) {
     size_t total = samples.size();
     samples.erase(std::remove_if(samples.begin(), samples.end(), [](Sample s) {
         auto num_pieces = Bits::pop_count(s.position.BP | s.position.WP);
-        return num_pieces  >6 ;
+        return num_pieces  <=6 ;
     }), samples.end());
     std::cout<<samples.size()<<std::endl;
 
-    Utilities::write_to_binary<Sample>(samples.begin(),samples.end(),"endinggdata");
+    Utilities::write_to_binary<Sample>(samples.begin(),samples.end(),"openingdata");
 
     std::cout<<"Samples: "<<(double)samples.size()/((double)total)<<std::endl;
 
 
     return 0;
 */
+
 
 
 
@@ -214,12 +243,14 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("check", "scal5");
+
+    Match engine_match("newfixed7", "oldfixed9");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(6);
-    engine_match.setHashSize(22);
+    engine_match.setNumThreads(4);
+    engine_match.setHashSize(21);
     engine_match.start();
+
 
 
 

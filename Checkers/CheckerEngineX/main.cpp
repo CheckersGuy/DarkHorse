@@ -80,12 +80,6 @@ inline Position posFromString(const std::string &pos) {
 #include <Network.h>
 
 
-void invert_memory_layout(Network& network, std::string out_file){
-    std::ofstream stream(out_file,std::ios::binary);
-    //little helper function to test different memory layouts !
-    //from column major to row major layout !
-}
-
 int main(int argl, const char **argc) {
 
     initialize();
@@ -110,22 +104,25 @@ int main(int argl, const char **argc) {
 
 
 
-   /* TT.resize(23);
-    board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:W5:B4,3");
+
+/*
+     TT.resize(23);
+     board = Position::getStartPosition();
+     board = Position::pos_from_fen("W:W5:B4,3");
 
 
-    board.printBoard();
+     board.printBoard();
 
 
-    std::cout << std::endl;
+     std::cout << std::endl;
 
-    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
 
-    Move best;
-    searchValue(board, best, MAX_PLY, 20000000, true);
-    board.makeMove(best);
-    board.printBoard();*/
+     Move best;
+     searchValue(board, best, MAX_PLY, 20000000, true);
+     board.makeMove(best);
+     board.printBoard();*/
+
 
 
     std::string current;
@@ -176,7 +173,7 @@ int main(int argl, const char **argc) {
             if (liste.length() == 1) {
                 bestMove = liste[0];
             } else {
-                searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+                searchValue(board, bestMove, 7, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";

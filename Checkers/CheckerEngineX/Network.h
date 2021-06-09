@@ -10,6 +10,8 @@
 #include <fstream>
 #include <iostream>
 #include "Position.h"
+#include "SIMD.h"
+#include <cstring>
 
 float sigmoid(float val);
 
@@ -21,27 +23,26 @@ struct Layer {
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
 
+struct AlignedDeleter {
+    void operator()(float *ptr) {
+        //needs to be different fo MSVC
+        _mm_free(ptr);
+    }
+};
+
+template<typename T> using aligned_ptr = std::unique_ptr<T,AlignedDeleter>;
 
 struct Network {
 
     Position p_black, p_white;
     std::vector<Layer> layers;
-    float *biases;
-    float *weights;
-    float *input;
-    float *temp;
-    float *z_black;
-    float *z_white;
+    aligned_ptr<float[]> biases;
+    aligned_ptr<float[]> weights;
+    aligned_ptr<float[]> input;
+    aligned_ptr<float[]> temp;
+    aligned_ptr<float[]> z_black;
+    aligned_ptr<float[]> z_white;
     int max_units{0};
-
-    ~Network() {
-        delete[] biases;
-        delete[] weights;
-        delete[] input;
-        delete[] temp;
-        delete[] z_black;
-        delete[] z_white;
-    };
 
 
     float get_max_weight();
