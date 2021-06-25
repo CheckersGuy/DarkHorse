@@ -18,11 +18,11 @@ void Transposition::resize(size_t capa) {
     clear();
 }
 
-size_t Transposition::getCapacity() {
+size_t Transposition::getCapacity()const {
     return capacity;
 }
 
-uint32_t Transposition::getHashHits() {
+uint32_t Transposition::getHashHits()const {
     return hashHit;
 }
 
@@ -61,7 +61,7 @@ void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t dept
     cluster[0].age = age_counter;
 }
 
-bool Transposition::findHash(uint64_t key, NodeInfo &info) {
+bool Transposition::findHash(uint64_t key, NodeInfo &info)const {
     const auto index = key & (getCapacity() - 1u);
     const uint32_t currKey = key >> 32u;
     for (int i = 0; i < bucket_size; ++i) {

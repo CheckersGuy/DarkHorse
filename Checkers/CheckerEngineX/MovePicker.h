@@ -7,7 +7,7 @@
 
 #include "types.h"
 #include "Move.h"
-
+#include "Position.h"
 
 namespace Statistics {
     class MovePicker {
@@ -18,7 +18,7 @@ namespace Statistics {
 
         int getMoveScore(Move move, Color color);
 
-        int getMoveScore(Move move, Color color, Move ttMove);
+        int getMoveScore(Position current,Move move, Color color, Move ttMove);
 
         void clearScores();
 

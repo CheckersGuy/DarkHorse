@@ -23,14 +23,14 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     const int parallelism = 16;
 
 
-    network.load("test_open_scalxx9_big.weights");
+    network.load("testbig");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
-    network2.load("test_end_scalxx9_big.weights");
+    network2.load("endtest");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
@@ -131,11 +131,48 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
 
 }
 
+struct PosHasher {
+
+    uint64_t operator()(Position pos) const {
+        return Zobrist::generateKey(pos);
+    }
+};
+
+template<typename T>
+void remove_duplicates(std::string in_File, std::string out_file) {
+    Zobrist::initializeZobrisKeys();
+    std::vector<T> in_samples;
+    Utilities::read_binary<T>(std::back_inserter(in_samples), in_File);
+    std::vector<T> out_samples;
+    std::unordered_set<Position, PosHasher> hash_table;
+    std::cout << "Number of samples before removing duplicates: " << in_samples.size() << std::endl;
+    for (auto sample : in_samples) {
+        Position curr;
+        if constexpr (std::is_same_v<T, Sample>) {
+            curr = sample.position;
+        } else {
+            curr = sample.pos;
+        }
+        //we have already seen the sample
+        if (hash_table.find(curr) != hash_table.end()) {
+            continue;
+        }
+        hash_table.insert(curr);
+        out_samples.emplace_back(sample);
+    }
+    std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
+    Utilities::write_to_binary<T>(out_samples.begin(), out_samples.end(), out_file);
+
+}
 
 int main(int argl, const char **argc) {
 
     initialize();
-    generate_depth_data(7, "/home/robin/DarkHorse/Training/TrainData/openingdata", "reinfdepth3");
+    //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/openingdataremoved", "/home/robin/DarkHorse/Training/TrainData/depth12dataopen");
+    //remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/openingdata","/home/robin/DarkHorse/Training/TrainData/openingdataremoved");
+
+
+
 
     //creating a subset of the small-dataset consisting of only positions with >6 pieces
 
@@ -151,8 +188,23 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
+    std::vector<TrainSample> positions;
+    std::vector<TrainSample> nextPos;
+    Utilities::read_binary<TrainSample>(std::back_inserter(positions),
+                                        "/home/robin/DarkHorse/Training/TrainData/opening_data_depth9_bigremoved");
+    int max =0;
+    for (auto &sample : positions) {
+        max = std::max(max,sample.evaluation);
+        sample.evaluation = std::clamp(sample.evaluation, -6000, 6000);
+        nextPos.emplace_back(sample);
+    }
+    std::cout<<"Maxeval "<<max<<std::endl;
+    Utilities::write_to_binary<TrainSample>(nextPos.begin(), nextPos.end(),
+                                            "/home/robin/DarkHorse/Training/TrainData/opening_data_depth9_bigremoved2");
 
+*/
 
 
 
@@ -197,38 +249,6 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-    Board board;
-
-    std::vector<Sample> samples;
-    Utilities::read_binary<Sample>(std::back_inserter(samples), "../Training/TrainData/small_dataset");
-    std::mt19937_64 generator(213231ull);
-    std::shuffle(samples.begin(),samples.end(),generator);
-    std::cout << samples.size() << std::endl;
-
-    int counter =0;
-    for (Sample s : samples) {
-
-        auto num_pices = Bits::pop_count(s.position.BP | s.position.WP);
-        if(num_pices<=6)
-            continue;
-
-        if(counter>=100)
-            break;
-        counter++;
-        Position pos = s.position;
-        if (pos.isEnd())
-            continue;
-
-        pos.printPosition();
-        std::cout<<"Evaluation: "<<network.evaluate(pos)<<std::endl;
-        std::cout << std::endl;
-    }
-*/
-
-
-
-
 
 /*
 
@@ -244,12 +264,15 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("newfixed7", "oldfixed9");
+
+
+    Match engine_match("base", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(4);
+    engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
     engine_match.start();
+
 
 
 

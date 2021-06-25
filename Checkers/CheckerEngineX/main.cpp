@@ -94,7 +94,7 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
 
     network.init();
-    network2.load("test_end_scalxx9_big.weights");
+    network2.load("endtest");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
@@ -103,25 +103,23 @@ int main(int argl, const char **argc) {
     network2.init();
 
 
-
-
 /*
-     TT.resize(23);
-     board = Position::getStartPosition();
-     board = Position::pos_from_fen("W:W5:B4,3");
+    TT.resize(23);
+    board = Position::getStartPosition();
+    board = Position::pos_from_fen("W:WK6:B4,3");
 
 
-     board.printBoard();
+    board.printBoard();
 
 
-     std::cout << std::endl;
+    std::cout << std::endl;
 
-     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Move best;
+    searchValue(board, best, MAX_PLY, 20000000, true);
+    board.makeMove(best);
+    board.printBoard();
+*/
 
-     Move best;
-     searchValue(board, best, MAX_PLY, 20000000, true);
-     board.makeMove(best);
-     board.printBoard();*/
 
 
 
@@ -173,7 +171,7 @@ int main(int argl, const char **argc) {
             if (liste.length() == 1) {
                 bestMove = liste[0];
             } else {
-                searchValue(board, bestMove, 7, std::stoi(time_string), false);
+                searchValue(board, bestMove, 9, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";

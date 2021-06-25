@@ -24,7 +24,7 @@ public:
 
     Board(const Board &board);
 
-    void printBoard();
+    void printBoard() const;
 
     void makeMove(Move move);
 
@@ -32,15 +32,13 @@ public:
 
     bool isSilentPosition();
 
-    bool hasJumps();
-
     Position &getPosition();
 
-    uint64_t getCurrentKey();
+    uint64_t getCurrentKey() const;
 
-    bool isRepetition();
+    bool isRepetition() const;
 
-    Color getMover();
+    Color getMover() const;
 
     Board &operator=(Position pos);
 };

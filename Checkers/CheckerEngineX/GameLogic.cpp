@@ -14,7 +14,7 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network, network2, test_net, test_net2;
+Network network, network2;
 bool u_classical = false;
 
 void initialize() {
@@ -50,7 +50,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
 
-    for (int i = 1; i <= depth; ++i) {
+    for (int i = 1; i <= depth; i ++) {
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
@@ -96,9 +96,11 @@ namespace Search {
         pv.clear();
         //checking time-used
 
+
         if (board.isRepetition()) {
             return 0;
         }
+
 
         MoveListe liste;
 
@@ -141,7 +143,7 @@ namespace Search {
         }
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            return board.getMover() * Network::evaluate(network, network2, board.getPosition());
         }
 
 
@@ -170,10 +172,6 @@ namespace Search {
             }
         }
 
-        //probcut
-
-
-
         if (!local.pv_node && local.prune && local.depth >= 3 && isEval(local.beta)) {
             Value margin = (prob_cut * local.depth);
             Value newBeta = local.beta + margin;
@@ -193,7 +191,7 @@ namespace Search {
         }
 
         //sorting
-        liste.sort(tt_move, local.pv_node, board.getMover());
+        liste.sort(board.getPosition(), tt_move, local.pv_node, board.getMover());
 
         //move-loop
         Search::move_loop(local, board, pv, liste);
@@ -234,7 +232,7 @@ namespace Search {
 
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            return board.getMover() * Network::evaluate(network, network2, board.getPosition());
         }
 
         if (ply > glob.sel_depth)
@@ -256,14 +254,7 @@ namespace Search {
             }
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             if (!u_classical) {
-                auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
-
-                if (num_pieces > 6) {
-                    bestValue = network.evaluate(board.getPosition());
-                } else {
-                    bestValue = network2.evaluate(board.getPosition());
-                }
-
+                bestValue = Network::evaluate(network, network2, board.getPosition());
             } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }
@@ -394,7 +385,7 @@ namespace Search {
         }
 
         liste.putFront(mainPV[local.ply]);
-        liste.sort(Move{}, true, board.getMover());
+        liste.sort(board.getPosition(), Move{}, true, board.getMover());
 
         move_loop(local, board, line, liste);
 

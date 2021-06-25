@@ -56,35 +56,10 @@ struct Position {
             return WP;
     }
 
-    template<PieceType type>
-    constexpr uint32_t getPieces() {
-        if constexpr(type == KING) {
-            return K;
-        } else {
-            return (BP | WP) & (~K);
-        }
-    }
-
-    template<Color color>
-    constexpr uint32_t pawn_count() {
-        if constexpr (color == BLACK)
-            return Bits::pop_count(BP & (~K));
-        else
-            return Bits::pop_count(WP & (~K));;
-    }
-
-    template<Color color>
-    constexpr uint32_t king_count() {
-        if constexpr (color == BLACK)
-            return  Bits::pop_count(BP & K);
-        else
-            return Bits::pop_count(WP & K);
-    }
-
     uint32_t getKingAttackSquares(uint32_t bit_mask);
 
     template<Color color>
-    uint32_t attacks() {
+    uint32_t attacks()const {
         //returns all empty squares that are attacked by color
         uint32_t attacks = 0u;
         const uint32_t empty = ~(BP | WP);

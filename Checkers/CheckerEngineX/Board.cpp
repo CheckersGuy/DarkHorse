@@ -14,7 +14,7 @@ Board::Board(const Board &other) {
     this->pCounter = other.pCounter;
 }
 
-void Board::printBoard() {
+void Board::printBoard()const {
     Position pos = pStack[pCounter];
     pos.printPosition();
 }
@@ -42,34 +42,27 @@ Board &Board::operator=(Position pos) {
 }
 
 
-Color Board::getMover() {
-    return getPosition().getColor();
+Color Board::getMover()const {
+    return pStack[pCounter].getColor();
 }
 
 bool Board::isSilentPosition() {
     return (getPosition().getJumpers<WHITE>() == 0u && getPosition().getJumpers<BLACK>() == 0u);
 }
 
-bool Board::hasJumps() {
-    return !isSilentPosition();
+uint64_t Board::getCurrentKey() const{
+    return pStack[pCounter].key;
 }
 
-uint64_t Board::getCurrentKey() {
-    return getPosition().key;
-}
-
-bool Board::isRepetition() {
+bool Board::isRepetition()const {
     if (pCounter < 4)
         return false;
 
     int counter = 0;
-
+    const Position check = pStack[pCounter];
     for (auto i = pCounter; i > 0; i -= 2) {
 
-        /*if(moves[i].isCapture() || moves[i].isPromotion(pStack[i-1].K))
-            return false;*/
-
-        if (pStack[i] == getPosition()) {
+        if (pStack[i] == check) {
             counter++;
         }
         if (counter >= 2)
