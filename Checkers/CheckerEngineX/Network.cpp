@@ -5,8 +5,17 @@
 #include <complex>
 #include "Network.h"
 
-float sigmoid(float value) {
-    return 1.0f / (1.0f + std::exp(-value));
+
+
+
+int Network::evaluate(Network &op, Network &end, Position pos) {
+    auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
+    if (num_pieces > 6) {
+        return op.evaluate(pos);
+    } else {
+        return end.evaluate(pos);
+    }
+
 }
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
@@ -110,6 +119,7 @@ float Network::compute_incre_forward_pass(Position next) {
             auto j = Bits::bitscan_foward(n) + offset - 4;
             add_simd(z_previous, weights.get() + weight_index_offset + j * layers[0].out_features, z_previous, 1.0f,
                      layers[0].out_features);
+
             n &= n - 1u;
         }
         while (p != 0) {
@@ -193,9 +203,6 @@ float Network::compute_incre_forward_pass(Position next) {
             for (auto i = 0; i < l.out_features; i++) {
                 temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
             }
-            /* const float mul = input[j];
-             add_simd(temp.get(), weights.get() + weight_index_offset + j * l.out_features, temp.get(), mul,
-                      l.out_features);*/
         }
 
         if (k < layers.size() - 1) {
@@ -220,12 +227,12 @@ float Network::compute_incre_forward_pass(Position next) {
     return input[0];
 }
 
-float Network::forward_pass() {
+float Network::forward_pass() const {
 
     size_t weight_index_offset = 0u;
     size_t bias_index_offset = 0u;
     for (auto k = 0; k < layers.size(); ++k) {
-        Layer &l = layers[k];
+        const Layer &l = layers[k];
         for (auto j = 0; j < l.in_features; ++j) {
             if (input[j] == 0)
                 continue;
@@ -253,15 +260,7 @@ float Network::forward_pass() {
 }
 
 int Network::evaluate(Position pos) {
-    /*   set_input(pos);
-       float val = forward_pass();*/
     float val = compute_incre_forward_pass(pos);
-    //testing some stuff
-    /*auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces > 6) {
-        return static_cast<int>(val * 1000);
-    }
-    return static_cast<int>(val * 10);*/
     return static_cast<int>(val);
 }
 
@@ -270,9 +269,6 @@ void Network::set_input(Position p) {
     if (p.color == BLACK) {
         p = p.getColorFlip();
     }
-    constexpr size_t INPUT_SIZE = 120;
-    //clearing the input first
-
     for (auto i = 0; i < max_units; ++i) {
         input[i] = 0;
         temp[i] = 0;
@@ -307,12 +303,4 @@ void Network::set_input(Position p) {
         black_kings &= black_kings - 1u;
         input[offset + index] = 1;
     }
-    //input[INPUT_SIZE - 1] = (p.getColor() == BLACK) ? 0 : 1;
-/*
-    for (auto i = 0; i < INPUT_SIZE; ++i) {
-        std::cout << input[i] << " ";
-    }
-    std::cout << std::endl;
-*/
-
 }

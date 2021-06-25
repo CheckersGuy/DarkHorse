@@ -13,9 +13,6 @@
 #include "SIMD.h"
 #include <cstring>
 
-float sigmoid(float val);
-
-
 struct Layer {
     int in_features;
     int out_features;
@@ -57,9 +54,11 @@ struct Network {
 
     float compute_incre_forward_pass(Position next);
 
-    float forward_pass();
+    float forward_pass()const;
 
     int evaluate(Position pos);
+
+    static int evaluate(Network& op, Network& end, Position pos);
 
 };
 

@@ -19,15 +19,24 @@ struct NodeInfo {
 };
 
 struct Entry {
-    //total of 16 bytes
-    Value value{0};
-    Move bestMove;
-    uint32_t key{0u};
-    uint32_t age{100000u}; //age
-    Flag flag{Flag::None};
-    uint8_t depth{0};
+    Value value{0};//4 bytes
+    Move bestMove;//12 bytes
+    uint32_t key{0u};//4 bytes
+    uint32_t age{100000u};// 4 bytes
+    Flag flag{Flag::None};//1 byte
+    uint8_t depth{0};//1 byte
+    //padding
+    //total of 4+12+4+4+1+1 = 26 bytes !!!
+    //horrible, would like a total of 16 bytes one again
 };
 constexpr size_t bucket_size = 4;
+
+
+/*struct Cluster{
+    //
+
+    Entry& find_entry(uint64_t key);
+};*/
 
 using Cluster = std::array<Entry, bucket_size>;
 
@@ -44,9 +53,9 @@ public:
 
     Transposition() = default;
 
-    size_t getCapacity();
+    size_t getCapacity()const;
 
-    uint32_t getHashHits();
+    uint32_t getHashHits()const;
 
     void clear();
 
@@ -54,7 +63,7 @@ public:
 
     void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
 
-    bool findHash(uint64_t key, NodeInfo &info);
+    bool findHash(uint64_t key, NodeInfo &info)const;
 };
 
 extern Transposition TT;

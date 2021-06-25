@@ -28,19 +28,18 @@ namespace Statistics {
         return score;
     }
 
-    int MovePicker::getMoveScore(Move move, Color color, Move ttMove) {
-        //testing something
-
+    int MovePicker::getMoveScore(Position current, Move move, Color color, Move ttMove) {
 
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
+        if (move.isCapture()) {
+            uint32_t king_cap, pawn_cap;
+            king_cap = Bits::pop_count(current.K & move.captures);
+            pawn_cap = Bits::pop_count((current.WP | current.BP) & move.captures & (~current.K));
 
-      /*  if (move.isCapture()) {
-            auto capt_pieces = Bits::pop_count(move.captures);
-            return capt_pieces;
+            return 10 * (int) pawn_cap + 12 * (int) king_cap;
         }
-*/
 
         return getMoveScore(move, color);
     }
