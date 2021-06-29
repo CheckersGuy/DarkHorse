@@ -17,6 +17,26 @@
 constexpr uint32_t region = 13107u;
 constexpr size_t SIZE = 390625ull * 9ull * 2ull;
 
+inline size_t getIndexBigRegion(uint32_t big_region, const Position &pos) {
+    constexpr size_t index_offset = 390625ull * 9ull * 2ull;
+    uint32_t orig_pieces = (pos.BP | pos.WP) & big_region;
+    uint32_t pieces = (pos.BP | pos.WP);
+    pieces = Bits::pext(pieces, big_region);
+
+    uint32_t BP = pos.BP & (~pos.K);
+    uint32_t WP = pos.WP & (~pos.K);
+    size_t index = 0ull;
+    while (pieces) {
+        uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
+        size_t temp_index = Bits::bitscan_foward(pieces);
+        size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull;
+        index += current * powers[temp_index];
+        pieces &= pieces - 1u;
+        orig_pieces &= orig_pieces - 1u;
+    }
+
+}
+
 
 inline size_t getIndex2(uint32_t reg, const Position &pos) {
     uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
@@ -74,41 +94,6 @@ struct Weights {
     T getMinValue() const {
         return *std::min_element(weights.begin(), weights.end());
     }
-
-    int king_mobility(Position &pos) const {
-        uint32_t kings_white = pos.WP & pos.K;
-        uint32_t kings_black = pos.BP & pos.K;
-        int count_denied = 0;
-        int count_safe = 0;
-
-        if (kings_white != 0u) {
-            uint32_t attacked = pos.attacks<BLACK>();
-            while (kings_white != 0u) {
-                uint32_t bit_mask = kings_white & (~(kings_white - 1u));
-                uint32_t squares = pos.getKingAttackSquares(bit_mask);
-                uint32_t safe_squares = squares & (~attacked);
-                uint32_t denied_squares = squares & attacked;
-                count_safe += __builtin_popcount(safe_squares);
-                count_denied += __builtin_popcount(denied_squares);
-                kings_white &= kings_white - 1u;
-            }
-        }
-
-        if (kings_black != 0u) {
-            uint32_t attacked = pos.attacks<WHITE>();
-            while (kings_black != 0u) {
-                uint32_t bit_mask = kings_black & (~(kings_black - 1u));
-                uint32_t squares = pos.getKingAttackSquares(bit_mask);
-                uint32_t safe_squares = squares & (~attacked);
-                uint32_t denied_squares = squares & attacked;
-                count_safe -= __builtin_popcount(safe_squares);
-                count_denied -= __builtin_popcount(denied_squares);
-                kings_black &= kings_black - 1u;
-            }
-        }
-        return  count_safe-count_denied;
-    }
-
 
     template<typename RunType=uint32_t>
     void loadWeights(const std::string &path) {
@@ -177,7 +162,7 @@ struct Weights {
 
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
-        const U color =pos.color;
+        const U color = pos.color;
         constexpr U pawnEval = 1000;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
@@ -204,7 +189,7 @@ struct Weights {
             BK = Bits::pop_count(pos.BP & pos.K);
             phase += WK + BK;
         }
-        if(pos.getColor() == BLACK){
+        if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
         U opening = 0, ending = 0;
@@ -218,8 +203,8 @@ struct Weights {
                 ending += (weights[indexEnding]);
             }
         }
-        opening*=color;
-        ending*=color;
+        opening *= color;
+        ending *= color;
 
         const U pieceEval = (WP - BP) * pawnEval;
         const U kingEvalOp = kingOp * (WK - BK);
@@ -236,7 +221,7 @@ struct Weights {
         if constexpr(std::is_floating_point_v<U>) {
             score = score / stage_size;
         } else {
-            score = div_round(score,stage_size);
+            score = div_round(score, stage_size);
         }
         return score;
     }

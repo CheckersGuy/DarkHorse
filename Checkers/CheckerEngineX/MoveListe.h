@@ -19,7 +19,7 @@ public:
 
     void addMove(Move next);
 
-    void sort(Position current,Move ttMove, bool inPVLine, Color color);
+    void sort(Position current,Depth depth,Move ttMove, bool inPVLine, Color color);
 
     bool isEmpty() const;
 

@@ -20,34 +20,36 @@
 void generate_depth_data(int depth, std::string in_data, std::string out_data) {
     //rewriting this a little to be using memory backed files
     //using processes instead of threads
-    const int parallelism = 16;
 
-
-    network.load("testbig");
+/*    network.load("depth3testreinf");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-
     network.init();
+
+
     network2.load("endtest");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();
+    network2.init();*/
+
+    const int parallelism = 16;
+    use_classical(false);
 
     std::vector<Sample> samples;
     Utilities::read_binary<Sample>(std::back_inserter(samples), in_data);
     const size_t size = samples.size();
     Sample *some_data;
-    TrainSample *buffer;
+    PolySample1 *buffer;
     std::atomic<int> *atomic_counter;
 
 
     some_data = (Sample *) mmap(NULL, sizeof(Sample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    buffer = (TrainSample *) mmap(NULL, sizeof(TrainSample) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
+    buffer = (PolySample1 *) mmap(NULL, sizeof(PolySample1) * size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
                                   -1, 0);
     atomic_counter = (std::atomic<int> *) mmap(NULL, sizeof(std::atomic<int>), PROT_READ | PROT_WRITE,
                                                MAP_SHARED | MAP_ANONYMOUS, -1, 0);
@@ -78,30 +80,50 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
             std::exit(-1);
         } else if (pid == 0) {
             initialize();
-            use_classical(false);
+            use_classical(true);
             TT.resize(20);
             //child process
             std::cout << "Child: " << i << std::endl;
             for (size_t k = start_index; k < start_index + chunks[i]; ++k) {
                 Sample s = some_data[k];
                 Position pos = s.position;
+                Color color = pos.color;
                 Board board;
                 board = pos;
-                int eval = board.getMover() * searchValue(board, depth, 1000000, false);
-                eval = std::clamp(eval, -900, 900);
+                Move best;
+                int eval = board.getMover() * searchValue(board, best, depth, 1000000, false);
+                eval = std::clamp(eval, -9000, 9000);
+
+                uint32_t mover = best.from;
+                Position temp = pos;
+
+                if (color == BLACK) {
+                    temp = temp.getColorFlip();
+                    mover = getMirrored(mover);
+                }
+
+                /*     temp.printPosition();
+                     Position test;
+                     test.BP = mover;
+                     test.printPosition();
+                     std::cout << std::endl;
+                     std::cout << std::endl;
+                     std::cout << std::endl;*/
 
                 atomic_counter->operator++();
-                TrainSample x;
+                PolySample1 x;
                 x.pos = pos;
                 x.evaluation = eval;
                 x.result = s.result;
+                //should be stored from whites perspective
+                x.piece_moved = (int) Bits::bitscan_foward(mover);
                 buffer[k] = x;
             }
             std::exit(1);
         }
         start_index += chunks[i];
     }
-    std::vector<TrainSample> test_buffer;
+    std::vector<PolySample1> test_buffer;
     if (pid > 0) {
 
 
@@ -117,14 +139,14 @@ void generate_depth_data(int depth, std::string in_data, std::string out_data) {
         }
 
         for (int j = 0; j < size; ++j) {
-            TrainSample s = buffer[j];
+            PolySample1 s = buffer[j];
             test_buffer.emplace_back(s);
         }
-        Utilities::write_to_binary<TrainSample>(test_buffer.begin(), test_buffer.end(), out_data);
+        Utilities::write_to_binary<PolySample1>(test_buffer.begin(), test_buffer.end(), out_data);
 
 
         munmap(some_data, size * sizeof(Sample));
-        munmap(buffer, size * sizeof(TrainSample));
+        munmap(buffer, size * sizeof(PolySample1));
         std::exit(1);
     }
 
@@ -135,6 +157,12 @@ struct PosHasher {
 
     uint64_t operator()(Position pos) const {
         return Zobrist::generateKey(pos);
+    }
+};
+
+struct SampleHasher {
+    uint64_t operator()(Sample s) const {
+        return Zobrist::generateKey(s.position);
     }
 };
 
@@ -168,46 +196,65 @@ void remove_duplicates(std::string in_File, std::string out_file) {
 int main(int argl, const char **argc) {
 
     initialize();
-    //generate_depth_data(12, "/home/robin/DarkHorse/Training/TrainData/openingdataremoved", "/home/robin/DarkHorse/Training/TrainData/depth12dataopen");
-    //remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/openingdata","/home/robin/DarkHorse/Training/TrainData/openingdataremoved");
 
+    Position temp;
+    temp.BP = big_region1;
+    temp.printPosition();
 
+    temp.BP = big_region2;
+    temp.printPosition();
 
+    temp.BP = big_region3;
+    temp.printPosition();
 
-    //creating a subset of the small-dataset consisting of only positions with >6 pieces
-
-    /* std::vector<Sample> samples;
-     Utilities::read_binary<Sample>(std::back_inserter(samples), "/home/robin/DarkHorse/Training/TrainData/openingdata");
-
-
-     for (auto &sample  : samples) {
-         sample.position.printPosition();
-         std::cout<<"res: "<<sample.result<<std::endl;
-     }*/
-    //Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"reinfopendepth9");
-
-
+    temp.BP = big_region4;
+    temp.printPosition();
 
 /*
 
-    std::vector<TrainSample> positions;
-    std::vector<TrainSample> nextPos;
-    Utilities::read_binary<TrainSample>(std::back_inserter(positions),
-                                        "/home/robin/DarkHorse/Training/TrainData/opening_data_depth9_bigremoved");
-    int max =0;
-    for (auto &sample : positions) {
-        max = std::max(max,sample.evaluation);
-        sample.evaluation = std::clamp(sample.evaluation, -6000, 6000);
-        nextPos.emplace_back(sample);
-    }
-    std::cout<<"Maxeval "<<max<<std::endl;
-    Utilities::write_to_binary<TrainSample>(nextPos.begin(), nextPos.end(),
-                                            "/home/robin/DarkHorse/Training/TrainData/opening_data_depth9_bigremoved2");
+      generate_depth_data(3, "/home/robin/DarkHorse/Training/TrainData/openingdataremoved",
+                          "/home/robin/DarkHorse/Training/TrainData/depth3dataupdate2");
+
 
 */
 
 
+/*
 
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/test3.train");
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
+    std::vector<Sample> output;
+    std::unordered_set<Sample, SampleHasher> test;
+    std::copy_if(begin, end, std::back_inserter(output), [&](Sample s) {
+        if (test.find(s) == test.end()) {
+            test.insert(s);
+            return true;
+        }
+        return false;
+    });
+
+    std::cout << "Size: " << output.size() << std::endl;
+    Utilities::write_to_binary<Sample>(output.begin(), output.end(),
+                                       "/home/robin/DarkHorse/Training/TrainData/test4.train");
+*/
+
+
+
+    /*   std::vector<PolySample1> samples;
+       Utilities::read_binary<PolySample1>(std::back_inserter(samples), "/home/robin/DarkHorse/Training/TrainData/depth3dataopenreinf");
+
+
+       for (auto &sample  : samples) {
+           sample.pos.printPosition();
+           sample.evaluation = std::clamp(sample.evaluation,-900,900);
+           std::cout<<sample.evaluation<<std::endl;
+           std::cout<<std::endl;
+       }
+      Utilities::write_to_binary<PolySample1>(samples.begin(),samples.end(),"/home/robin/DarkHorse/Training/TrainData/depth3dataopenreinf");
+
+  ;*/
 
 /*
     std::vector<Sample> samples;
@@ -234,22 +281,6 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-/*
- * VERY IMPORTANT I NEED TO REDO SOME OF THE TRAINING STUFF AND DEFINE SOME MAX_EVAL CONSTANT
- * AS THIS BELOW SEEMED TO BE WORKING MUCH MUCH BETTER THAN I HAD EXPECTED
-    std::vector<TrainSample> samples;
-    Utilities::read_binary<TrainSample>(std::back_inserter(samples),"opening_data");
-    for(auto& data : samples){
-        data.evaluation = std::clamp(data.evaluation,-9000,9000);
-    }
-    Utilities::write_to_binary<TrainSample>(samples.begin(),samples.end(),"opening_data2");
-*/
-
-
-
-
 /*
 
      Generator generator("Generator", "train2.pos", "temp");
@@ -261,79 +292,33 @@ int main(int argl, const char **argc) {
 */
 
 
+//testing2 should be using the next depth3testupdate
 
-
-
-
-
-    Match engine_match("base", "master");
+/*
+    Match engine_match("masterupdate2", "masterupdate2");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
     engine_match.start();
+*/
 
 
 
 
 
 
-    /*   network.load("test_open_scalxx9_big.weights");
-       network.addLayer(Layer{120, 256});
-       network.addLayer(Layer{256, 32});
-       network.addLayer(Layer{32, 32});
-       network.addLayer(Layer{32, 1});
-
-       network.init();
-
-       network2.load("test_end_scalxx9_big.weights");
-       network2.addLayer(Layer{120, 256});
-       network2.addLayer(Layer{256, 32});
-       network2.addLayer(Layer{32, 32});
-       network2.addLayer(Layer{32, 1});
-
-       network2.init();
-
-
-       Position pos = Position::pos_from_fen("W:W18,19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,11,12,13,15");
-
-       std::vector<Position> positions;
-       Utilities::read_binary<Position>(std::back_inserter(positions),"/home/robin/DarkHorse/Training/Positions/train2.pos");
-
-
-
-       for(Position p : positions){
-           network.init();
-           network.set_input(p);
-           float test = network.forward_pass();
-           float test2 = network.compute_incre_forward_pass(p);
-           if(std::abs(test-test2)>=0.01f){
-               std::cout<<test<<std::endl;
-               std::cout<<test2<<std::endl;
-               p.printPosition();
-               std::cout<<p.get_fen_string()<<std::endl;
-
-           }
-       }
-
-   */
-
-
-
-
-
-
-
-    /*   std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-        Trainer trainer("../Training/TrainData/test3.train");
+//had a loss of about 0.13
+/*       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+        Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test4.train");
         trainer.setLearningRate(15000);
         trainer.setEpochs(1000);
         trainer.setl2Reg(0.000000000000);
         trainer.setCValue(-1e-3);
         trainer.startTune();
         auto loss = trainer.calculateLoss();
-        std::cout << "Loss: " << loss << std::endl;
-  */
+        std::cout << "Loss: " << loss << std::endl;*/
+
 
 
 

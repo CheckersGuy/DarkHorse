@@ -4,6 +4,16 @@
 
 #include "Generator.h"
 
+bool Sample::operator==(const Sample &other) const {
+    if (position != other.position) {
+        return false;
+    }
+    return result == other.result;
+}
+
+bool Sample::operator!=(const Sample &other) const {
+    return !((*this) == other);
+}
 
 std::ostream &operator<<(std::ostream &stream, const Sample &s) {
     stream << s.position;

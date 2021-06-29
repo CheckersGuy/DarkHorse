@@ -25,6 +25,8 @@ struct Sample {
 
     friend std::istream &operator>>(std::istream &stream, Sample &s);
 
+    bool operator==(const Sample& other)const;
+    bool operator!=(const Sample&other)const;
 };
 
 struct Instance {
