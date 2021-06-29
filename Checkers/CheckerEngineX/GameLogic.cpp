@@ -18,8 +18,9 @@ Network network, network2;
 bool u_classical = false;
 
 void initialize() {
-    //gameWeights.loadWeights<uint32_t>("/home/robin/Dokumente/CWeights/moredata3.weights");
+    gameWeights.loadWeights<uint32_t>("moredata3update2.weights");
     Zobrist::initializeZobrisKeys();
+    //Statistics::mPicker.init();
 }
 
 
@@ -191,7 +192,7 @@ namespace Search {
         }
 
         //sorting
-        liste.sort(board.getPosition(), tt_move, local.pv_node, board.getMover());
+        liste.sort(board.getPosition(),depth, tt_move, local.pv_node, board.getMover());
 
         //move-loop
         Search::move_loop(local, board, pv, liste);
@@ -385,7 +386,7 @@ namespace Search {
         }
 
         liste.putFront(mainPV[local.ply]);
-        liste.sort(board.getPosition(), Move{}, true, board.getMover());
+        liste.sort(board.getPosition(),depth, Move{}, true, board.getMover());
 
         move_loop(local, board, line, liste);
 

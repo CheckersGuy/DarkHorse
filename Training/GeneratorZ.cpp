@@ -22,3 +22,24 @@ std::istream &operator>>(std::istream &stream, TrainSample &s) {
     s.evaluation = eval;
     return stream;
 }
+
+std::ostream &operator<<(std::ostream &stream, const PolySample1 &s) {
+
+    stream << s.pos;
+    stream.write((char *) &s.result, sizeof(int));
+    stream.write((char *) &s.evaluation, sizeof(int));
+    stream.write((char *) &s.piece_moved, sizeof(int));
+    return stream;
+}
+
+std::istream &operator>>(std::istream &stream, PolySample1 &s) {
+    stream >> s.pos;
+    int result;
+    stream.read((char *) &result, sizeof(int));
+    s.result = result;
+    int eval;
+    stream.read((char *) &eval, sizeof(int));
+    s.evaluation = eval;
+    stream.read((char *) &s.piece_moved, sizeof(int));
+    return stream;
+}

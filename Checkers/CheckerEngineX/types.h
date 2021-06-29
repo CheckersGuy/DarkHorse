@@ -20,6 +20,11 @@ inline uint64_t getSystemTime() {
             (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
+constexpr uint32_t big_region1 = 30583;
+constexpr uint32_t big_region2 = big_region1 << 1;
+constexpr uint32_t big_region3 = 2004287488;
+constexpr uint32_t big_region4 = big_region3 << 1;
+
 constexpr uint32_t MASK_L3 = 14737632u;
 constexpr uint32_t MASK_L5 = 117901063u;
 constexpr uint32_t MASK_R3 = 117901056u;
@@ -38,23 +43,31 @@ constexpr uint8_t Move_Index_None = 100u;
 //constant for extensions and reductions
 
 
-/*
+
+
+
 
 constexpr int prob_cut = 150;
 constexpr int sing_ext = 850;
-constexpr int asp_wind =150;
+constexpr int asp_wind = 150;
 constexpr int MAX_ASP = 3000;
-*/
 
 
 
 
 
+
+
+
+
+/*
 
 constexpr int prob_cut = 15;
 constexpr int sing_ext = 45;
 constexpr int asp_wind =15;
 constexpr int MAX_ASP = 300;
+*/
+
 
 
 

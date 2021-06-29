@@ -7,7 +7,7 @@ void MoveListe::reset() {
 
 extern Line mainPV;
 
-void MoveListe::sort(Position current,Move ttMove, bool inPVLine, Color color) {
+void MoveListe::sort(Position current,Depth depth,Move ttMove, bool inPVLine, Color color) {
 
     if (moveCounter <= 1)
         return;
@@ -17,7 +17,7 @@ void MoveListe::sort(Position current,Move ttMove, bool inPVLine, Color color) {
 
     for (auto i = 0; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] = (short) Statistics::mPicker.getMoveScore(current,m, color, ttMove);
+        scores[i] = (short) Statistics::mPicker.getMoveScore(current,depth,m, color, ttMove);
     }
 
 
