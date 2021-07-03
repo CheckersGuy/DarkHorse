@@ -15,6 +15,7 @@
 #include <algorithm>
 #include "Bits.h"
 #include <Network.h>
+
 struct Local {
     Value alpha, beta;
     Value best_score;
@@ -29,8 +30,9 @@ struct Local {
     bool pv_node;
 };
 
-struct SearchGlobal{
+struct SearchGlobal {
     uint32_t sel_depth;
+
     //will be called whenever we find a new move
     void new_move();
 
@@ -44,7 +46,8 @@ namespace Search {
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);
 
-    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,std::vector<Move>&exluded_moves);
+    void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,
+                     std::vector<Move> &exluded_moves);
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
@@ -52,7 +55,7 @@ namespace Search {
 
     void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
 
-    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply,Depth depth);
+    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
 
     Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
 
@@ -62,9 +65,11 @@ namespace Search {
 
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print);
 
-Value searchValue(Board&board, int depth, uint32_t time, bool print);
+Value searchValue(Board &board, int depth, uint32_t time, bool print);
 
 void initialize();
+
+void initialize(uint64_t seed);
 
 extern Network network;
 extern Network network2;

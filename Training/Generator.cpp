@@ -231,15 +231,12 @@ void Generator::startx() {
     //Positions to be saved to a file
     const size_t num_positions = 10000000;
 
-    std::cout<<"Number of openings: "<<openings.size()<<std::endl;
+    std::cout << "Number of openings: " << openings.size() << std::endl;
     int *counter;
-    int *opening_counter;
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
-    opening_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                                   0);
+
     *counter = 0;
-    *opening_counter = 0;
 
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
@@ -260,17 +257,13 @@ void Generator::startx() {
         if (id == 0) {
             std::vector<Sample> local_buffer;
             //child takes a position and generates games
-
-            initialize();
+            const uint64_t seed = 13199312313ull + 23ull * i;
+            initialize(seed);
             use_classical(true);
             TT.resize(hash_size);
-
-            pthread_mutex_lock(pmutex);
-            *opening_counter = (*opening_counter >= SIZE) ? 0 : *opening_counter;
-            pthread_mutex_unlock(pmutex);
-
             //play a game and increment the opening-counter once more
 
+            int opening_counter = 0;
 
             int move_count;
             while (true) {
@@ -278,7 +271,7 @@ void Generator::startx() {
                 if (*counter >= num_positions) {
                     break;
                 }
-                Position opening = openings[*opening_counter];
+                Position opening = openings[opening_counter];
                 Board board;
                 board = opening;
                 /* std::cout << "OpeningCounter: " << *opening_counter << std::endl;
@@ -317,25 +310,19 @@ void Generator::startx() {
                     Sample current;
                     current.position = board.getPosition();
                     game.emplace_back(current);
-/*
-                    board.printBoard();
-                    std::cout << std::endl;*/
-
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
-                if (local_buffer.size() >= 500) {
+                if (local_buffer.size() >= 2000) {
                     std::cout << "ClearedBuffer" << std::endl;
-                    Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output, std::ios::app | std::ios::binary);
+                    Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
+                                                       std::ios::app | std::ios::binary);
                     local_buffer.clear();
                 }
                 *counter = *counter + (int) game.size();
                 std::cout << "Counter: " << *counter << std::endl;
-                *opening_counter = *opening_counter + 1;
-                if (*opening_counter >= openings.size())
-                    *opening_counter = 0;
                 pthread_mutex_unlock(pmutex);
-
+                opening_counter++;
             }
             std::exit(1);
         }

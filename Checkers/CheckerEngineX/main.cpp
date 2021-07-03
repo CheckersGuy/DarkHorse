@@ -156,6 +156,7 @@ int main(int argl, const char **argc) {
 
 
 
+
     TT.resize(24);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("W:WK3:B4,K32");
@@ -169,6 +170,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
+
 
 
 

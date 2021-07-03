@@ -23,6 +23,11 @@ void initialize() {
     //Statistics::mPicker.init();
 }
 
+void initialize(uint64_t seed) {
+    gameWeights.loadWeights<uint32_t>("current.weights");
+    Zobrist::initializeZobrisKeys(seed);
+    //Statistics::mPicker.init();
+}
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print) {
     Move best;
@@ -51,7 +56,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
 
-    for (int i = 1; i <= depth; i ++) {
+    for (int i = 1; i <= depth; i++) {
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
@@ -192,7 +197,7 @@ namespace Search {
         }
 
         //sorting
-        liste.sort(board.getPosition(),depth, tt_move, local.pv_node, board.getMover());
+        liste.sort(board.getPosition(), depth, tt_move, local.pv_node, board.getMover());
 
         //move-loop
         Search::move_loop(local, board, pv, liste);
@@ -360,6 +365,10 @@ namespace Search {
         return search_root(local, line, board, alpha, beta, depth, exluded_moves);
     }
 
+#ifdef TRAIN
+    std::mt19937_64 generator(getSystemTime());
+#endif
+
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,
                      std::vector<Move> &exluded_moves) {
         line.clear();
@@ -379,6 +388,11 @@ namespace Search {
         MoveListe liste;
         getMoves(board.getPosition(), liste);
 
+#ifdef TRAIN
+      std::shuffle(liste.begin(),liste.end(),generator);
+#endif
+
+
         //removing the excluded moves from the list
 
         for (Move m : exluded_moves) {
@@ -386,7 +400,7 @@ namespace Search {
         }
 
         liste.putFront(mainPV[local.ply]);
-        liste.sort(board.getPosition(),depth, Move{}, true, board.getMover());
+        liste.sort(board.getPosition(), depth, Move{}, true, board.getMover());
 
         move_loop(local, board, line, liste);
 

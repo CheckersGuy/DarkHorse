@@ -20,6 +20,8 @@ namespace Zobrist {
 
     void initializeZobrisKeys();
 
+    void initializeZobrisKeys(uint64_t seed);
+
     uint64_t generateKey(const Position &pos);
 
     void doUpdateZobristKey(Position &pos, Move move);
