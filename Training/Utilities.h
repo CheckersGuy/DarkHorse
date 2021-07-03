@@ -19,8 +19,8 @@ namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
 
     template<typename T, typename Iterator>
-    void write_to_binary(Iterator begin, Iterator end, std::string output) {
-        std::ofstream stream(output, std::ios::binary);
+    void write_to_binary(Iterator begin, Iterator end, std::string output, std::ios::openmode mode = std::ios::out | std::ios::binary) {
+        std::ofstream stream(output, mode);
         std::copy(begin, end, std::ostream_iterator<T>(stream));
     }
 

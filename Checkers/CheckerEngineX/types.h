@@ -20,10 +20,10 @@ inline uint64_t getSystemTime() {
             (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
-constexpr uint32_t big_region1 = 30583;
-constexpr uint32_t big_region2 = big_region1 << 1;
-constexpr uint32_t big_region3 = 2004287488;
-constexpr uint32_t big_region4 = big_region3 << 1;
+constexpr uint32_t big_region = 30583;
+constexpr uint32_t sub_region1 = 12593;
+constexpr uint32_t sub_region2 = 17990;
+
 
 constexpr uint32_t MASK_L3 = 14737632u;
 constexpr uint32_t MASK_L5 = 117901063u;
@@ -36,12 +36,13 @@ constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 constexpr std::array<size_t, 8> powers = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
+constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 729ull, 2187ull, 6561ull, 19683ull,
+                                            59049ull, 177147ull};
 
 constexpr int stage_size = 24;
 constexpr uint8_t Move_Index_None = 100u;
 
 //constant for extensions and reductions
-
 
 
 
@@ -54,19 +55,16 @@ constexpr int MAX_ASP = 3000;
 
 
 
-
-
-
-
-
-
 /*
 
 constexpr int prob_cut = 15;
 constexpr int sing_ext = 45;
 constexpr int asp_wind =15;
-constexpr int MAX_ASP = 300;
-*/
+constexpr int MAX_ASP = 300;*/
+
+
+
+
 
 
 

@@ -83,8 +83,88 @@ void Trainer::gradientUpdate(const Sample &sample) {
     double color = x.color;
     const double temp = error * sigmoidDiff(c, qStatic);;
     accu_loss += error * error;
-    auto x_flipped = (x.getColor() == BLACK)? x.getColorFlip() : x;
+    auto x_flipped = (x.getColor() == BLACK) ? x.getColorFlip() : x;
+
+
     for (size_t p = 0; p < 2; ++p) {
+
+        const size_t sub_offset = 12ull * 531441ull;
+        for (auto i = 0; i < 3; ++i) {
+            for (auto j = 0; j < 2; ++j) {
+                const uint32_t curRegion = big_region << (8 * i + j);
+
+                if ((curRegion & x_flipped.K) != 0) {
+                    //region contains some kings
+                    const uint32_t sub1 = sub_region1 << (8 * i + j);
+                    const uint32_t sub2 = sub_region2 << (8 * i + j);
+
+                    const auto sub1_index = getIndex2(sub1, x_flipped);
+                    const auto sub2_index = getIndex2(sub2, x_flipped);
+                    const size_t index1 = 24u * sub1_index + 4 * 2 * i + 4 * j + sub_offset + p;
+                    const size_t index2 = 24u * sub2_index + 4 * 2 * i + 4 * j + 2 + sub_offset + p;
+                    double diff = temp;
+                    if (p == 0) {
+                        //derivative for the opening
+                        diff *= phase * color;
+                    } else {
+                        //derivative for the ending
+                        diff *= end_phase * color;
+                    }
+                    momentums[index1] = beta * momentums[index1] + (1.0 - beta) * diff;
+                    //need to update the momentum term
+                    gameWeights[index1] = gameWeights[index1] - getLearningRate() * momentums[index1];
+                    //////////////////
+                    momentums[index2] = beta * momentums[index2] + (1.0 - beta) * diff;
+                    //need to update the momentum term
+                    gameWeights[index2] = gameWeights[index2] - getLearningRate() * momentums[index2];
+
+
+                } else {
+                    const auto big_region_index = getIndexBigRegion(curRegion, x_flipped);
+                    const size_t index = 12 * big_region_index + 2 * j + 4 * i + p;
+                    /*opening += weights[index_op];
+                    ending += weights[index_end];*/
+
+                    double diff = temp;
+                    if (p == 0) {
+                        //derivative for the opening
+                        diff *= phase * color;
+                    } else {
+                        //derivative for the ending
+                        diff *= end_phase * color;
+                    }
+                    momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
+                    //need to update the momentum term
+                    gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
+
+                }
+
+
+            }
+        }
+
+/*
+        for (uint32_t j = 0; j < 3; ++j) {
+            for (uint32_t i = 0; i < 3; ++i) {
+                const uint32_t curRegion = region << (8u * j + i);
+                size_t index = 18ull * getIndex2(curRegion, x_flipped) + 9ull * p + 3ull * j + i;
+
+                double diff = temp;
+                if (p == 0) {
+                    //derivative for the opening
+                    diff *= phase * color;
+                } else {
+                    //derivative for the ending
+                    diff *= end_phase * color;
+                }
+                momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
+                //need to update the momentum term
+                gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
+
+            }
+        }*/
+
+/*
         for (size_t j = 0; j < 3; ++j) {
             for (size_t i = 0; i < 3; ++i) {
                 const uint32_t curRegion = region << (8u * j + i);
@@ -102,7 +182,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
                 gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
 
             }
-        }
+        }*/
     }
 
     //for king_op

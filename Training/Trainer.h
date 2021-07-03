@@ -12,7 +12,7 @@
 #include <execution>
 #include "Utilities.h"
 #include "Generator.h"
-
+#include <types.h>
 class Trainer {
 
 private:
