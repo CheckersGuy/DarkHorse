@@ -19,17 +19,24 @@ namespace Zobrist {
         return seed * 2685821657736338717ull;
     }
 
-
-    void initializeZobrisKeys() {
-
+    void initializeZobrisKeys(uint64_t seed) {
+        std::mt19937_64 generator(seed);
+        std::uniform_int_distribution<uint64_t> distrib;
         for (int i = 0; i < 32; ++i) {
             for (int j = 0; j < 4; ++j) {
-                ZOBRIST_KEYS[i][j] = rand64();
+                const auto value = distrib(generator);
+                ZOBRIST_KEYS[i][j] = value;
             }
         }
-        colorBlack = rand64();
-        skip_hash = rand64();
+        colorBlack = distrib(generator);
+        skip_hash = distrib(generator);
     }
+
+    void initializeZobrisKeys() {
+        constexpr uint64_t seed = 1070372ull;
+        initializeZobrisKeys(seed);
+    }
+
 
     uint64_t generateKey(const Position &pos) {
         const uint32_t BK = pos.K & pos.BP;

@@ -232,6 +232,16 @@ void testing() {
 int main(int argl, const char **argc) {
 
     initialize();
+/*
+    use_classical(true);
+    std::vector<Position> positions;
+    Board board;
+    TT.resize(21);
+    board = Position::getStartPosition();
+    Utilities::createNMoveBook(std::back_inserter(positions), 3, board, -1000, 1000);
+    Utilities::write_to_binary<Position>(positions.begin(),positions.end(),"/home/robin/DarkHorse/Training/Positions/train3.pos",std::ios::app);
+    std::cout<<"Positions: "<<positions.size()<<std::endl;
+*/
 
     // remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/moregames","/home/robin/DarkHorse/Training/TrainData/moregamesremoved");
 
@@ -335,14 +345,13 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-    Generator generator("master3", "train2.pos", "/home/robin/DarkHorse/Training/TrainData/moregames");
+    Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/moregames");
     generator.set_num_games(10000000);
     generator.set_hash_size(21);
-    generator.set_parallelism(16);
+    generator.set_parallelism(6);
     generator.set_time(15);
     generator.startx();
+
 
 
 
@@ -358,6 +367,7 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
     Match engine_match("testx", "master3");
     engine_match.setTime(100);
@@ -368,6 +378,7 @@ int main(int argl, const char **argc) {
 
 
 
+*/
 
 
 
@@ -390,13 +401,6 @@ int main(int argl, const char **argc) {
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
-
-
-
-
-
-
 
 
     return 0;
