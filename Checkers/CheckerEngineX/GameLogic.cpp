@@ -18,7 +18,7 @@ Network network, network2;
 bool u_classical = false;
 
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("moredata3update2.weights");
+    gameWeights.loadWeights<uint32_t>("current.weights");
     Zobrist::initializeZobrisKeys();
     //Statistics::mPicker.init();
 }

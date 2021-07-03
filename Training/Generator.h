@@ -16,7 +16,9 @@
 #include <sys/wait.h>
 #include <fcntl.h>
 #include <types.h>
-
+#include <sys/mman.h>
+#include <stdlib.h>
+#include <unistd.h>
 struct Sample {
     Position position;
     int result{1000};
@@ -27,6 +29,12 @@ struct Sample {
 
     bool operator==(const Sample& other)const;
     bool operator!=(const Sample&other)const;
+};
+
+struct SampleHasher {
+    uint64_t operator()(Sample s) const {
+        return Zobrist::generateKey(s.position);
+    }
 };
 
 struct Instance {
@@ -71,6 +79,8 @@ public:
     }
 
     void start();
+
+    void startx();
 
     void process();
 

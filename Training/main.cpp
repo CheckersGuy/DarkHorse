@@ -11,9 +11,6 @@
 #include <thread>
 #include <future>
 #include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -160,11 +157,6 @@ struct PosHasher {
     }
 };
 
-struct SampleHasher {
-    uint64_t operator()(Sample s) const {
-        return Zobrist::generateKey(s.position);
-    }
-};
 
 template<typename T>
 void remove_duplicates(std::string in_File, std::string out_file) {
@@ -172,20 +164,15 @@ void remove_duplicates(std::string in_File, std::string out_file) {
     std::vector<T> in_samples;
     Utilities::read_binary<T>(std::back_inserter(in_samples), in_File);
     std::vector<T> out_samples;
-    std::unordered_set<Position, PosHasher> hash_table;
+    std::unordered_set<Sample, SampleHasher> hash_table;
     std::cout << "Number of samples before removing duplicates: " << in_samples.size() << std::endl;
     for (auto sample : in_samples) {
         Position curr;
-        if constexpr (std::is_same_v<T, Sample>) {
-            curr = sample.position;
-        } else {
-            curr = sample.pos;
-        }
         //we have already seen the sample
-        if (hash_table.find(curr) != hash_table.end()) {
+        if (hash_table.find(sample) != hash_table.end()) {
             continue;
         }
-        hash_table.insert(curr);
+        hash_table.insert(sample);
         out_samples.emplace_back(sample);
     }
     std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
@@ -193,30 +180,100 @@ void remove_duplicates(std::string in_File, std::string out_file) {
 
 }
 
+void testing() {
+    pthread_mutex_t *pmutex = NULL;
+    pthread_mutexattr_t attrmutex;
+/* Allocate memory to pmutex here. */
+    pmutex = (pthread_mutex_t *) mmap(NULL, sizeof(pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
+                                      -1, 0);
+
+/* Initialise mutex. */
+    pthread_mutex_init(pmutex, &attrmutex);
+
+    const int num_children = 10;
+
+    pid_t id;
+    for (auto i = 0; i < num_children; ++i) {
+        id = fork();
+        if (id < 0) {
+            std::cerr << "Could not fork the main process" << std::endl;
+            std::exit(-1);
+        }
+        if (id == 0) {
+            pthread_mutex_lock(pmutex);
+            for (auto k = 0; k < 100; ++k) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::cout << i << k << std::endl;
+            }
+            pthread_mutex_unlock(pmutex);
+            std::exit(1);
+        }
+    }
+
+    if (id > 0) {
+        //main_process
+
+
+
+        int status;
+        for (auto i = 0; i < num_children; ++i) {
+            wait(&status);
+        }
+    }
+
+
+
+
+    /* Clean up. */
+    pthread_mutex_destroy(pmutex);
+    pthread_mutexattr_destroy(&attrmutex);
+}
+
 int main(int argl, const char **argc) {
 
     initialize();
 
-    Position temp;
-    temp.BP = big_region1;
-    temp.printPosition();
+    // remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/moregames","/home/robin/DarkHorse/Training/TrainData/moregamesremoved");
 
-    temp.BP = big_region2;
-    temp.printPosition();
+/*    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 2; ++j) {
+            uint32_t reg = big_region1 << (i * 8 + j);
+            temp.BP = reg;
+            temp.printPosition();
+        }
+    }*/
+/*
 
-    temp.BP = big_region3;
-    temp.printPosition();
+    std::vector<Sample> opening;
+    std::vector<Sample> ending;
 
-    temp.BP = big_region4;
-    temp.printPosition();
+    std::vector<Sample> data;
+
+    Utilities::read_binary<Sample>(std::back_inserter(data),"/home/robin/DarkHorse/Training/TrainData/moregamesremoved");
+
+    for(Sample s : data){
+        auto num = Bits::pop_count(s.position.WP | s.position.BP);
+        if(num<=6)
+            ending.emplace_back(s);
+        else
+            opening.emplace_back(s);
+    }
+    Utilities::write_to_binary<Sample>(opening.begin(),opening.end(),"/home/robin/DarkHorse/Training/TrainData/moregamesopen.train");
+    Utilities::write_to_binary<Sample>(ending.begin(),ending.end(),"/home/robin/DarkHorse/Training/TrainData/moregamesend.train");
+*/
+
+
+
+
 
 /*
 
-      generate_depth_data(3, "/home/robin/DarkHorse/Training/TrainData/openingdataremoved",
-                          "/home/robin/DarkHorse/Training/TrainData/depth3dataupdate2");
+      generate_depth_data(3, "/home/robin/DarkHorse/Training/TrainData/moregamesopen.train",
+                          "/home/robin/DarkHorse/Training/TrainData/depth3opendata");
 
 
 */
+
 
 
 /*
@@ -280,28 +337,34 @@ int main(int argl, const char **argc) {
 
 
 
+    Generator generator("master3", "train2.pos", "/home/robin/DarkHorse/Training/TrainData/moregames");
+    generator.set_num_games(10000000);
+    generator.set_hash_size(21);
+    generator.set_parallelism(16);
+    generator.set_time(15);
+    generator.startx();
 
-/*
 
-     Generator generator("Generator", "train2.pos", "temp");
-     generator.set_num_games(1000000);
-     generator.set_hash_size(25);
-     generator.set_parallelism(7);
-     generator.set_time(100);
-     generator.start();
-*/
+
+
+
+
 
 
 //testing2 should be using the next depth3testupdate
 
-/*
-    Match engine_match("masterupdate2", "masterupdate2");
+
+
+
+
+
+
+    Match engine_match("testx", "master3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
     engine_match.start();
-*/
 
 
 
@@ -309,19 +372,24 @@ int main(int argl, const char **argc) {
 
 
 //had a loss of about 0.13
-/*       std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-        Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test4.train");
-        trainer.setLearningRate(15000);
-        trainer.setEpochs(1000);
-        trainer.setl2Reg(0.000000000000);
-        trainer.setCValue(-1e-3);
-        trainer.startTune();
-        auto loss = trainer.calculateLoss();
-        std::cout << "Loss: " << loss << std::endl;*/
 
 
 
 
+
+
+
+
+
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test4.train");
+    trainer.setLearningRate(15000);
+    trainer.setEpochs(1000);
+    trainer.setl2Reg(0.000000000000);
+    trainer.setCValue(-2e-3);
+    trainer.startTune();
+    auto loss = trainer.calculateLoss();
+    std::cout << "Loss: " << loss << std::endl;
 
 
 

@@ -6,8 +6,6 @@
 #include "Network.h"
 
 
-
-
 int Network::evaluate(Network &op, Network &end, Position pos) {
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
     if (num_pieces > 6) {
@@ -260,7 +258,7 @@ float Network::forward_pass() const {
 }
 
 int Network::evaluate(Position pos) {
-    float val = compute_incre_forward_pass(pos);
+    float val = compute_incre_forward_pass(pos )* 128.0f;
     return static_cast<int>(val);
 }
 
