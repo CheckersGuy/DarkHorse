@@ -84,9 +84,10 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
 
+/*
     network.load("testb");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
@@ -101,6 +102,7 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{32, 1});
 
     network2.init();
+*/
 
     // std::cout<<"MaxWeight: "<<network.get_max_weight()<<std::endl;
 
@@ -157,7 +159,7 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
     TT.resize(24);
     board = Position::getStartPosition();
     board = Position::pos_from_fen("W:WK3:B4,K32");
@@ -170,7 +172,7 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();*/
+    board.printBoard();
 
 
     std::string current;
