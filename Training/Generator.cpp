@@ -229,7 +229,7 @@ void Generator::start() {
 
 void Generator::startx() {
     //Positions to be saved to a file
-    const size_t num_positions = 10000000;
+    const size_t num_positions = 100000000;
 
     std::cout << "Number of openings: " << openings.size() << std::endl;
     int *counter;
@@ -323,6 +323,10 @@ void Generator::startx() {
                 std::cout << "Counter: " << *counter << std::endl;
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;
+                std::cout<<"Opening_Counter: "<<opening_counter<<std::endl;
+                if(opening_counter>=openings.size()){
+                    opening_counter=0;
+                }
             }
             std::exit(1);
         }
