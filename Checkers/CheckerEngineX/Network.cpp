@@ -258,7 +258,7 @@ float Network::forward_pass() const {
 }
 
 int Network::evaluate(Position pos) {
-    float val = compute_incre_forward_pass(pos )* 128.0f;
+    float val = compute_incre_forward_pass(pos )* 2000.0f;
     return static_cast<int>(val);
 }
 
