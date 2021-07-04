@@ -352,7 +352,7 @@ int main(int argl, const char **argc) {
     Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/moregames");
     generator.set_num_games(10000000);
     generator.set_hash_size(21);
-    generator.set_parallelism(16);
+    generator.set_parallelism(96);
     generator.set_time(15);
     generator.startx();
 
