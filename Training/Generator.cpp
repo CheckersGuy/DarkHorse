@@ -313,7 +313,7 @@ void Generator::startx() {
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
-                if (local_buffer.size() >= 2000) {
+                if (local_buffer.size() >= 10000) {
                     std::cout << "ClearedBuffer" << std::endl;
                     Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
                                                        std::ios::app | std::ios::binary);
