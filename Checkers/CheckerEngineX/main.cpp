@@ -162,7 +162,7 @@ int main(int argl, const char **argc) {
 
     TT.resize(24);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK3:B4,K32");
+    //board = Position::pos_from_fen("W:WK3:B4,K32");
 
     board.printBoard();
 
