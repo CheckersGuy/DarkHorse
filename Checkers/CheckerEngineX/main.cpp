@@ -168,13 +168,7 @@ int main(int argl, const char **argc) {
     //board = Position::pos_from_fen("W:WK3:B4,K32");
 
     board.printBoard();
-
-
-    std::cout << std::endl;
-
-    std::cout<<"Eval: "<<Network::evaluate(network,network2,board.getPosition())<<std::endl;
-
-
+    
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
