@@ -247,6 +247,7 @@ void Generator::startx() {
 /* Initialise mutex. */
     pthread_mutex_init(pmutex, &attrmutex);
 
+
     pid_t id;
     for (auto i = 0; i < parallelism; ++i) {
         id = fork();
@@ -291,6 +292,7 @@ void Generator::startx() {
                         }
                         break;
                     }
+
                     if (board.isRepetition()) {
                         //draw by repetition
                         for (auto &sample : game) {
@@ -313,7 +315,7 @@ void Generator::startx() {
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
-                if (local_buffer.size() >= 10000) {
+                if (local_buffer.size() >= 1000) {
                     std::cout << "ClearedBuffer" << std::endl;
                     Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
                                                        std::ios::app | std::ios::binary);
@@ -323,9 +325,9 @@ void Generator::startx() {
                 std::cout << "Counter: " << *counter << std::endl;
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;
-                std::cout<<"Opening_Counter: "<<opening_counter<<std::endl;
-                if(opening_counter>=openings.size()){
-                    opening_counter=0;
+                std::cout << "Opening_Counter: " << opening_counter << std::endl;
+                if (opening_counter >= openings.size()) {
+                    opening_counter = 0;
                 }
             }
             std::exit(1);

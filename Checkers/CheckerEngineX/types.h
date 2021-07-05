@@ -55,13 +55,15 @@ constexpr int MAX_ASP = 3000;
 
 
 
+
+
 /*
+constexpr int prob_cut = 10;
+constexpr int sing_ext = 35;
+constexpr int asp_wind =10;
+constexpr int MAX_ASP = 300;
 
-constexpr int prob_cut = 15;
-constexpr int sing_ext = 45;
-constexpr int asp_wind =15;
-constexpr int MAX_ASP = 300;*/
-
+*/
 
 
 

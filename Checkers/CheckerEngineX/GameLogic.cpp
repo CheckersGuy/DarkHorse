@@ -18,13 +18,13 @@ Network network, network2;
 bool u_classical = false;
 
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("currenttest.weights");
+    gameWeights.loadWeights<uint32_t>("current.weights");
     Zobrist::initializeZobrisKeys();
     //Statistics::mPicker.init();
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("currenttest.weights");
+    gameWeights.loadWeights<uint32_t>("current.weights");
     Zobrist::initializeZobrisKeys(seed);
     //Statistics::mPicker.init();
 }
@@ -238,7 +238,7 @@ namespace Search {
 
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * Network::evaluate(network, network2, board.getPosition());
+            return Network::evaluate(network, network2, board.getPosition());
         }
 
         if (ply > glob.sel_depth)
