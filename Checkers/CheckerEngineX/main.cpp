@@ -88,7 +88,7 @@ int main(int argl, const char **argc) {
 
 
 
-    network.load("testb");
+   /* network.load("testb");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -101,7 +101,7 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();
+    network2.init();*/
 
 
     // std::cout<<"MaxWeight: "<<network.get_max_weight()<<std::endl;
