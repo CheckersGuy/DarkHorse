@@ -8,7 +8,7 @@
 
 int Network::evaluate(Network &op, Network &end, Position pos) {
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces > 6) {
+    if (num_pieces > 8) {
         return op.evaluate(pos);
     } else {
         return end.evaluate(pos);
@@ -53,7 +53,6 @@ void Network::init() {
     for (Layer l : layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
-    float *test;
     temp = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
     input = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
 
@@ -258,7 +257,7 @@ float Network::forward_pass() const {
 }
 
 int Network::evaluate(Position pos) {
-    float val = compute_incre_forward_pass(pos )* 2000.0f;
+    float val = compute_incre_forward_pass(pos )* 2048.0f;
     return static_cast<int>(val);
 }
 
