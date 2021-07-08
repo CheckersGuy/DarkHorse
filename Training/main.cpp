@@ -257,78 +257,30 @@ int main(int argl, const char **argc) {
 
 
 
-    std::vector<Sample> opening;
-    std::vector<Sample> ending;
 
-    std::vector<Sample> data;
+       std::vector<Sample> opening;
+       std::vector<Sample> ending;
 
-    Utilities::read_binary<Sample>(std::back_inserter(data),
-                                   "/home/robin/DarkHorse/Training/TrainData/test100removed");
+       std::vector<Sample> data;
 
-    for (Sample s : data) {
-        auto num = Bits::pop_count(s.position.WP | s.position.BP);
-        if (num <= 8) {
-            ending.emplace_back(s);
-        } else {
-            opening.emplace_back(s);
-        }
-    }
-    Utilities::write_to_binary<Sample>(opening.begin(), opening.end(),
-                                       "/home/robin/DarkHorse/Training/TrainData/test100open.train");
-    Utilities::write_to_binary<Sample>(ending.begin(), ending.end(),
-                                       "/home/robin/DarkHorse/Training/TrainData/test100end.train");
+       Utilities::read_binary<Sample>(std::back_inserter(data),
+                                      "/home/robin/DarkHorse/Training/TrainData/test100removed");
 
-
-
-
-
-
-
-
-
-
-/*
-      generate_depth_data(3, "/home/robin/DarkHorse/Training/TrainData/moregamesopen.train",
-                          "/home/robin/DarkHorse/Training/TrainData/depth3opendata");
-
-      */
-
-/*
-
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/test3.train");
-    std::istream_iterator<Sample> begin(stream);
-    std::istream_iterator<Sample> end;
-
-    std::vector<Sample> output;
-    std::unordered_set<Sample, SampleHasher> test;
-    std::copy_if(begin, end, std::back_inserter(output), [&](Sample s) {
-        if (test.find(s) == test.end()) {
-            test.insert(s);
-            return true;
-        }
-        return false;
-    });
-
-    std::cout << "Size: " << output.size() << std::endl;
-    Utilities::write_to_binary<Sample>(output.begin(), output.end(),
-                                       "/home/robin/DarkHorse/Training/TrainData/test4.train");
-*/
-
-
-
-    /*   std::vector<PolySample1> samples;
-       Utilities::read_binary<PolySample1>(std::back_inserter(samples), "/home/robin/DarkHorse/Training/TrainData/depth3dataopenreinf");
-
-
-       for (auto &sample  : samples) {
-           sample.pos.printPosition();
-           sample.evaluation = std::clamp(sample.evaluation,-900,900);
-           std::cout<<sample.evaluation<<std::endl;
-           std::cout<<std::endl;
+       for (Sample s : data) {
+           auto num = Bits::pop_count(s.position.WP | s.position.BP);
+           if (num <= 8) {
+               ending.emplace_back(s);
+           } else {
+               opening.emplace_back(s);
+           }
        }
-      Utilities::write_to_binary<PolySample1>(samples.begin(),samples.end(),"/home/robin/DarkHorse/Training/TrainData/depth3dataopenreinf");
+       Utilities::write_to_binary<Sample>(opening.begin(), opening.end(),
+                                          "/home/robin/DarkHorse/Training/TrainData/test100open.train");
+       Utilities::write_to_binary<Sample>(ending.begin(), ending.end(),
+                                          "/home/robin/DarkHorse/Training/TrainData/test100end.train");
 
-  ;*/
+
+
 
 
     Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
@@ -337,12 +289,6 @@ int main(int argl, const char **argc) {
     generator.set_parallelism(96);
     generator.set_time(100);
     generator.startx();
-
-
-
-
-
-
 
 
 
@@ -385,25 +331,46 @@ int main(int argl, const char **argc) {
     }
 */
 
-
+/*
     Match engine_match("testcrazy", "master3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
-    engine_match.start();
+    engine_match.start()*/;
+
+
+/*
+    std::vector<Sample> test;
+    Utilities::read_binary<Sample>(std::back_inserter(test), "/home/robin/DarkHorse/Training/TrainData/test100removed");
+    for (auto i = 0; i < test.size(); ++i) {
+        Sample s = test[i];
+        auto num_pieces = Bits::pop_count(s.position.BP | s.position.WP);
+        if (num_pieces > 24) {
+            s.position.printPosition();
+            for(auto k=0;k<100;++k){
+                test[i-k].position.printPosition();
+                std::cout<<std::endl;
+            }
+            break;
+        }
+    }
+*/
 
 
 
-    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
-    trainer.setLearningRate(15000);
-    trainer.setEpochs(1000);
-    trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-2e-3);
-    trainer.startTune();
-    auto loss = trainer.calculateLoss();
-    std::cout << "Loss: " << loss << std::endl;
+    /* std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
+     trainer.setLearningRate(15000);
+     trainer.setEpochs(1000);
+     trainer.setl2Reg(0.000000000000);
+     trainer.setCValue(-2e-3);
+     trainer.startTune();
+     auto loss = trainer.calculateLoss();
+     std::cout << "Loss: " << loss << std::endl;
+ */
+
+
 
 
     return 0;

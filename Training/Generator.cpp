@@ -232,8 +232,12 @@ void Generator::startx() {
     const size_t num_positions = 100000000;
 
     std::cout << "Number of openings: " << openings.size() << std::endl;
+
     int *counter;
+    int *error_counter;
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                           0);
+    error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
 
     *counter = 0;
@@ -308,14 +312,21 @@ void Generator::startx() {
 
                     Sample current;
                     current.position = board.getPosition();
-                    game.emplace_back(current);
+                    if(Bits::pop_count(current.position.BP | current.position.WP)<=24){
+                        game.emplace_back(current);
+                    }else{
+                        std::cerr<<"Error"<<std::endl;
+                        pthread_mutex_lock(pmutex);
+                        (*error_counter)++;
+                        pthread_mutex_unlock(pmutex);
+                    }
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
                 if (local_buffer.size() >= 1000) {
                     std::cout << "ClearedBuffer" << std::endl;
                     Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
-                                                       std::ios::app | std::ios::binary);
+                                                       std::ios::app);
                     local_buffer.clear();
                 }
                 *counter = *counter + (int) game.size();
@@ -323,6 +334,7 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;
                 std::cout << "Opening_Counter: " << opening_counter << std::endl;
+                std::cout<<"Error_Counter: "<<error_counter<<std::endl;
                 if (opening_counter >= openings.size()) {
                     opening_counter = 0;
                 }
