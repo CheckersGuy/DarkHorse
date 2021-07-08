@@ -90,11 +90,13 @@ namespace Search {
 
     Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
-        if (local.depth >= 2 && !move.isCapture() && local.i >= ((local.pv_node) ? 3 : 1)) {
+        const bool is_promotion = move.isPromotion(board.getPosition().K);
+        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = ((!local.pv_node && local.i >= 4) ? 2 : 1);
         }
         return red;
     }
+
 
 
     Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune) {

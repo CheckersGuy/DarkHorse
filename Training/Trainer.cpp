@@ -244,10 +244,18 @@ void Trainer::epoch() {
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
 
+
+
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
-                      counter++;
-                      gradientUpdate(sample);
+                      auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
+                      if(num_pieces>24){
+                          sample.position.printPosition();
+                      }else{
+                          counter++;
+                          gradientUpdate(sample);
+                      }
+
                   });
 
 }
@@ -275,18 +283,6 @@ void Trainer::startTune() {
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
         std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
         std::cout << "kingScore:" << gameWeights.kingOp << " | " << gameWeights.kingEnd << std::endl;
-        std::cout << "TEMPO_RANKS" << std::endl;
-        std::cout << "TEMPO_RANKS" << std::endl;
-        for (auto i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
-            std::copy(gameWeights.tempo_ranks[i].begin(),
-                      gameWeights.tempo_ranks[i].end(),
-                      std::ostream_iterator<double>(std::cout, ","));
-            std::cout << std::endl;
-        }
-        std::cout << std::endl;
-        std::cout << std::endl;
-        std::cout << std::endl;
-
         learningRate = (1.0 - decay) * learningRate;
     }
 }
