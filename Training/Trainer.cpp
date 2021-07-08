@@ -250,7 +250,7 @@ void Trainer::epoch() {
                   [this, &counter](Sample sample) {
                       auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
                       if(num_pieces>24){
-                          sample.position.printPosition();
+                          //sample.position.printPosition();
                       }else{
                           counter++;
                           gradientUpdate(sample);
