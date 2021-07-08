@@ -160,6 +160,7 @@ struct PosHasher {
 
 template<typename T>
 void remove_duplicates(std::string in_File, std::string out_file) {
+    int error_count =0;
     Zobrist::initializeZobrisKeys();
     std::vector<T> in_samples;
     Utilities::read_binary<T>(std::back_inserter(in_samples), in_File);
@@ -173,8 +174,15 @@ void remove_duplicates(std::string in_File, std::string out_file) {
             continue;
         }
         hash_table.insert(sample);
-        out_samples.emplace_back(sample);
+        auto num_pieces = Bits::pop_count(curr.BP | curr.WP);
+        if (num_pieces <= 24) {
+            out_samples.emplace_back(sample);
+        }else{
+            error_count++;
+        }
+
     }
+    std::cout<<"Number of Errors: "<<std::endl;
     std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
     Utilities::write_to_binary<T>(out_samples.begin(), out_samples.end(), out_file);
 
@@ -244,8 +252,10 @@ int main(int argl, const char **argc) {
 */
 
 
+
    remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
                               "/home/robin/DarkHorse/Training/TrainData/test100removed");
+
 
 
 /*    for (auto i = 0; i < 3; ++i) {
@@ -255,6 +265,7 @@ int main(int argl, const char **argc) {
             temp.printPosition();
         }
     }*/
+
 
 
 
@@ -296,23 +307,13 @@ int main(int argl, const char **argc) {
 
 
 
-    Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
-    generator.set_num_games(10000000);
-    generator.set_hash_size(20);
-    generator.set_parallelism(96);
-    generator.set_time(100);
-    generator.startx();
 
-
-
-
-
-
-
-
-
-
-
+       Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
+       generator.set_num_games(10000000);
+       generator.set_hash_size(20);
+       generator.set_parallelism(96);
+       generator.set_time(100);
+       generator.startx();
 
 
 
@@ -352,14 +353,14 @@ int main(int argl, const char **argc) {
     }
 */
 
-/*
-    Match engine_match("testcrazy", "master3");
+
+ /*   Match engine_match("testcrazy", "master3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
-    engine_match.start()*/;
-
+    engine_match.start();
+*/
 
 /*
     std::vector<Sample> test;
@@ -379,19 +380,18 @@ int main(int argl, const char **argc) {
 */
 
 
+/*
 
-    /* std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
-     trainer.setLearningRate(15000);
-     trainer.setEpochs(1000);
-     trainer.setl2Reg(0.000000000000);
-     trainer.setCValue(-2e-3);
-     trainer.startTune();
-     auto loss = trainer.calculateLoss();
-     std::cout << "Loss: " << loss << std::endl;
- */
-
-
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
+    trainer.setLearningRate(15000);
+    trainer.setEpochs(1000);
+    trainer.setl2Reg(0.000000000000);
+    trainer.setCValue(-2e-3);
+    trainer.startTune();
+    auto loss = trainer.calculateLoss();
+    std::cout << "Loss: " << loss << std::endl;
+*/
 
 
     return 0;
