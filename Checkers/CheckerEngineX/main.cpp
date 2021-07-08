@@ -113,13 +113,8 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
- /*   TT.resize(22);
+    
+    TT.resize(22);
     board = Position::getStartPosition();
    // board = Position::pos_from_fen("W:WK3:B4,K32");
 
@@ -130,7 +125,7 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
 
 
 
