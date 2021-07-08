@@ -240,11 +240,11 @@ void Generator::startx() {
 
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
-/* Allocate memory to pmutex here. */
+    pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
+
     pmutex = (pthread_mutex_t *) mmap(NULL, sizeof(pthread_mutex_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS,
                                       -1, 0);
 
-/* Initialise mutex. */
     pthread_mutex_init(pmutex, &attrmutex);
 
 
@@ -275,12 +275,9 @@ void Generator::startx() {
                 Position opening = openings[opening_counter];
                 Board board;
                 board = opening;
-                /* std::cout << "OpeningCounter: " << *opening_counter << std::endl;
-                 board.printBoard();
-                 std::cout << std::endl;
- */
                 pthread_mutex_unlock(pmutex);
                 std::vector<Sample> game;
+                TT.clear();
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
@@ -336,7 +333,13 @@ void Generator::startx() {
 
     if (id > 0) {
         //main_process
-        wait(NULL);
+        int status=0;
+        while ((id = wait(&status)) > 0)
+        {
+            printf("Exit status of %d was %d (%s)\n", (int)id, status,
+                   (status > 0) ? "accept" : "reject");
+            std::exit(-1);
+        }
     }
 
 

@@ -12,18 +12,16 @@
 namespace Statistics {
     class MovePicker {
     private:
-        Network policy_net;
         std::array<int, 32 * 32 * 2> history{0};
         std::array<int, 32 * 32 * 2> bfScore{0};
     public:
+        std::array<Move,MAX_PLY> killer_moves;
 
         int getMoveScore(Move move, Color color);
 
-        int getMoveScore(Position current,Depth depth,Move move, Color color, Move ttMove);
+        int getMoveScore(Position current,int ply,Depth depth,Move move, Color color, Move ttMove);
 
         void clearScores();
-
-        void init();
 
         void update_scores(Move* list, Move move,Color color, int depth);
 

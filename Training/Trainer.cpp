@@ -46,7 +46,6 @@ double sigmoidDiff(double c, double value) {
     return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
 }
 
-
 void Trainer::gradientUpdate(const Sample &sample) {
     //one step of stochastic gradient descent
     //one step of stochastic gradient descent
@@ -122,6 +121,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
                 } else {
                     const auto big_region_index = getIndexBigRegion(curRegion, x_flipped);
                     const size_t index = 12 * big_region_index + 2 * j + 4 * i + p;
+
                     /*opening += weights[index_op];
                     ending += weights[index_end];*/
 
@@ -244,12 +244,12 @@ void Trainer::epoch() {
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
 
-
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
                       counter++;
                       gradientUpdate(sample);
                   });
+
 }
 
 

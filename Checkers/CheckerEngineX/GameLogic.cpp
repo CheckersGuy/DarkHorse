@@ -56,7 +56,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
 
-    for (int i = 1; i <= depth; i++) {
+    for (int i = 1; i <= depth; i += 2) {
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
@@ -90,8 +90,7 @@ namespace Search {
 
     Depth reduce(Local &local, Board &board, Move move) {
         Depth red = 0;
-        const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((local.pv_node) ? 3 : 1)) {
+        if (local.depth >= 2 && !move.isCapture() && local.i >= ((local.pv_node) ? 3 : 1)) {
             red = ((!local.pv_node && local.i >= 4) ? 2 : 1);
         }
         return red;
@@ -149,7 +148,7 @@ namespace Search {
         }
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * Network::evaluate(network, network2, board.getPosition());
+            return Network::evaluate(network, network2, board.getPosition());
         }
 
 
@@ -197,18 +196,15 @@ namespace Search {
         }
 
         //sorting
-        liste.sort(board.getPosition(), depth, tt_move, local.pv_node, board.getMover());
+        liste.sort(board.getPosition(), ply, depth, tt_move, local.pv_node, board.getMover());
 
         //move-loop
         Search::move_loop(local, board, pv, liste);
-
-
-        //updating search stats
-        //moved to move-loop
-        if (local.best_score > local.alpha && liste.length() > 1) {
+        if (local.best_score >= local.beta && liste.length() > 1) {
             Statistics::mPicker.update_scores(&liste.liste[0], local.move, board.getMover(),
-                                              depth);
+                                              local.depth);
         }
+
 #ifndef TRAIN
         //storing tb-entries
         Value tt_value = toTT(local.best_score, ply);
@@ -352,11 +348,17 @@ namespace Search {
                     local.move = move;
                     local.best_score = value;
                     pv.concat(move, local_pv);
+
                 }
             }
 
             local.i++;
         }
+        /*    if (!local.move.isEmpty()) {
+                if (local.best_score >= local.beta && !local.move.isCapture()) {
+                    Statistics::mPicker.killer_moves[local.ply] = local.move;
+                }
+            }*/
 
     }
 
@@ -389,7 +391,7 @@ namespace Search {
         getMoves(board.getPosition(), liste);
 
 #ifdef TRAIN
-      std::shuffle(liste.begin(),liste.end(),generator);
+        std::shuffle(liste.begin(), liste.end(), generator);
 #endif
 
 
@@ -400,7 +402,7 @@ namespace Search {
         }
 
         liste.putFront(mainPV[local.ply]);
-        liste.sort(board.getPosition(), depth, Move{}, true, board.getMover());
+        liste.sort(board.getPosition(), local.ply, depth, Move{}, true, board.getMover());
 
         move_loop(local, board, line, liste);
 

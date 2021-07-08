@@ -29,6 +29,7 @@ uint32_t Transposition::getHashHits() const {
 
 void Transposition::clear() {
     hashHit = 0;
+    age_counter =0;
     std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 

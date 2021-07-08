@@ -79,7 +79,6 @@ inline Position posFromString(const std::string &pos) {
 
 #include <Network.h>
 
-
 int main(int argl, const char **argc) {
 
     initialize();
@@ -87,8 +86,7 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
-
-   /* network.load("testb");
+    network.load("testb");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -101,60 +99,12 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();*/
+    network2.init();
 
 
-    // std::cout<<"MaxWeight: "<<network.get_max_weight()<<std::endl;
+    //evalute each position and write to file
 
-    /* Network policy;
-     policy.load("policytestreinf");
-     policy.addLayer(Layer{120, 1024});
-     policy.addLayer(Layer{1024, 64});
-     policy.addLayer(Layer{64, 64});
-     policy.addLayer(Layer{64, 32});
-     policy.init();
-
-     Position test_position = Position::pos_from_fen("W:W7,K10,K29:BK4,2,5,K11");
-
-
-     policy.compute_incre_forward_pass(test_position);
-     int max_index = 0;
-     float best_value = -10000.0f;
-     for (auto i = 0; i < 32; ++i) {
-         std::cout << policy.input[i] << std::endl;
-         if (policy.input[i] > best_value) {
-             best_value = policy.input[i];
-             max_index = i;
-         }
-     }
-     if (test_position.color == BLACK) {
-         test_position = test_position.getColorFlip();
-     }
-     test_position.printPosition();
-     std::cout << std::endl;
-     Position temp;
-     temp.WP = 1 << max_index;
-     temp.printPosition();
-
-     std::cout << "Max_Index: " << max_index << std::endl;
-     std::cout << "Max_Index_Value: " << best_value << std::endl;
-*/
-
-/*
-    Position temp;
-    for (auto i = 0; i < 3; ++i) {
-        for (auto j = 0; j < 2; ++j) {
-            temp = Position{};
-            temp.BP = big_region << (8 * i + j);
-            temp.printPosition();
-            std::cout << std::endl;
-            Position test;
-            test.BP = sub_region1 << (8 * i + j);
-            test.WP = sub_region2 << (8 * i + j);
-            test.printPosition();
-            std::cout << std::endl;
-        }
-    }*/
+    //manually checking some positions
 
 
 
@@ -163,18 +113,24 @@ int main(int argl, const char **argc) {
 
 
 
-    TT.resize(22);
+
+
+
+
+
+
+ /*   TT.resize(22);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:WK3:B4,K32");
+   // board = Position::pos_from_fen("W:WK3:B4,K32");
 
     board.printBoard();
-    
+
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
 
-
+*/
 
 
 
