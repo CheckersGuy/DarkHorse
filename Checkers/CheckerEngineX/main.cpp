@@ -86,7 +86,7 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
-    network.load("testb");
+ /*   network.load("testb");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -99,7 +99,7 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();
+    network2.init();*/
 
 
     //evalute each position and write to file
@@ -113,7 +113,7 @@ int main(int argl, const char **argc) {
 
 
 
-    
+
     TT.resize(22);
     board = Position::getStartPosition();
    // board = Position::pos_from_fen("W:WK3:B4,K32");
