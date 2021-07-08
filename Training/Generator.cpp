@@ -241,7 +241,7 @@ void Generator::startx() {
                            0);
 
     *counter = 0;
-
+    *error_counter = 0;
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
     pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
@@ -334,7 +334,7 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;
                 std::cout << "Opening_Counter: " << opening_counter << std::endl;
-                std::cout<<"Error_Counter: "<<error_counter<<std::endl;
+                std::cout<<"Error_Counter: "<<*error_counter<<std::endl;
                 if (opening_counter >= openings.size()) {
                     opening_counter = 0;
                 }

@@ -243,8 +243,10 @@ int main(int argl, const char **argc) {
     std::cout<<"Positions: "<<positions.size()<<std::endl;
 */
 
+
    remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
                               "/home/robin/DarkHorse/Training/TrainData/test100removed");
+
 
 /*    for (auto i = 0; i < 3; ++i) {
         for (auto j = 0; j < 2; ++j) {
@@ -283,12 +285,31 @@ int main(int argl, const char **argc) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
     Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
     generator.set_num_games(10000000);
     generator.set_hash_size(20);
     generator.set_parallelism(96);
     generator.set_time(100);
     generator.startx();
+
+
+
+
+
+
+
+
 
 
 
