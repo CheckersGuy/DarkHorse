@@ -182,7 +182,7 @@ void remove_duplicates(std::string in_File, std::string out_file) {
         }
 
     }
-    std::cout<<"Number of Errors: "<<std::endl;
+    std::cout<<"Number of Errors: "<<error_count<<std::endl;
     std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
     Utilities::write_to_binary<T>(out_samples.begin(), out_samples.end(), out_file);
 
@@ -253,8 +253,10 @@ int main(int argl, const char **argc) {
 
 
 
+
    remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
                               "/home/robin/DarkHorse/Training/TrainData/test100removed");
+
 
 
 
@@ -265,6 +267,7 @@ int main(int argl, const char **argc) {
             temp.printPosition();
         }
     }*/
+
 
 
 
@@ -308,12 +311,15 @@ int main(int argl, const char **argc) {
 
 
 
+
+
        Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
        generator.set_num_games(10000000);
        generator.set_hash_size(20);
        generator.set_parallelism(96);
        generator.set_time(100);
        generator.startx();
+
 
 
 
@@ -380,7 +386,7 @@ int main(int argl, const char **argc) {
 */
 
 
-/*
+
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
@@ -391,7 +397,7 @@ int main(int argl, const char **argc) {
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-*/
+
 
 
     return 0;
