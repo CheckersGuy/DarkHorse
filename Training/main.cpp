@@ -243,7 +243,7 @@ int main(int argl, const char **argc) {
     std::cout<<"Positions: "<<positions.size()<<std::endl;
 */
 
-    remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
+   remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
                               "/home/robin/DarkHorse/Training/TrainData/test100removed");
 
 /*    for (auto i = 0; i < 3; ++i) {
@@ -277,6 +277,7 @@ int main(int argl, const char **argc) {
                                        "/home/robin/DarkHorse/Training/TrainData/test100open.train");
     Utilities::write_to_binary<Sample>(ending.begin(), ending.end(),
                                        "/home/robin/DarkHorse/Training/TrainData/test100end.train");
+
 
 
 
@@ -330,19 +331,12 @@ int main(int argl, const char **argc) {
   ;*/
 
 
-
-
-
-
-
     Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
     generator.set_num_games(10000000);
-    generator.set_hash_size(21);
+    generator.set_hash_size(20);
     generator.set_parallelism(96);
     generator.set_time(100);
     generator.startx();
-
-
 
 
 
@@ -361,26 +355,48 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
 /*
+    network.load("testb");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
+    network.addLayer(Layer{32, 1});
 
-    Match engine_match("test", "master");
+    network.init();
+    network2.load("testc");
+    network2.addLayer(Layer{120, 256});
+    network2.addLayer(Layer{256, 32});
+    network2.addLayer(Layer{32, 32});
+    network2.addLayer(Layer{32, 1});
+
+    network2.init();
+
+    std::vector<Sample> test_positions;
+    Utilities::read_binary<Sample>(std::back_inserter(test_positions),
+                                   "/home/robin/DarkHorse/Training/TrainData/small_dataset");
+
+    int counter =0;
+    for(Sample s : test_positions){
+        if(counter>=100)
+            break;
+        s.position.printPosition();
+        std::cout<<"Eval"<<network.compute_incre_forward_pass(s.position)<<std::endl;
+        counter++;
+    }
+*/
+
+
+    Match engine_match("testcrazy", "master3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(5);
     engine_match.setHashSize(21);
     engine_match.start();
 
-*/
-
 
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/moregamesremoved");
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
     trainer.setLearningRate(15000);
     trainer.setEpochs(1000);
     trainer.setl2Reg(0.000000000000);
@@ -388,7 +404,6 @@ int main(int argl, const char **argc) {
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
 
 
     return 0;

@@ -172,10 +172,10 @@ struct Weights {
         uint32_t man_white = pos.WP & (~pos.K);
         man_white = getMirrored(man_white);
         U tempi = 0;
-        for (uint32_t i = 0; i < 7; ++i) {
+        for (int i = 0; i < 7; ++i) {
             uint32_t shift = 4u * i;
-            auto mask_white = (man_white >> shift) & temp_mask;
-            auto mask_black = (man_black >> shift) & temp_mask;
+            const uint32_t mask_white = (man_white >> shift) & temp_mask;
+            const uint32_t mask_black = (man_black >> shift) & temp_mask;
             tempi -= tempo_ranks[i][mask_black];
             tempi += tempo_ranks[i][mask_white];
         }
@@ -190,12 +190,13 @@ struct Weights {
             BK = Bits::pop_count(pos.BP & pos.K);
             phase += WK + BK;
         }
+        U opening = 0, ending = 0;
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
 
 
-        U opening = 0, ending = 0;
+
 
 
         /*     for (uint32_t j = 0; j < 3; ++j) {
@@ -213,7 +214,6 @@ struct Weights {
         for (auto i = 0; i < 3; ++i) {
             for (auto j = 0; j < 2; ++j) {
                 const uint32_t curRegion = big_region << (8 * i + j);
-
                 if ((curRegion & pos.K) != 0) {
                     //region contains some kings
                     const uint32_t sub1 = sub_region1 << (8 * i + j);
@@ -230,7 +230,7 @@ struct Weights {
                     ending += weights[index_end1];
                     ending += weights[index_end2];
                 } else {
-                    const auto big_region_index = getIndexBigRegion(curRegion, pos);
+                    const size_t big_region_index = getIndexBigRegion(curRegion, pos);
                     size_t index_op = 12 * big_region_index + 2 * j + 4 * i;
                     size_t index_end = 12 * big_region_index + 2 * j + 4 * i + 1;
                     opening += weights[index_op];
@@ -240,6 +240,7 @@ struct Weights {
 
             }
         }
+
 
         opening *= color;
         ending *= color;

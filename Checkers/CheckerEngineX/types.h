@@ -48,6 +48,7 @@ constexpr uint8_t Move_Index_None = 100u;
 
 
 
+
 constexpr int prob_cut = 150;
 constexpr int sing_ext = 850;
 constexpr int asp_wind = 150;
@@ -57,13 +58,18 @@ constexpr int MAX_ASP = 3000;
 
 
 
+
 /*
+
 constexpr int prob_cut = 10;
 constexpr int sing_ext = 35;
 constexpr int asp_wind =10;
 constexpr int MAX_ASP = 300;
-
 */
+
+
+
+
 
 
 
