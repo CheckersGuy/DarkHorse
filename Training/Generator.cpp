@@ -266,11 +266,12 @@ void Generator::startx() {
             initialize(seed);
             use_classical(true);
             TT.resize(hash_size);
+            std::cout<<"Init child: "<<i<<std::endl;
             //play a game and increment the opening-counter once more
 
             int opening_counter = 0;
 
-            int move_count;
+
             while (true) {
                 pthread_mutex_lock(pmutex);
                 if (*counter >= num_positions) {
@@ -282,7 +283,7 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 std::vector<Sample> game;
                 TT.clear();
-                for (move_count = 0; move_count < 600; ++move_count) {
+                for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
 
@@ -309,17 +310,10 @@ void Generator::startx() {
                         searchValue(board, best, MAX_PLY, time_control, false);
                     }
                     board.makeMove(best);
+                    board.printBoard();
 
                     Sample current;
                     current.position = board.getPosition();
-                    if(Bits::pop_count(current.position.BP | current.position.WP)<=24){
-                        game.emplace_back(current);
-                    }else{
-                        std::cerr<<"Error"<<std::endl;
-                        pthread_mutex_lock(pmutex);
-                        (*error_counter)++;
-                        pthread_mutex_unlock(pmutex);
-                    }
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
@@ -330,6 +324,7 @@ void Generator::startx() {
                     local_buffer.clear();
                 }
                 *counter = *counter + (int) game.size();
+                std::cout<<game.size()<<std::endl;
                 std::cout << "Counter: " << *counter << std::endl;
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;

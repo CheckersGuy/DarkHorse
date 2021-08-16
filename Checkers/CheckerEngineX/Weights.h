@@ -30,6 +30,7 @@ inline size_t getIndexBigRegion(uint32_t reg, const Position &pos) {
         uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
         size_t temp_index = Bits::bitscan_foward(pieces);
         size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull;
+
         index += current * powers3[temp_index];
         pieces &= pieces - 1u;
         orig_pieces &= orig_pieces - 1u;
@@ -54,6 +55,12 @@ inline size_t getIndex2(uint32_t reg, const Position &pos) {
         size_t temp_index = Bits::bitscan_foward(pieces);
         size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull + ((BK & lsb) != 0u) * 3ull +
                          ((WK & lsb) != 0u) * 4ull;
+    /*    if(current>4){
+            pos.printPosition();
+            std::cout<<pos.WP<<std::endl;
+            std::cout<<pos.BP<<std::endl;
+            std::cout<<"Error"<<std::endl;
+        }*/
         index += current * powers[temp_index];
         pieces &= pieces - 1u;
         orig_pieces &= orig_pieces - 1u;
@@ -163,6 +170,15 @@ struct Weights {
 
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
+
+        if(pos.BP ==0){
+            return -loss(ply);
+        }
+        if(pos.WP ==0){
+            return loss(ply);
+        }
+
+
         const U color = pos.color;
         constexpr U pawnEval = 1000;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));

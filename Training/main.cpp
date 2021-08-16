@@ -158,33 +158,36 @@ struct PosHasher {
 };
 
 
-template<typename T>
 void remove_duplicates(std::string in_File, std::string out_file) {
-    int error_count =0;
+    int error_count = 0;
     Zobrist::initializeZobrisKeys();
-    std::vector<T> in_samples;
-    Utilities::read_binary<T>(std::back_inserter(in_samples), in_File);
-    std::vector<T> out_samples;
+    std::vector<Sample> in_samples;
+    Utilities::read_binary<Sample>(std::back_inserter(in_samples), in_File);
+    std::vector<Sample> out_samples;
     std::unordered_set<Sample, SampleHasher> hash_table;
     std::cout << "Number of samples before removing duplicates: " << in_samples.size() << std::endl;
-    for (auto sample : in_samples) {
-        Position curr;
+    for (Sample sample : in_samples) { ;
         //we have already seen the sample
         if (hash_table.find(sample) != hash_table.end()) {
             continue;
         }
         hash_table.insert(sample);
-        auto num_pieces = Bits::pop_count(curr.BP | curr.WP);
-        if (num_pieces <= 24) {
-            out_samples.emplace_back(sample);
-        }else{
-            error_count++;
-        }
+        auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
+        uint32_t WP = sample.position.WP & (~sample.position.K);
+        uint32_t BP = sample.position.BP & (~sample.position.K);
+        uint32_t WK = sample.position.WP & (sample.position.K);
+        uint32_t BK = sample.position.BP & (sample.position.K);
 
+        if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
+            ((WP & BP) != 0) || ((WK & BK) != 0)) {
+            error_count++;
+        } else {
+            out_samples.emplace_back(sample);
+        }
     }
-    std::cout<<"Number of Errors: "<<error_count<<std::endl;
+    std::cout << "Number of Errors: " << error_count << std::endl;
     std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
-    Utilities::write_to_binary<T>(out_samples.begin(), out_samples.end(), out_file);
+    Utilities::write_to_binary<Sample>(out_samples.begin(), out_samples.end(), out_file);
 
 }
 
@@ -240,22 +243,30 @@ void testing() {
 int main(int argl, const char **argc) {
 
     initialize();
-/*
+
     use_classical(true);
+/*
     std::vector<Position> positions;
     Board board;
     TT.resize(21);
     board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(positions), 3, board, -1000, 1000);
-    Utilities::write_to_binary<Position>(positions.begin(),positions.end(),"/home/robin/DarkHorse/Training/Positions/train3.pos",std::ios::app);
-    std::cout<<"Positions: "<<positions.size()<<std::endl;
+    Utilities::createNMoveBook(std::back_inserter(positions), 4, board, -500, 500);
+    Utilities::write_to_binary<Position>(positions.begin(), positions.end(),
+                                         "/home/robin/DarkHorse/Training/Positions/train3.pos");
+    std::cout << "Positions: " << positions.size() << std::endl;
+
 */
 
 
+/*
+
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/test100removed",
+                      "/home/robin/DarkHorse/Training/TrainData/test100removed");
 
 
-   remove_duplicates<Sample>("/home/robin/DarkHorse/Training/TrainData/test100",
-                              "/home/robin/DarkHorse/Training/TrainData/test100removed");
+
+
+*/
 
 
 
@@ -272,53 +283,62 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
 
-       std::vector<Sample> opening;
-       std::vector<Sample> ending;
+    std::vector<Sample> opening;
+    std::vector<Sample> ending;
+    std::vector<Sample> early_ending;
 
-       std::vector<Sample> data;
+    std::vector<Sample> data;
 
-       Utilities::read_binary<Sample>(std::back_inserter(data),
-                                      "/home/robin/DarkHorse/Training/TrainData/test100removed");
+    Utilities::read_binary<Sample>(std::back_inserter(data),
+                                   "/home/robin/DarkHorse/Training/TrainData/test100removed");
 
-       for (Sample s : data) {
-           auto num = Bits::pop_count(s.position.WP | s.position.BP);
-           if (num <= 8) {
-               ending.emplace_back(s);
-           } else {
-               opening.emplace_back(s);
-           }
-       }
-       Utilities::write_to_binary<Sample>(opening.begin(), opening.end(),
-                                          "/home/robin/DarkHorse/Training/TrainData/test100open.train");
-       Utilities::write_to_binary<Sample>(ending.begin(), ending.end(),
-                                          "/home/robin/DarkHorse/Training/TrainData/test100end.train");
+    for (Sample s : data) {
+        auto num = Bits::pop_count(s.position.WP | s.position.BP);
+        if (num <= 6) {
+            ending.emplace_back(s);
+        } else if (num > 6 && num <= 12) {
+            early_ending.emplace_back(s);
+        } else {
+            opening.emplace_back(s);
+        }
+    }
+    Utilities::write_to_binary<Sample>(opening.begin(), opening.end(),
+                                       "/home/robin/DarkHorse/Training/TrainData/test100open.train");
+    Utilities::write_to_binary<Sample>(ending.begin(), ending.end(),
+                                       "/home/robin/DarkHorse/Training/TrainData/test100end.train");
 
-
-
-
-
-
-
-
-
-
-
-
+    Utilities::write_to_binary<Sample>(opening.begin(), opening.end(),
+                                       "/home/robin/DarkHorse/Training/TrainData/test100open.train");
+    Utilities::write_to_binary<Sample>(early_ending.begin(), early_ending.end(),
+                                       "/home/robin/DarkHorse/Training/TrainData/test100early_end.train");
 
 
 
 
 
+*/
 
 
-       Generator generator("master3", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/test100");
-       generator.set_num_games(10000000);
-       generator.set_hash_size(20);
-       generator.set_parallelism(96);
-       generator.set_time(100);
-       generator.startx();
+
+
+
+
+
+
+
+
+/*
+    Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testset");
+    generator.set_num_games(10000000);
+    generator.set_hash_size(20);
+    generator.set_parallelism(1);
+    generator.set_time(100);
+    generator.startx();
+
+*/
 
 
 
@@ -360,13 +380,33 @@ int main(int argl, const char **argc) {
 */
 
 
- /*   Match engine_match("testcrazy", "master3");
+
+
+
+
+
+
+
+
+
+    Match engine_match("test4", "testing");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(5);
-    engine_match.setHashSize(21);
+    engine_match.setNumThreads(12);
+    engine_match.setHashSize(20);
     engine_match.start();
-*/
+
+
+
+
+
+
+
+
+
+
+
+
 
 /*
     std::vector<Sample> test;
@@ -385,12 +425,11 @@ int main(int argl, const char **argc) {
     }
 */
 
-
-
+/*
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
-    trainer.setLearningRate(15000);
+    trainer.setLearningRate(80);
     trainer.setEpochs(1000);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-2e-3);
@@ -398,6 +437,7 @@ int main(int argl, const char **argc) {
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
 
+*/
 
 
     return 0;

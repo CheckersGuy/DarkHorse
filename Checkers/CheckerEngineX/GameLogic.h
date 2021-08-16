@@ -15,20 +15,7 @@
 #include <algorithm>
 #include "Bits.h"
 #include <Network.h>
-
-struct Local {
-    Value alpha, beta;
-    Value best_score;
-    Value sing_score;
-    Depth depth;
-    Ply ply;
-    int i;
-    Move skip_move;
-    Move sing_move;
-    Move move;
-    bool prune{false};
-    bool pv_node;
-};
+#include <types.h>
 
 struct SearchGlobal {
     uint32_t sel_depth;
@@ -40,9 +27,28 @@ struct SearchGlobal {
     void score_update();
 };
 
+struct Local {
+    Value alpha, beta;
+    Value best_score{-INFINITE};
+    Value sing_score;
+    Depth depth;
+    Ply ply;
+    int i;
+    Move skip_move;
+    Move sing_move;
+    Move move;
+};
+
 void use_classical(bool flag);
 
+Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Value beta, bool in_pv);
+
+Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
+
+Value search(Board board,Move& best, Depth depth, uint32_t time, bool print);
+
 namespace Search {
+
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth);
 
@@ -51,15 +57,15 @@ namespace Search {
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
-    Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move, bool prune);
+    Value search(bool in_pv,Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move);
 
-    void move_loop(Local &local, Board &board, Line &pv, MoveListe &liste);
+    void move_loop(bool in_pv,Local &local, Board &board, Line &pv, MoveListe &liste);
 
-    Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
+    Value qs(bool in_pv,Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
 
-    Value searchMove(Move move, Local &local, Board &board, Line &line, int extension);
+    Value searchMove(bool in_pv,Move move, Local &local, Board &board, Line &line, int extension);
 
-    Depth reduce(Local &local, Board &board, Move move);
+    Depth reduce(Local &local, Board &board, Move , bool in_pv);
 
 }
 
@@ -73,6 +79,7 @@ void initialize(uint64_t seed);
 
 extern Network network;
 extern Network network2;
+extern Network network3;
 
 
 #endif //CHECKERSTEST_GAMELOGIC_H

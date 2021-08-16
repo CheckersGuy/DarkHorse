@@ -9,32 +9,32 @@
 #include "Move.h"
 #include "Position.h"
 #include "Network.h"
+#include "MoveListe.h"
+
 namespace Statistics {
     class MovePicker {
     private:
-        std::array<int, 32 * 32 * 2> history{0};
-        std::array<int, 32 * 32 * 2> bfScore{0};
+        std::array<int, 32 * 16> history{0};
+        std::array<int, 32 * 16> bfScore{0};
+
     public:
-        std::array<Move,MAX_PLY> killer_moves;
+        std::array<Move, MAX_PLY> killer_moves;
 
-        int getMoveScore(Move move, Color color);
+        int getMoveScore(Position pos, Move move);
 
-        int getMoveScore(Position current,int ply,Depth depth,Move move, Color color, Move ttMove);
+        int getHistoryIndex(Position pos, Move move);
+
+        int getMoveScore(Position current, int ply, Move move, Move ttMove);
 
         void clearScores();
 
-        void update_scores(Move* list, Move move,Color color, int depth);
+        void update_scores(Position pos, Move *list, Move move, int depth);
 
-        static int get_move_encoding(Color color,Move move);
+        static int get_move_encoding(Color color, Move move);
 
     };
 
-#ifndef TRAIN
     extern MovePicker mPicker;
-#else
-    extern thread_local MovePicker mPicker;
-#endif
-
 
 
 }

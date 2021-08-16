@@ -2,32 +2,11 @@
 #include "Position.h"
 #include "Zobrist.h"
 
-Position Position::posFromString(const std::string &pos) {
-    Position result;
-    for (uint32_t i = 0; i < 32u; ++i) {
-        uint32_t current = 1u << i;
-        if (pos[i] == '1') {
-            result.BP |= current;
-        } else if (pos[i] == '2') {
-            result.WP |= current;
-        } else if (pos[i] == '3') {
-            result.K |= current;
-            result.BP |= current;
-        } else if (pos[i] == '4') {
-            result.K |= current;
-            result.WP |= current;
-        }
-    }
-    if (pos[32] == 'B') {
-        result.color = BLACK;
-    } else {
-        result.color = WHITE;
-    }
-    result.key = Zobrist::generateKey(result);
-    return result;
+bool Position::hasJumps() const {
+    return hasJumps(BLACK) || hasJumps(WHITE);
 }
 
-std::string Position::getPositionString()const {
+std::string Position::getPositionString() const {
     std::string position;
     for (uint32_t i = 0; i < 32u; ++i) {
         uint32_t current = 1u << i;
@@ -140,8 +119,8 @@ Position Position::pos_from_fen(std::string fen_string) {
         if (token == "W") {
             mover = WHITE;
         }
-        if(token ==":"){
-            saw_king=false;
+        if (token == ":") {
+            saw_king = false;
         }
 
         if (token == ",") {
@@ -157,7 +136,7 @@ Position Position::pos_from_fen(std::string fen_string) {
 }
 
 std::string Position::get_fen_string() const {
-    if(isEmpty())
+    if (isEmpty())
         return std::string{};
     std::ostringstream stream;
     stream << ((color == BLACK) ? "B" : "W");
@@ -211,6 +190,46 @@ Position Position::getColorFlip() const {
     return next;
 }
 
+
+PieceType Position::getPieceType(Move move) const {
+    PieceType type;
+    if ((move.from & (BP & K)) != 0) {
+        type = BKING;
+    } else if ((move.from & (WP & K)) != 0) {
+        type = WKING;
+    } else if ((move.from & BP) != 0) {
+        type = BPAWN;
+    } else if ((move.from & WP) != 0) {
+        type = WPAWN;
+    }else{
+        type = WPAWN;
+    }
+    return type;
+}
+
+bool Position::islegal() const {
+    const uint32_t b_pawns = BP & (~K);
+    const uint32_t w_pawns = WP & (~K);
+
+    const uint32_t b_kings = BP & (K);
+    const uint32_t w_kings = WP & (K);
+
+    //no pawns on the promotion squares
+    if ((b_pawns & PROMO_SQUARES_BLACK) != 0)
+        return false;
+    if ((w_pawns & PROMO_SQUARES_WHITE) != 0)
+        return false;
+
+    //no two pieces can occupy the same square
+    if ((BP & WP) != 0)
+        return false;
+    //ghost king
+    if ((K != 0) && (K & (BP | WP)) == 0)
+        return false;
+
+    return true;
+}
+
 Position Position::getStartPosition() {
     Position pos{};
     pos.color = BLACK;
@@ -253,7 +272,7 @@ bool Position::isWipe() const {
 }
 
 bool Position::isEnd() const {
-    return ( color == BLACK && getMovers<BLACK>() == 0u ) || (color == WHITE && getMovers<WHITE>()==0u);
+    return (color == BLACK && getMovers<BLACK>() == 0u) || (color == WHITE && getMovers<WHITE>() == 0u);
 }
 
 void Position::printPosition() const {
@@ -263,7 +282,7 @@ void Position::printPosition() const {
         int row = i / 8;
         int col = i % 8;
         if ((row + col) % 2 == 0) {
-            out +="[ ]";
+            out += "[ ]";
         } else {
             if ((row + col + 1) % 2 == 0) {
                 counter--;
@@ -274,7 +293,7 @@ void Position::printPosition() const {
             } else if (((BP) & maske) == maske) {
                 out += "[0]";
             } else if (((WP & K) & maske) == maske) {
-                out +="[W]";
+                out += "[W]";
             } else if (((WP) & maske) == maske) {
                 out += "[X]";
             } else {
@@ -285,7 +304,7 @@ void Position::printPosition() const {
             out += "\n";
         }
     }
-    std::cout << out<< std::endl;
+    std::cout << out << std::endl;
 }
 
 void Position::makeMove(Move &move) {

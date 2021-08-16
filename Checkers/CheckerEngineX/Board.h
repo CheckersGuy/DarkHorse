@@ -15,7 +15,9 @@ class Board {
 
 private:
     std::array<Position, MAX_PLY+400> pStack;
-    std::array<Move, MAX_PLY+400> moves;
+    std::array<Move,MAX_PLY+400> moveStack;
+    int rev_mov_counter =0;
+    int pre_rev_mov_counter=0;
 
 public:
     int pCounter = 0;
@@ -34,9 +36,13 @@ public:
 
     Position &getPosition();
 
+    Position previous();
+
     uint64_t getCurrentKey() const;
 
     bool isRepetition() const;
+
+    bool isRepetition2() const;
 
     Color getMover() const;
 

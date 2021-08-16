@@ -10,7 +10,6 @@
 #include <fstream>
 #include <iostream>
 #include "Position.h"
-#include "SIMD.h"
 #include <cstring>
 
 struct Layer {
@@ -56,9 +55,10 @@ struct Network {
 
     float forward_pass()const;
 
-    int evaluate(Position pos);
+    int evaluate(Position pos,int ply);
 
-    static int evaluate(Network& op, Network& end, Position pos);
+    static int evaluate(Network& op, Network& end, Position pos,int ply);
+    static int evaluate(Network& op,Network& early_end, Network& end, Position pos,int ply);
 
 };
 

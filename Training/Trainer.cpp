@@ -66,7 +66,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
     end_phase /= (double) stage_size;
 
 
-    if (isWin(qStatic) || !isEval(qStatic))
+    if (isWin((int)qStatic) || !isEval((int)qStatic))
         return;
 
     double result;
@@ -142,47 +142,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
             }
         }
-
-/*
-        for (uint32_t j = 0; j < 3; ++j) {
-            for (uint32_t i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8u * j + i);
-                size_t index = 18ull * getIndex2(curRegion, x_flipped) + 9ull * p + 3ull * j + i;
-
-                double diff = temp;
-                if (p == 0) {
-                    //derivative for the opening
-                    diff *= phase * color;
-                } else {
-                    //derivative for the ending
-                    diff *= end_phase * color;
-                }
-                momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
-                //need to update the momentum term
-                gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
-
-            }
-        }*/
-
-/*
-        for (size_t j = 0; j < 3; ++j) {
-            for (size_t i = 0; i < 3; ++i) {
-                const uint32_t curRegion = region << (8u * j + i);
-                size_t index = 18ull * getIndex2(curRegion, x_flipped) + 9ull * p + 3ull * j + i;
-                double diff = temp;
-                if (p == 0) {
-                    //derivative for the opening
-                    diff *= phase*color;
-                } else {
-                    //derivative for the ending
-                    diff *= end_phase*color;
-                }
-                momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
-                //need to update the momentum term
-                gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
-
-            }
-        }*/
     }
 
     //for king_op
@@ -245,13 +204,17 @@ void Trainer::epoch() {
     int counter = 0;
 
 
-
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
                       auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
-                      if(num_pieces>24){
-                          //sample.position.printPosition();
-                      }else{
+                      uint32_t WP = sample.position.WP & (~sample.position.K);
+                      uint32_t BP = sample.position.BP & (~sample.position.K);
+                      uint32_t WK = sample.position.WP & (sample.position.K);
+                      uint32_t BK = sample.position.BP & (sample.position.K);
+
+                      if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
+                              ((WP & BP) != 0) || ((WK & BK) != 0)) {
+                      } else {
                           counter++;
                           gradientUpdate(sample);
                       }

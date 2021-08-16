@@ -7,22 +7,20 @@ void MoveListe::reset() {
 
 extern Line mainPV;
 
-void MoveListe::sort(Position current, int ply, Depth depth, Move ttMove, bool inPVLine, Color color) {
+void MoveListe::sort(Position current, int ply, Move ttMove, int start_index) {
 
-    if (moveCounter <= 1)
+
+    if (moveCounter-start_index <= 1)
         return;
 
-    const int start_index = (inPVLine) ? 1 : 0;
-
-
-    for (auto i = 0; i < moveCounter; ++i) {
+    for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] = (short) Statistics::mPicker.getMoveScore(current, ply, depth, m, color, ttMove);
+        scores[i] =(short) Statistics::mPicker.getMoveScore(current, ply, m, ttMove);
     }
 
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
-        int tmp = scores[i];
+        const int tmp = scores[i];
         Move tmpMove = liste[i];
         int j;
         for (j = i; j > (start_index) && scores[j - 1] < tmp; --j) {
@@ -30,7 +28,7 @@ void MoveListe::sort(Position current, int ply, Depth depth, Move ttMove, bool i
             scores[j] = scores[j - 1];
         }
         liste[j] = tmpMove;
-        scores[j] = (short) tmp;
+        scores[j] = (short)tmp;
     }
 
 }
@@ -51,7 +49,7 @@ void MoveListe::remove(Move move) {
 
 }
 
-void MoveListe::putFront(const Move move) {
+void MoveListe::putFront(Move move) {
 
     if (moveCounter <= 1)
         return;
@@ -65,16 +63,12 @@ void MoveListe::putFront(const Move move) {
 }
 
 MoveListe &MoveListe::operator=(const MoveListe &other) {
-    std::copy(begin(), end(), begin());
+    for (auto i = 0; i < other.moveCounter; ++i) {
+        liste[i] = other.liste[i];
+    }
     this->moveCounter = other.moveCounter;
     return *this;
 }
 
-uint8_t MoveListe::get_move_index(Move move) const {
-    for (uint32_t i = 0u; i < moveCounter; ++i) {
-        if (move == liste[i])
-            return i;
-    }
-    return Move_Index_None;
-}
+
 

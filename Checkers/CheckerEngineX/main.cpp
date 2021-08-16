@@ -86,20 +86,29 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
- /*   network.load("testb");
+ /*   network.load("opentest");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
-    network2.load("testc");
+
+    network2.load("openend");
     network2.addLayer(Layer{120, 256});
     network2.addLayer(Layer{256, 32});
     network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();*/
+    network2.init();
+
+    network3.load("earlyend");
+    network3.addLayer(Layer{120, 256});
+    network3.addLayer(Layer{256, 32});
+    network3.addLayer(Layer{32, 32});
+    network3.addLayer(Layer{32, 1});
+
+    network3.init();*/
 
 
     //evalute each position and write to file
@@ -114,18 +123,48 @@ int main(int argl, const char **argc) {
 
 
 
+    // auto val = search(board,10,10000,true);
 
-    TT.resize(22);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+
+    TT.resize(23);
     board = Position::getStartPosition();
-   // board = Position::pos_from_fen("W:WK3:B4,K32");
-
+    board = Position::pos_from_fen("W:W5,29:BK3,K12");
     board.printBoard();
 
+
+
+
+    board.printBoard();
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
 
+*/
+
+
+
+
+//Great now repetition detection is not working
 
 
 
@@ -183,6 +222,7 @@ int main(int argl, const char **argc) {
                 bestMove = liste[0];
             } else {
                 searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+                //search(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";
