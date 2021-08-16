@@ -14,11 +14,11 @@ class Line {
 
 private:
     std::array<Move, MAX_PLY> myArray;
-    uint32_t counter{0u};
+    int counter{0u};
 
 public:
 
-    uint32_t length() const;
+    int length() const;
 
     void addMove(const Move &move);
 

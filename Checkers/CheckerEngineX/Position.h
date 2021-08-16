@@ -114,12 +114,16 @@ struct Position {
         return movers;
     }
 
+    PieceType getPieceType(Move move)const;
+
 
     std::string get_fen_string() const;
 
     Color getColor() const;
 
     bool hasJumps(Color color) const;
+
+    bool hasJumps() const;
 
     bool isWipe() const;
 
@@ -128,6 +132,8 @@ struct Position {
     bool isEmpty() const;
 
     bool isEnd() const;
+
+    bool islegal()const;
 
     std::string getPositionString() const;
 
@@ -140,8 +146,6 @@ struct Position {
     static Position getStartPosition();
 
     static Position pos_from_fen(std::string fen_string);
-
-    static Position posFromString(const std::string &pos);
 
     inline bool operator==(const Position &pos) const {
         return (pos.BP == BP && pos.WP == WP && pos.K == K && pos.color == color);

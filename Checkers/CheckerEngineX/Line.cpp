@@ -6,7 +6,7 @@
 #include "Line.h"
 
 
-uint32_t Line::length() const {
+int Line::length() const {
     return counter;
 }
 

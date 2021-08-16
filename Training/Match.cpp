@@ -255,8 +255,8 @@ void Match::start() {
     //this probably needs to be reworked
     HyperLog<Position, 14, TrainHasher> counter;
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
-    std::cout<<"Engine1: "<<first<<std::endl;
-    std::cout<<"Engine2: "<<second<<std::endl;
+    std::cout << "Engine1: " << first << std::endl;
+    std::cout << "Engine2: " << second << std::endl;
     Zobrist::initializeZobrisKeys();
     const int numEngines = 2;
     const int num_matches = this->threads;
@@ -316,10 +316,20 @@ void Match::start() {
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 if (inter.pos.isEmpty()) {
-                    Position temp = get_start_pos();
-                    inter.start_pos = temp;
+                    Position temp;
+                    //Debugging if the reverse is actually played :)
+
+                    if (inter.first_game) {
+                        inter.first_mover = 0;
+                        inter.start_pos = get_start_pos();
+                        inter.first_game = false;
+                    } else {
+                        inter.first_mover = 1;
+                        inter.first_game = true;
+                    }
                     inter.pos = inter.start_pos;
-                    inter.first_mover = 0;
+
+
                 }
 
                 if (inter.is_terminal_state()) {
@@ -338,9 +348,9 @@ void Match::start() {
                     if (inter.is_n_fold(3)) {
                         draws++;
                     }
-                    if (inter.history.size() <=400) {
+                    if (inter.history.size() <= 400) {
                         //reached max move
-                        for(Position p : inter.history){
+                        for (Position p : inter.history) {
                             p.key = Zobrist::generateKey(p);
                             counter.insert(p);
                         }

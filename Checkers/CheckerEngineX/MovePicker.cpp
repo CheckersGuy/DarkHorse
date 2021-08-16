@@ -6,88 +6,90 @@
 
 namespace Statistics {
 
-
-#ifndef TRAIN
     MovePicker mPicker;
-#else
-    thread_local MovePicker mPicker;
-#endif
-
 
     int MovePicker::get_move_encoding(Color color, Move move) {
         //we differentiate between edge moves and
         //always from whites perspective
-
-        auto cmp_class = [](uint32_t from, uint32_t to) {
-            //outputs a value between 0 and 4 depending on
-            //how we can reach the destination square
-            if (to == from << 3 || to == from << 5) {
-                return 0;
-            }
-            if (to == from >> 3 || to == from >> 5) {
-                return 1;
-            }
-            if (to == from << 4)
-                return 2;
-            if (to == from >> 4)
-                return 3;
-
-        };
-
-        const uint32_t edge = 0u;
-
-        uint32_t from = (color == BLACK) ? getMirrored(move.from) : move.from;
-        uint32_t to = (color == BLACK) ? getMirrored(move.to) : move.to;
-        //we classify moves based on that
-        //EDGE moves first
-
-        //getting the index on one of the edges
-        uint32_t current = edge & from;
-        current = _pext_u32(current, edge);
-        uint32_t move_index = Bits::bitscan_foward(current);
-
-        //to be continued
-
-
         return 0;
     }
 
+    int MovePicker::getHistoryIndex(Position pos, Move move) {
+        //32 source squares
+        // 4 piece types
+        // 4 directions
+        int t;
+
+        if ((move.from & (pos.BP & pos.K)) != 0) {
+            t = 0;
+        } else if ((move.from & (pos.WP & pos.K)) != 0) {
+            t = 1;
+        } else if ((move.from & pos.BP) != 0) {
+            t = 2;
+        } else if ((move.from & pos.WP) != 0) {
+            t = 3;
+        } else {
+            t = 0;
+        }
+
+        int orig_sq = move.getFromIndex();
+        //direction of the piece
+        int dir = 0;
+
+        if ((((MASK_R3 & move.to) >> 3) == move.from) || (((MASK_R5 & move.to) >> 5) == move.from)) {
+            dir = 1;
+        } else if ((((MASK_L3 & move.to) << 3) == move.from) || (((MASK_L5 & move.to) << 5) == move.from)) {
+            dir = 2;
+        } else if ((move.to << 4) == move.from) {
+            dir = 3;
+        }
+        const int index = 16 * orig_sq + 4 * dir + t;
+        return index;
+    }
+
     void MovePicker::clearScores() {
-        std::fill(bfScore.begin(), bfScore.end(), 0);
         std::fill(history.begin(), history.end(), 0);
     }
 
-    int MovePicker::getMoveScore(Move move, Color color) {
-        const int colorIndex = (color + 1) / 2;
-        const int bScore = bfScore[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] + 1;
-        const int hhScore = history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()];
-        const int score = hhScore / bScore;
-
-        return score;
+    int MovePicker::getMoveScore(Position pos, Move move) {
+        const int index = getHistoryIndex(pos, move);
+        const int score = history[index];
+        const int bf_score = bfScore[index] + 1;
+        return score / bf_score;
     }
 
-    int MovePicker::getMoveScore(Position current, int ply, Depth depth, Move move, Color color, Move ttMove) {
-
+    int MovePicker::getMoveScore(Position current, int ply, Move move, Move ttMove) {
         const int killer_score = 10000;
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
-     /*   if (move == killer_moves[ply]) {
-            return killer_score;
-        }*/
-        return getMoveScore(move, color);
+        if (move.isCapture()) {
+            return (int) Bits::pop_count(move.captures);
+        }
+
+
+        /*      if (move == killer_moves[ply]) {
+                  return killer_score;
+              }
+      */
+
+        return getMoveScore(current, move);
 
     }
 
 
-    void MovePicker::update_scores(Move *liste, Move move, Color color, int depth) {
-        const int colorIndex = (color + 1) / 2;
-        history[32 * 32 * colorIndex + 32 * move.getToIndex() + move.getFromIndex()] += depth * depth;
-        while (move != (*liste)) {
-            Move top = *liste;
-            bfScore[32 * 32 * colorIndex + 32 * top.getToIndex() + top.getFromIndex()] += depth;
+    void MovePicker::update_scores(Position pos, Move *liste, Move move, int depth) {
+        if (depth <= 2)
+            return;
+        const int index = getHistoryIndex(pos, move);
+        history[index] += depth * depth;
+        Move top = liste[0];
+        while (top != move) {
+            if (top == move)
+                break;
+            top = *liste;
+            history[getHistoryIndex(pos, top)] -= depth * depth;
             liste++;
         }
-
     }
 }

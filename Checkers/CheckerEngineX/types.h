@@ -40,7 +40,6 @@ constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 729u
                                             59049ull, 177147ull};
 
 constexpr int stage_size = 24;
-constexpr uint8_t Move_Index_None = 100u;
 
 //constant for extensions and reductions
 
@@ -49,9 +48,12 @@ constexpr uint8_t Move_Index_None = 100u;
 
 
 
-constexpr int prob_cut = 150;
-constexpr int sing_ext = 850;
-constexpr int asp_wind = 150;
+
+
+
+constexpr int prob_cut = 300;
+constexpr int sing_ext = 300;
+constexpr int asp_wind = 100;
 constexpr int MAX_ASP = 3000;
 
 
@@ -61,21 +63,16 @@ constexpr int MAX_ASP = 3000;
 
 /*
 
-constexpr int prob_cut = 10;
-constexpr int sing_ext = 35;
-constexpr int asp_wind =10;
+
+
+constexpr int prob_cut = 30;
+constexpr int sing_ext = 50;
+constexpr int asp_wind =15;
 constexpr int MAX_ASP = 300;
+
+
+
 */
-
-
-
-
-
-
-
-
-
-
 
 
 
