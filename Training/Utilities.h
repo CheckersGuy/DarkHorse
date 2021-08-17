@@ -55,7 +55,7 @@ namespace Utilities {
         for (int i = 0; i < liste.length(); ++i) {
             board.makeMove(liste[i]);
             createNMoveBook(iter, N - 1, board, lowerBound, upperBound);
-            board.undoMove();
+            board.undoMove(liste[i]);
         }
     }
 

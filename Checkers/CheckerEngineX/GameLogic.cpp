@@ -102,12 +102,12 @@ namespace Search {
         //checking time-used
 
 
-        if (ply>0 && board.isRepetition()) {
-            if(board.isRepetition2() != board.isRepetition()){
-                board.previous().printPosition();
-                board.printBoard();
-                std::cout<<std::endl;
-            }
+        if (ply>0 && board.isRepetition2()) {
+          /*       if(board.isRepetition2() != board.isRepetition()){
+                     board.previous().printPosition();
+                     board.printBoard();
+                     std::cout<<std::endl;
+                 }*/
             return 0;
         }
 
@@ -275,7 +275,7 @@ namespace Search {
             board.makeMove(move);
             Value value = -Search::qs(((i == 0) ? in_pv : false), board, localPV, -beta, -std::max(alpha, bestValue),
                                       ply + 1, depth - 1);
-            board.undoMove();
+            board.undoMove(move);
             if (value > bestValue) {
                 bestValue = value;
                 if (value >= beta)
@@ -353,7 +353,7 @@ namespace Search {
             }
 
         }
-        board.undoMove();
+        board.undoMove(move);
         return val;
 
     }
@@ -536,7 +536,7 @@ Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Val
         }
 
 
-        board.undoMove();
+        board.undoMove(mv);
         if (val > alpha) {
             best_move = mv;
             if (val >= beta) {
@@ -579,7 +579,7 @@ Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta) {
         board.makeMove(mv);
         Line local_pv;
         Value val = -qsSearch(board, local_pv, ply + 1, -beta, -alpha);
-        board.undoMove();
+        board.undoMove(mv);
         if (val >= beta) {
             return beta;
         }
