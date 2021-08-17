@@ -310,10 +310,11 @@ void Generator::startx() {
                         searchValue(board, best, MAX_PLY, time_control, false);
                     }
                     board.makeMove(best);
-                    board.printBoard();
-
+                /*    board.printBoard();
+*/
                     Sample current;
                     current.position = board.getPosition();
+                    game.emplace_back(current);
                 }
                 pthread_mutex_lock(pmutex);
                 std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
@@ -326,6 +327,7 @@ void Generator::startx() {
                 *counter = *counter + (int) game.size();
                 std::cout<<game.size()<<std::endl;
                 std::cout << "Counter: " << *counter << std::endl;
+                std::cout<<"BufferSize: "<<local_buffer.size()<<std::endl;
                 pthread_mutex_unlock(pmutex);
                 opening_counter++;
                 std::cout << "Opening_Counter: " << opening_counter << std::endl;

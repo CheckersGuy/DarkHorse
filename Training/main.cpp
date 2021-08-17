@@ -258,15 +258,11 @@ int main(int argl, const char **argc) {
 */
 
 
-/*
-
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/test100removed",
-                      "/home/robin/DarkHorse/Training/TrainData/test100removed");
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testset",
+                      "/home/robin/DarkHorse/Training/TrainData/testsetremoved");
 
 
 
-
-*/
 
 
 
@@ -320,25 +316,18 @@ int main(int argl, const char **argc) {
 
 
 */
-
-
-
-
-
-
-
-
-
-
 /*
+
+
     Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testset");
     generator.set_num_games(10000000);
     generator.set_hash_size(20);
-    generator.set_parallelism(1);
+    generator.set_parallelism(14);
     generator.set_time(100);
     generator.startx();
 
 */
+
 
 
 
@@ -382,27 +371,12 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
-
-    Match engine_match("test4", "testing");
+    Match engine_match("newset", "test4");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(12);
     engine_match.setHashSize(20);
     engine_match.start();
-
-
-
-
-
-
-
-
 
 
 
@@ -425,19 +399,16 @@ int main(int argl, const char **argc) {
     }
 */
 
-/*
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test100removed");
-    trainer.setLearningRate(80);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/testsetremoved");
+    trainer.setLearningRate(12000);
     trainer.setEpochs(1000);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-2e-3);
+    trainer.setCValue(-6e-4);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
-*/
 
 
     return 0;

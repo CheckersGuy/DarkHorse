@@ -59,7 +59,6 @@ namespace Statistics {
     }
 
     int MovePicker::getMoveScore(Position current, int ply, Move move, Move ttMove) {
-        const int killer_score = 10000;
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }

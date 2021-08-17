@@ -143,7 +143,8 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
+
 
     TT.resize(23);
     board = Position::getStartPosition();
@@ -159,7 +160,8 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 
-*/
+
+
 
 
 

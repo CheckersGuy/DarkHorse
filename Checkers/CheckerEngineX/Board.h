@@ -30,7 +30,7 @@ public:
 
     void makeMove(Move move);
 
-    void undoMove();
+    void undoMove(Move move);
 
     bool isSilentPosition();
 

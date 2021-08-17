@@ -18,26 +18,22 @@ void Board::printBoard() const {
     pos.printPosition();
 }
 
+//Requires some more checking here
+//weird that I can not figure that out
 void Board::makeMove(Move move) {
-
     pStack[pCounter + 1] = pStack[pCounter];
     this->pCounter++;
+    moveStack[pCounter]=move;
     Zobrist::doUpdateZobristKey(getPosition(), move);
     pStack[pCounter].makeMove(move);
 
-    if(move.isCapture()){
-        pre_rev_mov_counter = rev_mov_counter;
-        rev_mov_counter = pCounter;
-    }
+
 
 
 }
 
-void Board::undoMove() {
+void Board::undoMove(Move move) {
     this->pCounter--;
-    if(pCounter<=rev_mov_counter){
-        rev_mov_counter = pre_rev_mov_counter;
-    }
 }
 
 Board &Board::operator=(Position pos) {
@@ -63,8 +59,8 @@ uint64_t Board::getCurrentKey() const {
 }
 
 bool Board::isRepetition() const {
-    if (pCounter < 4)
-        return false;
+    if(rev_mov_counter>pCounter)
+        std::cerr<<"Error"<<std::endl;
 
     int counter = 0;
     const Position check = pStack[pCounter];
@@ -72,8 +68,10 @@ bool Board::isRepetition() const {
         if (pStack[i] == check) {
             counter++;
         }
-        if (counter >= 2)
+        if (counter >= 2){
             return true;
+        }
+
 
     }
 
@@ -81,12 +79,9 @@ bool Board::isRepetition() const {
 }
 
 bool Board::isRepetition2() const {
-    if (pCounter < 4)
-        return false;
-
     int counter = 0;
     const Position check = pStack[pCounter];
-    for (int i = pCounter; i >= rev_mov_counter; i -= 2) {
+    for (int i = pCounter; i >=0; i -= 2) {
 
         if (pStack[i] == check) {
             counter++;
@@ -94,6 +89,12 @@ bool Board::isRepetition2() const {
         if (counter >= 2)
             return true;
 
+        if((moveStack[i].to& pStack[i].K)==0)
+            return false;
+
+        if(moveStack[i].isCapture()){
+            return false;
+        }
     }
 
     return false;
