@@ -86,29 +86,31 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
- /*   network.load("opentest");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
+/*
+    network.load("testtest");
+    network.addLayer(Layer{120, 512});
+    network.addLayer(Layer{512, 16});
+    network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
 
-    network2.load("openend");
-    network2.addLayer(Layer{120, 256});
-    network2.addLayer(Layer{256, 32});
-    network2.addLayer(Layer{32, 32});
+    network2.load("testtest");
+    network2.addLayer(Layer{120, 512});
+    network2.addLayer(Layer{512, 16});
+    network2.addLayer(Layer{16, 32});
     network2.addLayer(Layer{32, 1});
 
     network2.init();
 
-    network3.load("earlyend");
-    network3.addLayer(Layer{120, 256});
-    network3.addLayer(Layer{256, 32});
-    network3.addLayer(Layer{32, 32});
+    network3.load("testtest");
+    network3.addLayer(Layer{120, 512});
+    network3.addLayer(Layer{512, 16});
+    network3.addLayer(Layer{16, 32});
     network3.addLayer(Layer{32, 1});
 
-    network3.init();*/
+    network3.init();
+*/
 
 
     //evalute each position and write to file
@@ -124,6 +126,31 @@ int main(int argl, const char **argc) {
 
 
     // auto val = search(board,10,10000,true);
+
+ /*   Position temp;
+    temp.BP = sub_region1;
+
+    Position temp2;
+    temp2.BP = sub_region2;
+
+    temp.printPosition();
+    std::cout<<std::endl;
+    temp2.printPosition();
+
+    Position temp3;
+    temp3.BP = big_region;
+    std::cout<<std::endl;
+    temp3.printPosition();
+    std::cout<<std::endl;
+    Position test;
+    for(auto i=0;i<4;++i){
+        for(auto j=0;j<2;++j){
+            test.BP|=1<<(4*i+j);
+        }
+    }
+    test.printPosition();
+    std::cout<<test.BP<<std::endl;
+*/
 
 
 
@@ -148,7 +175,7 @@ int main(int argl, const char **argc) {
 
     TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:W5,29:BK3,K12");
+    //board = Position::pos_from_fen("W:WK8,10,21,22,32:B2,13,14,28,K31");
     board.printBoard();
 
 
@@ -163,10 +190,6 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-//Great now repetition detection is not working
 
 
 

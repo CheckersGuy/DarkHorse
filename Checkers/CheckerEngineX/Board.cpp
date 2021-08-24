@@ -59,9 +59,6 @@ uint64_t Board::getCurrentKey() const {
 }
 
 bool Board::isRepetition() const {
-    if(rev_mov_counter>pCounter)
-        std::cerr<<"Error"<<std::endl;
-
     int counter = 0;
     const Position check = pStack[pCounter];
     for (int i = pCounter; i >= 0; i -= 2) {

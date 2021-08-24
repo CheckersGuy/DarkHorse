@@ -30,7 +30,7 @@ public:
 
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
-                                            l2Reg(0.01) {
+                                            l2Reg(0.05) {
         momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
         Utilities::read_binary<Sample>(std::back_inserter(data), data_path);
         std::cout<<"Number of samples "<<data.size()<<std::endl;

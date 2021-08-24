@@ -15,10 +15,11 @@
 
 
 //constexpr uint32_t region = 13107u;
-constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;
-
-
+//constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;//changing how indices are calculated
+constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
 inline size_t getIndexBigRegion(uint32_t reg, const Position &pos) {
+
+
     uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
     uint32_t pieces = (pos.BP | pos.WP);
     pieces = Bits::pext(pieces, reg);
@@ -76,7 +77,7 @@ struct Weights {
 
     std::array<std::array<T, 16>, 7> tempo_ranks;
 
-    Weights() : kingOp(1500), kingEnd(1500) {
+    Weights() : kingOp(0), kingEnd(0) {
         weights = std::vector<T>(SIZE, T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
@@ -123,7 +124,7 @@ struct Weights {
             if (stream.eof())
                 break;
             for (RunType i = 0u; i < length; ++i) {
-                weights[counter] = first;
+                weights[counter] = std::clamp(first,-16000.0,16000.0);
                 counter++;
             }
         }
@@ -211,21 +212,6 @@ struct Weights {
             pos = pos.getColorFlip();
         }
 
-
-
-
-
-        /*     for (uint32_t j = 0; j < 3; ++j) {
-                 for (uint32_t i = 0; i < 3; ++i) {
-                     const uint32_t curRegion = region << (8u * j + i);
-                     const auto region_index = getIndex2(curRegion, pos);
-                     size_t indexOpening = 18u * region_index + 3u * j + i;
-                     size_t indexEnding = 18u * region_index + 9u + 3u * j + i;
-                     opening += (weights[indexOpening]);
-                     ending += (weights[indexEnding]);
-                 }
-             }*/
-
         const size_t sub_offset = 12ull * 531441ull;
         for (auto i = 0; i < 3; ++i) {
             for (auto j = 0; j < 2; ++j) {
@@ -262,8 +248,8 @@ struct Weights {
         ending *= color;
 
         const U pieceEval = (WP - BP) * pawnEval;
-        const U kingEvalOp = kingOp * (WK - BK);
-        const U kingEvalEnd = kingEnd * (WK - BK);
+        const U kingEvalOp = (pawnEval+kingOp) * (WK - BK);
+        const U kingEvalEnd = (pawnEval+kingEnd) * (WK - BK);
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tempi;

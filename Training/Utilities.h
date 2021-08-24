@@ -41,7 +41,7 @@ namespace Utilities {
         if (N == 0) {
             Board copy(board);
             Move best;
-            Value value = searchValue(board, best, MAX_PLY, 40, false);
+            Value value = searchValue(board, best, MAX_PLY, 20, false);
             if (value >= lowerBound && value <= upperBound) {
                 hashes.insert(board.getCurrentKey());
                 Position currentPos = board.getPosition();
