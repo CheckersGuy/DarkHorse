@@ -55,7 +55,7 @@ namespace Statistics {
         const int index = getHistoryIndex(pos, move);
         const int score = history[index];
         const int bf_score = bfScore[index] + 1;
-        return score / bf_score;
+        return score;
     }
 
     int MovePicker::getMoveScore(Position current, int ply, Move move, Move ttMove) {

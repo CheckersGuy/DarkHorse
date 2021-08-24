@@ -38,36 +38,7 @@ void Generator::set_time(int time) {
     time_control = time;
 }
 
-void Generator::print_stats() {
-    std::cout << "num_games: " << game_counter << "\n";
-    std::cout << "num_wins: " << num_wins << "\n";
-    double ratio = ((double) num_wins) / ((double) game_counter);
-    std::cout << "decisive_ratio: " << ratio << "\n";
-    std::cout << "\n";
-    std::cout << "\n";
-    std::flush(std::cout);
-}
 
-void Generator::clearBuffer() {
-    std::string path{"../Training/TrainData/"};
-    path.append(output);
-    std::ofstream stream(path, std::ios::binary | std::ios::app);
-    if (!stream.good()) {
-        std::cerr << "Could not clear buffer" << std::endl;
-        std::exit(-1);
-    }
-    std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(stream));
-    //appending to the file
-    std::cout << "Cleared buffer" << std::endl;
-    buffer.clear();
-}
-
-Position Generator::get_start_pos() {
-    if (opening_index >= openings.size() - 1) {
-        opening_index = 0;
-    }
-    return openings[opening_index++];
-}
 
 std::string Instance::read_message() {
     std::string message;
@@ -89,6 +60,7 @@ void Generator::set_hash_size(int size) {
     hash_size = size;
 }
 
+/*
 void Generator::process() {
     for (auto &instance : instances) {
         if (instance.state == Instance::Idle) {
@@ -132,9 +104,11 @@ void Generator::process() {
                                     s.result = result;
                                     if (result != 1000)
                                         buffer.emplace_back(s);
-                                    /*     pos.printPosition();
+                                    */
+/*     pos.printPosition();
                                      std::cout << result << std::endl;
-                                     std::cout << std::endl;*/
+                                     std::cout << std::endl;*//*
+
                                 } catch (std::domain_error &error) {
                                     //write something to a log file
                                     //I don't expect this to happen very often though
@@ -162,7 +136,8 @@ void Generator::process() {
     }
 
 }
-
+*/
+/*
 void Generator::start() {
 
     //opening book
@@ -225,7 +200,7 @@ void Generator::start() {
     }
 
 
-}
+}*/
 
 void Generator::startx() {
     //Positions to be saved to a file
@@ -235,13 +210,21 @@ void Generator::startx() {
 
     int *counter;
     int *error_counter;
+    int* num_games;
+    int* num_won;
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
+    num_won = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                           0);
+    num_games = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                           0);
 
     *counter = 0;
     *error_counter = 0;
+    *num_won =0;
+    *num_games=0;
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
     pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
@@ -281,7 +264,7 @@ void Generator::startx() {
                 Board board;
                 board = opening;
                 pthread_mutex_unlock(pmutex);
-                std::vector<Sample> game;
+                std::vector<Position> game;
                 TT.clear();
                 for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
@@ -289,17 +272,34 @@ void Generator::startx() {
 
                     if (liste.length() == 0) {
                         //end of the game, a player won
-                        for (auto &sample : game) {
-                            sample.result = (board.getMover() == BLACK) ? 1 : -1;
+                        pthread_mutex_lock(pmutex);
+                        (*num_won)++;
+                        (*num_games)++;
+
+                        for (auto &pos : game) {
+                            Sample sample;
+                            sample.position = pos;
+                            sample.result =(board.getMover() == BLACK) ? 1 : -1;
+                            local_buffer.emplace_back(sample);
                         }
+                        (*counter)+=game.size();
+                        pthread_mutex_unlock(pmutex);
                         break;
                     }
 
                     if (board.isRepetition()) {
+                        pthread_mutex_lock(pmutex);
+                        (*num_games)++;
+
                         //draw by repetition
-                        for (auto &sample : game) {
+                        for (auto &pos : game) {
+                            Sample sample;
+                            sample.position = pos;
                             sample.result = 0;
+                            local_buffer.emplace_back(sample);
                         }
+                        (*counter)+=game.size();
+                        pthread_mutex_unlock(pmutex);
                         break;
                     }
 
@@ -312,29 +312,27 @@ void Generator::startx() {
                     board.makeMove(best);
                 /*    board.printBoard();
 */
-                    Sample current;
-                    current.position = board.getPosition();
-                    game.emplace_back(current);
+
+                    game.emplace_back(board.getPosition());
                 }
                 pthread_mutex_lock(pmutex);
-                std::copy(game.begin(), game.end(), std::back_inserter(local_buffer));
                 if (local_buffer.size() >= 1000) {
                     std::cout << "ClearedBuffer" << std::endl;
                     Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
                                                        std::ios::app);
                     local_buffer.clear();
                 }
-                *counter = *counter + (int) game.size();
                 std::cout<<game.size()<<std::endl;
-                std::cout << "Counter: " << *counter << std::endl;
+                std::cout << "Counter: " << *counter<< std::endl;
                 std::cout<<"BufferSize: "<<local_buffer.size()<<std::endl;
-                pthread_mutex_unlock(pmutex);
                 opening_counter++;
                 std::cout << "Opening_Counter: " << opening_counter << std::endl;
                 std::cout<<"Error_Counter: "<<*error_counter<<std::endl;
+                std::cout<<"WinRatio: "<<(float)(*num_won)/(float)(*num_games)<<std::endl;
                 if (opening_counter >= openings.size()) {
                     opening_counter = 0;
                 }
+                pthread_mutex_unlock(pmutex);
             }
             std::exit(1);
         }
@@ -360,11 +358,11 @@ void Generator::startx() {
 }
 
 
-void Generator::set_num_games(size_t num) {
-    num_games = num;
-}
-
 void Generator::set_parallelism(size_t threads) {
     parallelism = threads;
+}
+
+void Generator::set_num_games(size_t num_games) {
+    max_games=num_games;
 }
 

@@ -60,9 +60,8 @@ private:
     static constexpr size_t BUFFER_SIZE = 50000;
     std::string engine_path;
     std::string output;
-    size_t num_games{100000};
-    size_t game_counter{0},num_wins{0};
     size_t parallelism{1};
+    size_t max_games;
     std::vector<Instance> instances;
     std::vector<Sample> buffer;
     std::vector<Position> openings;
@@ -82,22 +81,13 @@ public:
 
     void startx();
 
-    void process();
-
-    void clearBuffer();
-
     void set_time(int time);
 
     void set_parallelism(size_t threads);
 
     void set_num_games(size_t num_games);
 
-    void print_stats();
-
     void set_hash_size(int size);
-
-    Position get_start_pos();
-
 
 };
 

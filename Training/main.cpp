@@ -191,6 +191,18 @@ void remove_duplicates(std::string in_File, std::string out_file) {
 
 }
 
+void mergeFiles(std::string file1, std::string file2, std::string output) {
+    std::vector<Sample> samples;
+    Utilities::read_binary<Sample>(std::back_inserter(samples), file1);
+    std::vector<Sample> samples2;
+    Utilities::read_binary<Sample>(std::back_inserter(samples2), file2);
+    std::vector<Sample> outsamples;
+    std::copy(samples.begin(), samples.end(), std::back_inserter(outsamples));
+    std::copy(samples2.begin(), samples2.end(), std::back_inserter(outsamples));
+    Utilities::write_to_binary<Sample>(outsamples.begin(), outsamples.end(), output);
+    std::cout << "Size after merge: " << outsamples.size() << std::endl;
+}
+
 void testing() {
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
@@ -246,34 +258,28 @@ int main(int argl, const char **argc) {
 
     use_classical(true);
 /*
+
     std::vector<Position> positions;
     Board board;
     TT.resize(21);
     board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(positions), 4, board, -500, 500);
+    Utilities::createNMoveBook(std::back_inserter(positions), 5, board, -3200, 3200);
     Utilities::write_to_binary<Position>(positions.begin(), positions.end(),
                                          "/home/robin/DarkHorse/Training/Positions/train3.pos");
     std::cout << "Positions: " << positions.size() << std::endl;
-
 */
 
 
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testset",
-                      "/home/robin/DarkHorse/Training/TrainData/testsetremoved");
 
 
 
 
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testinggen",
+                      "/home/robin/DarkHorse/Training/TrainData/testinggenremoved");
 
 
 
-/*    for (auto i = 0; i < 3; ++i) {
-        for (auto j = 0; j < 2; ++j) {
-            uint32_t reg = big_region1 << (i * 8 + j);
-            temp.BP = reg;
-            temp.printPosition();
-        }
-    }*/
+
 
 
 
@@ -316,67 +322,58 @@ int main(int argl, const char **argc) {
 
 
 */
+
+
 /*
 
-
-    Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testset");
+    Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testinggen");
     generator.set_num_games(10000000);
     generator.set_hash_size(20);
     generator.set_parallelism(14);
-    generator.set_time(100);
+    generator.set_time(50);
     generator.startx();
 
 */
 
 
 
-
-
-//testing2 should be using the next depth3testupdate
-
-
-
-
-
-/*
-    network.load("testb");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
-    network.addLayer(Layer{32, 1});
-
-    network.init();
-    network2.load("testc");
-    network2.addLayer(Layer{120, 256});
-    network2.addLayer(Layer{256, 32});
-    network2.addLayer(Layer{32, 32});
-    network2.addLayer(Layer{32, 1});
-
-    network2.init();
-
-    std::vector<Sample> test_positions;
-    Utilities::read_binary<Sample>(std::back_inserter(test_positions),
-                                   "/home/robin/DarkHorse/Training/TrainData/small_dataset");
-
-    int counter =0;
-    for(Sample s : test_positions){
-        if(counter>=100)
-            break;
-        s.position.printPosition();
-        std::cout<<"Eval"<<network.compute_incre_forward_pass(s.position)<<std::endl;
-        counter++;
-    }
-*/
-
-
-
-
-    Match engine_match("newset", "test4");
+    Match engine_match("ultimate5", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(12);
-    engine_match.setHashSize(20);
+    engine_match.setHashSize(21);
     engine_match.start();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -399,10 +396,9 @@ int main(int argl, const char **argc) {
     }
 */
 
-
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/testsetremoved");
-    trainer.setLearningRate(12000);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/testinggenremoved");
+    trainer.setLearningRate(40000);
     trainer.setEpochs(1000);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-6e-4);

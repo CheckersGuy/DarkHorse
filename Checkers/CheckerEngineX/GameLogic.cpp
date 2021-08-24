@@ -17,13 +17,13 @@ Network network, network3, network2;
 bool u_classical = false;
 
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("current.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/currenttest3.weights");
     Zobrist::initializeZobrisKeys();
     //Statistics::mPicker.init();
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("current.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/currenttest3.weights");
     Zobrist::initializeZobrisKeys(seed);
     //Statistics::mPicker.init();
 }
@@ -103,11 +103,6 @@ namespace Search {
 
 
         if (ply>0 && board.isRepetition2()) {
-          /*       if(board.isRepetition2() != board.isRepetition()){
-                     board.previous().printPosition();
-                     board.printBoard();
-                     std::cout<<std::endl;
-                 }*/
             return 0;
         }
 
