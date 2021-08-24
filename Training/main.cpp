@@ -269,19 +269,8 @@ int main(int argl, const char **argc) {
     std::cout << "Positions: " << positions.size() << std::endl;
 */
 
-
-
-
-
-
     remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testinggen",
                       "/home/robin/DarkHorse/Training/TrainData/testinggenremoved");
-
-
-
-
-
-
 
 
 
@@ -324,7 +313,7 @@ int main(int argl, const char **argc) {
 */
 
 
-/*
+
 
     Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testinggen");
     generator.set_num_games(10000000);
@@ -333,16 +322,15 @@ int main(int argl, const char **argc) {
     generator.set_time(50);
     generator.startx();
 
-*/
-
-
-
+    
+/*
     Match engine_match("ultimate5", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(12);
     engine_match.setHashSize(21);
     engine_match.start();
+*/
 
 
 
