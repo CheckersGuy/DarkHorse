@@ -318,11 +318,11 @@ int main(int argl, const char **argc) {
     Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testinggen");
     generator.set_num_games(10000000);
     generator.set_hash_size(20);
-    generator.set_parallelism(14);
+    generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
 
-    
+
 /*
     Match engine_match("ultimate5", "master");
     engine_match.setTime(100);
