@@ -175,6 +175,7 @@ void remove_duplicates(std::string in_File, std::string out_file) {
         if((counter % 1000000)==0){
             std::cout<<"Progress: "<<((double)counter)/((double)in_samples.size())<<std::endl;
         }
+        counter++;
         hash_table.insert(sample);
         auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
         uint32_t WP = sample.position.WP & (~sample.position.K);
