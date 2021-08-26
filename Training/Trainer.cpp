@@ -55,6 +55,8 @@ void Trainer::gradientUpdate(const Sample &sample) {
         return;
     auto qStatic = gameWeights.evaluate<double>(x, 0);
 
+    if (isWin((int) qStatic) || !isEval((int) qStatic))
+        return;
 
     int num_wp = __builtin_popcount(x.WP & (~x.K));
     int num_bp = __builtin_popcount(x.BP & (~x.K));
@@ -66,8 +68,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
     end_phase /= (double) stage_size;
 
 
-    if (isWin((int)qStatic) || !isEval((int)qStatic))
-        return;
 
     double result;
     if (sample.result == -1)
@@ -91,39 +91,9 @@ void Trainer::gradientUpdate(const Sample &sample) {
         for (auto i = 0; i < 3; ++i) {
             for (auto j = 0; j < 2; ++j) {
                 const uint32_t curRegion = big_region << (8 * i + j);
-
-                if ((curRegion & x_flipped.K) != 0) {
-                    //region contains some kings
-                    const uint32_t sub1 = sub_region1 << (8 * i + j);
-                    const uint32_t sub2 = sub_region2 << (8 * i + j);
-
-                    const auto sub1_index = getIndex2(sub1, x_flipped);
-                    const auto sub2_index = getIndex2(sub2, x_flipped);
-                    const size_t index1 = 24u * sub1_index + 4 * 2 * i + 4 * j + sub_offset + p;
-                    const size_t index2 = 24u * sub2_index + 4 * 2 * i + 4 * j + 2 + sub_offset + p;
-                    double diff = temp;
-                    if (p == 0) {
-                        //derivative for the opening
-                        diff *= phase * color;
-                    } else {
-                        //derivative for the ending
-                        diff *= end_phase * color;
-                    }
-                    momentums[index1] = beta * momentums[index1] + (1.0 - beta) * diff;
-                    //need to update the momentum term
-                    gameWeights[index1] = gameWeights[index1] - getLearningRate() * momentums[index1];
-                    //////////////////
-                    momentums[index2] = beta * momentums[index2] + (1.0 - beta) * diff;
-                    //need to update the momentum term
-                    gameWeights[index2] = gameWeights[index2] - getLearningRate() * momentums[index2];
-
-
-                } else {
+                if ((curRegion & x_flipped.K) == 0) {
                     const auto big_region_index = getIndexBigRegion(curRegion, x_flipped);
                     const size_t index = 12 * big_region_index + 2 * j + 4 * i + p;
-
-                    /*opening += weights[index_op];
-                    ending += weights[index_end];*/
 
                     double diff = temp;
                     if (p == 0) {
@@ -137,6 +107,25 @@ void Trainer::gradientUpdate(const Sample &sample) {
                     //need to update the momentum term
                     gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
 
+                } else {
+                    for (auto k = 0; k < 3; ++k) {
+                        const uint32_t sub_reg = region << (8 * i + k);
+                        size_t index = getIndex2(sub_reg, x_flipped);
+                        size_t sub_index = 18 * index + 2 * k + 6 * i + p + sub_offset;
+
+                        double diff = temp;
+                        if (p == 0) {
+                            //derivative for the opening
+                            diff *= phase * color;
+                        } else {
+                            //derivative for the ending
+                            diff *= end_phase * color;
+                        }
+                        momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
+                        //need to update the momentum term
+                        gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+                    }
+                    break;
                 }
 
 
@@ -213,7 +202,7 @@ void Trainer::epoch() {
                       uint32_t BK = sample.position.BP & (sample.position.K);
 
                       if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
-                              ((WP & BP) != 0) || ((WK & BK) != 0)) {
+                          ((WP & BP) != 0) || ((WK & BK) != 0)) {
                       } else {
                           counter++;
                           gradientUpdate(sample);
@@ -240,13 +229,13 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("currenttest9.weights");
+        gameWeights.storeWeights("currenttest11.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
         std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
         std::cout << "kingScore:" << gameWeights.kingOp << " | " << gameWeights.kingEnd << std::endl;
-        learningRate=learningRate*(1.0-decay);
+        learningRate = learningRate * (1.0 - decay);
     }
 }
 

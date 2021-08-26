@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 struct Sample {
     Position position;
     int result{1000};
@@ -27,13 +28,16 @@ struct Sample {
 
     friend std::istream &operator>>(std::istream &stream, Sample &s);
 
-    bool operator==(const Sample& other)const;
-    bool operator!=(const Sample&other)const;
+    bool operator==(const Sample &other) const;
+
+    bool operator!=(const Sample &other) const;
 };
 
 struct SampleHasher {
+    std::hash<int> hasher;
+
     uint64_t operator()(Sample s) const {
-        return Zobrist::generateKey(s.position);
+        return Zobrist::generateKey(s.position) ^ hasher(s.result);
     }
 };
 
