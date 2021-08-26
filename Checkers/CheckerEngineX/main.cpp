@@ -157,25 +157,9 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:WK8,10,21,22,32:B2,13,14,28,K31");
+    board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
     board.printBoard();
 
 
@@ -189,6 +173,18 @@ int main(int argl, const char **argc) {
 
 
 
+/*
+
+    for (auto i = 0; i < 3; ++i) {
+        for (auto j = 0; j < 3; ++j) {
+            const uint32_t curRegion = region<< (8 * i + j);
+            Position temp;
+            temp.BP = curRegion;
+            temp.printPosition();
+            std::cout<<std::endl;
+        }
+    }
+*/
 
 
 

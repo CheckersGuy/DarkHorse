@@ -13,12 +13,6 @@
 //default is around 8kb of memory
 //Notes:
 
-/*the maximum value of any bucket is obviously bounded by numbits-num_bucket_bits
- * 1. I dont need to use double here at all
- * 2. There is still work left to be done
- * 3. Sparse Representation, bias correction ...
- */
-
 
 template<typename T, size_t num_bucket_bits = 10, typename Hasher = std::hash<T>>
 class HyperLog {

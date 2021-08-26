@@ -16,17 +16,33 @@
 
 //constexpr uint32_t region = 13107u;
 //constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;//changing how indices are calculated
-constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
+//constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
+constexpr size_t SIZE = 12ull * 531441ull + 18ull * 390625ull;
+
 inline size_t getIndexBigRegion(uint32_t reg, const Position &pos) {
-
-
+    const uint32_t PROMO_SQUARES = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
+    size_t index = 0ull;
+    uint32_t BP = pos.BP & (~pos.K);
+    uint32_t WP = pos.WP & (~pos.K);
     uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
+/*
+    uint32_t promo_region = reg & PROMO_SQUARES;
+    uint32_t promo_pieces = orig_pieces & PROMO_SQUARES;
+
+    while(promo_pieces){
+        uint32_t lsb = (promo_pieces & ~(promo_pieces - 1u));
+        size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 1ull;
+
+    }
+*/
+
+
+
+
     uint32_t pieces = (pos.BP | pos.WP);
     pieces = Bits::pext(pieces, reg);
 
-    uint32_t BP = pos.BP & (~pos.K);
-    uint32_t WP = pos.WP & (~pos.K);
-    size_t index = 0ull;
+
     while (orig_pieces) {
         uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
         size_t temp_index = Bits::bitscan_foward(pieces);
@@ -56,13 +72,8 @@ inline size_t getIndex2(uint32_t reg, const Position &pos) {
         size_t temp_index = Bits::bitscan_foward(pieces);
         size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull + ((BK & lsb) != 0u) * 3ull +
                          ((WK & lsb) != 0u) * 4ull;
-    /*    if(current>4){
-            pos.printPosition();
-            std::cout<<pos.WP<<std::endl;
-            std::cout<<pos.BP<<std::endl;
-            std::cout<<"Error"<<std::endl;
-        }*/
-        index += current * powers[temp_index];
+
+        index += current * powers5[temp_index];
         pieces &= pieces - 1u;
         orig_pieces &= orig_pieces - 1u;
     }
@@ -124,7 +135,7 @@ struct Weights {
             if (stream.eof())
                 break;
             for (RunType i = 0u; i < length; ++i) {
-                weights[counter] = std::clamp(first,-16000.0,16000.0);
+                weights[counter] = std::clamp(first, -16000.0, 16000.0);
                 counter++;
             }
         }
@@ -172,10 +183,10 @@ struct Weights {
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
 
-        if(pos.BP ==0){
+        if (pos.BP == 0) {
             return -loss(ply);
         }
-        if(pos.WP ==0){
+        if (pos.WP == 0) {
             return loss(ply);
         }
 
@@ -216,30 +227,23 @@ struct Weights {
         for (auto i = 0; i < 3; ++i) {
             for (auto j = 0; j < 2; ++j) {
                 const uint32_t curRegion = big_region << (8 * i + j);
-                if ((curRegion & pos.K) != 0) {
-                    //region contains some kings
-                    const uint32_t sub1 = sub_region1 << (8 * i + j);
-                    const uint32_t sub2 = sub_region2 << (8 * i + j);
-
-                    const auto sub1_index = getIndex2(sub1, pos);
-                    const auto sub2_index = getIndex2(sub2, pos);
-                    const size_t index_op1 = 24u * sub1_index + 4 * 2 * i + 4 * j + sub_offset;
-                    const size_t index_op2 = 24u * sub2_index + 4 * 2 * i + 4 * j + 2 + sub_offset;
-                    const size_t index_end1 = 24u * sub1_index + 4 * 2 * i + 4 * j + 1 + sub_offset;
-                    const size_t index_end2 = 24u * sub2_index + 4 * 2 * i + 4 * j + 3 + sub_offset;
-                    opening += weights[index_op1];
-                    opening += weights[index_op2];
-                    ending += weights[index_end1];
-                    ending += weights[index_end2];
-                } else {
+                if ((curRegion & pos.K) == 0) {
                     const size_t big_region_index = getIndexBigRegion(curRegion, pos);
                     size_t index_op = 12 * big_region_index + 2 * j + 4 * i;
                     size_t index_end = 12 * big_region_index + 2 * j + 4 * i + 1;
                     opening += weights[index_op];
                     ending += weights[index_end];
+                } else {
+                    for (auto k = 0; k < 3; ++k) {
+                        const uint32_t sub_reg = region << (8 * i + k);
+                        size_t index = getIndex2(sub_reg, pos);
+                        size_t sub_index_op = 18 * index + 2 * k + 6 * i;
+                        size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
+                        opening += weights[sub_index_op + sub_offset];
+                        ending += weights[sub_index_end + sub_offset];
+                    }
+                    break;
                 }
-
-
             }
         }
 
@@ -248,8 +252,8 @@ struct Weights {
         ending *= color;
 
         const U pieceEval = (WP - BP) * pawnEval;
-        const U kingEvalOp = (pawnEval+kingOp) * (WK - BK);
-        const U kingEvalEnd = (pawnEval+kingEnd) * (WK - BK);
+        const U kingEvalOp = (pawnEval + kingOp) * (WK - BK);
+        const U kingEvalEnd = (pawnEval + kingEnd) * (WK - BK);
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tempi;
