@@ -22,6 +22,7 @@ inline uint64_t getSystemTime() {
 
 constexpr uint32_t big_region = 30583;
 constexpr uint32_t region = 13107;
+constexpr uint32_t eval_strip =65535;
 /*
 constexpr uint32_t sub_region1 = 12593;
 constexpr uint32_t sub_region2 = 17990;

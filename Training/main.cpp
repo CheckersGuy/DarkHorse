@@ -166,14 +166,14 @@ void remove_duplicates(std::string in_File, std::string out_file) {
     std::vector<Sample> out_samples;
     std::unordered_set<Sample, SampleHasher> hash_table;
     std::cout << "Number of samples before removing duplicates: " << in_samples.size() << std::endl;
-    size_t counter =0;
-    for (Sample sample : in_samples) { ;
+    size_t counter = 0;
+    for (Sample sample: in_samples) { ;
         //we have already seen the sample
         if (hash_table.find(sample) != hash_table.end()) {
             continue;
         }
-        if((counter % 1000000)==0){
-            std::cout<<"Progress: "<<((double)counter)/((double)in_samples.size())<<std::endl;
+        if ((counter % 1000000) == 0) {
+            std::cout << "Progress: " << ((double) counter) / ((double) in_samples.size()) << std::endl;
         }
         counter++;
         hash_table.insert(sample);
@@ -274,8 +274,10 @@ int main(int argl, const char **argc) {
     std::cout << "Positions: " << positions.size() << std::endl;
 */
 
+
     remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testinggen",
                       "/home/robin/DarkHorse/Training/TrainData/testinggenremoved");
+
 
 
 
@@ -319,7 +321,7 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
 
     Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testinggen");
     generator.set_num_games(10000000);
@@ -327,21 +329,20 @@ int main(int argl, const char **argc) {
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
-
-*/
+    
 
 /*
 
 
-    Match engine_match("ultimate7", "ultimate6");
+    Match engine_match("ultimate7", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
     engine_match.setHashSize(21);
     engine_match.start();
 
-*/
 
+*/
 
 
 
@@ -362,13 +363,13 @@ int main(int argl, const char **argc) {
         }
     }
 */
-    //0.18762
+    //0.160792
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/testinggenremoved");
     trainer.setLearningRate(40000);
     trainer.setEpochs(1000);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-6e-4);
+    trainer.setCValue(-1e-3);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;

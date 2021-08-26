@@ -123,43 +123,9 @@ int main(int argl, const char **argc) {
 
 
 
-
-
-    // auto val = search(board,10,10000,true);
-
- /*   Position temp;
-    temp.BP = sub_region1;
-
-    Position temp2;
-    temp2.BP = sub_region2;
-
-    temp.printPosition();
-    std::cout<<std::endl;
-    temp2.printPosition();
-
-    Position temp3;
-    temp3.BP = big_region;
-    std::cout<<std::endl;
-    temp3.printPosition();
-    std::cout<<std::endl;
-    Position test;
-    for(auto i=0;i<4;++i){
-        for(auto j=0;j<2;++j){
-            test.BP|=1<<(4*i+j);
-        }
-    }
-    test.printPosition();
-    std::cout<<test.BP<<std::endl;
-*/
-
-
-
-
-
-
     TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
+    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
     board.printBoard();
 
 
@@ -185,8 +151,18 @@ int main(int argl, const char **argc) {
         }
     }
 */
+/*
 
+    for(auto i=0;i<3;++i){
+        Position test;
+        test.BP = 65535;
+        test.BP = test.BP<<(8*i);
+        test.printPosition();
+        std::cout<<test.BP<<std::endl;
 
+    }
+
+*/
 
 
 

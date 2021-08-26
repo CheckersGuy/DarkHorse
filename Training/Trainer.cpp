@@ -68,7 +68,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
     end_phase /= (double) stage_size;
 
 
-
     double result;
     if (sample.result == -1)
         result = 0.0;
@@ -86,49 +85,35 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
     for (size_t p = 0; p < 2; ++p) {
-
         const size_t sub_offset = 12ull * 531441ull;
-        for (auto i = 0; i < 3; ++i) {
-            for (auto j = 0; j < 2; ++j) {
-                const uint32_t curRegion = big_region << (8 * i + j);
-                if ((curRegion & x_flipped.K) == 0) {
-                    const auto big_region_index = getIndexBigRegion(curRegion, x_flipped);
-                    const size_t index = 12 * big_region_index + 2 * j + 4 * i + p;
+        double diff = temp;
+        if (p == 0) {
+            //derivative for the opening
+            diff *= phase * color;
+        } else {
+            //derivative for the ending
+            diff *= end_phase * color;
+        }
 
-                    double diff = temp;
-                    if (p == 0) {
-                        //derivative for the opening
-                        diff *= phase * color;
-                    } else {
-                        //derivative for the ending
-                        diff *= end_phase * color;
-                    }
+        for (auto i = 0; i < 3; ++i) {
+            const uint32_t curr_eval_strip = eval_strip << (8 * i);
+            if ((curr_eval_strip & x_flipped.K) != 0) {
+                for (auto k = 0; k < 3; ++k) {
+                    const uint32_t sub_reg = region << (8 * i + k);
+                    size_t index = getIndex2(sub_reg, x_flipped);
+                    size_t sub_index = 18 * index + 2 * k + 6 * i + p + sub_offset;
+                    momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
+                    gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+                }
+            } else {
+                for (auto j = 0; j < 2; ++j) {
+                    const uint32_t curRegion = big_region << (8 * i + j);
+                    const size_t big_region_index = getIndexBigRegion(curRegion, x_flipped);
+                    size_t index = 12 * big_region_index + 2 * j + 4 * i + p;
                     momentums[index] = beta * momentums[index] + (1.0 - beta) * diff;
-                    //need to update the momentum term
                     gameWeights[index] = gameWeights[index] - getLearningRate() * momentums[index];
 
-                } else {
-                    for (auto k = 0; k < 3; ++k) {
-                        const uint32_t sub_reg = region << (8 * i + k);
-                        size_t index = getIndex2(sub_reg, x_flipped);
-                        size_t sub_index = 18 * index + 2 * k + 6 * i + p + sub_offset;
-
-                        double diff = temp;
-                        if (p == 0) {
-                            //derivative for the opening
-                            diff *= phase * color;
-                        } else {
-                            //derivative for the ending
-                            diff *= end_phase * color;
-                        }
-                        momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
-                        //need to update the momentum term
-                        gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
-                    }
-                    break;
                 }
-
-
             }
         }
     }
@@ -229,7 +214,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("currenttest11.weights");
+        gameWeights.storeWeights("currenttest13.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
