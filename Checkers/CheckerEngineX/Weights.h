@@ -17,7 +17,7 @@
 //constexpr uint32_t region = 13107u;
 //constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;//changing how indices are calculated
 //constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
-constexpr size_t SIZE = 12ull * 531441ull + 18ull * 390625ull;
+constexpr size_t SIZE = 18ull * 390625ull;
 
 inline size_t getIndexBigRegion(uint32_t reg, const Position &pos) {
     const uint32_t PROMO_SQUARES = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
@@ -223,28 +223,15 @@ struct Weights {
             pos = pos.getColorFlip();
         }
 
-        const size_t sub_offset = 12ull * 531441ull;
+        const size_t sub_offset = 0;
         for (auto i = 0; i < 3; ++i) {
-            const uint32_t curr_eval_strip = eval_strip << (8 * i);
-            if ((curr_eval_strip & pos.K) != 0) {
-                for (auto k = 0; k < 3; ++k) {
-                    const uint32_t sub_reg = region << (8 * i + k);
-                    size_t index = getIndex2(sub_reg, pos);
-                    size_t sub_index_op = 18 * index + 2 * k + 6 * i;
-                    size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
-                    opening += weights[sub_index_op + sub_offset];
-                    ending += weights[sub_index_end + sub_offset];
-                }
-            } else {
-                for (auto j = 0; j < 2; ++j) {
-                    const uint32_t curRegion = big_region << (8 * i + j);
-                    const size_t big_region_index = getIndexBigRegion(curRegion, pos);
-                    size_t index_op = 12 * big_region_index + 2 * j + 4 * i;
-                    size_t index_end = 12 * big_region_index + 2 * j + 4 * i + 1;
-                    opening += weights[index_op];
-                    ending += weights[index_end];
-
-                }
+            for (auto k = 0; k < 3; ++k) {
+                const uint32_t sub_reg = region << (8 * i + k);
+                size_t index = getIndex2(sub_reg, pos);
+                size_t sub_index_op = 18 * index + 2 * k + 6 * i;
+                size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
+                opening += weights[sub_index_op + sub_offset];
+                ending += weights[sub_index_end + sub_offset];
             }
         }
 

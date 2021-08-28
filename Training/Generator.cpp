@@ -5,27 +5,26 @@
 #include "Generator.h"
 
 bool Sample::operator==(const Sample &other) const {
-    if (position != other.position) {
-        return false;
-    }
-    return result == other.result;
+    return (position == other.position && result == other.result);
 }
 
 bool Sample::operator!=(const Sample &other) const {
     return !((*this) == other);
 }
 
-std::ostream &operator<<(std::ostream &stream, const Sample &s) {
-    stream << s.position;
+std::ostream &operator<<(std::ostream &stream, const Sample s) {
+    stream.write((char*)&s.position,sizeof(Position));
     stream.write((char *) &s.result, sizeof(int));
     return stream;
 }
 
 std::istream &operator>>(std::istream &stream, Sample &s) {
-    stream >> s.position;
+    Position pos;
+    stream.read((char*)&pos,sizeof(Position));
     int result;
     stream.read((char *) &result, sizeof(int));
     s.result = result;
+    s.position=pos;
     return stream;
 }
 
@@ -215,11 +214,11 @@ void Generator::startx() {
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                           0);
+                                 0);
     num_won = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     num_games = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                           0);
+                             0);
 
     *counter = 0;
     *error_counter = 0;
@@ -286,8 +285,9 @@ void Generator::startx() {
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
-
-                    if (board.isRepetition()) {
+                    uint32_t count;
+                    count = std::count(game.begin(),game.end(),game.back());
+                    if (count>=3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
 
@@ -310,8 +310,8 @@ void Generator::startx() {
                         searchValue(board, best, MAX_PLY, time_control, false);
                     }
                     board.makeMove(best);
-                /*    board.printBoard();
-*/
+                    /*    board.printBoard();
+    */
 
                     game.emplace_back(board.getPosition());
                 }
@@ -356,7 +356,6 @@ void Generator::startx() {
     pthread_mutex_destroy(pmutex);
     pthread_mutexattr_destroy(&attrmutex);
 }
-
 
 void Generator::set_parallelism(size_t threads) {
     parallelism = threads;

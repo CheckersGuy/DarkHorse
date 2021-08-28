@@ -27,7 +27,7 @@ namespace Utilities {
 
     template<typename T, typename OutIter>
     void read_binary(OutIter out, std::string input) {
-        std::ifstream stream(input, std::ios::binary);
+        std::ifstream stream(input, std::ios::binary | std::ios::in);
         std::istream_iterator<T> begin(stream);
         std::istream_iterator<T> end{};
         std::copy(begin, end, out);

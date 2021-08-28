@@ -123,6 +123,8 @@ int main(int argl, const char **argc) {
 
 
 
+
+
     TT.resize(23);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
@@ -139,30 +141,9 @@ int main(int argl, const char **argc) {
 
 
 
-/*
 
-    for (auto i = 0; i < 3; ++i) {
-        for (auto j = 0; j < 3; ++j) {
-            const uint32_t curRegion = region<< (8 * i + j);
-            Position temp;
-            temp.BP = curRegion;
-            temp.printPosition();
-            std::cout<<std::endl;
-        }
-    }
-*/
-/*
 
-    for(auto i=0;i<3;++i){
-        Position test;
-        test.BP = 65535;
-        test.BP = test.BP<<(8*i);
-        test.printPosition();
-        std::cout<<test.BP<<std::endl;
 
-    }
-
-*/
 
 
 
