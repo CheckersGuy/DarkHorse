@@ -24,7 +24,7 @@ struct Sample {
     Position position;
     int result{1000};
 
-    friend std::ostream &operator<<(std::ostream &stream, const Sample &s);
+    friend std::ostream &operator<<(std::ostream &stream, const Sample s);
 
     friend std::istream &operator>>(std::istream &stream, Sample &s);
 

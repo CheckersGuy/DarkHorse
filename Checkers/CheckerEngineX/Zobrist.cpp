@@ -10,15 +10,6 @@ namespace Zobrist {
     uint64_t skip_hash = 0ull;
 
 
-    uint64_t rand64() {
-
-        static uint64_t seed = 1070372ull;
-        seed ^= seed >> 12u;
-        seed ^= seed << 25u;
-        seed ^= seed >> 27u;
-        return seed * 2685821657736338717ull;
-    }
-
     void initializeZobrisKeys(uint64_t seed) {
         std::mt19937_64 generator(seed);
         std::uniform_int_distribution<uint64_t> distrib;
