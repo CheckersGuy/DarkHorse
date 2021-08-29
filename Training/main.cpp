@@ -62,19 +62,23 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
- /*   std::vector<Position> positions;
+/*
+    std::vector<Position> positions;
     Board board;
     TT.resize(21);
     board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(positions), 4, board, -5200, 5200);
+    Utilities::createNMoveBook(std::back_inserter(positions), 6, board, -3200, 3200);
     Utilities::write_to_binary<Position>(positions.begin(), positions.end(),
                                          "/home/robin/DarkHorse/Training/Positions/train3.pos");
     std::cout << "Positions: " << positions.size() << std::endl;
 
 */
- 
+
+
+
     remove_duplicates("/home/robin/DarkHorse/Training/TrainData/testinggen2",
                       "/home/robin/DarkHorse/Training/TrainData/testinggenremoved2");
+
 
 
 
@@ -119,10 +123,11 @@ int main(int argl, const char **argc) {
 
 */
 
+
     Generator generator("test4", "train3.pos", "/home/robin/DarkHorse/Training/TrainData/testinggen2");
     generator.set_num_games(10000000);
     generator.set_hash_size(20);
-    generator.set_parallelism(14);
+    generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
 
@@ -130,9 +135,11 @@ int main(int argl, const char **argc) {
 
 
 
+
+
 /*
 
-    Match engine_match("fix3", "fix2");
+    Match engine_match("fix8", "fix4");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
@@ -140,6 +147,8 @@ int main(int argl, const char **argc) {
     engine_match.start();
 
 */
+
+
 
 
 
@@ -174,7 +183,7 @@ int main(int argl, const char **argc) {
     trainer.setLearningRate(40000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-1e-3);
+    trainer.setCValue(-6e-4);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
