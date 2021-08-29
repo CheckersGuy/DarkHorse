@@ -211,6 +211,7 @@ void Generator::startx() {
     int *error_counter;
     int* num_games;
     int* num_won;
+    int* opening_counter;
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
@@ -218,6 +219,9 @@ void Generator::startx() {
     num_won = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     num_games = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                             0);
+
+    opening_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                              0);
 
     *counter = 0;
@@ -251,15 +255,13 @@ void Generator::startx() {
             std::cout<<"Init child: "<<i<<std::endl;
             //play a game and increment the opening-counter once more
 
-            int opening_counter = 0;
-
 
             while (true) {
                 pthread_mutex_lock(pmutex);
                 if (*counter >= num_positions) {
                     break;
                 }
-                Position opening = openings[opening_counter];
+                Position opening = openings[*opening_counter];
                 Board board;
                 board = opening;
                 pthread_mutex_unlock(pmutex);
@@ -325,12 +327,12 @@ void Generator::startx() {
                 std::cout<<game.size()<<std::endl;
                 std::cout << "Counter: " << *counter<< std::endl;
                 std::cout<<"BufferSize: "<<local_buffer.size()<<std::endl;
-                opening_counter++;
-                std::cout << "Opening_Counter: " << opening_counter << std::endl;
+                (*opening_counter)++;
+                std::cout << "Opening_Counter: " << *opening_counter << std::endl;
                 std::cout<<"Error_Counter: "<<*error_counter<<std::endl;
                 std::cout<<"WinRatio: "<<(float)(*num_won)/(float)(*num_games)<<std::endl;
-                if (opening_counter >= openings.size()) {
-                    opening_counter = 0;
+                if (*opening_counter >= openings.size()) {
+                    *opening_counter = 0;
                 }
                 pthread_mutex_unlock(pmutex);
             }
