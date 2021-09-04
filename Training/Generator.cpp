@@ -4,214 +4,112 @@
 
 #include "Generator.h"
 
-bool Sample::operator==(const Sample &other) const {
-    return (position == other.position && result == other.result);
+void Generator::set_buffer_clear_count(size_t count) {
+    buffer_clear_count = count;
 }
 
-bool Sample::operator!=(const Sample &other) const {
-    return !((*this) == other);
+void Generator::load_filter() {
+    std::ifstream stream(output + std::string(".filter"), std::ios::binary);
+
+    if (!stream) {
+        std::cout << "There was no filter file" << std::endl;
+        past_uniq_counter=0;
+        pos_counter =0;
+        return;
+    }
+    stream.read((char*)&past_uniq_counter,sizeof(size_t));
+    stream.read((char*)&pos_counter,sizeof(size_t));
+    const size_t size = num_bits / 8 + 1;
+    stream.read((char *) (bit_set), sizeof(uint8_t) * size);
+    stream.close();
 }
 
-std::ostream &operator<<(std::ostream &stream, const Sample s) {
-    stream.write((char*)&s.position,sizeof(Position));
-    stream.write((char *) &s.result, sizeof(int));
-    return stream;
-}
-
-std::istream &operator>>(std::istream &stream, Sample &s) {
-    Position pos;
-    stream.read((char*)&pos,sizeof(Position));
-    int result;
-    stream.read((char *) &result, sizeof(int));
-    s.result = result;
-    s.position=pos;
-    return stream;
-}
-
-void Instance::write_message(std::string msg) {
-    const std::string ex_message = msg + "\n";
-    write(write_pipe, (char *) &ex_message.front(), sizeof(char) * (ex_message.size()));
-}
-
-void Generator::set_time(int time) {
-    time_control = time;
+void Generator::save_filter(size_t uniq_pos_seen,size_t pos_seen) {
+    std::ofstream stream(output + std::string(".filter"), std::ios::binary);
+    const size_t size = num_bits / 8 + 1;
+    stream.write((char*)&uniq_pos_seen,sizeof(size_t));
+    stream.write((char*)&pos_seen,sizeof(size_t));
+    stream.write((char *) (bit_set), sizeof(uint8_t) * size);
+    stream.close();
 }
 
 
+void Generator::set(size_t index) {
+    const size_t part_index = index / 8u;
+    const size_t sub_index = index % 8u;
+    const uint8_t maske = (1u << sub_index) | bit_set[part_index];
+    bit_set[part_index] = maske;
+}
 
-std::string Instance::read_message() {
-    std::string message;
-    char c;
-    int result;
-    do {
-        result = read(read_pipe, (char *) (&c), sizeof(char));
-        if (c == char(0) || c == '\n') {
-            break;
-        } else {
-            message += c;
-        }
+bool Generator::get(size_t index) {
+    const size_t part_index = index / 8u;
+    const size_t sub_index = index % 8u;
+    const uint8_t maske = 1u << sub_index;
+    return ((bit_set[part_index] & maske) == maske);
+}
 
-    } while (result != -1);
-    return message;
+void Generator::insert(Sample sample) {
+    uint64_t hash_val = hash(sample);
+
+    auto hash1 = static_cast<uint32_t>(hash_val);
+    auto hash2 = static_cast<uint32_t>(hash_val >> 32);
+
+    for (uint32_t k = 0; k < num_hashes; ++k) {
+        uint32_t current_hash = hash1 + hash2 * k;
+        size_t index = current_hash % num_bits;
+        set(index);
+    }
+}
+
+bool Generator::has(const Sample &other) {
+    uint64_t hash_val = hash(other);
+    //extracing lower and upper 32 bits
+    auto hash1 = static_cast<uint32_t>(hash_val);
+    auto hash2 = static_cast<uint32_t>(hash_val >> 32);
+    for (uint32_t k = 0; k < num_hashes; ++k) {
+        uint32_t current_hash = hash1 + hash2 * k;
+        size_t index = current_hash % num_bits;
+        if (get(index) == false)
+            return false;
+    }
+    return true;
 }
 
 void Generator::set_hash_size(int size) {
     hash_size = size;
 }
 
-/*
-void Generator::process() {
-    for (auto &instance : instances) {
-        if (instance.state == Instance::Idle) {
-            if (!instance.waiting_response) {
-                instance.write_message("init");
-                instance.write_message(std::to_string(hash_size));
-                instance.waiting_response = true;
-            }
-            auto msg = instance.read_message();
-            if (msg == "init_ready") {
-                std::cout << "initialized engine" << std::endl;
-                instance.state = Instance::Init;
-                instance.waiting_response = false;
-            }
-        }
-        if (instance.state == Instance::Init) {
-            if (!instance.waiting_response) {
-                Position start_pos = get_start_pos();
-                instance.write_message("generate");
-                instance.write_message(start_pos.get_fen_string());
-                instance.write_message(std::to_string(time_control));
-                instance.waiting_response = true;
-            }
-            auto msg = instance.read_message();
-            if (msg == "game_start") {
-                int result = 1000;
-                std::cout << "Receiving game" << std::endl;
-                do {
-                    msg = instance.read_message();
-                    if (msg != "game_end") {
-                        Position pos;
-                        if (msg == "result") {
-                            msg = instance.read_message();
-                            result = std::stoi(msg);
-                        } else {
-                            if (!msg.empty()) {
-                                try {
-                                    pos = Position::pos_from_fen(msg);
-                                    Sample s;
-                                    s.position = pos;
-                                    s.result = result;
-                                    if (result != 1000)
-                                        buffer.emplace_back(s);
-                                    */
-/*     pos.printPosition();
-                                     std::cout << result << std::endl;
-                                     std::cout << std::endl;*//*
+void Generator::set_time(int time) {
+    time_control = time;
+}
 
-                                } catch (std::domain_error &error) {
-                                    //write something to a log file
-                                    //I don't expect this to happen very often though
-                                    std::ofstream stream("Generator_log", std::ios::app);
-                                    stream << "Error occured when parsing the message '" << msg << "'";
-                                    stream << "\n" << "\n";
-                                    stream.close();
-                                }
-
-                            }
-                        }
-                    }
-                } while (msg != "game_end");
-                if (result == -1 || result == 1)
-                    num_wins++;
-                if (buffer.size() >= BUFFER_SIZE) {
-                    clearBuffer();
-                }
-                game_counter++;
-                print_stats();
-                instance.waiting_response = false;
-            }
-        }
-
-    }
+void Generator::print_stats() {
 
 }
-*/
-/*
-void Generator::start() {
-
-    //opening book
-    //creating pipes
-    constexpr int max_parallelism = 128;
-    int read_pipes[max_parallelism][2];
-    int write_pipes[max_parallelism][2];
-    pid_t pid;
-
-    for (auto i = 0; i < parallelism; ++i) {
-        pipe(read_pipes[i]);
-        pipe(write_pipes[i]);
-        pid = fork();
-        if (pid < 0) {
-            std::cerr << "Error" << std::endl;
-            std::exit(-1);
-        } else if (pid == 0) {
-            //child process
-            close(read_pipes[i][0]);
-            close(write_pipes[i][1]);
-            dup2(write_pipes[i][0], STDIN_FILENO);
-            dup2(read_pipes[i][1], STDOUT_FILENO);
-            //will be changed to call a different executable
-            //will work on that tomorrow
-            std::string e = "../Training/Engines/";
-            e += engine_path;
-            const std::string command = "./" + e;
-            auto result = execlp(command.c_str(), e.c_str(), NULL);
-            std::exit(result);
-        }
-    }
-
-    if (pid > 0) {
-
-        for (auto i = 0; i < parallelism; ++i) {
-            instances.emplace_back(Instance{read_pipes[i][0], write_pipes[i][1]});
-        }
-
-        //main_process
-        for (auto i = 0; i < parallelism; ++i) {
-            close(read_pipes[i][1]);
-            close(write_pipes[i][0]);
-            fcntl64(read_pipes[i][0], F_SETFL, O_NONBLOCK | O_RDONLY);
-        }
-        while (game_counter < num_games) {
-            process();
-        }
-
-        for (auto &instance : instances) {
-            instance.write_message("terminate");
-        }
-        clearBuffer();
-
-
-        //at the end we need for the child-processes
-        int status;
-        for (int p = 0; p < parallelism; ++p) {
-            wait(&status);
-        }
-    }
-
-
-}*/
 
 void Generator::startx() {
     //Positions to be saved to a file
-    const size_t num_positions = 100000000;
-
+    initialize();
+    const size_t BUFFER_CAP = 1000000;
     std::cout << "Number of openings: " << openings.size() << std::endl;
 
+    int *buffer_length = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                                      0);
+    int *buffer_length_temp = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                                           0);
+    Sample *buffer = (Sample *) mmap(NULL, sizeof(Sample) * BUFFER_CAP, PROT_READ | PROT_WRITE,
+                                     MAP_SHARED | MAP_ANONYMOUS, -1,
+                                     0);
+    //temporary buffer to see if the bloom-filter is working
+    Sample *check_buffer = (Sample *) mmap(NULL, sizeof(Sample) * BUFFER_CAP, PROT_READ | PROT_WRITE,
+                                           MAP_SHARED | MAP_ANONYMOUS, -1,
+                                           0);
     int *counter;
     int *error_counter;
-    int* num_games;
-    int* num_won;
-    int* opening_counter;
+    int *num_games;
+    int *num_won;
+    int *opening_counter;
+    size_t *unique_pos_seen;
     counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
@@ -222,12 +120,25 @@ void Generator::startx() {
                              0);
 
     opening_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                             0);
+                                   0);
+    bit_set = (uint8_t *) mmap(NULL, sizeof(uint8_t) * ((num_bits / 8) + 1), PROT_READ | PROT_WRITE,
+                               MAP_SHARED | MAP_ANONYMOUS, -1,
+                               0);
 
-    *counter = 0;
+    unique_pos_seen = (size_t *) mmap(NULL, sizeof(size_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                                      0);
+
+    for (auto i = 0; i < ((num_bits / 8) + 1); ++i) {
+        bit_set[i] = 0;
+    }
+    load_filter();
+    *unique_pos_seen = past_uniq_counter;
+    *counter = pos_counter;
     *error_counter = 0;
-    *num_won =0;
-    *num_games=0;
+    *num_won = 0;
+    *num_games = 0;
+    *buffer_length = 0;
+    *buffer_length_temp = 0;
     pthread_mutex_t *pmutex = NULL;
     pthread_mutexattr_t attrmutex;
     pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
@@ -246,19 +157,18 @@ void Generator::startx() {
             std::exit(-1);
         }
         if (id == 0) {
-            std::vector<Sample> local_buffer;
             //child takes a position and generates games
             const uint64_t seed = 13199312313ull + 23ull * i;
             initialize(seed);
             use_classical(true);
             TT.resize(hash_size);
-            std::cout<<"Init child: "<<i<<std::endl;
+            std::cout << "Init child: " << i << std::endl;
             //play a game and increment the opening-counter once more
 
 
             while (true) {
                 pthread_mutex_lock(pmutex);
-                if (*counter >= num_positions) {
+                if (*counter >= 100000000) {
                     break;
                 }
                 Position opening = openings[*opening_counter];
@@ -277,30 +187,39 @@ void Generator::startx() {
                         (*num_won)++;
                         (*num_games)++;
 
-                        for (auto &pos : game) {
+                        for (auto &pos: game) {
                             Sample sample;
                             sample.position = pos;
-                            sample.result =(board.getMover() == BLACK) ? 1 : -1;
-                            local_buffer.emplace_back(sample);
+                            sample.result = ((board.getMover() == BLACK) ? 1 : -1);
+                            if (!has(sample)) {
+                                buffer[(*buffer_length)++] = sample;
+                                (*unique_pos_seen)++;
+                                insert(sample);
+                            }
+                            check_buffer[(*buffer_length_temp)++] = sample;
                         }
-                        (*counter)+=game.size();
+                        (*counter) += game.size();
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
                     uint32_t count;
-                    count = std::count(game.begin(),game.end(),game.back());
-                    if (count>=3) {
+                    count = std::count(game.begin(), game.end(), game.back());
+                    if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
-
                         //draw by repetition
-                        for (auto &pos : game) {
+                        for (auto &pos: game) {
                             Sample sample;
                             sample.position = pos;
                             sample.result = 0;
-                            local_buffer.emplace_back(sample);
+                            if (!has(sample)) {
+                                buffer[(*buffer_length)++] = sample;
+                                (*unique_pos_seen)++;
+                                insert(sample);
+                            }
+                            check_buffer[(*buffer_length_temp)++] = sample;
                         }
-                        (*counter)+=game.size();
+                        (*counter) += game.size();
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
@@ -315,22 +234,43 @@ void Generator::startx() {
                     /*    board.printBoard();
     */
 
+
+                    auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
+                    uint32_t WP = board.getPosition().WP & (~board.getPosition().K);
+                    uint32_t BP = board.getPosition().BP & (~board.getPosition().K);
+                    uint32_t WK = board.getPosition().WP & (board.getPosition().K);
+                    uint32_t BK = board.getPosition().BP & (board.getPosition().K);
+
+                    if (num_pieces > 24 || std::abs(board.getPosition().color) != 1 || num_pieces == 0 ||
+                        ((WP & BP) != 0) || ((WK & BK) != 0)) {
+                        board.getPosition().printPosition();
+                    }
+
                     game.emplace_back(board.getPosition());
                 }
                 pthread_mutex_lock(pmutex);
-                if (local_buffer.size() >= 1000) {
+                if (*buffer_length >= buffer_clear_count) {
                     std::cout << "ClearedBuffer" << std::endl;
-                    Utilities::write_to_binary<Sample>(local_buffer.begin(), local_buffer.end(), output,
+                    Utilities::write_to_binary<Sample>(buffer, buffer + *buffer_length, output,
                                                        std::ios::app);
-                    local_buffer.clear();
+                    Utilities::write_to_binary<Sample>(check_buffer, check_buffer + *buffer_length_temp,
+                                                       output + ".check",
+                                                       std::ios::app);
+                    *buffer_length = 0;
+                    *buffer_length_temp = 0;
+                    save_filter(*unique_pos_seen,*counter);
                 }
-                std::cout<<game.size()<<std::endl;
-                std::cout << "Counter: " << *counter<< std::endl;
-                std::cout<<"BufferSize: "<<local_buffer.size()<<std::endl;
-                (*opening_counter)++;
+                std::cout << "Pos Seen: " << *counter << std::endl;
+                std::cout << "Unique-Pos-Seen: " << *unique_pos_seen << std::endl;
+                std::cout << "Ratio: " << (double) (*unique_pos_seen) / (double) (*counter) << std::endl;
                 std::cout << "Opening_Counter: " << *opening_counter << std::endl;
-                std::cout<<"Error_Counter: "<<*error_counter<<std::endl;
-                std::cout<<"WinRatio: "<<(float)(*num_won)/(float)(*num_games)<<std::endl;
+                std::cout << "Error_Counter: " << *error_counter << std::endl;
+                std::cout << "WinRatio: " << (float) (*num_won) / (float) (*num_games) << std::endl;
+                for (auto x = 0; x < 3; ++x) {
+                    std::cout << "\n";
+                }
+
+                (*opening_counter)++;
                 if (*opening_counter >= openings.size()) {
                     *opening_counter = 0;
                 }
@@ -342,10 +282,9 @@ void Generator::startx() {
 
     if (id > 0) {
         //main_process
-        int status=0;
-        while ((id = wait(&status)) > 0)
-        {
-            printf("Exit status of %d was %d (%s)\n", (int)id, status,
+        int status = 0;
+        while ((id = wait(&status)) > 0) {
+            printf("Exit status of %d was %d (%s)\n", (int) id, status,
                    (status > 0) ? "accept" : "reject");
             std::exit(-1);
         }
@@ -363,7 +302,10 @@ void Generator::set_parallelism(size_t threads) {
     parallelism = threads;
 }
 
-void Generator::set_num_games(size_t num_games) {
-    max_games=num_games;
+void Generator::create_filter_file(std::string input) {
+    //make sure to "null" the bloom-filter before returning from this
+    //function
+
+
 }
 

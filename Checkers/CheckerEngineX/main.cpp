@@ -87,6 +87,7 @@ int main(int argl, const char **argc) {
 
 
 /*
+
     network.load("testtest");
     network.addLayer(Layer{120, 512});
     network.addLayer(Layer{512, 16});
@@ -113,26 +114,16 @@ int main(int argl, const char **argc) {
 */
 
 
+
     //evalute each position and write to file
 
     //manually checking some positions
 
 
-
-
-
-
-
-
-
-/*
-
-
-    TT.resize(23);
+    TT.resize(25);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
+    //board = Position::pos_from_fen("B:W19,21,22,23,25,26,27,29,30,31,32:B1,2,3,4,5,6,7,9,10,11,12");
     board.printBoard();
-
 
 
 
@@ -141,7 +132,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-*/
+
 
 
 

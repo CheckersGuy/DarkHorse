@@ -52,6 +52,7 @@ constexpr int stage_size = 24;
 
 
 
+
 constexpr int prob_cut = 300;
 constexpr int sing_ext = 300;
 constexpr int asp_wind = 100;
@@ -64,13 +65,14 @@ constexpr int MAX_ASP = 3000;
 
 
 
-/*
 
+/*
 
 constexpr int prob_cut = 30;
 constexpr int sing_ext = 50;
 constexpr int asp_wind =15;
 constexpr int MAX_ASP = 300;
+
 */
 
 

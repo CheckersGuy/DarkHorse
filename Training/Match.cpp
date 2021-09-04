@@ -166,7 +166,6 @@ void Engine::new_move(Move move) {
 
 
 void Interface::process() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
     for (auto &engine : engines) {
         engine.initEngine();
         engine.newGame(pos);
@@ -253,7 +252,6 @@ Position Match::get_start_pos() {
 
 void Match::start() {
     //this probably needs to be reworked
-    HyperLog<Position, 14, TrainHasher> counter;
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     std::cout << "Engine1: " << first << std::endl;
     std::cout << "Engine2: " << second << std::endl;
@@ -309,10 +307,11 @@ void Match::start() {
                 fcntl64(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
             }
         }
-        printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws", "Uniq_Counter");
-        printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
         printf("\r");
         printf("\r");
+        printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
+        printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws);
+
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 if (inter.pos.isEmpty()) {
@@ -334,7 +333,9 @@ void Match::start() {
 
                 if (inter.is_terminal_state()) {
                     game_count++;
-                    printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws, (int) counter.get_count());
+                    printf("\r");
+                    printf("\r");
+                    printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
                     std::cout << std::endl;
                     MoveListe liste;
                     getMoves(inter.pos, liste);
@@ -348,14 +349,6 @@ void Match::start() {
                     if (inter.is_n_fold(3)) {
                         draws++;
                     }
-                    if (inter.history.size() <= 400) {
-                        //reached max move
-                        for (Position p : inter.history) {
-                            p.key = Zobrist::generateKey(p);
-                            counter.insert(p);
-                        }
-                    }
-
                     inter.reset_engines();
                     inter.history.clear();
                 }
