@@ -132,7 +132,7 @@ int main(int argl, const char **argc) {
 
     Generator generator("train.pos", "/home/robin/DarkHorse/Training/TrainData/bloom");
     generator.set_hash_size(20);
-    generator.set_buffer_clear_count(700000);
+    generator.set_buffer_clear_count(150000);
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
