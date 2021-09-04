@@ -13,7 +13,6 @@
 #include "Utilities.h"
 #include <sys/resource.h>
 #include <filesystem>
-#include <HyperLog.h>
 
 inline std::string getPositionString(Position pos) {
     std::string position;
@@ -38,13 +37,6 @@ inline std::string getPositionString(Position pos) {
     }
     return position;
 }
-
-struct TrainHasher{
-
-    uint64_t operator()(Position p){
-        return p.key;
-    }
-};
 
 struct Engine {
     enum class State {
@@ -114,7 +106,7 @@ private:
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     std::vector<Position> positions;
-    std::string openingBook{"../Training/Positions/3move.pos"};
+    std::string openingBook{"../Training/Positions/11manballots.pos"};
 
 public:
     explicit Match(const std::string &first, const std::string &second) : first(

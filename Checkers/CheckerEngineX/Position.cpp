@@ -64,7 +64,7 @@ struct Scanner {
     }
 
     bool is_square(std::string token) {
-        for (char c : token) {
+        for (char c: token) {
             if (!isdigit(c))
                 return false;
         }
@@ -201,7 +201,7 @@ PieceType Position::getPieceType(Move move) const {
         type = BPAWN;
     } else if ((move.from & WP) != 0) {
         type = WPAWN;
-    }else{
+    } else {
         type = WPAWN;
     }
     return type;
@@ -348,21 +348,12 @@ uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
 }
 
 std::ostream &operator<<(std::ostream &stream, const Position &pos) {
-    stream.write((char *) &pos.WP, sizeof(uint32_t));
-    stream.write((char *) &pos.BP, sizeof(uint32_t));
-    stream.write((char *) &pos.K, sizeof(uint32_t));
-    int color = (pos.color == BLACK) ? 0 : 1;
-    stream.write((char *) &color, sizeof(int));
+    stream.write((char *) &pos, sizeof(Position));
     return stream;
 }
 
 std::istream &operator>>(std::istream &stream, Position &pos) {
-    stream.read((char *) &pos.WP, sizeof(uint32_t));
-    stream.read((char *) &pos.BP, sizeof(uint32_t));
-    stream.read((char *) &pos.K, sizeof(uint32_t));
-    int color;
-    stream.read((char *) &color, sizeof(int));
-    pos.color = (color == 0) ? BLACK : WHITE;
+    stream.read((char *) &pos, sizeof(Position));
     return stream;
 }
 

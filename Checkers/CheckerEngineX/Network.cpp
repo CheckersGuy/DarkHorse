@@ -6,33 +6,28 @@
 #include "Network.h"
 
 
-int Network::evaluate(Network &op, Network &end, Position pos,int ply) {
+int Network::evaluate(Network &op, Network &end, Position pos, int ply) {
 
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces > 6) {
-        return op.evaluate(pos,ply);
-    } else {
-        return end.evaluate(pos,ply);
-    }
-
+    return op.evaluate(pos, ply);
 }
 
-int Network::evaluate(Network &op, Network &early_end, Network &end, Position pos,int ply) {
- /*   if(pos.BP ==0){
-        return -loss(ply);
-    }
-    if(pos.WP ==0){
-        return loss(ply);
-    }
-*/
+int Network::evaluate(Network &op, Network &early_end, Network &end, Position pos, int ply) {
+    /*   if(pos.BP ==0){
+           return -loss(ply);
+       }
+       if(pos.WP ==0){
+           return loss(ply);
+       }
+   */
 
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
     if (num_pieces <= 6) {
-        return end.evaluate(pos,ply);
+        return end.evaluate(pos, ply);
     } else if (num_pieces > 6 && num_pieces <= 12) {
-        return early_end.evaluate(pos,ply);
-    }else{
-        return op.evaluate(pos,ply);
+        return early_end.evaluate(pos, ply);
+    } else {
+        return op.evaluate(pos, ply);
     }
 
 }
@@ -71,7 +66,7 @@ void Network::init() {
     p_black = Position{};
     p_white = Position{};
 
-    for (Layer l : layers)
+    for (Layer l: layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
     temp = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
@@ -95,7 +90,7 @@ void Network::init() {
 float Network::get_max_weight() {
     float max_value = std::numeric_limits<float>::min();
     size_t num_weights = 0;
-    for (Layer l : layers) {
+    for (Layer l: layers) {
         num_weights += l.out_features * l.in_features;
     }
     for (int i = 0; i < num_weights; ++i) {
@@ -284,17 +279,17 @@ float Network::forward_pass() const {
     return input[0];
 }
 
-int Network::evaluate(Position pos,int ply) {
+int Network::evaluate(Position pos, int ply) {
 
-    if(pos.BP ==0){
-        return -pos.color*loss(ply);
+    if (pos.BP == 0) {
+        return -pos.color * loss(ply);
     }
-    if(pos.WP ==0){
-        return pos.color*loss(ply);
+    if (pos.WP == 0) {
+        return pos.color * loss(ply);
     }
 
 
-    float val = compute_incre_forward_pass(pos) * 128.0f;
+    float val = compute_incre_forward_pass(pos) * 1028.0f;
     return static_cast<int>(val);
 }
 

@@ -164,8 +164,6 @@ void Trainer::epoch() {
     std::shuffle(data.begin(), data.end(), generator);
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
-
-
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
                       auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
@@ -198,11 +196,15 @@ void Trainer::startTune() {
         accu_loss = 0.0;
         last_loss_value = loss;
         std::cout << "Loss: " << loss << std::endl;
+        auto t1 = std::chrono::high_resolution_clock::now();
         epoch();
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto dur = t2-t1;
+        std::cout<<"Time for epoch: "<<dur.count()/1000000<<std::endl;
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("currenttest21.weights");
+        gameWeights.storeWeights("bloom.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
