@@ -17,7 +17,7 @@ Network network, network3, network2;
 bool u_classical = false;
 
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/bloom5.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/currenttest14.weights");
     Zobrist::initializeZobrisKeys();
     //Statistics::mPicker.init();
 }
