@@ -83,7 +83,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
     accu_loss += error * error;
     auto x_flipped = (x.getColor() == BLACK) ? x.getColorFlip() : x;
 
-    const size_t sub_offset =0;
+    const size_t sub_offset = 0;
     for (size_t p = 0; p < 2; ++p) {
         double diff = temp;
         if (p == 0) {
@@ -159,28 +159,32 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
 void Trainer::epoch() {
-    static std::mt19937_64 generator(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-    std::cout << "Start shuffling" << std::endl;
+   std::cout << "Start shuffling" << std::endl;
     std::shuffle(data.begin(), data.end(), generator);
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
-                      auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
-                      uint32_t WP = sample.position.WP & (~sample.position.K);
-                      uint32_t BP = sample.position.BP & (~sample.position.K);
-                      uint32_t WK = sample.position.WP & (sample.position.K);
-                      uint32_t BK = sample.position.BP & (sample.position.K);
-
-                      if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
-                          ((WP & BP) != 0) || ((WK & BK) != 0)) {
-                      } else {
-                          counter++;
-                          gradientUpdate(sample);
-                      }
-
+                      gradientUpdate(sample);
                   });
+    /*const size_t SHUFFLE_BUFF_SIZE = 100000ull;
+    for (auto i = 0; i < data.size(); ++i) {
+        auto begin = data.begin();
+        std::advance(begin, i);
+        auto end = begin;
+        int k = 0;
+        for (k = 0; k < SHUFFLE_BUFF_SIZE && i < data.size(); ++k) {
+            ++i;
+        }
+        std::advance(end, k);
+        std::shuffle(begin,end,generator);
+        std::for_each(begin, end, [&](Sample s) {
+            gradientUpdate(s);
+        });
 
+
+    }
+*/
 }
 
 
@@ -199,12 +203,12 @@ void Trainer::startTune() {
         auto t1 = std::chrono::high_resolution_clock::now();
         epoch();
         auto t2 = std::chrono::high_resolution_clock::now();
-        auto dur = t2-t1;
-        std::cout<<"Time for epoch: "<<dur.count()/1000000<<std::endl;
+        auto dur = t2 - t1;
+        std::cout << "Time for epoch: " << dur.count() / 1000000 << std::endl;
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("bloom.weights");
+        gameWeights.storeWeights("bloom5.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

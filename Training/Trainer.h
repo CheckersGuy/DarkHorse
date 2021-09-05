@@ -24,13 +24,13 @@ private:
     double beta{0.99};
     double decay{0.05};
     std::unique_ptr<double[]> momentums;
-
+    std::mt19937_64 generator;
 public:
 
 
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
-                                            l2Reg(0.05) {
+                                            l2Reg(0.05),generator(std::mt19937_64(231231241ull)) {
         momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
         Utilities::read_binary<Sample>(std::back_inserter(data), data_path);
         std::cout<<"Number of samples "<<data.size()<<std::endl;

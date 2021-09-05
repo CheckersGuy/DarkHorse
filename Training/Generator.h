@@ -39,7 +39,6 @@ private:
     std::vector<Position> openings;
     int time_control{100};
     int hash_size{21};
-
     void set(size_t index);
 
     bool get(size_t index);
