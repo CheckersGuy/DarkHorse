@@ -168,7 +168,7 @@ void Generator::startx() {
 
             while (true) {
                 pthread_mutex_lock(pmutex);
-                if (*counter >= 100000000) {
+                if (*counter >= 10000000000ull) {
                     break;
                 }
                 Position opening = openings[*opening_counter];

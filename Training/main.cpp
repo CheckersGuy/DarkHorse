@@ -75,13 +75,13 @@ int main(int argl, const char **argc) {
     Board board;
     TT.resize(21);
     board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(positions), 5, board, -2000, 2000);
+    Utilities::createNMoveBook(std::back_inserter(positions), 6, board, -2000, 2000);
     Utilities::write_to_binary<Position>(positions.begin(), positions.end(),
-                                         "/home/robin/DarkHorse/Training/Positions/train.pos");
+                                         "/home/robin/DarkHorse/Training/Positions/train2.pos");
     std::cout << "Positions: " << positions.size() << std::endl;
 
-*/
 
+*/
 
 
 
@@ -129,24 +129,16 @@ int main(int argl, const char **argc) {
 
 
 
-
     Generator generator("train.pos", "/home/robin/DarkHorse/Training/TrainData/bloom");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(150000);
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
-
-
-
-
-
-
-
-
+    
 /*
 
-    Match engine_match("main", "master");
+    Match engine_match("bloom5", "bloom4");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
