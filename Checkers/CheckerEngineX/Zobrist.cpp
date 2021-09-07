@@ -8,10 +8,10 @@ namespace Zobrist {
     std::array<std::array<uint64_t, 4>, 32> ZOBRIST_KEYS;
     uint64_t colorBlack = 0ull;
     uint64_t skip_hash = 0ull;
-
+     std::mt19937_64 generator;
 
     void initializeZobrisKeys(uint64_t seed) {
-        std::mt19937_64 generator(seed);
+        generator = std::mt19937_64(seed);
         std::uniform_int_distribution<uint64_t> distrib;
         for (int i = 0; i < 32; ++i) {
             for (int j = 0; j < 4; ++j) {

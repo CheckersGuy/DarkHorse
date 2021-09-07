@@ -165,6 +165,17 @@ void Trainer::epoch() {
     int counter = 0;
     std::for_each(data.begin(), data.end(),
                   [this, &counter](Sample sample) {
+                      auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
+                      uint32_t WP = sample.position.WP & (~sample.position.K);
+                      uint32_t BP = sample.position.BP & (~sample.position.K);
+                      uint32_t WK = sample.position.WP & (sample.position.K);
+                      uint32_t BK = sample.position.BP & (sample.position.K);
+
+                      if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
+                          ((WP & BP) != 0) || ((WK & BK) != 0)) {
+                          sample.position.printPosition();
+                      }
+
                       gradientUpdate(sample);
                   });
     /*const size_t SHUFFLE_BUFF_SIZE = 100000ull;
@@ -208,7 +219,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("bloom5.weights");
+        gameWeights.storeWeights("bloomnext.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

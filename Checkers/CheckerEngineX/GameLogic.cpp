@@ -383,10 +383,6 @@ namespace Search {
         return search_root(local, line, board, alpha, beta, depth, exluded_moves);
     }
 
-#ifdef TRAIN
-    std::mt19937_64 generator(getSystemTime());
-#endif
-
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth,
                      std::vector<Move> &exluded_moves) {
         line.clear();
@@ -402,10 +398,6 @@ namespace Search {
         MoveListe liste;
         getMoves(board.getPosition(), liste);
 
-#ifdef TRAIN
-        std::shuffle(liste.begin(), liste.end(), generator);
-#endif
-
 
         //removing the excluded moves from the list
 
@@ -418,6 +410,12 @@ namespace Search {
         int start_index = 1;
 
         liste.sort(board.getPosition(), local.ply, Move{}, start_index);
+
+#ifdef TRAIN
+        std::shuffle(liste.begin(), liste.end(), Zobrist::generator);
+#endif
+
+
 
         move_loop(true, local, board, line, liste);
 

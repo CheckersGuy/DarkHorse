@@ -13,22 +13,22 @@ void Generator::load_filter() {
 
     if (!stream) {
         std::cout << "There was no filter file" << std::endl;
-        past_uniq_counter=0;
-        pos_counter =0;
+        past_uniq_counter = 0;
+        pos_counter = 0;
         return;
     }
-    stream.read((char*)&past_uniq_counter,sizeof(size_t));
-    stream.read((char*)&pos_counter,sizeof(size_t));
+    stream.read((char *) &past_uniq_counter, sizeof(size_t));
+    stream.read((char *) &pos_counter, sizeof(size_t));
     const size_t size = num_bits / 8 + 1;
     stream.read((char *) (bit_set), sizeof(uint8_t) * size);
     stream.close();
 }
 
-void Generator::save_filter(size_t uniq_pos_seen,size_t pos_seen) {
+void Generator::save_filter(size_t uniq_pos_seen, size_t pos_seen) {
     std::ofstream stream(output + std::string(".filter"), std::ios::binary);
     const size_t size = num_bits / 8 + 1;
-    stream.write((char*)&uniq_pos_seen,sizeof(size_t));
-    stream.write((char*)&pos_seen,sizeof(size_t));
+    stream.write((char *) &uniq_pos_seen, sizeof(size_t));
+    stream.write((char *) &pos_seen, sizeof(size_t));
     stream.write((char *) (bit_set), sizeof(uint8_t) * size);
     stream.close();
 }
@@ -158,7 +158,7 @@ void Generator::startx() {
         }
         if (id == 0) {
             //child takes a position and generates games
-            const uint64_t seed = 13199312313ull + 23ull * i;
+            const uint64_t seed = 13199312313ull + 12412312314ull * i;
             initialize(seed);
             use_classical(true);
             TT.resize(hash_size);
@@ -177,6 +177,7 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 std::vector<Position> game;
                 TT.clear();
+                initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
                 for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
@@ -243,7 +244,9 @@ void Generator::startx() {
 
                     if (num_pieces > 24 || std::abs(board.getPosition().color) != 1 || num_pieces == 0 ||
                         ((WP & BP) != 0) || ((WK & BK) != 0)) {
-                        board.getPosition().printPosition();
+                        pthread_mutex_lock(pmutex);
+                        (*error_counter)++;
+                        pthread_mutex_unlock(pmutex);
                     }
 
                     game.emplace_back(board.getPosition());
@@ -258,7 +261,7 @@ void Generator::startx() {
                                                        std::ios::app);
                     *buffer_length = 0;
                     *buffer_length_temp = 0;
-                    save_filter(*unique_pos_seen,*counter);
+                    save_filter(*unique_pos_seen, *counter);
                 }
                 std::cout << "Pos Seen: " << *counter << std::endl;
                 std::cout << "Unique-Pos-Seen: " << *unique_pos_seen << std::endl;
