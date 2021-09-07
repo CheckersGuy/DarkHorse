@@ -83,12 +83,12 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
 
-/*
 
-    network.load("testtest");
+
+    network.load("network3.30.weights");
     network.addLayer(Layer{120, 512});
     network.addLayer(Layer{512, 16});
     network.addLayer(Layer{16, 32});
@@ -96,7 +96,7 @@ int main(int argl, const char **argc) {
 
     network.init();
 
-    network2.load("testtest");
+    network2.load("network3.30.weights");
     network2.addLayer(Layer{120, 512});
     network2.addLayer(Layer{512, 16});
     network2.addLayer(Layer{16, 32});
@@ -104,14 +104,14 @@ int main(int argl, const char **argc) {
 
     network2.init();
 
-    network3.load("testtest");
+    network3.load("network3.30.weights");
     network3.addLayer(Layer{120, 512});
     network3.addLayer(Layer{512, 16});
     network3.addLayer(Layer{16, 32});
     network3.addLayer(Layer{32, 1});
 
     network3.init();
-*/
+
 
 
 
@@ -119,9 +119,10 @@ int main(int argl, const char **argc) {
 
     //manually checking some positions
 
-   /* TT.resize(25);
+
+    /*TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:W19,21,22,23,25,26,27,29,30,31,32:B1,2,3,4,5,6,7,9,10,11,12");
+    //board = Position::pos_from_fen("B:WK21,25:BK3,K2");
     board.printBoard();
 
 
@@ -132,16 +133,6 @@ int main(int argl, const char **argc) {
     board.makeMove(best);
     board.printBoard();
 */
-
-
-
-
-
-
-
-
-
-
 
 
 

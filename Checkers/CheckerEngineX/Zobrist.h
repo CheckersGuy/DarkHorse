@@ -17,7 +17,7 @@
 namespace Zobrist {
     extern uint64_t colorBlack;
     extern uint64_t skip_hash;
-
+    extern std::mt19937_64 generator;
     void initializeZobrisKeys();
 
     void initializeZobrisKeys(uint64_t seed);

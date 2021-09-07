@@ -27,7 +27,7 @@ class Generator {
 private:
     std::hash<Sample> hash;
     //enough for roughly 200 million insertions
-    static constexpr size_t num_bits =2875527868ull;
+    static constexpr size_t num_bits =5751035027ull;
     static constexpr size_t num_hashes =10;
 
     size_t buffer_clear_count{100000};

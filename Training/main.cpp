@@ -53,12 +53,12 @@ void remove_duplicates(std::string in_File, std::string out_file) {
     }
 
     auto t2 = std::chrono::high_resolution_clock::now();
-    auto dist = t2-t1;
-    std::cout<<"It took: "<<dist.count()/1000000<<std::endl;
+    auto dist = t2 - t1;
+    std::cout << "It took: " << dist.count() / 1000000 << std::endl;
 
     std::cout << "Number of Errors: " << error_count << std::endl;
     std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
-   // Utilities::write_to_binary<Sample>(out_samples.begin(), out_samples.end(), out_file);
+    // Utilities::write_to_binary<Sample>(out_samples.begin(), out_samples.end(), out_file);
 
 }
 
@@ -127,30 +127,33 @@ int main(int argl, const char **argc) {
 
 */
 
-
-
-    Generator generator("train.pos", "/home/robin/DarkHorse/Training/TrainData/bloom");
+    Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/bloomcloud");
     generator.set_hash_size(20);
-    generator.set_buffer_clear_count(150000);
+    generator.set_buffer_clear_count(500000);
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
 
-/*
 
-    Match engine_match("bloom5", "bloom4");
+
+
+/*
+    Match engine_match("network3", "network2");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
     engine_match.setHashSize(20);
     engine_match.start();
+
 */
+
+
 
 
 
     //0.193772
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloom");
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloom2");
     trainer.setLearningRate(140000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
