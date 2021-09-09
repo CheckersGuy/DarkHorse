@@ -88,7 +88,8 @@ int main(int argl, const char **argc) {
 
 
 
-    network.load("network3.30.weights");
+
+    network.load("network7.weights");
     network.addLayer(Layer{120, 512});
     network.addLayer(Layer{512, 16});
     network.addLayer(Layer{16, 32});
@@ -96,7 +97,7 @@ int main(int argl, const char **argc) {
 
     network.init();
 
-    network2.load("network3.30.weights");
+    network2.load("network7.weights");
     network2.addLayer(Layer{120, 512});
     network2.addLayer(Layer{512, 16});
     network2.addLayer(Layer{16, 32});
@@ -104,7 +105,7 @@ int main(int argl, const char **argc) {
 
     network2.init();
 
-    network3.load("network3.30.weights");
+    network3.load("network7.weights");
     network3.addLayer(Layer{120, 512});
     network3.addLayer(Layer{512, 16});
     network3.addLayer(Layer{16, 32});
@@ -120,11 +121,13 @@ int main(int argl, const char **argc) {
     //manually checking some positions
 
 
-    /*TT.resize(23);
-    board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:WK21,25:BK3,K2");
-    board.printBoard();
 
+/*
+
+    TT.resize(23);
+    board = Position::getStartPosition();
+    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
+    board.printBoard();
 
 
     board.printBoard();
@@ -132,11 +135,10 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
+
+
+
 */
-
-
-
-
 
     std::string current;
     while (std::cin >> current) {
@@ -215,7 +217,7 @@ int main(int argl, const char **argc) {
             std::cout << "game_start" << "\n";
             std::cout << "result" << "\n";
             std::cout << std::to_string(game.second) << "\n";
-            for (Position p : game.first) {
+            for (Position p: game.first) {
                 if (!p.isEnd() && !p.isEmpty())
                     std::cout << p.get_fen_string() << "\n";
             }

@@ -8,6 +8,15 @@ extern "C" int invert_pieces(uint32_t pieces){
     return static_cast<int>(getMirrored(pieces));
 }
 
+extern "C" int has_jumps(uint32_t white_men, uint32_t black_men, uint32_t kings,int color){
+    Position pos;
+    pos.BP = black_men;
+    pos.WP = white_men;
+    pos.K = kings;
+    return pos.hasJumps(static_cast<Color>(color));
+}
+
+
 extern "C" void print_fen(int color, uint32_t white_men, uint32_t black_men, uint32_t kings) {
     Position pos;
     pos.BP = black_men;

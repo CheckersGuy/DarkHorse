@@ -219,7 +219,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + ".weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("bloomnext.weights");
+        gameWeights.storeWeights("bloomcloud.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
