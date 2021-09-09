@@ -15,6 +15,20 @@ void Generator::load_filter() {
         std::cout << "There was no filter file" << std::endl;
         past_uniq_counter = 0;
         pos_counter = 0;
+        //if there was no weight file
+        //we can create the filter file from scratch
+
+        std::ifstream sec_stream(output,std::ios::binary);
+        std::istream_iterator<Sample> be(sec_stream);
+        std::istream_iterator<Sample>e{};
+
+        std::for_each(be,e,[&](Sample s){
+            insert(s);
+            past_uniq_counter++;
+            pos_counter++;
+        });
+
+
         return;
     }
     stream.read((char *) &past_uniq_counter, sizeof(size_t));
@@ -101,9 +115,7 @@ void Generator::startx() {
                                      MAP_SHARED | MAP_ANONYMOUS, -1,
                                      0);
     //temporary buffer to see if the bloom-filter is working
-    Sample *check_buffer = (Sample *) mmap(NULL, sizeof(Sample) * BUFFER_CAP, PROT_READ | PROT_WRITE,
-                                           MAP_SHARED | MAP_ANONYMOUS, -1,
-                                           0);
+
     int *counter;
     int *error_counter;
     int *num_games;
@@ -197,7 +209,6 @@ void Generator::startx() {
                                 (*unique_pos_seen)++;
                                 insert(sample);
                             }
-                            check_buffer[(*buffer_length_temp)++] = sample;
                         }
                         (*counter) += game.size();
                         pthread_mutex_unlock(pmutex);
@@ -218,7 +229,6 @@ void Generator::startx() {
                                 (*unique_pos_seen)++;
                                 insert(sample);
                             }
-                            check_buffer[(*buffer_length_temp)++] = sample;
                         }
                         (*counter) += game.size();
                         pthread_mutex_unlock(pmutex);
@@ -256,23 +266,19 @@ void Generator::startx() {
                     std::cout << "ClearedBuffer" << std::endl;
                     Utilities::write_to_binary<Sample>(buffer, buffer + *buffer_length, output,
                                                        std::ios::app);
-                    Utilities::write_to_binary<Sample>(check_buffer, check_buffer + *buffer_length_temp,
-                                                       output + ".check",
-                                                       std::ios::app);
                     *buffer_length = 0;
                     *buffer_length_temp = 0;
                     save_filter(*unique_pos_seen, *counter);
+                    std::cout << "Pos Seen: " << *counter << std::endl;
+                    std::cout << "Unique-Pos-Seen: " << *unique_pos_seen << std::endl;
+                    std::cout << "Ratio: " << (double) (*unique_pos_seen) / (double) (*counter) << std::endl;
+                    std::cout << "Opening_Counter: " << *opening_counter << std::endl;
+                    std::cout << "Error_Counter: " << *error_counter << std::endl;
+                    std::cout << "WinRatio: " << (float) (*num_won) / (float) (*num_games) << std::endl;
+                    for (auto x = 0; x < 3; ++x) {
+                        std::cout << "\n";
+                    }
                 }
-                std::cout << "Pos Seen: " << *counter << std::endl;
-                std::cout << "Unique-Pos-Seen: " << *unique_pos_seen << std::endl;
-                std::cout << "Ratio: " << (double) (*unique_pos_seen) / (double) (*counter) << std::endl;
-                std::cout << "Opening_Counter: " << *opening_counter << std::endl;
-                std::cout << "Error_Counter: " << *error_counter << std::endl;
-                std::cout << "WinRatio: " << (float) (*num_won) / (float) (*num_games) << std::endl;
-                for (auto x = 0; x < 3; ++x) {
-                    std::cout << "\n";
-                }
-
                 (*opening_counter)++;
                 if (*opening_counter >= openings.size()) {
                     *opening_counter = 0;

@@ -129,7 +129,7 @@ int main(int argl, const char **argc) {
 
     Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/bloomcloud");
     generator.set_hash_size(20);
-    generator.set_buffer_clear_count(500000);
+    generator.set_buffer_clear_count(250000);
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
@@ -138,7 +138,10 @@ int main(int argl, const char **argc) {
 
 
 /*
-    Match engine_match("network3", "network2");
+
+
+
+    Match engine_match("network7", "main");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
@@ -151,13 +154,15 @@ int main(int argl, const char **argc) {
 
 
 
-    //0.193772
+
+    //0.181677 <--- -3e-4
+
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloom2");
-    trainer.setLearningRate(140000);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloomcloud");
+    trainer.setLearningRate(5000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-7e-4);
+    trainer.setCValue(-6e-4);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
