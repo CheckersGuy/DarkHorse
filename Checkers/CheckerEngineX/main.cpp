@@ -83,11 +83,12 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
 
 
 
+/*
 
     network.load("network256x32.weights");
     network.addLayer(Layer{120, 256});
@@ -97,6 +98,7 @@ int main(int argl, const char **argc) {
 
     network.init();
 
+*/
 
 
 
@@ -184,7 +186,7 @@ int main(int argl, const char **argc) {
             std::cout << std::to_string(bestMove.getToIndex()) << "\n";
             uint32_t captures = bestMove.captures;
             while (captures) {
-                std::cout << std::to_string(__tzcnt_u32(captures)) << "\n";
+                std::cout << std::to_string(Bits::bitscan_foward(captures)) << "\n";
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
