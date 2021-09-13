@@ -4,6 +4,16 @@
 
 #include "PyHelper.h"
 
+
+extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings){
+    auto num_pieces = Bits::pop_count(white_men)+Bits::pop_count(black_men);
+
+    if(num_pieces>=8){
+        return 0;
+    }
+    return 1;
+}
+
 extern "C" int invert_pieces(uint32_t pieces){
     return static_cast<int>(getMirrored(pieces));
 }

@@ -120,9 +120,12 @@ struct Weights {
         static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
-            std::cerr << "Error" << std::endl;
+            std::cerr << "Error could not load the weights" << std::endl;
             return;
         }
+#ifdef TRAIN
+      std::cout<<"Loading the weights"<<std::endl;
+#endif
 
         size_t counter = 0u;
         while (stream) {
@@ -135,7 +138,8 @@ struct Weights {
             if (stream.eof())
                 break;
             for (RunType i = 0u; i < length; ++i) {
-                weights[counter] = std::clamp(first, -16000.0, 16000.0);
+                weights[counter] = std::clamp(first, (double) std::numeric_limits<int16_t>::min(),
+                                              (double) std::numeric_limits<int16_t>::max());
                 counter++;
             }
         }
@@ -149,7 +153,8 @@ struct Weights {
             for (auto j = 0; j < 16; ++j) {
                 double temp;
                 stream.read((char *) &temp, sizeof(double));
-                tempo_ranks[i][j] = temp;
+                tempo_ranks[i][j] = std::clamp(temp, (double) std::numeric_limits<int16_t>::min(),
+                                               (double) std::numeric_limits<int16_t>::max());
             }
         }
         stream.close();
@@ -200,6 +205,8 @@ struct Weights {
         uint32_t man_white = pos.WP & (~pos.K);
         man_white = getMirrored(man_white);
         U tempi = 0;
+/*
+
         for (int i = 0; i < 7; ++i) {
             uint32_t shift = 4u * i;
             const uint32_t mask_white = (man_white >> shift) & temp_mask;
@@ -207,6 +214,7 @@ struct Weights {
             tempi -= tempo_ranks[i][mask_black];
             tempi += tempo_ranks[i][mask_white];
         }
+*/
 
 
         U phase = WP + BP;
@@ -223,15 +231,14 @@ struct Weights {
             pos = pos.getColorFlip();
         }
 
-        const size_t sub_offset = 0;
         for (auto i = 0; i < 3; ++i) {
             for (auto k = 0; k < 3; ++k) {
                 const uint32_t sub_reg = region << (8 * i + k);
                 size_t index = getIndex2(sub_reg, pos);
                 size_t sub_index_op = 18 * index + 2 * k + 6 * i;
                 size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
-                opening += weights[sub_index_op + sub_offset];
-                ending += weights[sub_index_end + sub_offset];
+                opening += weights[sub_index_op];
+                ending += weights[sub_index_end];
             }
         }
 

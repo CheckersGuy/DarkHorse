@@ -89,29 +89,13 @@ int main(int argl, const char **argc) {
 
 
 
-    network.load("network7.weights");
-    network.addLayer(Layer{120, 512});
-    network.addLayer(Layer{512, 16});
-    network.addLayer(Layer{16, 32});
+    network.load("network256x32.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
-
-    network2.load("network7.weights");
-    network2.addLayer(Layer{120, 512});
-    network2.addLayer(Layer{512, 16});
-    network2.addLayer(Layer{16, 32});
-    network2.addLayer(Layer{32, 1});
-
-    network2.init();
-
-    network3.load("network7.weights");
-    network3.addLayer(Layer{120, 512});
-    network3.addLayer(Layer{512, 16});
-    network3.addLayer(Layer{16, 32});
-    network3.addLayer(Layer{32, 1});
-
-    network3.init();
 
 
 
@@ -122,11 +106,9 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-
     TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
+   // board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
     board.printBoard();
 
 
@@ -138,7 +120,13 @@ int main(int argl, const char **argc) {
 
 
 
-*/
+
+
+
+
+
+
+
 
     std::string current;
     while (std::cin >> current) {
@@ -189,7 +177,6 @@ int main(int argl, const char **argc) {
                 bestMove = liste[0];
             } else {
                 searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-                //search(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             }
 
             std::cout << "new_move" << "\n";

@@ -14,52 +14,51 @@
 #include <SampleFilter.h>
 #include <SampleFilter2.h>
 
-void remove_duplicates(std::string in_File, std::string out_file) {
-    int error_count = 0;
-    Zobrist::initializeZobrisKeys();
-    std::vector<Sample> in_samples;
-    Utilities::read_binary<Sample>(std::back_inserter(in_samples), in_File);
-    std::vector<Sample> out_samples;
-    std::unordered_set<Sample, std::hash<Sample>> hash_table;
-    std::cout << "Number of samples before removing duplicates: " << in_samples.size() << std::endl;
+size_t count_unique_elements(std::string input) {
+    std::ifstream stream(input, std::ios::binary);
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
     size_t counter = 0;
+    size_t total_elements = 0;
+    SampleFilter filter(5751035027, 10);
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    for (Sample sample: in_samples) { ;
-        //sample.position.printPosition();
-        //we have already seen the sample
-        if (hash_table.find(sample) != hash_table.end()) {
-            continue;
+    std::for_each(begin, end, [&](Sample s) {
+        if (!filter.has(s)) {
+            counter++;
+            filter.insert(s);
         }
-        if ((counter % 1000000) == 0) {
-            std::cout << "Progress: " << ((double) counter) / ((double) in_samples.size()) << std::endl;
+        total_elements++;
+    });
+
+    std::cout << "TotalElements: " << total_elements << std::endl;
+    std::cout << "Unique Elements: " << counter << std::endl;
+
+    return counter;
+}
+
+void remove_duplicates(std::string input, std::string output) {
+    std::ifstream stream(input, std::ios::binary);
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
+    size_t counter = 0;
+    size_t total_elements = 0;
+    SampleFilter filter(5751035027, 10);
+    std::vector<Sample> elements;
+    std::for_each(begin, end, [&](Sample s) {
+        if (!filter.has(s)) {
+            counter++;
+            filter.insert(s);
+            elements.emplace_back(s);
         }
-        counter++;
-        hash_table.insert(sample);
-        auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
-        uint32_t WP = sample.position.WP & (~sample.position.K);
-        uint32_t BP = sample.position.BP & (~sample.position.K);
-        uint32_t WK = sample.position.WP & (sample.position.K);
-        uint32_t BK = sample.position.BP & (sample.position.K);
+        total_elements++;
+    });
 
-        if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
-            ((WP & BP) != 0) || ((WK & BK) != 0)) {
-            error_count++;
-            //sample.position.printPosition();
-        } else {
-            out_samples.emplace_back(sample);
-        }
-    }
 
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto dist = t2 - t1;
-    std::cout << "It took: " << dist.count() / 1000000 << std::endl;
-
-    std::cout << "Number of Errors: " << error_count << std::endl;
-    std::cout << "Number of samples after removing duplicates: " << out_samples.size() << std::endl;
-    // Utilities::write_to_binary<Sample>(out_samples.begin(), out_samples.end(), out_file);
-
+    Utilities::write_to_binary<Sample>(elements.begin(),elements.end(),output);
+    std::cout<<"Size after removing: "<<elements.size()<<std::endl;
+    std::cout<<"Removed a total of "<< total_elements-elements.size()<< " elements"<<std::endl;
 }
 
 int main(int argl, const char **argc) {
@@ -126,6 +125,7 @@ int main(int argl, const char **argc) {
 
 
 */
+/*
 
     Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/bloomcloud");
     generator.set_hash_size(20);
@@ -133,33 +133,36 @@ int main(int argl, const char **argc) {
     generator.set_parallelism(95);
     generator.set_time(50);
     generator.startx();
+*/
 
 
 
-
-/*
-
+    //Match engine_match("network7", "network6");
 
 
-    Match engine_match("network7", "main");
+    Match engine_match("network256x32", "bloomcloud");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
     engine_match.setHashSize(20);
     engine_match.start();
 
+
+/*
+
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/bloomcloud","/home/robin/DarkHorse/Training/TrainData/bloomcloudxx");
+    return 0;
+
 */
 
 
-
-
-
-
-    //0.181677 <--- -3e-4
+    // 0.190537  1e-4
+    //0.188262   6e-4
+    //0.188813 1e-3
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloomcloud");
-    trainer.setLearningRate(5000);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloomcloudxx");
+    trainer.setLearningRate(20000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-6e-4);
