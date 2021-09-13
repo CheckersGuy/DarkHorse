@@ -24,7 +24,7 @@ namespace Bits {
 #ifndef _WIN32
         return __builtin_popcount(val);
 #else
-        return _popcount(val)
+        return __popcnt(val);
 #endif
     }
 

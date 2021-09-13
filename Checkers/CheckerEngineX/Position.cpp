@@ -149,7 +149,7 @@ std::string Position::get_fen_string() const {
     }
 
     while (white_pieces) {
-        auto square = __tzcnt_u32(white_pieces);
+        auto square = Bits::bitscan_foward(white_pieces);
         const uint32_t mask = 1u << square;
         if (((1u << square) & K))
             stream << "K";
@@ -166,7 +166,7 @@ std::string Position::get_fen_string() const {
     }
 
     while (black_pieces) {
-        auto square = __tzcnt_u32(black_pieces);
+        auto square = Bits::bitscan_foward(black_pieces);
         const uint32_t mask = 1u << square;
         if (((1u << square) & K))
             stream << "K";

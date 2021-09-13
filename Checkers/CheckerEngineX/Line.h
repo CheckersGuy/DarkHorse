@@ -9,6 +9,7 @@
 #include "Move.h"
 #include "types.h"
 #include <array>
+#include <string>
 
 class Line {
 
