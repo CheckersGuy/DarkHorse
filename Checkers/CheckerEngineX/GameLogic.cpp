@@ -13,7 +13,7 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network, network3, network2;
+Network network;
 bool u_classical = false;
 
 void initialize() {
@@ -102,7 +102,7 @@ namespace Search {
         //checking time-used
 
 
-        if (ply>0 && board.isRepetition2()) {
+        if (ply > 0 && board.isRepetition2()) {
             return 0;
         }
 
@@ -251,7 +251,7 @@ namespace Search {
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
 
             if (!u_classical) {
-                bestValue = Network::evaluate(network, network2, board.getPosition(), ply);
+                bestValue = network.evaluate(board.getPosition(), ply);
             } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }
@@ -290,7 +290,7 @@ namespace Search {
 
 
         if (in_pv
-            && local.depth >=8
+            && local.depth >= 8
             && move == local.sing_move
             && local.skip_move.isEmpty()
             && extension == 0
@@ -401,7 +401,7 @@ namespace Search {
 
         //removing the excluded moves from the list
 
-        for (Move m : exluded_moves) {
+        for (Move m: exluded_moves) {
             liste.remove(m);
         }
 
@@ -414,7 +414,6 @@ namespace Search {
 #ifdef TRAIN
         std::shuffle(liste.begin(), liste.end(), Zobrist::generator);
 #endif
-
 
 
         move_loop(true, local, board, line, liste);
@@ -568,7 +567,7 @@ Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta) {
     }
 
     Move best_move;
-    for (Move mv : liste) {
+    for (Move mv: liste) {
         board.makeMove(mv);
         Line local_pv;
         Value val = -qsSearch(board, local_pv, ply + 1, -beta, -alpha);

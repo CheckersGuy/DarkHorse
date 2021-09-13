@@ -83,7 +83,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
     accu_loss += error * error;
     auto x_flipped = (x.getColor() == BLACK) ? x.getColorFlip() : x;
 
-    const size_t sub_offset = 0;
+
     for (size_t p = 0; p < 2; ++p) {
         double diff = temp;
         if (p == 0) {
@@ -94,11 +94,12 @@ void Trainer::gradientUpdate(const Sample &sample) {
             diff *= end_phase * color;
         }
 
+
         for (auto i = 0; i < 3; ++i) {
             for (auto k = 0; k < 3; ++k) {
                 const uint32_t sub_reg = region << (8 * i + k);
                 size_t index = getIndex2(sub_reg, x_flipped);
-                size_t sub_index = 18 * index + 2 * k + 6 * i + p + sub_offset;
+                size_t sub_index = 18 * index + 2 * k + 6 * i + p;
                 momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
                 gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
             }
@@ -159,7 +160,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
 void Trainer::epoch() {
-   std::cout << "Start shuffling" << std::endl;
+    std::cout << "Start shuffling" << std::endl;
     std::shuffle(data.begin(), data.end(), generator);
     std::cout << "Done shuffling" << std::endl;
     int counter = 0;

@@ -8,7 +8,6 @@
 
 int Network::evaluate(Network &op, Network &end, Position pos, int ply) {
 
-    auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
     return op.evaluate(pos, ply);
 }
 
