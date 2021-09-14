@@ -83,14 +83,9 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
-
-
-
-/*
-
-    network.load("network256x32.weights");
+    network.load("network256x32rescore.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -98,19 +93,12 @@ int main(int argl, const char **argc) {
 
     network.init();
 
-*/
-
-
-
-    //evalute each position and write to file
-
-    //manually checking some positions
 
 
 
     TT.resize(23);
     board = Position::getStartPosition();
-   // board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
+    //board = Position::pos_from_fen("B:WK3,29:BK12,18");
     board.printBoard();
 
 
@@ -119,14 +107,6 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
-
-
-
 
 
 
