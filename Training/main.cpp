@@ -91,40 +91,19 @@ int main(int argl, const char **argc) {
 
 
 
-
 /*
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/bloom.check",
-                      "/home/robin/DarkHorse/Training/TrainData/dummyremovethis2");
 
 
-    std::vector<Sample> removed;
-    std::ifstream stream("../Training/TrainData/bloom.check");
-    std::istream_iterator<Sample> begin(stream);
-    std::istream_iterator<Sample> end;
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    SampleFilter2 filter(14377587567, 10);
-
-    auto count = std::count_if(begin, end, [&](Sample s) {
-        if(filter.has(s)){
-            return false;
-        }
-        filter.insert(s);
-        return true;
-    });
-    std::cout<<"NumElements: "<<count<<std::endl;
-
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto dist = t2-t1;
-    std::cout<<"It took: "<<dist.count()/1000000<<std::endl;
-
-    std::cout<<removed.size()<<std::endl;
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/bloomcloudrescored",
+                      "/home/robin/DarkHorse/Training/TrainData/bloomcloudrescored");
 
     return 0;
 
-
 */
+
+
+
+
 /*
 
     Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/bloomcloud");
@@ -140,7 +119,7 @@ int main(int argl, const char **argc) {
     //Match engine_match("network7", "network6");
 
 
-    Match engine_match("network256x32", "bloomcloud");
+    Match engine_match("rescore", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
