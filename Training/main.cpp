@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <SampleFilter.h>
-#include <SampleFilter2.h>
+
 
 size_t count_unique_elements(std::string input) {
     std::ifstream stream(input, std::ios::binary);
@@ -55,10 +55,10 @@ void remove_duplicates(std::string input, std::string output) {
         total_elements++;
     });
 
-
-    Utilities::write_to_binary<Sample>(elements.begin(),elements.end(),output);
-    std::cout<<"Size after removing: "<<elements.size()<<std::endl;
-    std::cout<<"Removed a total of "<< total_elements-elements.size()<< " elements"<<std::endl;
+    std::ofstream out_stream(output, std::ios::binary);
+    std::copy(elements.begin(), elements.end(), std::ostream_iterator<Sample>(out_stream));
+    std::cout << "Size after removing: " << elements.size() << std::endl;
+    std::cout << "Removed a total of " << total_elements - elements.size() << " elements" << std::endl;
 }
 
 int main(int argl, const char **argc) {
@@ -104,22 +104,33 @@ int main(int argl, const char **argc) {
 
 
 
-/*
 
-    Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/bloomcloud");
-    generator.set_hash_size(20);
-    generator.set_buffer_clear_count(150000);
-    generator.set_parallelism(95);
-    generator.set_time(50);
-    generator.startx();
+
+
+
+
+  /*  Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/test.games", "/home/robin/DarkHorse/Training/TrainData/test.samples");
+    return 0;
+
 */
+
+
+/*    Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
+    generator.set_hash_size(20);
+    generator.set_buffer_clear_count(10000);
+    generator.set_parallelism(12);
+    generator.set_time(50);
+    generator.startx();*/
 
 
 
     //Match engine_match("network7", "network6");
 
 
-    Match engine_match("rescore", "master");
+
+
+
+    Match engine_match("fun", "master");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
@@ -127,12 +138,6 @@ int main(int argl, const char **argc) {
     engine_match.start();
 
 
-/*
-
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/bloomcloud","/home/robin/DarkHorse/Training/TrainData/bloomcloudxx");
-    return 0;
-
-*/
 
 
     // 0.190537  1e-4
@@ -140,15 +145,15 @@ int main(int argl, const char **argc) {
     //0.188813 1e-3
 
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/bloomcloudxx");
-    trainer.setLearningRate(20000);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/test.samples");
+    trainer.setLearningRate(50000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-6e-4);
+    trainer.setCValue(-1e-3);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
+    //check:  0.16619
 
     return 0;
 }

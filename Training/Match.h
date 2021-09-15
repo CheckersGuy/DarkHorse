@@ -4,15 +4,18 @@
 
 #ifndef TRAINING_MATCH_H
 #define TRAINING_MATCH_H
-
+#include <MoveListe.h>
+#include "MGenerator.h"
 #include <deque>
+#include <iterator>
+#include <fstream>
 #include  <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 #include "fcntl.h"
-#include "Utilities.h"
 #include <sys/resource.h>
 #include <filesystem>
+#include <Position.h>
 
 inline std::string getPositionString(Position pos) {
     std::string position;
@@ -110,8 +113,12 @@ private:
 
 public:
     explicit Match(const std::string &first, const std::string &second) : first(
-            first),second(second) {
-        Utilities::read_binary<Position>(std::back_inserter(positions), openingBook);
+            first), second(second) {
+        std::ifstream stream(openingBook, std::ios::binary);
+        std::istream_iterator<Position> begin(stream);
+        std::istream_iterator<Position> end;
+        std::copy(begin, end, std::back_inserter(positions));
+
     };
 
     void setMaxGames(int games);
@@ -132,7 +139,7 @@ public:
 
     void setOpeningBook(std::string book);
 
-    Position get_start_pos() ;
+    Position get_start_pos();
 
 
 };

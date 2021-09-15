@@ -23,7 +23,7 @@ void initialize() {
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/currenttest14.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/bloomcloud.weights");
     Zobrist::initializeZobrisKeys(seed);
     //Statistics::mPicker.init();
 }

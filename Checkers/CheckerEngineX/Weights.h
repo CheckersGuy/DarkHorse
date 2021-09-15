@@ -123,9 +123,6 @@ struct Weights {
             std::cerr << "Error could not load the weights" << std::endl;
             return;
         }
-#ifdef TRAIN
-      std::cout<<"Loading the weights"<<std::endl;
-#endif
 
         size_t counter = 0u;
         while (stream) {
@@ -205,7 +202,7 @@ struct Weights {
         uint32_t man_white = pos.WP & (~pos.K);
         man_white = getMirrored(man_white);
         U tempi = 0;
-/*
+
 
         for (int i = 0; i < 7; ++i) {
             uint32_t shift = 4u * i;
@@ -214,8 +211,6 @@ struct Weights {
             tempi -= tempo_ranks[i][mask_black];
             tempi += tempo_ranks[i][mask_white];
         }
-*/
-
 
         U phase = WP + BP;
 

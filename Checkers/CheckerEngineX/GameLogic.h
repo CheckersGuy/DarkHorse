@@ -27,6 +27,8 @@ struct SearchGlobal {
     void score_update();
 };
 
+extern SearchGlobal glob;
+
 struct Local {
     Value alpha, beta;
     Value best_score{-INFINITE};
@@ -45,7 +47,7 @@ Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Val
 
 Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
 
-Value search(Board board,Move& best, Depth depth, uint32_t time, bool print);
+Value search(Board board, Move &best, Depth depth, uint32_t time, bool print);
 
 namespace Search {
 
@@ -57,15 +59,15 @@ namespace Search {
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
-    Value search(bool in_pv,Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move);
+    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move);
 
-    void move_loop(bool in_pv,Local &local, Board &board, Line &pv, MoveListe &liste);
+    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste);
 
-    Value qs(bool in_pv,Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
+    Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
 
-    Value searchMove(bool in_pv,Move move, Local &local, Board &board, Line &line, int extension);
+    Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension);
 
-    Depth reduce(Local &local, Board &board, Move , bool in_pv);
+    Depth reduce(Local &local, Board &board, Move, bool in_pv);
 
 }
 
@@ -78,7 +80,6 @@ void initialize();
 void initialize(uint64_t seed);
 
 extern Network network;
-
 
 
 #endif //CHECKERSTEST_GAMELOGIC_H

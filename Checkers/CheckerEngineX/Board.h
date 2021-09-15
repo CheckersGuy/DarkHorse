@@ -14,10 +14,8 @@
 class Board {
 
 private:
-    std::array<Position, MAX_PLY+400> pStack;
-    std::array<Move,MAX_PLY+400> moveStack;
-    int rev_mov_counter =0;
-    int pre_rev_mov_counter=0;
+    std::array<Position, MAX_PLY+600> pStack;
+    std::array<Move,MAX_PLY+600> moveStack;
 
 public:
     int pCounter = 0;
