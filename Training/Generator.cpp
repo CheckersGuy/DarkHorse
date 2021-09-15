@@ -98,7 +98,7 @@ void Generator::startx() {
                 for ( move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
-
+                    game.emplace_back(board.getPosition());
                     if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
@@ -150,7 +150,6 @@ void Generator::startx() {
                         pthread_mutex_unlock(pmutex);
                     }
 
-                    game.emplace_back(board.getPosition());
                 }
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {
