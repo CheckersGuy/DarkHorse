@@ -96,7 +96,7 @@ int main(int argl, const char **argc) {
 
     TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:WK6:B4,3");
+    board = Position::pos_from_fen("B:WK29:BK4");
     board.printBoard();
 
 
