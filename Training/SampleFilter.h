@@ -6,7 +6,6 @@
 #define READING_SAMPLEFILTER_H
 
 #include <vector>
-#include "Generator.h"
 #include "Sample.h"
 class SampleFilter {
 
