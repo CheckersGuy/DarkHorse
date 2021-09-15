@@ -4,6 +4,11 @@
 
 #include "SampleFilter.h"
 
+size_t SampleFilter::get_num_insertions() {
+    return num_insertions;
+}
+
+
 size_t SampleFilter::get_num_bits() {
     return num_bits;
 }
@@ -26,6 +31,7 @@ SampleFilter &SampleFilter::operator=(SampleFilter &filter) {
 }
 
 void SampleFilter::insert(Sample sample) {
+    num_insertions++;
     uint64_t hash_val = hash(sample);
     //extracing lower and upper 32 bits
     auto hash1 = static_cast<uint32_t>(hash_val);

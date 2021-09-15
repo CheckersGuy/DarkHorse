@@ -85,7 +85,7 @@ int main(int argl, const char **argc) {
     Board board;
     use_classical(false);
 
-    network.load("network256x32rescore.weights");
+    network.load("fun.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -94,11 +94,9 @@ int main(int argl, const char **argc) {
     network.init();
 
 
-
-
     TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:WK3,29:BK12,18");
+    board = Position::pos_from_fen("W:WK6:B4,3");
     board.printBoard();
 
 
@@ -107,8 +105,6 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
 
     std::string current;
     while (std::cin >> current) {
@@ -174,24 +170,6 @@ int main(int argl, const char **argc) {
         } else if (current == "terminate") {
             //terminating the program
             break;
-        } else if (current == "generate") {
-            std::string fen_string;
-            std::cin >> fen_string;
-            std::string time_string;
-            std::cin >> time_string;
-
-            int time = std::stoi(time_string);
-            Position start_pos = Position::pos_from_fen(fen_string);
-            auto game = generate_game(start_pos, time, false);
-            std::cout << "game_start" << "\n";
-            std::cout << "result" << "\n";
-            std::cout << std::to_string(game.second) << "\n";
-            for (Position p: game.first) {
-                if (!p.isEnd() && !p.isEmpty())
-                    std::cout << p.get_fen_string() << "\n";
-            }
-            std::cout << "game_end" << "\n";
-
         }
     }
 

@@ -32,7 +32,14 @@ public:
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.05),generator(std::mt19937_64(231231241ull)) {
         momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
-        Utilities::read_binary<Sample>(std::back_inserter(data), data_path);
+        std::ifstream stream(data_path,std::ios::binary);
+        if(!stream){
+            std::cout<<"Could not find the data"<<std::endl;
+            std::exit(-1);
+        }
+        std::istream_iterator<Sample>begin(stream);
+        std::istream_iterator<Sample>end;
+        std::copy(begin,end,std::back_inserter(data));
         std::cout<<"Number of samples "<<data.size()<<std::endl;
     };
 

@@ -6,8 +6,8 @@
 #define READING_SAMPLEFILTER_H
 
 #include <vector>
-#include <Generator.h>
-
+#include "Generator.h"
+#include "Sample.h"
 class SampleFilter {
 
 private:
@@ -15,6 +15,8 @@ private:
     std::vector<bool> bit_set;
     size_t num_bits;
     size_t num_hashes;
+    size_t num_insertions{0};
+    size_t unique_count{0};
 
 public:
 
@@ -30,6 +32,8 @@ public:
     size_t get_num_bits();
 
     size_t get_num_hashes();
+
+    size_t get_num_insertions();
 
     void insert(Sample sample);
 

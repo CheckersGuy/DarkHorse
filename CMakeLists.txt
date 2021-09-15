@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_CXX_FLAGS "-Ofast -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast -g -pthread -march=native -flto -ffat-lto-objects -fuse-linker-plugin")
 SET(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_BUILD_TYPE Debug)
 if (UNIX)
@@ -29,7 +29,7 @@ add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
 
 
 if (UNIX)
-    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/SampleFilter.cpp Training/SampleFilter.h Training/Sample.cpp Training/Sample.h Training/SampleFilter2.cpp Training/SampleFilter2.h)
+    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/SampleFilter.cpp Training/SampleFilter.h Training/Sample.cpp Training/Sample.h)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
