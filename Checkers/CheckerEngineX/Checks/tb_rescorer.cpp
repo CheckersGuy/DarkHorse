@@ -45,6 +45,7 @@ std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handl
        return -pos.color;
 
 
+
    return std::nullopt;
 }
 
@@ -64,58 +65,27 @@ int get_game_result(std::vector<Position>& game) {
 
 std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_pieces, EGDB_DRIVER* handle) {
     std::vector<Sample> sample_data;
+    int game_result = get_game_result(game);
+    for (auto p : game) {
+        p.printPosition();
+        std::cout << "FenString: " << p.get_fen_string();
+        Sample s;
+        s.position = p;
+        s.result = game_result;
+    }
+    for (auto i = 0; i < 3; ++i)
+        std::cout << "\n";
+
+
+
+
+
+    return sample_data;
    
 
-        auto start_point = 0;
-        while (start_point < game.size()) {
-            std::optional<int>result;
-            int k;
-            for (k = start_point; k < game.size(); ++k) {
-                result = get_tb_result(game[k], max_pieces, handle);
-                if (result.has_value()) {
-                    break;
-                }
-            }
-            if (result.has_value()) {
-                for (auto p = start_point; p <=k; ++p) {
-                    Sample s;
-                    s.position = game[p];
-                    s.result = result.value();
-                    sample_data.emplace_back(s);
-                }
-                start_point = k + 1;
-            }
-            else {
-               const int result = get_game_result(game);
-                for (auto p = start_point; p <game.size(); ++p) {
-                    Sample s;
-                    s.position = game[p];
-                    s.result = result;
-                    sample_data.emplace_back(s);
-                }
+    
 
-                break;
-            }
-
-        }
-
-
-        int res = sample_data.front().result;
-        for (auto s : sample_data) {
-            if (s.result != res) {
-
-                for (auto p : sample_data) {
-                    p.position.printPosition();
-                    std::cout << "FenString: " << p.position.get_fen_string();
-                    std::cout << "Result: " << p.result << std::endl;
-                }
-                for (auto i = 0; i < 3; ++i)
-                    std::cout << "\n";
-
-                break;
-            }
-        }
-
+            
     return sample_data;
 }
 
@@ -139,6 +109,8 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     game.emplace_back(previous);
     ++it;
     for (; it != end; ++it) {
+        if (game_counter >= 3)
+            break;
         Position pos = *it;
         const size_t piece_count = Bits::pop_count(pos.BP | pos.WP);
         const size_t prev_piec_count = Bits::pop_count(previous.BP | previous.WP);

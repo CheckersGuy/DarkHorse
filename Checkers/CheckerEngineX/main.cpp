@@ -83,8 +83,8 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(false);
-
+    use_classical(true);
+    /*
     network.load("fun.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
@@ -92,7 +92,7 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
 
     network.init();
-
+    */
 
     TT.resize(23);
     board = Position::getStartPosition();
