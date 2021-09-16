@@ -15,7 +15,7 @@ Weights<double> gameWeights;
 SearchGlobal glob;
 Network network;
 bool u_classical = false;
-
+Value last_eval;
 void initialize() {
     gameWeights.loadWeights<uint32_t>("../Training/Engines/bloomcloud.weights");
     Zobrist::initializeZobrisKeys();
@@ -45,6 +45,17 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     nodeCounter = 0;
     mainPV.clear();
     //TT.clear();
+
+    //if there is only one move we can return
+
+    MoveListe liste;
+    getMoves(board.getPosition(), liste);
+    if (liste.length() == 1) {
+        best = liste[0];
+        return last_eval;
+    }
+
+
     endTime = getSystemTime() + time;
     Value eval = INFINITE;
     Local local;
@@ -82,6 +93,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
             break;
         }
     }
+    last_eval = eval;
     return eval;
 }
 
