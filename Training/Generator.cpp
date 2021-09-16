@@ -94,6 +94,7 @@ void Generator::startx() {
                 std::vector<Position> game;
                 TT.clear();
                 initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+                Position previous = opening;
                 int move_count;
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
@@ -126,9 +127,22 @@ void Generator::startx() {
                     }
 
                     Move best;
-
                     searchValue(board, best, MAX_PLY, time_control, false);
                     board.makeMove(best);
+
+                    if (best.isEmpty()) {
+                        std::cerr << "Error" << std::endl;
+                        board.printBoard();
+                    }
+
+                    if(Bits::pop_count(board.getPosition().BP | board.getPosition().WP)> Bits::pop_count(previous.BP | previous.WP)){
+                        std::cerr<<"Error2"<<std::endl;
+                        board.printBoard();
+                        pthread_mutex_lock(pmutex);
+                        (*error_counter)++;
+                        pthread_mutex_unlock(pmutex);
+                    }
+                    previous = board.getPosition();
                 }
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {

@@ -118,7 +118,7 @@ int main(int argl, const char **argc) {
     Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(12);
+    generator.set_parallelism(10);
     generator.set_time(50);
     generator.startx();
 
