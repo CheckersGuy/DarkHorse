@@ -126,23 +126,10 @@ void Generator::startx() {
                     }
 
                     Move best;
-                 
+                    
                         searchValue(board, best, MAX_PLY, time_control, false);
                         //std::cout<<"Seldepth reached: "<<glob.sel_depth<<std::endl;
                     board.makeMove(best);
-                    auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
-                    uint32_t WP = board.getPosition().WP & (~board.getPosition().K);
-                    uint32_t BP = board.getPosition().BP & (~board.getPosition().K);
-                    uint32_t WK = board.getPosition().WP & (board.getPosition().K);
-                    uint32_t BK = board.getPosition().BP & (board.getPosition().K);
-
-                    if (num_pieces > 24 || std::abs(board.getPosition().color) != 1 || num_pieces == 0 ||
-                        ((WP & BP) != 0) || ((WK & BK) != 0)) {
-                        pthread_mutex_lock(pmutex);
-                        (*error_counter)++;
-                        pthread_mutex_unlock(pmutex);
-                    }
-
                 }
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {
