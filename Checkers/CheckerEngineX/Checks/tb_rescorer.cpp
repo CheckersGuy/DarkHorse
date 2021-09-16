@@ -21,6 +21,12 @@ void print_msgs(char* msg)
     printf("%s", msg);
 }
 
+bool is_legal_game(std::vector<Position>& game) {
+    //checks if the game contains a sequence of legal moves
+
+    return true;
+}
+
 
 std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
     if (pos.hasJumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
@@ -67,26 +73,17 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
     std::vector<Sample> sample_data;
     int game_result = get_game_result(game);
     for (auto p : game) {
+        std::cout << "\n";
+        std::cout << "\n";
         p.printPosition();
-        std::cout << "FenString: " << p.get_fen_string();
+        std::cout.flush();
         Sample s;
         s.position = p;
         s.result = game_result;
     }
-    for (auto i = 0; i < 3; ++i)
-        std::cout << "\n";
-
-
-
-
 
     return sample_data;
-   
-
-    
-
-            
-    return sample_data;
+  
 }
 
 
