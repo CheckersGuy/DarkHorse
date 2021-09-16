@@ -94,7 +94,7 @@ int main(int argl, const char **argc) {
     network.init();
     */
 
-    TT.resize(23);
+    /*TT.resize(23);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("B:WK29:BK4");
     board.printBoard();
@@ -105,7 +105,7 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-
+*/
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {
@@ -151,12 +151,7 @@ int main(int argl, const char **argc) {
 
             MoveListe liste;
             getMoves(board.getPosition(), liste);
-            if (liste.length() == 1) {
-                bestMove = liste[0];
-            } else {
-                searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
-            }
-
+            searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
             std::cout << std::to_string(bestMove.getToIndex()) << "\n";

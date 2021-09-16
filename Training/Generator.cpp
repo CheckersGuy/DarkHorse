@@ -95,7 +95,7 @@ void Generator::startx() {
                 TT.clear();
                 initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
                 int move_count;
-                for ( move_count = 0; move_count < 600; ++move_count) {
+                for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
                     game.emplace_back(board.getPosition());
@@ -126,9 +126,7 @@ void Generator::startx() {
                     }
 
                     Move best;
-                 
-                        searchValue(board, best, MAX_PLY, time_control, false);
-                        //std::cout<<"Seldepth reached: "<<glob.sel_depth<<std::endl;
+                    searchValue(board, best, MAX_PLY, time_control, false);
                     board.makeMove(best);
                     auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
                     uint32_t WP = board.getPosition().WP & (~board.getPosition().K);
@@ -147,11 +145,11 @@ void Generator::startx() {
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {
                     std::cout << "ClearedBuffer" << std::endl;
-                    std::ofstream stream(output,std::ios::binary | std::ios::app);
-                    std::copy(buffer,buffer+*buffer_length,std::ostream_iterator<Position>(stream));
+                    std::ofstream stream(output, std::ios::binary | std::ios::app);
+                    std::copy(buffer, buffer + *buffer_length, std::ostream_iterator<Position>(stream));
                     *buffer_length = 0;
                 }
-                std::cout<<"MoveCount: "<<move_count<<std::endl;
+                std::cout << "MoveCount: " << move_count << std::endl;
                 std::cout << "Pos Seen: " << *counter << std::endl;
                 std::cout << "Opening_Counter: " << *opening_counter << std::endl;
                 std::cout << "Error_Counter: " << *error_counter << std::endl;
