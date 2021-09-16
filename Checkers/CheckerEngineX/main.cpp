@@ -94,9 +94,9 @@ int main(int argl, const char **argc) {
     network.init();
     */
 
-    /*TT.resize(23);
+   TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:WK29:BK4");
+    board = Position::pos_from_fen("B:W14,21,27,31:B1,2,13,28");
     board.printBoard();
 
 
@@ -105,7 +105,6 @@ int main(int argl, const char **argc) {
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
     board.printBoard();
-*/
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {

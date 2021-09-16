@@ -21,11 +21,6 @@ void print_msgs(char* msg)
     printf("%s", msg);
 }
 
-bool is_legal_game(std::vector<Position>& game) {
-    //checks if the game contains a sequence of legal moves
-
-    return true;
-}
 
 
 std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
@@ -50,6 +45,9 @@ std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handl
    if (val == EGDB_LOSS)
        return -pos.color;
 
+   if (val == EGDB_DRAW)
+       return 0;
+
 
 
    return std::nullopt;
@@ -71,17 +69,40 @@ int get_game_result(std::vector<Position>& game) {
 
 std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_pieces, EGDB_DRIVER* handle) {
     std::vector<Sample> sample_data;
-    int game_result = get_game_result(game);
+    const int result = get_game_result(game);
     for (auto p : game) {
-        std::cout << "\n";
-        std::cout << "\n";
-        p.printPosition();
-        std::cout.flush();
         Sample s;
+        s.result = result;
         s.position = p;
-        s.result = game_result;
+        sample_data.emplace_back(s);
     }
 
+    int last_stop = -1;
+    for (auto i = 0; i < game.size(); ++i) {
+        auto tb_result = get_tb_result(game[i], max_pieces, handle);
+        if (tb_result.has_value()) {
+           
+            for (int k = i; k > last_stop; k--) {
+                Sample s;
+                s.position = game[k];
+                s.result = tb_result.value();
+                sample_data[k]=s;
+            }
+            last_stop = i;
+        }
+        else if (i == game.size() - 1) {
+            //end of the game
+            
+            for(int k = i; k > last_stop; k--) {
+                Sample s;
+                s.position = game[k];
+                s.result = result;
+                sample_data[k] = s;
+            }
+        }
+        
+    }
+   
     return sample_data;
   
 }
@@ -106,8 +127,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     game.emplace_back(previous);
     ++it;
     for (; it != end; ++it) {
-        if (game_counter >= 3)
-            break;
+      
         Position pos = *it;
         const size_t piece_count = Bits::pop_count(pos.BP | pos.WP);
         const size_t prev_piec_count = Bits::pop_count(previous.BP | previous.WP);
@@ -117,7 +137,41 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
         else {
          
             auto samples = get_rescored_game(game, max_pieces, handle);
-            std::copy(samples.begin(), samples.end(), std::back_inserter(buffer));
+          
+            //looking for intresting samples
+           
+            /*
+            bool is_rescored = false;
+            int first = samples.front().result;
+            for (auto s : samples) {
+                if (s.result != first) {
+                    is_rescored = true;
+                    break;
+                }
+
+            }
+            if (is_rescored) {
+
+                for (auto s : samples) {
+                    std::cout << "\n";
+                    std::cout << "\n";
+                    std::cout << "Result: " << s.result << "\n";
+                    std::cout << "Fen: " << s.position.get_fen_string() << "\n";
+                    s.position.printPosition();
+                    std::cout.flush();
+                }
+
+            }
+            */
+            for (auto s : samples) {
+                total_count++;
+                if (!filter.has(s)) {
+                    filter.insert(s);
+                    buffer.emplace_back(s);
+                    uniq_count++;
+                }
+            }
+
             game.clear();
             game_counter++;
         }
@@ -126,7 +180,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
             std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
             buffer.clear();
         }
-        total_count++;
+        
     }
     std::cout << "Total Position: " << total_count << " after removing: " << uniq_count << std::endl;
     std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
