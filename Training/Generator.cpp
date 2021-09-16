@@ -126,17 +126,10 @@ void Generator::startx() {
                     }
 
                     Move best;
-                    if (liste.length() == 1) {
-                        best = liste[0];
-                    } else {
+                 
                         searchValue(board, best, MAX_PLY, time_control, false);
                         //std::cout<<"Seldepth reached: "<<glob.sel_depth<<std::endl;
-                    }
                     board.makeMove(best);
-                    /*    board.printBoard();
-    */
-
-
                     auto num_pieces = Bits::pop_count(board.getPosition().BP | board.getPosition().WP);
                     uint32_t WP = board.getPosition().WP & (~board.getPosition().K);
                     uint32_t BP = board.getPosition().BP & (~board.getPosition().K);
