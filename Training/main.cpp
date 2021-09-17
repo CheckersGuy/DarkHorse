@@ -106,31 +106,32 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
 
 
-    /*  Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/test.games", "/home/robin/DarkHorse/Training/TrainData/test.samples");
+      Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/test.games", "/home/robin/DarkHorse/Training/TrainData/test.samples");
       return 0;
 
-  */
+*/
 
+
+/*
 
     Generator generator("train2.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(10);
+    generator.set_parallelism(14);
     generator.set_time(50);
     generator.startx();
 
-
-
-    //Match engine_match("network7", "network6");
+*/
 
 
 
 
 
-    Match engine_match("check", "bloomcloud");
+    Match engine_match("funrescored", "fun");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);

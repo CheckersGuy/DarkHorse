@@ -36,11 +36,7 @@ namespace Utilities {
             if (piece_count <= prev_piec_count) {
                 game.emplace_back(pos);
             } else {
-                for (auto c: game) {
-                    c.printPosition();
-                    std::cout << "Fen: " << c.get_fen_string() << std::endl;
-                    std::cout << std::endl;
-                }
+
                 Position &back = game.back();
                 const size_t rep_count = std::count(game.begin(), game.end(), back);
 
@@ -48,7 +44,7 @@ namespace Utilities {
                 getMoves(back, liste);
                 if (liste.length() == 0) {
                     const int result = -back.color;
-                    std::cout<<((result ==-1) ? "Black won": "White won");
+
                     for (auto p: game) {
                         Sample s;
                         s.position = p;
@@ -60,8 +56,7 @@ namespace Utilities {
                         }
                     }
                 } else if (rep_count >= 3) {
-                    std::cout << "Repetition" << std::endl;
-                    std::cout << "Fen: " << back.get_fen_string() << std::endl;
+
 
                     for (auto p: game) {
                         Sample s;
@@ -74,8 +69,6 @@ namespace Utilities {
                         }
                     }
                 }
-                for (auto i = 0; i < 3; ++i)
-                    std::cout << "\n";
 
 
                 game.clear();

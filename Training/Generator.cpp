@@ -130,14 +130,7 @@ void Generator::startx() {
                     searchValue(board, best, MAX_PLY, time_control, false);
                     board.makeMove(best);
 
-                    if (best.isEmpty()) {
-                        std::cerr << "Error" << std::endl;
-                        board.printBoard();
-                    }
-
                     if(Bits::pop_count(board.getPosition().BP | board.getPosition().WP)> Bits::pop_count(previous.BP | previous.WP)){
-                        std::cerr<<"Error2"<<std::endl;
-                        board.printBoard();
                         pthread_mutex_lock(pmutex);
                         (*error_counter)++;
                         pthread_mutex_unlock(pmutex);
