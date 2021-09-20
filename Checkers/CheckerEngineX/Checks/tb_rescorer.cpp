@@ -102,6 +102,35 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
         }
         
     }
+
+    //Getting the moves played
+    for (auto k = 1; k < sample_data.size(); ++k) {
+        Position pos = sample_data[k].position;
+        Position previous = sample_data[k - 1].position;
+        if (!previous.hasJumps(previous.getColor())) {
+     
+            Move move;
+            move.from = (previous.BP & (~pos.BP)) | (previous.WP & (~pos.WP));
+            move.to = (pos.BP & (~previous.BP)) | (pos.WP & (~previous.WP));
+            Position copy;
+            copy = previous;
+            copy.makeMove(move);
+            if (copy != pos) {
+                for (auto p = 0; p < sample_data.size(); ++p) {
+                    std::cout << "P: " << p << std::endl;
+                    sample_data[p].position.printPosition();
+                }
+                previous.printPosition();
+                pos.printPosition();
+                std::cout << "K: " << k << std::endl;
+
+                std::exit(-1);
+            }
+
+        }
+   
+
+    }
    
     return sample_data;
   
@@ -212,8 +241,8 @@ int main(int argl, const char **argc) {
         return(1);
     }
 
-    std::string path("C:/Users/leagu/Downloads/test.games");
-    std::string output("C:/Users/leagu/Downloads/testrescored.samples");
+    std::string path("C:/Users/leagu/Downloads/test3.games");
+    std::string output("C:/Users/leagu/Downloads/xxxxxx");
   
     create_samples_from_games(path, output, max_pieces, handle);
 
