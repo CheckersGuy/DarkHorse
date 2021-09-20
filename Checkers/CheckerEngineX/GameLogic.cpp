@@ -17,13 +17,13 @@ Network network;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/bloomcloud.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/have.weights");
     Zobrist::initializeZobrisKeys();
     //Statistics::mPicker.init();
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/bloomcloud.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
     Zobrist::initializeZobrisKeys(seed);
     //Statistics::mPicker.init();
 }
@@ -50,10 +50,12 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
     MoveListe liste;
     getMoves(board.getPosition(), liste);
+
     if (liste.length() == 1) {
         best = liste[0];
         return last_eval;
     }
+
 
 
     endTime = getSystemTime() + time;

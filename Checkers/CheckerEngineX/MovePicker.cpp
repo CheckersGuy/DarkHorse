@@ -9,9 +9,75 @@ namespace Statistics {
     MovePicker mPicker;
 
     int MovePicker::get_move_encoding(Color color, Move move) {
+
+
+
+
         //we differentiate between edge moves and
         //always from whites perspective
-        return 0;
+        //first only for outer squares to do some testing
+        const uint32_t maske = OUTER_SQUARES;
+        //on the outer squares pieces can only move up or down
+        //to be continued
+
+
+        /*      Position temp;
+              temp.BP = maske;
+              temp.printPosition();
+              std::cout << "\n";
+              Position test;
+              test.BP = move.from;
+              test.printPosition();
+      */
+        if ((move.from & maske) != 0) {
+            uint32_t index = Bits::pext(move.from, maske);
+            index = _tzcnt_u32(index);
+            uint32_t dir;
+            if ((((move.to & MASK_L3) << 3) == move.from) || ((move.to) << 4) == move.from) {
+                dir = 0;
+            } else {
+                dir = 1;
+            }
+            return  2u * index + dir;
+        }
+
+        const uint32_t maske2 = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
+
+        if ((move.from & maske2) != 0) {
+            uint32_t index = Bits::pext(move.from, maske2);
+            index = _tzcnt_u32(index);
+            uint32_t dir;
+            if ((((move.to & MASK_L3) << 3) == move.from)) {
+                dir = 0;
+            } else if (((move.to) << 4) == move.from) {
+                dir = 1;
+            } else if (((move.to) >> 4) == move.from) {
+                dir = 0;
+            } else if (((move.to & MASK_R3) >> 3) == move.from) {
+                dir = 1;
+            }
+            return 12u + 2u * index + dir;
+        }
+        const uint32_t maske3 = INNER_SQUARES;
+
+        if ((move.from & maske3) != 0) {
+            uint32_t index = Bits::pext(move.from, maske3);
+            index = _tzcnt_u32(index);
+            uint32_t dir;
+            if ((((move.to & MASK_L3) << 3) == move.from)) {
+                dir = 0;
+            } else if (((move.to) << 4) == move.from) {
+                dir = 1;
+            } else if ((((move.to & MASK_R3) >> 3) == move.from)) {
+                dir = 2;
+            } else if (((move.to) >> 4) == move.from) {
+                dir = 3;
+            }
+            return  12u + 16u + 4u * index + dir;
+        }
+
+
+        return -1;
     }
 
     int MovePicker::getHistoryIndex(Position pos, Move move) {
