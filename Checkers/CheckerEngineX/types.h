@@ -22,15 +22,13 @@ inline uint64_t getSystemTime() {
 
 constexpr uint32_t big_region = 30583;
 constexpr uint32_t region = 13107;
-constexpr uint32_t eval_strip =65535;
+constexpr uint32_t eval_strip = 65535;
 /*
 constexpr uint32_t sub_region1 = 12593;
 constexpr uint32_t sub_region2 = 17990;
 */
-constexpr uint32_t sub_region1 = region;
-constexpr uint32_t sub_region2 = region<<1;
-
-
+constexpr uint32_t INNER_SQUARES = 132638688;
+constexpr uint32_t OUTER_SQUARES = 135796752;
 constexpr uint32_t MASK_L3 = 14737632u;
 constexpr uint32_t MASK_L5 = 117901063u;
 constexpr uint32_t MASK_R3 = 117901056u;
@@ -44,7 +42,6 @@ constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 constexpr std::array<size_t, 8> powers5 = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
 constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 729ull, 2187ull, 6561ull, 19683ull,
                                             59049ull, 177147ull};
-constexpr std::array<size_t,4> powers2 ={1ull,2ull,4ull,8ull};
 
 constexpr int stage_size = 24;
 

@@ -11,6 +11,7 @@
 struct Sample {
     Position position;
     int result{1000};
+    int move{-1};
 
     friend std::ostream &operator<<(std::ostream &stream, const Sample s);
 

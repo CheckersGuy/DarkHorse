@@ -179,24 +179,7 @@ void Trainer::epoch() {
 
                       gradientUpdate(sample);
                   });
-    /*const size_t SHUFFLE_BUFF_SIZE = 100000ull;
-    for (auto i = 0; i < data.size(); ++i) {
-        auto begin = data.begin();
-        std::advance(begin, i);
-        auto end = begin;
-        int k = 0;
-        for (k = 0; k < SHUFFLE_BUFF_SIZE && i < data.size(); ++k) {
-            ++i;
-        }
-        std::advance(end, k);
-        std::shuffle(begin,end,generator);
-        std::for_each(begin, end, [&](Sample s) {
-            gradientUpdate(s);
-        });
 
-
-    }
-*/
 }
 
 
@@ -218,9 +201,9 @@ void Trainer::startTune() {
         auto dur = t2 - t1;
         std::cout << "Time for epoch: " << dur.count() / 1000000 << std::endl;
         counter++;
-        std::string name = "X" + std::to_string(counter) + ".weights";
+        std::string name = "X" + std::to_string(counter) + "newworld.weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("fun.weights");
+        gameWeights.storeWeights("have.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

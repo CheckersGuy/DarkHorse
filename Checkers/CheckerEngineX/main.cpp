@@ -3,52 +3,6 @@
 #include "GameLogic.h"
 #include "Perft.h"
 
-using Game = std::pair<std::vector<Position>, int>;
-
-Game generate_game(Position start_pos, int time_c, bool print = false) {
-    std::vector<Position> history;
-
-    TT.clear();
-    Board board;
-    board = start_pos;
-    int result = 0;
-    int i = 0;
-    for (i = 0; i < 500; ++i) {
-        MoveListe liste;
-        getMoves(board.getPosition(), liste);
-        history.emplace_back(board.getPosition());
-        if (print) {
-            board.printBoard();
-            std::cout << std::endl;
-        }
-
-        //checking for 3 fold repetition
-        auto count = std::count_if(history.begin(), history.end(), [&](Position pos) {
-            return board.getPosition() == pos;
-        });
-        if (count >= 3) {
-            result = 0;
-            break;
-        }
-
-        if (liste.isEmpty()) {
-            result = (board.getMover() == BLACK) ? 1 : -1;
-            break;
-        }
-
-        Move best;
-        searchValue(board, best, MAX_PLY, time_c, print);
-        board.makeMove(best);
-    }
-    //What to do if we reached 500 moves ?
-    //ignore all positions generated thus far
-    if (i >= 499)
-        history.clear();
-
-    return std::make_pair(history, result);
-}
-
-
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -85,7 +39,7 @@ int main(int argl, const char **argc) {
     Board board;
     use_classical(false);
 
-    network.load("funrescored.weights");
+    network.load("fun4rescored.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -93,18 +47,30 @@ int main(int argl, const char **argc) {
 
     network.init();
 
+ /*   Move move;
+    move.from = 2048u;
+
+    Statistics::mPicker.get_move_encoding(BLACK,move);
+
+
+    return 0;
+
+*/
+
 /*
-   TT.resize(23);
+
+    TT.resize(20);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:W14,21,27,31:B1,2,13,28");
+    //board = Position::pos_from_fen("B:WK29:BK4");
     board.printBoard();
 
 
-    board.printBoard();
     Move best;
     searchValue(board, best, MAX_PLY, 20000000, true);
     board.makeMove(best);
-    board.printBoard();*/
+    board.printBoard();
+*/
+
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {

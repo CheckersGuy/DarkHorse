@@ -76,7 +76,16 @@ void Generator::startx() {
             //child takes a position and generates games
             const uint64_t seed = 13199312313ull + 12412312314ull * i;
             initialize(seed);
-            use_classical(true);
+            use_classical(false);
+
+            network.load("fun4rescored.weights");
+            network.addLayer(Layer{120, 256});
+            network.addLayer(Layer{256, 32});
+            network.addLayer(Layer{32, 32});
+            network.addLayer(Layer{32, 1});
+
+            network.init();
+
             TT.resize(hash_size);
             std::cout << "Init child: " << i << std::endl;
             //play a game and increment the opening-counter once more
@@ -168,7 +177,9 @@ void Generator::startx() {
         while ((id = wait(&status)) > 0) {
             printf("Exit status of %d was %d (%s)\n", (int) id, status,
                    (status > 0) ? "accept" : "reject");
-            std::exit(-1);
+            if(status<0){
+
+            }
         }
     }
 

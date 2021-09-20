@@ -36,6 +36,9 @@ namespace Utilities {
             if (piece_count <= prev_piec_count) {
                 game.emplace_back(pos);
             } else {
+                //getting the move
+
+                //some form of sanity check
 
                 Position &back = game.back();
                 const size_t rep_count = std::count(game.begin(), game.end(), back);
@@ -81,7 +84,7 @@ namespace Utilities {
             }
             total_count++;
         }
-        std::cout<<"Total Position: "<<total_count<<" after removing: "<<uniq_count<<std::endl;
+        std::cout << "Total Position: " << total_count << " after removing: " << uniq_count << std::endl;
         std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
     }
 }
