@@ -106,14 +106,16 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
       Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/check.games", "/home/robin/DarkHorse/Training/TrainData/check.samples");
       return 0;
+*/
 
 
 
 
- /*   Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
+    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
     generator.set_parallelism(14);
@@ -121,7 +123,7 @@ int main(int argl, const char **argc) {
     generator.startx();
 
 
-*/
+
 
 
 
