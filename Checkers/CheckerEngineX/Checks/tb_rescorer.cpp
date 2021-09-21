@@ -27,30 +27,30 @@ std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handl
     if (pos.hasJumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
         return std::nullopt;
 
-   EGDB_NORMAL_BITBOARD board;
-   board.white = pos.WP;
-   board.black = pos.BP;
-   board.king =pos.K;
+    EGDB_NORMAL_BITBOARD board;
+    board.white = pos.WP;
+    board.black = pos.BP;
+    board.king = pos.K;
 
-   EGDB_BITBOARD normal;
-   normal.normal = board;
-   auto val = handle->lookup(handle, &normal, (pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE, 0);
+    EGDB_BITBOARD normal;
+    normal.normal = board;
+    auto val = handle->lookup(handle, &normal, (pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE, 0);
 
-   if (val == EGDB_UNKNOWN)
-       return std::nullopt;
+    if (val == EGDB_UNKNOWN)
+        return std::nullopt;
 
-   if (val == EGDB_WIN)
-       return pos.color;
+    if (val == EGDB_WIN)
+        return pos.color;
 
-   if (val == EGDB_LOSS)
-       return -pos.color;
+    if (val == EGDB_LOSS)
+        return -pos.color;
 
-   if (val == EGDB_DRAW)
-       return 0;
+    if (val == EGDB_DRAW)
+        return 0;
 
 
 
-   return std::nullopt;
+    return std::nullopt;
 }
 
 int get_game_result(std::vector<Position>& game) {
@@ -81,26 +81,26 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
     for (auto i = 0; i < game.size(); ++i) {
         auto tb_result = get_tb_result(game[i], max_pieces, handle);
         if (tb_result.has_value()) {
-           
+
             for (int k = i; k > last_stop; k--) {
                 Sample s;
                 s.position = game[k];
                 s.result = tb_result.value();
-                sample_data[k]=s;
+                sample_data[k] = s;
             }
             last_stop = i;
         }
         else if (i == game.size() - 1) {
             //end of the game
-            
-            for(int k = i; k > last_stop; k--) {
+
+            for (int k = i; k > last_stop; k--) {
                 Sample s;
                 s.position = game[k];
                 s.result = result;
                 sample_data[k] = s;
             }
         }
-        
+
     }
 
     //Getting the moves played
@@ -108,7 +108,7 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
         Position pos = sample_data[k].position;
         Position previous = sample_data[k - 1].position;
         if (!previous.hasJumps(previous.getColor())) {
-     
+
             Move move;
             move.from = (previous.BP & (~pos.BP)) | (previous.WP & (~pos.WP));
             move.to = (pos.BP & (~previous.BP)) | (pos.WP & (~previous.WP));
@@ -116,17 +116,17 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
             copy = previous;
             copy.makeMove(move);
             if (copy != pos) {
-                for (auto p = 0; p < sample_data.size(); ++p) {
-                    std::cout << "P: " << p << std::endl;
-                    sample_data[p].position.printPosition();
-                }
                 previous.printPosition();
                 pos.printPosition();
                 std::cout << "K: " << k << std::endl;
-
                 std::exit(-1);
             }
 
+            sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.getColor(), move);
+            if (sample_data[k - 1].move >= 100) {
+                std::cerr << "Error move: " << sample_data[k - 1].move<< std::endl;
+                std::exit(-1);
+            }
         }
    
 
@@ -242,7 +242,7 @@ int main(int argl, const char **argc) {
     }
 
     std::string path("C:/Users/leagu/Downloads/test3.games");
-    std::string output("C:/Users/leagu/Downloads/xxxxxx");
+    std::string output("C:/Users/leagu/Downloads/policy.samples");
   
     create_samples_from_games(path, output, max_pieces, handle);
 
