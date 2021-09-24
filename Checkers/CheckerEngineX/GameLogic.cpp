@@ -13,19 +13,19 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network;
+Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/have.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
     Zobrist::initializeZobrisKeys();
-    //Statistics::mPicker.init();
+
 }
 
 void initialize(uint64_t seed) {
     gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
     Zobrist::initializeZobrisKeys(seed);
-    //Statistics::mPicker.init();
+
 }
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print) {
@@ -206,7 +206,7 @@ namespace Search {
 
 
         //sorting
-        liste.sort(board.getPosition(), ply, tt_move, start_index);
+        liste.sort(board.getPosition(),depth, ply, tt_move, start_index);
 
         //move-loop
         Search::move_loop(in_pv, local, board, pv, liste);
@@ -386,9 +386,6 @@ namespace Search {
 
             local.i++;
         }
-        if (!local.move.isEmpty() && local.best_score >= local.beta && !local.move.isCapture()) {
-            Statistics::mPicker.killer_moves[local.ply] = local.move;
-        }
 
     }
 
@@ -423,7 +420,7 @@ namespace Search {
         liste.putFront(mainPV[0]);
         int start_index = 1;
 
-        liste.sort(board.getPosition(), local.ply, Move{}, start_index);
+        liste.sort(board.getPosition(),local.depth, local.ply, Move{}, start_index);
 
 #ifdef TRAIN
         std::shuffle(liste.begin(), liste.end(), Zobrist::generator);
@@ -489,7 +486,7 @@ Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Val
     Value start_alpha = alpha;
 
 
-    liste.sort(board.getPosition(), ply, Move{}, start_index);
+    liste.sort(board.getPosition(),depth, ply, Move{}, start_index);
     Move best_move;
     Depth next_depth = depth - 1;
     if (board.getPosition().hasJumps() && board.previous().hasJumps() && ply > 0) {

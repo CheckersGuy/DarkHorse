@@ -26,13 +26,8 @@
 
 class Generator {
 private:
-    std::hash<Sample> hash;
-    //enough for roughly 200 million insertions
-    static constexpr size_t num_bits =5751035027ull;
-    static constexpr size_t num_hashes =10;
-
     size_t buffer_clear_count{100000};
-    size_t pos_counter;
+    size_t max_positions{0};
     std::string output;
     size_t parallelism{1};
     std::vector<Position> openings;
@@ -65,6 +60,8 @@ public:
     void set_parallelism(size_t threads);
 
     void set_hash_size(int size);
+
+    void set_max_position(size_t max);
 
 };
 

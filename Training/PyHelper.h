@@ -8,6 +8,8 @@
 #include <cstdint>
 #include "Position.h"
 
+extern "C" void create_input(uint32_t w, uint32_t b, uint32_t k,int color,float*input);
+extern "C" void deallocate_input(float* pointer);
 extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" void print_fen( int color,uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_black_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
