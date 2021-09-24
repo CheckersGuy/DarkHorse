@@ -32,14 +32,15 @@ inline Position posFromString(const std::string &pos) {
 //game-generation
 
 #include <Network.h>
+#include <iterator>
 
 int main(int argl, const char **argc) {
-
     initialize();
     Board board;
     use_classical(false);
 
-    network.load("fun4rescored.weights");
+
+    network.load("olddata.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -47,29 +48,16 @@ int main(int argl, const char **argc) {
 
     network.init();
 
- /*   Move move;
-    move.from = 2048u;
-
-    Statistics::mPicker.get_move_encoding(BLACK,move);
-
-
-    return 0;
-
-*/
-
 /*
-
-    TT.resize(20);
+    TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("B:WK29:BK4");
+    //board = Position::pos_from_fen("W:WK6:B4,3");
     board.printBoard();
-
 
     Move best;
-    searchValue(board, best, MAX_PLY, 20000000, true);
+    searchValue(board, best, MAX_PLY, 200000000, true);
     board.makeMove(best);
-    board.printBoard();
-*/
+    board.printBoard();*/
 
     std::string current;
     while (std::cin >> current) {

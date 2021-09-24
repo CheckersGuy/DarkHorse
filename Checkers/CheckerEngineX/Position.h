@@ -39,6 +39,13 @@ inline constexpr uint32_t getMirrored(uint32_t b) {
     return getHorizontalFlip(getVerticalFlip(b));
 }
 
+struct Square{
+    PieceType type;
+    uint32_t index;
+
+    friend std::ostream& operator<<(std::ostream& stream,Square square);
+};
+
 struct Position {
     Color color{BLACK};
     uint32_t WP{0u}, BP{0u}, K{0u};

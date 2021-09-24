@@ -7,7 +7,7 @@ void MoveListe::reset() {
 
 extern Line mainPV;
 
-void MoveListe::sort(Position current, int ply, Move ttMove, int start_index) {
+void MoveListe::sort(Position current,Depth depth, int ply, Move ttMove, int start_index) {
 
 
     if (moveCounter-start_index <= 1)
@@ -15,7 +15,7 @@ void MoveListe::sort(Position current, int ply, Move ttMove, int start_index) {
 
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] =(short) Statistics::mPicker.getMoveScore(current, ply, m, ttMove);
+        scores[i] =(short) Statistics::mPicker.getMoveScore(current,depth, ply, m, ttMove);
     }
 
 

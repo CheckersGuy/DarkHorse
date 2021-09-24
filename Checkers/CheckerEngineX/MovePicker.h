@@ -14,23 +14,25 @@
 namespace Statistics {
     class MovePicker {
     private:
+
         std::array<int, 32 * 16> history{0};
         std::array<int, 32 * 16> bfScore{0};
 
     public:
-        std::array<Move, MAX_PLY> killer_moves;
-
+        Network policy;
         int getMoveScore(Position pos, Move move);
 
         int getHistoryIndex(Position pos, Move move);
 
-        int getMoveScore(Position current, int ply, Move move, Move ttMove);
+        int getMoveScore(Position current,Depth depth, int ply, Move move, Move ttMove);
 
         void clearScores();
 
         void update_scores(Position pos, Move *list, Move move, int depth);
 
         static int get_move_encoding(Color color, Move move);
+
+        void init();
 
     };
 

@@ -100,10 +100,17 @@ int main(int argl, const char **argc) {
     return 0;
 
 */
+/*
+std::ofstream out("/home/robin/DarkHorse/Training/TrainData/policyopen.samples",std::ios::binary);
+std::ifstream stream("/home/robin/PycharmProjects/pythonProject2/TrainData/policy.samples",std::ios::binary);
+std::istream_iterator<Sample>begin(stream);
+std::istream_iterator<Sample>end;
+std::copy_if(begin,end,std::ostream_iterator<Sample>(out),[](Sample s){
+    return Bits::pop_count(s.position.BP | s.position.WP)>8;
+});
+return 0;
 
-
-
-
+*/
 
 
 /*
@@ -115,11 +122,12 @@ int main(int argl, const char **argc) {
 
 
 
-    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
+    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/lastcheck.games");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(14);
-    generator.set_time(50);
+    generator.set_parallelism(12);
+    generator.set_time(10);
+    generator.set_max_position(1000000000ull);
     generator.startx();
 
 
@@ -128,11 +136,13 @@ int main(int argl, const char **argc) {
 
 
 
-    Match engine_match("fun4rescored", "network256x32");
+
+/*
+    Match engine_match("newdata", "olddata");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
-    engine_match.setHashSize(21);
+    engine_match.setHashSize(20);
     engine_match.start();
 
 
@@ -153,6 +163,7 @@ int main(int argl, const char **argc) {
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
 
+*/
 
     return 0;
 }

@@ -53,12 +53,13 @@ struct Network {
 
     float compute_incre_forward_pass(Position next);
 
+    float* get_output();
+
     float forward_pass()const;
 
     int evaluate(Position pos,int ply);
+    static int evaluate(Network&net1, Network& net2,Position pos, int ply);
 
-    static int evaluate(Network& op, Network& end, Position pos,int ply);
-    static int evaluate(Network& op,Network& early_end, Network& end, Position pos,int ply);
 
 };
 
