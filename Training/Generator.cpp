@@ -84,7 +84,6 @@ void Generator::startx() {
             initialize(seed);
             use_classical(true);
 
-
             TT.resize(hash_size);
             std::cout << "Init child: " << i << std::endl;
             //play a game and increment the opening-counter once more
@@ -143,7 +142,11 @@ void Generator::startx() {
                     }
 
                     Move best;
+                    auto t1 = std::chrono::high_resolution_clock::now();
                     auto value = searchValue(board, best, MAX_PLY, time_control, false);
+                    auto t2 = std::chrono::high_resolution_clock::now();
+                    auto dur = t2-t1;
+                    //std::cout<<"Took: "<<dur.count()/1000000<<std::endl;
                     board.makeMove(best);
 
                     if (Bits::pop_count(board.getPosition().BP | board.getPosition().WP) >

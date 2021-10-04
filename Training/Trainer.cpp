@@ -94,14 +94,36 @@ void Trainer::gradientUpdate(const Sample &sample) {
             diff *= end_phase * color;
         }
 
-
-        for (auto i = 0; i < 3; ++i) {
-            for (auto k = 0; k < 3; ++k) {
-                const uint32_t sub_reg = region << (8 * i + k);
-                size_t index = getIndex2(sub_reg, x_flipped);
-                size_t sub_index = 18 * index + 2 * k + 6 * i + p;
+        const size_t offset1 = 8ull * 157464ull;
+        const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
+        if (x_flipped.K == 0) {
+            for (auto i: {0, 2}) {
+                size_t t = ((i == 0) ? 0 : 1);
+                for (auto k = 0; k < 2; ++k) {
+                    const uint32_t sub_reg = big_region << (8 * i + k);
+                    size_t index = get_big_index<IndexType::PROMO>(sub_reg, x_flipped);
+                    size_t sub_index = 8 * index + 2 * k + 4 * t + p;
+                    momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
+                    gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+                }
+            }
+            //FOR THE NON_PROMO_SQUARES
+            for (auto k = 0; k < 2; ++k) {
+                const uint32_t sub_reg = big_region << (8 * 1 + k);
+                size_t index = get_big_index<IndexType::INNER>(sub_reg, x_flipped);
+                size_t sub_index = 4 * index + 2 * k + p + offset1;
                 momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
                 gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+            }
+        } else {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto k = 0; k < 3; ++k) {
+                    const uint32_t sub_reg = region << (8 * i + k);
+                    size_t index = getIndex2(sub_reg, x_flipped);
+                    size_t sub_index = 18 * index + 2 * k + 6 * i + p + offset2;
+                    momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
+                    gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+                }
             }
 
         }
@@ -128,7 +150,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
     {
         //for tempo ranks black side
         uint32_t man = x.BP & (~x.K);
-        for (size_t i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
+        for (size_t i = 0; i < 7; ++i) {
             double diff = temp;
             diff *= -1.0;
             uint32_t shift = 4 * i;
@@ -142,7 +164,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
         //for tempo ranks white-side
         man = x.WP & (~x.K);
         man = getMirrored(man);
-        for (size_t i = 0; i < gameWeights.tempo_ranks.size(); ++i) {
+        for (size_t i = 0; i < 7; ++i) {
             double diff = temp;
             diff *= 1.0;
             uint32_t shift = 4 * i;
@@ -203,7 +225,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + "newworld.weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("have.weights");
+        gameWeights.storeWeights("xxxx5.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

@@ -17,13 +17,13 @@ Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/test12312.weights");
     Zobrist::initializeZobrisKeys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx2.weights");
     Zobrist::initializeZobrisKeys(seed);
 
 }
@@ -113,9 +113,8 @@ namespace Search {
 
     Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move) {
         pv.clear();
+        nodeCounter++;
         //checking time-used
-
-
         if (ply > 0 && board.isRepetition2()) {
             return 0;
         }
@@ -235,11 +234,9 @@ namespace Search {
     }
 
     Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth) {
-
-
         pv.clear();
         nodeCounter++;
-        if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
+        if ((nodeCounter & 8383u) == 0u && getSystemTime() >= endTime) {
             throw std::string{"Time_out"};
         }
 
