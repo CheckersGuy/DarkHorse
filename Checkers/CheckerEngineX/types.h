@@ -40,7 +40,7 @@ constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 constexpr std::array<size_t, 8> powers5 = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
-constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 729ull, 2187ull, 6561ull, 19683ull,
+constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 243ull, 729ull, 2187ull, 6561ull,
                                             59049ull, 177147ull};
 
 constexpr int stage_size = 24;

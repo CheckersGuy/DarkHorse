@@ -37,21 +37,24 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
+/*
 
-    network.load("olddata.weights");
+    network.load("model.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
+*/
 
-/*
-    TT.resize(23);
+
+
+  /*  TT.resize(23);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:WK6:B4,3");
+    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
     board.printBoard();
 
     Move best;
