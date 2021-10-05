@@ -160,7 +160,10 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
         Position pos = *it;
         const size_t piece_count = Bits::pop_count(pos.BP | pos.WP);
         const size_t prev_piec_count = Bits::pop_count(previous.BP | previous.WP);
-        if (piece_count <= prev_piec_count) {
+        MoveListe liste;
+        getMoves(previous, liste);
+
+        if (piece_count <= prev_piec_count && liste.length()>0) {
             game.emplace_back(pos);
         }
         else {
@@ -200,7 +203,6 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
                     uniq_count++;
                 }
             }
-
             game.clear();
             game_counter++;
         }
@@ -241,8 +243,8 @@ int main(int argl, const char **argc) {
         return(1);
     }
 
-    std::string path("C:/Users/leagu/Downloads/test3.games");
-    std::string output("C:/Users/leagu/Downloads/policy.samples");
+    std::string path("C:/Users/leagu/Downloads/reinf.games");
+    std::string output("C:/Users/leagu/Downloads/reinf.samples");
   
     create_samples_from_games(path, output, max_pieces, handle);
 
