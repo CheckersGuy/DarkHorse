@@ -141,15 +141,17 @@ return 0;
 
 
 
-/*
 
-    Match engine_match("fun7rescored", "fun6rescored");
+
+
+
+    Match engine_match("xxxx5", "xxxx2");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(10);
+    engine_match.setNumThreads(14);
     engine_match.setHashSize(21);
     engine_match.start();
-*/
+
 
 
     // 0.190537  1e-4
@@ -165,7 +167,6 @@ return 0;
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
 
 
     return 0;
