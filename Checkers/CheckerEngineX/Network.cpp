@@ -6,28 +6,12 @@
 #include "Network.h"
 
 
-int Network::evaluate(Network &op, Network &end, Position pos, int ply) {
+int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
+    auto num_pieces = pos.piece_count();
+    if (num_pieces > 8)
+        return net1.evaluate(pos, ply);
 
-    return op.evaluate(pos, ply);
-}
-
-int Network::evaluate(Network &op, Network &early_end, Network &end, Position pos, int ply) {
-    /*   if(pos.BP ==0){
-           return -loss(ply);
-       }
-       if(pos.WP ==0){
-           return loss(ply);
-       }
-   */
-
-    auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces <= 6) {
-        return end.evaluate(pos, ply);
-    } else if (num_pieces > 6 && num_pieces <= 12) {
-        return early_end.evaluate(pos, ply);
-    } else {
-        return op.evaluate(pos, ply);
-    }
+    return net1.evaluate(pos, ply);
 
 }
 
@@ -247,6 +231,10 @@ float Network::compute_incre_forward_pass(Position next) {
     return input[0];
 }
 
+float *Network::get_output() {
+    return input.get();
+}
+
 float Network::forward_pass() const {
 
     size_t weight_index_offset = 0u;
@@ -331,3 +319,4 @@ void Network::set_input(Position p) {
         input[offset + index] = 1;
     }
 }
+

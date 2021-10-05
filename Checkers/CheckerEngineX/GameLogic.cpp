@@ -13,19 +13,19 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network;
+Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/have.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx5.weights");
     Zobrist::initializeZobrisKeys();
-    //Statistics::mPicker.init();
+
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/newworld2.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx2.weights");
     Zobrist::initializeZobrisKeys(seed);
-    //Statistics::mPicker.init();
+
 }
 
 Value searchValue(Board &board, int depth, uint32_t time, bool print) {
@@ -113,9 +113,8 @@ namespace Search {
 
     Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move) {
         pv.clear();
+        nodeCounter++;
         //checking time-used
-
-
         if (ply > 0 && board.isRepetition2()) {
             return 0;
         }
@@ -206,7 +205,7 @@ namespace Search {
 
 
         //sorting
-        liste.sort(board.getPosition(), ply, tt_move, start_index);
+        liste.sort(board.getPosition(),depth, ply, tt_move, start_index);
 
         //move-loop
         Search::move_loop(in_pv, local, board, pv, liste);
@@ -235,11 +234,9 @@ namespace Search {
     }
 
     Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth) {
-
-
         pv.clear();
         nodeCounter++;
-        if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
+        if ((nodeCounter & 8383u) == 0u && getSystemTime() >= endTime) {
             throw std::string{"Time_out"};
         }
 
@@ -386,9 +383,6 @@ namespace Search {
 
             local.i++;
         }
-        if (!local.move.isEmpty() && local.best_score >= local.beta && !local.move.isCapture()) {
-            Statistics::mPicker.killer_moves[local.ply] = local.move;
-        }
 
     }
 
@@ -423,7 +417,7 @@ namespace Search {
         liste.putFront(mainPV[0]);
         int start_index = 1;
 
-        liste.sort(board.getPosition(), local.ply, Move{}, start_index);
+        liste.sort(board.getPosition(),local.depth, local.ply, Move{}, start_index);
 
 #ifdef TRAIN
         std::shuffle(liste.begin(), liste.end(), Zobrist::generator);
@@ -489,7 +483,7 @@ Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Val
     Value start_alpha = alpha;
 
 
-    liste.sort(board.getPosition(), ply, Move{}, start_index);
+    liste.sort(board.getPosition(),depth, ply, Move{}, start_index);
     Move best_move;
     Depth next_depth = depth - 1;
     if (board.getPosition().hasJumps() && board.previous().hasJumps() && ply > 0) {

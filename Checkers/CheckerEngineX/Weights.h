@@ -13,47 +13,44 @@
 #include "GameLogic.h"
 #include <cstring>
 
+enum class IndexType {
+    INNER, PROMO
+};
 
 //constexpr uint32_t region = 13107u;
 //constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;//changing how indices are calculated
 //constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
-constexpr size_t SIZE = 18ull * 390625ull;
+//constexpr size_t SIZE = 18ull * 390625ull + 12ull * 531441ull;
 
-inline size_t getIndexBigRegion(uint32_t reg, const Position &pos) {
+constexpr size_t SIZE = 18ull * 390625ull + 4ull * 531441ull + 8ull * 157464ull;
+
+template<IndexType type>
+size_t get_big_index(uint32_t reg, const Position &pos) {
     const uint32_t PROMO_SQUARES = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
     size_t index = 0ull;
     uint32_t BP = pos.BP & (~pos.K);
     uint32_t WP = pos.WP & (~pos.K);
-    uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
-/*
+    uint32_t orig_pieces = (pos.BP | pos.WP) & reg & (~PROMO_SQUARES);
     uint32_t promo_region = reg & PROMO_SQUARES;
-    uint32_t promo_pieces = orig_pieces & PROMO_SQUARES;
 
-    while(promo_pieces){
-        uint32_t lsb = (promo_pieces & ~(promo_pieces - 1u));
-        size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 1ull;
+    uint32_t promo_pieces = (pos.BP | pos.WP) & PROMO_SQUARES & reg;
+    uint32_t promo_index = Bits::pext(promo_pieces, promo_region);
+    uint32_t pieces = Bits::pext(orig_pieces, reg & (~PROMO_SQUARES));
 
-    }
-*/
-
-
-
-
-    uint32_t pieces = (pos.BP | pos.WP);
-    pieces = Bits::pext(pieces, reg);
-
-
-    while (orig_pieces) {
+    while (pieces) {
         uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
         size_t temp_index = Bits::bitscan_foward(pieces);
         size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull;
-
         index += current * powers3[temp_index];
         pieces &= pieces - 1u;
         orig_pieces &= orig_pieces - 1u;
     }
-    return index;
 
+    if constexpr(type == IndexType::INNER) {
+        return index;
+    } else {
+        return 8 * index + promo_index;
+    }
 }
 
 
@@ -114,6 +111,7 @@ struct Weights {
     T getMinValue() const {
         return *std::min_element(weights.begin(), weights.end());
     }
+
 
     template<typename RunType=uint32_t>
     void loadWeights(const std::string &path) {
@@ -222,19 +220,58 @@ struct Weights {
             phase += WK + BK;
         }
         U opening = 0, ending = 0;
+
         if (pos.getColor() == BLACK) {
             pos = pos.getColorFlip();
         }
-
-        for (auto i = 0; i < 3; ++i) {
-            for (auto k = 0; k < 3; ++k) {
-                const uint32_t sub_reg = region << (8 * i + k);
-                size_t index = getIndex2(sub_reg, pos);
-                size_t sub_index_op = 18 * index + 2 * k + 6 * i;
-                size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
-                opening += weights[sub_index_op];
-                ending += weights[sub_index_end];
+        const size_t offset1 = 8ull * 157464ull;
+        const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
+        if (pos.K == 0) {
+            //FOR THE PROMO_SQUARES
+            for (auto i: {0, 2}) {
+                size_t temp = ((i == 0) ? 0 : 1);
+                for (auto k = 0; k < 2; ++k) {
+                    Position test;
+                    const uint32_t sub_reg = big_region << (8 * i + k);
+                    test.BP = sub_reg;
+                    size_t index = get_big_index<IndexType::PROMO>(sub_reg, pos);
+                    size_t sub_index_op = 8 * index + 2 * k + 4 * temp;
+                    size_t sub_index_end = 8 * index + 2 * k + 4 * temp + 1;
+                    opening += weights[sub_index_op];
+                    ending += weights[sub_index_end];
+                }
             }
+            //FOR THE NON_PROMO_SQUARES
+            for (auto k = 0; k < 2; ++k) {
+                const uint32_t sub_reg = big_region << (8 * 1 + k);
+                size_t index = get_big_index<IndexType::INNER>(sub_reg, pos);
+                size_t sub_index_op = 4 * index + 2 * k;
+                size_t sub_index_end = 4 * index + 2 * k + 1;
+                opening += weights[sub_index_op + offset1];
+                ending += weights[sub_index_end + offset1];
+            }
+            /*      for (auto i = 0; i < 3; ++i) {
+                      for (auto k = 0; k < 2; ++k) {
+                          const uint32_t sub_reg = big_region << (8 * i + k);
+                          size_t index = getIndexBigRegion(sub_reg, pos);
+                          size_t sub_index_op = 12 * index + 2 * k + 4 * i;
+                          size_t sub_index_end = 12 * index + 2 * k + 4 * i + 1;
+                          opening += weights[sub_index_op];
+                          ending += weights[sub_index_end];
+                      }
+                  }*/
+        } else {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto k = 0; k < 3; ++k) {
+                    const uint32_t sub_reg = region << (8 * i + k);
+                    size_t index = getIndex2(sub_reg, pos);
+                    size_t sub_index_op = 18 * index + 2 * k + 6 * i;
+                    size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
+                    opening += weights[sub_index_op + offset2];
+                    ending += weights[sub_index_end + offset2];
+                }
+            }
+
         }
 
 
