@@ -80,27 +80,15 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
     int last_stop = -1;
     for (auto i = 0; i < game.size(); ++i) {
         auto tb_result = get_tb_result(game[i], max_pieces, handle);
-        if (tb_result.has_value()) {
-
+        if (!tb_result.has_value())
+            continue;
             for (int k = i; k > last_stop; k--) {
                 Sample s;
                 s.position = game[k];
-                s.result = tb_result.value();
+                s.result =tb_result.value();
                 sample_data[k] = s;
             }
             last_stop = i;
-        }
-        else if (i == game.size() - 1) {
-            //end of the game
-
-            for (int k = i; k > last_stop; k--) {
-                Sample s;
-                s.position = game[k];
-                s.result = result;
-                sample_data[k] = s;
-            }
-        }
-
     }
 
     //Getting the moves played
@@ -116,9 +104,7 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
             copy = previous;
             copy.makeMove(move);
             if (copy != pos) {
-                previous.printPosition();
-                pos.printPosition();
-                std::cout << "K: " << k << std::endl;
+                std::cerr << "Couldnt extract the move" << std::endl;
                 std::exit(-1);
             }
 
@@ -169,32 +155,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
         else {
          
             auto samples = get_rescored_game(game, max_pieces, handle);
-          
-            //looking for intresting samples
-           
-            /*
-            bool is_rescored = false;
-            int first = samples.front().result;
-            for (auto s : samples) {
-                if (s.result != first) {
-                    is_rescored = true;
-                    break;
-                }
-
-            }
-            if (is_rescored) {
-
-                for (auto s : samples) {
-                    std::cout << "\n";
-                    std::cout << "\n";
-                    std::cout << "Result: " << s.result << "\n";
-                    std::cout << "Fen: " << s.position.get_fen_string() << "\n";
-                    s.position.printPosition();
-                    std::cout.flush();
-                }
-
-            }
-            */
+     
             for (auto s : samples) {
                 total_count++;
                 if (!filter.has(s)) {
@@ -223,6 +184,11 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 
 int main(int argl, const char **argc) {
 
+    if (argl < 3) {
+        std::cerr << "You did not pass enough arguments" << std::endl;
+        std::exit(-1);
+    }
+
     int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
     EGDB_DRIVER *handle;
@@ -243,8 +209,11 @@ int main(int argl, const char **argc) {
         return(1);
     }
 
-    std::string path("C:/Users/leagu/Downloads/reinf.games");
-    std::string output("C:/Users/leagu/Downloads/reinf.samples");
+    std::string in_file(argc[1]);
+    std::string out_file(argc[2]);
+
+    std::string path(in_file);
+    std::string output(out_file);
   
     create_samples_from_games(path, output, max_pieces, handle);
 
