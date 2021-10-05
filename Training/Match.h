@@ -115,6 +115,12 @@ public:
     explicit Match(const std::string &first, const std::string &second) : first(
             first), second(second) {
         std::ifstream stream(openingBook, std::ios::binary);
+
+        if(!stream.good()){
+            std::cerr<<"Could not load the openings"<<std::endl;
+            std::exit(-1);
+        }
+
         std::istream_iterator<Position> begin(stream);
         std::istream_iterator<Position> end;
         std::copy(begin, end, std::back_inserter(positions));

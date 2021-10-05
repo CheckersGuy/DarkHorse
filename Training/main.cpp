@@ -100,6 +100,25 @@ int main(int argl, const char **argc) {
     return 0;
 
 */
+/*
+std::ofstream out("/home/robin/DarkHorse/Training/TrainData/policyopen.samples",std::ios::binary);
+std::ifstream stream("/home/robin/PycharmProjects/pythonProject2/TrainData/policy.samples",std::ios::binary);
+std::istream_iterator<Sample>begin(stream);
+std::istream_iterator<Sample>end;
+std::copy_if(begin,end,std::ostream_iterator<Sample>(out),[](Sample s){
+    return Bits::pop_count(s.position.BP | s.position.WP)>8;
+});
+return 0;
+
+*/
+
+
+/*
+
+
+      Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/lastcheck.games", "/home/robin/DarkHorse/Training/TrainData/xxx.samples");
+      return 0;
+*/
 
 
 
@@ -108,27 +127,25 @@ int main(int argl, const char **argc) {
 
 /*
 
-      Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/check.games", "/home/robin/DarkHorse/Training/TrainData/check.samples");
-      return 0;
+    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
+    generator.set_hash_size(20);
+    generator.set_buffer_clear_count(10000);
+    generator.set_parallelism(12);
+    generator.set_time(10);
+    generator.set_max_position(1000000000ull);
+    generator.startx();
+
+
 */
 
 
 
 
-    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
-    generator.set_hash_size(20);
-    generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(14);
-    generator.set_time(50);
-    generator.startx();
 
 
 
 
-
-
-
-    Match engine_match("fun4rescored", "network256x32");
+    Match engine_match("xxxx5", "xxxx2");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
@@ -137,15 +154,13 @@ int main(int argl, const char **argc) {
 
 
 
-
-
     // 0.190537  1e-4
     //0.188262   6e-4
     //0.188813 1e-3
     //0.127496
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/check.samples");
-    trainer.setLearningRate(150000);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/lastcheck.samples");
+    trainer.setLearningRate(120000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);

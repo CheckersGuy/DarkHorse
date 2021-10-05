@@ -8,6 +8,20 @@ namespace Statistics {
 
     MovePicker mPicker;
 
+    void MovePicker::init() {
+/*
+        policy.load("policy.weights");
+        policy.addLayer(Layer{120, 1024});
+        policy.addLayer(Layer{1024, 32});
+        policy.addLayer(Layer{32, 32});
+        policy.addLayer(Layer{32, 100});
+
+        policy.init();
+*/
+
+
+    }
+
     int MovePicker::get_move_encoding(Color color, Move move) {
         //range of values 0...90
 
@@ -23,12 +37,13 @@ namespace Statistics {
             uint32_t index = Bits::pext(move.from, maske);
             index = _tzcnt_u32(index);
             int dir;
-            if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to) << 4) == move.from) || (((move.to & MASK_L5) << 5) == move.from)) {
+            if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to) << 4) == move.from) ||
+                (((move.to & MASK_L5) << 5) == move.from)) {
                 dir = 0;
             } else {
                 dir = 1;
             }
-            return  2 * index + dir;
+            return 2 * index + dir;
         }
 
         const uint32_t maske2 = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
@@ -56,14 +71,11 @@ namespace Statistics {
             int dir;
             if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to & MASK_L5) << 5) == move.from)) {
                 dir = 0;
-            }
-            else if (((move.to) << 4) == move.from) {
+            } else if (((move.to) << 4) == move.from) {
                 dir = 1;
-            }
-            else if (((move.to) >> 4) == move.from) {
+            } else if (((move.to) >> 4) == move.from) {
                 dir = 2;
-            }
-            else if ((((move.to & MASK_R3) >> 3) == move.from) || (((move.to & MASK_R5) >> 5) == move.from)) {
+            } else if ((((move.to & MASK_R3) >> 3) == move.from) || (((move.to & MASK_R5) >> 5) == move.from)) {
                 dir = 3;
             }
 
@@ -119,19 +131,13 @@ namespace Statistics {
         return score;
     }
 
-    int MovePicker::getMoveScore(Position current, int ply, Move move, Move ttMove) {
+    int MovePicker::getMoveScore(Position current, Depth depth, int ply, Move move, Move ttMove) {
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
         if (move.isCapture()) {
             return (int) Bits::pop_count(move.captures);
         }
-
-
-        /*      if (move == killer_moves[ply]) {
-                  return killer_score;
-              }
-      */
 
         return getMoveScore(current, move);
 

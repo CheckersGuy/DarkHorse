@@ -315,9 +315,6 @@ void Match::start() {
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
                 if (inter.pos.isEmpty()) {
-                    Position temp;
-                    //Debugging if the reverse is actually played :)
-
                     if (inter.first_game) {
                         inter.first_mover = 0;
                         inter.start_pos = get_start_pos();

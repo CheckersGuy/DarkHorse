@@ -357,6 +357,11 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
     return stream;
 }
 
+std::ostream &operator<<(std::ostream &stream, Square square) {
+
+    return stream;
+}
+
 
 
 

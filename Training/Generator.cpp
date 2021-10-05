@@ -20,6 +20,10 @@ void Generator::print_stats() {
 
 }
 
+void Generator::set_max_position(size_t max) {
+    max_positions = max;
+}
+
 void Generator::startx() {
     //Positions to be saved to a file
     initialize();
@@ -28,6 +32,8 @@ void Generator::startx() {
 
     int *buffer_length = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                                       0);
+    bool *stop = (bool *) mmap(NULL, sizeof(bool), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                               0);
     Position *buffer = (Position *) mmap(NULL, sizeof(Position) * BUFFER_CAP, PROT_READ | PROT_WRITE,
                                          MAP_SHARED | MAP_ANONYMOUS, -1,
                                          0);
@@ -49,7 +55,7 @@ void Generator::startx() {
 
     opening_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                                    0);
-
+    *stop = false;
     *counter = 0;
     *error_counter = 0;
     *num_won = 0;
@@ -76,26 +82,23 @@ void Generator::startx() {
             //child takes a position and generates games
             const uint64_t seed = 13199312313ull + 12412312314ull * i;
             initialize(seed);
-            use_classical(false);
-
-            network.load("fun4rescored.weights");
-            network.addLayer(Layer{120, 256});
-            network.addLayer(Layer{256, 32});
-            network.addLayer(Layer{32, 32});
-            network.addLayer(Layer{32, 1});
-
-            network.init();
+            use_classical(true);
 
             TT.resize(hash_size);
             std::cout << "Init child: " << i << std::endl;
             //play a game and increment the opening-counter once more
 
 
-            while (true) {
+            while (!(*stop)) {
                 pthread_mutex_lock(pmutex);
-                if (*counter >= 10000000000ull) {
+
+                if (*counter >= max_positions) {
+                    pthread_mutex_lock(pmutex);
+                    *stop = true;
+                    pthread_mutex_unlock(pmutex);
                     break;
                 }
+
                 Position opening = openings[*opening_counter];
                 Board board;
                 board = opening;
@@ -105,10 +108,16 @@ void Generator::startx() {
                 initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
                 Position previous = opening;
                 int move_count;
-                for (move_count = 0; move_count < 600; ++move_count) {
+                for (move_count = 0; move_count < 400; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
                     game.emplace_back(board.getPosition());
+
+                    //some form of adjudication trying
+
+
+                    uint32_t count;
+                    count = std::count(game.begin(), game.end(), game.back());
                     if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
@@ -120,10 +129,7 @@ void Generator::startx() {
                         }
                         pthread_mutex_unlock(pmutex);
                         break;
-                    }
-                    uint32_t count;
-                    count = std::count(game.begin(), game.end(), game.back());
-                    if (count >= 3) {
+                    }else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
                         //draw by repetition
@@ -136,11 +142,17 @@ void Generator::startx() {
                     }
 
                     Move best;
-                    searchValue(board, best, MAX_PLY, time_control, false);
+                    auto t1 = std::chrono::high_resolution_clock::now();
+                    auto value = searchValue(board, best, MAX_PLY, time_control, false);
+                    auto t2 = std::chrono::high_resolution_clock::now();
+                    auto dur = t2-t1;
+                    //std::cout<<"Took: "<<dur.count()/1000000<<std::endl;
                     board.makeMove(best);
 
-                    if(Bits::pop_count(board.getPosition().BP | board.getPosition().WP)> Bits::pop_count(previous.BP | previous.WP)){
+                    if (Bits::pop_count(board.getPosition().BP | board.getPosition().WP) >
+                        Bits::pop_count(previous.BP | previous.WP)) {
                         pthread_mutex_lock(pmutex);
+                        *stop = true;
                         (*error_counter)++;
                         pthread_mutex_unlock(pmutex);
                     }
@@ -167,7 +179,6 @@ void Generator::startx() {
                 }
                 pthread_mutex_unlock(pmutex);
             }
-            std::exit(1);
         }
     }
 
@@ -177,7 +188,7 @@ void Generator::startx() {
         while ((id = wait(&status)) > 0) {
             printf("Exit status of %d was %d (%s)\n", (int) id, status,
                    (status > 0) ? "accept" : "reject");
-            if(status<0){
+            if (status < 0) {
 
             }
         }

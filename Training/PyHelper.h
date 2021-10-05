@@ -8,8 +8,11 @@
 #include <cstdint>
 #include "Position.h"
 
+extern "C" void patterns_op(uint32_t w, uint32_t b, uint32_t k, int color, int64_t *input);
+extern "C" void create_input(uint32_t w, uint32_t b, uint32_t k, int color, float *input);
+extern "C" void deallocate_input(float *pointer);
 extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings);
-extern "C" void print_fen( int color,uint32_t white_men, uint32_t black_men, uint32_t kings);
+extern "C" void print_fen(int color, uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_black_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_white_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int has_white_king(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
@@ -22,7 +25,7 @@ extern "C" int count_black_kings(uint32_t white_men, uint32_t black_men, uint32_
 extern "C" int count_white_pawn(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int count_black_pawn(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int invert_pieces(uint32_t pieces);
-extern "C" int has_jumps(uint32_t white_men, uint32_t black_men, uint32_t kings,int color);
+extern "C" int has_jumps(uint32_t white_men, uint32_t black_men, uint32_t kings, int color);
 
 
 #endif //READING_PYHELPER_H
