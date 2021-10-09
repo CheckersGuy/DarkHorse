@@ -23,8 +23,6 @@ public:
                                                        bit_set(num_bits, false) {
     }
 
-    SampleFilter() = default;
-
     SampleFilter(const SampleFilter &filter);
 
 

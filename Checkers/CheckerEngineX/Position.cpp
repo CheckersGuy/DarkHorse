@@ -318,7 +318,7 @@ void Position::makeMove(Move &move) {
         BP &= ~move.from;
         BP |= move.to;
 
-        if (((move.to & PROMO_SQUARES_BLACK) != 0u) && ((move.from & K) == 0))
+        if (((move.from & K) == 0) && ((move.to & PROMO_SQUARES_BLACK) != 0u))
             K |= move.to;
 
     } else {
@@ -329,7 +329,7 @@ void Position::makeMove(Move &move) {
         WP &= ~move.from;
         WP |= move.to;
 
-        if (((move.to & PROMO_SQUARES_WHITE) != 0u) && ((move.from & K) == 0))
+        if (((move.from & K) == 0) && ((move.to & PROMO_SQUARES_WHITE) != 0u) )
             K |= move.to;
 
     }

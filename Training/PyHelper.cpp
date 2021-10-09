@@ -3,10 +3,26 @@
 //
 
 #include "PyHelper.h"
+#include <PosStreamer.h>
 
 enum class IndexType {
     INNER, PROMO
 };
+
+std::unique_ptr<PosStreamer> streamer;
+
+extern "C" void test(float *test) {
+
+    if (streamer.get() == nullptr) {
+        streamer = std::make_unique<PosStreamer>("", 10000);
+    }
+
+    for (auto i = 0; i < 9; ++i) {
+        test[i] = i;
+    }
+    test[0] = streamer->get_buffer_size();
+}
+
 
 template<IndexType type>
 size_t get_big_index(uint32_t reg, const Position &pos) {

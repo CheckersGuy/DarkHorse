@@ -33,7 +33,7 @@ inline Position posFromString(const std::string &pos) {
 
 #include <Network.h>
 #include <iterator>
-
+#include <types.h>
 int main(int argl, const char **argc) {
     initialize();
     Board board;
@@ -51,8 +51,8 @@ int main(int argl, const char **argc) {
 */
 
 
-
-  /*  TT.resize(23);
+/*
+    TT.resize(23);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("W:W5,29:BK3,K12");
     board.printBoard();

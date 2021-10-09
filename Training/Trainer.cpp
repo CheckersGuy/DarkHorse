@@ -182,36 +182,33 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
 void Trainer::epoch() {
-    std::cout << "Start shuffling" << std::endl;
-    std::shuffle(data.begin(), data.end(), generator);
-    std::cout << "Done shuffling" << std::endl;
-    int counter = 0;
-    std::for_each(data.begin(), data.end(),
-                  [this, &counter](Sample sample) {
-                      auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
-                      uint32_t WP = sample.position.WP & (~sample.position.K);
-                      uint32_t BP = sample.position.BP & (~sample.position.K);
-                      uint32_t WK = sample.position.WP & (sample.position.K);
-                      uint32_t BK = sample.position.BP & (sample.position.K);
+    size_t num_samples = pos_streamer.get_file_size();
+    for (auto i = size_t{0}; i < num_samples; ++i) {
+        Sample sample = pos_streamer.get_next();
+        auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
+        uint32_t WP = sample.position.WP & (~sample.position.K);
+        uint32_t BP = sample.position.BP & (~sample.position.K);
+        uint32_t WK = sample.position.WP & (sample.position.K);
+        uint32_t BK = sample.position.BP & (sample.position.K);
 
-                      if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
-                          ((WP & BP) != 0) || ((WK & BK) != 0)) {
-                          sample.position.printPosition();
-                      }
+        if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
+            ((WP & BP) != 0) || ((WK & BK) != 0)) {
+            sample.position.printPosition();
+        }
 
-                      gradientUpdate(sample);
-                  });
+        gradientUpdate(sample);
+    }
 
 }
 
 
 void Trainer::startTune() {
     int counter = 0;
-    std::cout << "Data_size: " << data.size() << std::endl;
+    std::cout << "Data_size: " << pos_streamer.get_file_size() << std::endl;
     while (counter < getEpochs()) {
         std::cout << "Start of epoch: " << counter << "\n\n" << std::endl;
         std::cout << "CValue: " << getCValue() << std::endl;
-        double num_games = data.size();
+        double num_games = pos_streamer.get_file_size();
         double loss = accu_loss / ((double) num_games);
         loss = sqrt(loss);
         accu_loss = 0.0;
@@ -263,10 +260,10 @@ double Trainer::calculateLoss() {
         return current;
     };
     double result = 0.0;
-    std::for_each(data.begin(), data.end(), [&](const Sample &sample) {
+/*    std::for_each(data.begin(), data.end(), [&](const Sample &sample) {
         result += evalLambda(sample);
-    });
+    });*/
 
-    return std::sqrt(result / static_cast<double>(data.size()));
+    return std::sqrt(result / static_cast<double>(pos_streamer.get_file_size()));
 }
 
