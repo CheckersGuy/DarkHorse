@@ -20,13 +20,18 @@ inline uint64_t getSystemTime() {
             (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
+
+constexpr auto powc = [](size_t base, size_t power) {
+    size_t res = 1ull;
+    for (size_t i = 0; i < power; ++i) {
+        res *= base;
+    }
+    return res;
+};
+
+
 constexpr uint32_t big_region = 30583;
 constexpr uint32_t region = 13107;
-constexpr uint32_t eval_strip = 65535;
-/*
-constexpr uint32_t sub_region1 = 12593;
-constexpr uint32_t sub_region2 = 17990;
-*/
 constexpr uint32_t INNER_SQUARES = 132638688;
 constexpr uint32_t OUTER_SQUARES = 135796752;
 constexpr uint32_t MASK_L3 = 14737632u;
@@ -39,9 +44,11 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
-constexpr std::array<size_t, 8> powers5 = {1ull, 5ull, 25ull, 125ull, 625ull, 3125ull, 15625ull, 78125ull};
-constexpr std::array<size_t, 12> powers3 = {1ull, 3ull, 9ull, 27ull, 81ull, 243ull, 729ull, 2187ull, 6561ull,
-                                            59049ull, 177147ull};
+constexpr std::array<size_t, 8> powers5 = {powc(5, 0), powc(5, 1), powc(5, 2), powc(5, 3), powc(5, 4), powc(5, 5),
+                                           powc(5, 6), powc(5, 7)};
+constexpr std::array<size_t, 12> powers3 = {powc(3, 0), powc(3, 1), powc(3, 2), powc(3, 3), powc(3, 4), powc(3, 5),
+                                            powc(3, 6), powc(3, 7), powc(3, 8),
+                                            powc(3, 9), powc(3, 10), powc(3, 11)};
 
 constexpr int stage_size = 24;
 

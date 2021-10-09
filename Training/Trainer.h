@@ -13,11 +13,12 @@
 #include "Utilities.h"
 #include "Generator.h"
 #include <types.h>
+#include <PosStreamer.h>
+
 class Trainer {
 
 private:
     int epochs;
-    std::vector<Sample> data;
     double learningRate, l2Reg, cValue;
     double accu_loss{0};
     double last_loss_value;
@@ -25,22 +26,16 @@ private:
     double decay{0.07};
     std::unique_ptr<double[]> momentums;
     std::mt19937_64 generator;
+    PosStreamer pos_streamer;
 public:
 
 
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
-                                            l2Reg(0.05),generator(std::mt19937_64(231231241ull)) {
+                                            l2Reg(0.05), generator(std::mt19937_64(231231241ull)),
+                                            pos_streamer(PosStreamer(data_path, 1000000)) {
         momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
-        std::ifstream stream(data_path,std::ios::binary);
-        if(!stream){
-            std::cout<<"Could not find the data"<<std::endl;
-            std::exit(-1);
-        }
-        std::istream_iterator<Sample>begin(stream);
-        std::istream_iterator<Sample>end;
-        std::copy(begin,end,std::back_inserter(data));
-        std::cout<<"Number of samples "<<data.size()<<std::endl;
+
     };
 
     void epoch();

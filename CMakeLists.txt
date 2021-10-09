@@ -39,7 +39,7 @@ add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders})
 
 
 if (UNIX)
-    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/SampleFilter.cpp Training/SampleFilter.h Training/Sample.cpp Training/Sample.h)
+    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/SampleFilter.cpp Training/SampleFilter.h Training/Sample.cpp Training/Sample.h Training/PosStreamer.cpp Training/PosStreamer.h Training/BatchProvider.cpp Training/BatchProvider.h)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")

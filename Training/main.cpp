@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <SampleFilter.h>
+#include <PosStreamer.h>
 
 
 size_t count_unique_elements(std::string input) {
@@ -140,6 +141,17 @@ return 0;
 
 
 
+/*
+
+    PosStreamer streamer("/home/robin/DarkHorse/Training/TrainData/test2.positions", 10000,false);
+
+    std::cout<<"Size: "<<streamer.get_file_size()<<std::endl;
+    for(auto i=0;i<10;++i){
+        auto example = streamer.get_next();
+        example.position.printPosition();
+    }
+    return 0;
+*/
 
 
 
@@ -151,6 +163,7 @@ return 0;
     engine_match.setNumThreads(14);
     engine_match.setHashSize(21);
     engine_match.start();
+
 
 
 

@@ -5,9 +5,11 @@
 #ifndef READING_PYHELPER_H
 #define READING_PYHELPER_H
 
+
+
 #include <cstdint>
 #include "Position.h"
-
+extern "C" void test( float *test);
 extern "C" void patterns_op(uint32_t w, uint32_t b, uint32_t k, int color, int64_t *input);
 extern "C" void create_input(uint32_t w, uint32_t b, uint32_t k, int color, float *input);
 extern "C" void deallocate_input(float *pointer);
