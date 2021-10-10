@@ -81,7 +81,10 @@ void Trainer::gradientUpdate(const Sample &sample) {
     double color = x.color;
     const double temp = error * sigmoidDiff(c, qStatic);;
     accu_loss += error * error;
+
     auto x_flipped = (x.getColor() == BLACK) ? x.getColorFlip() : x;
+
+
 
 
     for (size_t p = 0; p < 2; ++p) {
@@ -222,7 +225,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + "newworld.weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("xxxx5.weights");
+        gameWeights.storeWeights("xxxx6.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

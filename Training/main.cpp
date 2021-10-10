@@ -61,7 +61,7 @@ void remove_duplicates(std::string input, std::string output) {
     std::cout << "Size after removing: " << elements.size() << std::endl;
     std::cout << "Removed a total of " << total_elements - elements.size() << " elements" << std::endl;
 }
-
+#include <BatchProvider.h>
 int main(int argl, const char **argc) {
 
     initialize();
@@ -157,13 +157,32 @@ return 0;
 
 
 
-    Match engine_match("xxxx5", "xxxx2");
+  /*  Match engine_match("xxxx6", "xxxx2");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(14);
     engine_match.setHashSize(21);
     engine_match.start();
 
+*/
+
+/*
+  BatchProvider provider("/home/robin/DarkHorse/Training/TrainData/lastcheck.samples",1000,10);
+
+  for(auto i=0;i<100000;++i){
+      std::array<float,120>inputs;
+      std::array<float,1>results;
+      provider.next(&results.front(),&inputs.front());
+      float s = 0;
+      for(auto k=0;k<120;++k)
+          s+=inputs[k];
+      if(s>10000){
+          std::cout<<s<<std::endl;
+          std::cout<<i<<std::endl;
+          break;
+      }
+  }
+*/
 
 
 
@@ -173,7 +192,7 @@ return 0;
     //0.127496
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/lastcheck.samples");
-    trainer.setLearningRate(120000);
+    trainer.setLearningRate(12000);
     trainer.setEpochs(100);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);

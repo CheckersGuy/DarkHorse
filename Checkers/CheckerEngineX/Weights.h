@@ -250,16 +250,7 @@ struct Weights {
                 opening += weights[sub_index_op + offset1];
                 ending += weights[sub_index_end + offset1];
             }
-            /*      for (auto i = 0; i < 3; ++i) {
-                      for (auto k = 0; k < 2; ++k) {
-                          const uint32_t sub_reg = big_region << (8 * i + k);
-                          size_t index = getIndexBigRegion(sub_reg, pos);
-                          size_t sub_index_op = 12 * index + 2 * k + 4 * i;
-                          size_t sub_index_end = 12 * index + 2 * k + 4 * i + 1;
-                          opening += weights[sub_index_op];
-                          ending += weights[sub_index_end];
-                      }
-                  }*/
+
         } else {
             for (auto i = 0; i < 3; ++i) {
                 for (auto k = 0; k < 3; ++k) {

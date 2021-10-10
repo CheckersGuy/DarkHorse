@@ -10,6 +10,10 @@
 #include <PosStreamer.h>
 #include <deque>
 
+enum OutputType{
+
+};
+
 struct Batch {
     const size_t batch_size;
     static constexpr size_t input_size = 120;
@@ -29,10 +33,23 @@ class BatchProvider {
 private:
     PosStreamer streamer;
     std::deque<std::shared_ptr<Batch>> batches;
-    size_t batch_size;
+    size_t batch_size, buffer_size;
 public:
 
+    BatchProvider(std::string path, size_t buffer_size, size_t batch_size) : streamer(path, buffer_size, batch_size,
+                                                                                      true) {
+        this->batch_size = batch_size;
+        this->buffer_size = buffer_size;
+        std::cout<<"Number of training samples: "<<streamer.get_file_size()<<std::endl;
+    }
+
     void next(float *results, float *inputs);
+
+    size_t get_batch_size()const;
+
+    size_t get_buffer_size()const;
+
+    const PosStreamer& get_streamer()const;
 
 
 };
