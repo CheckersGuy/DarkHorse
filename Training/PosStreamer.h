@@ -5,21 +5,6 @@
 #ifndef READING_POSSTREAMER_H
 #define READING_POSSTREAMER_H
 
-#if defined(_MSC_VER)
-//  Microsoft
-    #define EXPORT __declspec(dllexport)
-    #define IMPORT __declspec(dllimport)
-#elif defined(__GNUC__)
-//  GCC
-#define EXPORT __attribute__((visibility("default")))
-#define IMPORT
-#else
-//  do nothing and hope for the best?
-    #define EXPORT
-    #define IMPORT
-    #pragma warning Unknown dynamic link import/export semantics.
-#endif
-
 
 #include <string>
 #include <memory>
@@ -29,7 +14,7 @@
 #include <iterator>
 
 
-class EXPORT PosStreamer {
+class PosStreamer {
 
 private:
     std::string file_path;
@@ -51,7 +36,6 @@ public:
             : buffer_size(buffer_size), shuffle(shuffle) {
 
         //computing the file_size
-
         file_size = PosStreamer::get_file_size(file_path) / sizeof(Sample);
         stream = std::ifstream(file_path, std::ios::binary);
         if (!stream.good()) {

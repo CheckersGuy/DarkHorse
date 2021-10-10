@@ -4,23 +4,28 @@
 
 #include "PyHelper.h"
 #include <PosStreamer.h>
+#include <BatchProvider.h>
 
 enum class IndexType {
     INNER, PROMO
 };
 
-std::unique_ptr<PosStreamer> streamer;
+std::unique_ptr<BatchProvider> streamer;
 
-extern "C" void test(float *test) {
-
+extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_path) {
+    std::string path(file_path);
+    std::cout << "Path: " << file_path << std::endl;
     if (streamer.get() == nullptr) {
-        streamer = std::make_unique<PosStreamer>("", 10000);
+        streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size);
     }
+    return streamer->get_streamer().get_file_size();
+}
 
-    for (auto i = 0; i < 9; ++i) {
-        test[i] = i;
+extern "C" void get_next_batch(float *results, float *inputs) {
+    if (streamer.get() == nullptr) {
+        std::exit(-1);
     }
-    test[0] = streamer->get_buffer_size();
+    streamer->next(results, inputs);
 }
 
 
