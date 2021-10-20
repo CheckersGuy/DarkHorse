@@ -9,8 +9,9 @@
 #include <memory>
 #include <PosStreamer.h>
 #include <deque>
+#include <Weights.h>
 
-enum OutputType{
+enum OutputType {
 
 };
 
@@ -29,10 +30,10 @@ struct Batch {
 
 };
 
+
 class BatchProvider {
 private:
     PosStreamer streamer;
-    std::deque<std::shared_ptr<Batch>> batches;
     size_t batch_size, buffer_size;
 public:
 
@@ -40,18 +41,33 @@ public:
                                                                                       true) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
-        std::cout<<"Number of training samples: "<<streamer.get_file_size()<<std::endl;
+        std::cout << "Number of training samples: " << streamer.get_file_size() << std::endl;
     }
 
+    size_t get_batch_size() const;
+
+    size_t get_buffer_size() const;
+
+    PosStreamer &get_streamer();
+
+};
+
+class NetBatchProvider : public BatchProvider {
+
+public:
+    using BatchProvider::BatchProvider;
+
     void next(float *results, float *inputs);
+};
 
-    size_t get_batch_size()const;
+class PattBatchProvider : public BatchProvider {
+public:
 
-    size_t get_buffer_size()const;
+    using BatchProvider::BatchProvider;
 
-    const PosStreamer& get_streamer()const;
-
-
+    void next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
+              int64_t *patt_end_big,int64_t *patt_op_small,
+    int64_t *patt_end_small);
 };
 
 

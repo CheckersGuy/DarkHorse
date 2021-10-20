@@ -36,13 +36,13 @@ public:
             : buffer_size(buffer_size), shuffle(shuffle) {
 
         //computing the file_size
+        ptr = buffer_size + 1;
         file_size = PosStreamer::get_file_size(file_path) / sizeof(Sample);
         stream = std::ifstream(file_path, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Could not open the stream" << std::endl;
             std::exit(-1);
         }
-        ptr = buffer_size + 1;
         file_path = file_path;
         buffer = std::make_unique<Sample[]>(buffer_size);
         generator = std::mt19937_64(seed);

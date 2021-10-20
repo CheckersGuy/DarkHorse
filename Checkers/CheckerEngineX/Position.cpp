@@ -1,6 +1,7 @@
 #include <sstream>
-#include "Position.h"
 #include "Zobrist.h"
+
+#include "Position.h"
 
 bool Position::hasJumps() const {
     return hasJumps(BLACK) || hasJumps(WHITE);
