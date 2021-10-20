@@ -85,8 +85,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
     auto x_flipped = (x.getColor() == BLACK) ? x.getColorFlip() : x;
 
 
-
-
     for (size_t p = 0; p < 2; ++p) {
         double diff = temp;
         if (p == 0) {
@@ -99,36 +97,17 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
         const size_t offset1 = 8ull * 157464ull;
         const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
-        if (x_flipped.K == 0) {
-            for (auto i: {0, 2}) {
-                size_t t = ((i == 0) ? 0 : 1);
-                for (auto k = 0; k < 2; ++k) {
-                    const uint32_t sub_reg = big_region << (8 * i + k);
-                    size_t index = get_big_index<IndexType::PROMO>(sub_reg, x_flipped);
-                    size_t sub_index = 8 * index + 2 * k + 4 * t + p;
-                    momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
-                    gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
-                }
-            }
-            //FOR THE NON_PROMO_SQUARES
-            for (auto k = 0; k < 2; ++k) {
-                const uint32_t sub_reg = big_region << (8 * 1 + k);
-                size_t index = get_big_index<IndexType::INNER>(sub_reg, x_flipped);
-                size_t sub_index = 4 * index + 2 * k + p + offset1;
-                momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
-                gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
-            }
-        } else {
-            for (auto i = 0; i < 3; ++i) {
-                for (auto k = 0; k < 3; ++k) {
-                    const uint32_t sub_reg = region << (8 * i + k);
-                    size_t index = getIndex2(sub_reg, x_flipped);
-                    size_t sub_index = 18 * index + 2 * k + 6 * i + p + offset2;
-                    momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
-                    gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
-                }
-            }
 
+        auto f = [&](size_t index) {
+            size_t sub_index = index + p;
+            momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
+            gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+        };
+
+        if (x_flipped.K == 0) {
+            Bits::big_index(f, x_flipped.WP, x_flipped.BP, x_flipped.K);
+        } else {
+            Bits::small_index(f, x_flipped.WP, x_flipped.BP, x_flipped.K);
         }
     }
 

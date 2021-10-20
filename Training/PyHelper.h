@@ -9,17 +9,16 @@
 
 #include <cstdint>
 #include "Position.h"
+extern "C" void get_next_val_batch(float *results, float *inputs);
 extern "C" void get_next_batch(float *results, float *inputs);
-extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_path);
-extern "C" void patterns_op(uint32_t w, uint32_t b, uint32_t k, int color, int64_t *input);
-extern "C" void create_input(uint32_t w, uint32_t b, uint32_t k, int color, float *input);
-extern "C" void deallocate_input(float *pointer);
+extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path,bool patterns);
+extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_path,bool patterns);
+
+
 extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" void print_fen(int color, uint32_t white_men, uint32_t black_men, uint32_t kings);
-extern "C" int has_black_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
-extern "C" int has_white_pawn(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
-extern "C" int has_white_king(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
-extern "C" int has_black_king(int index, uint32_t white_men, uint32_t black_men, uint32_t kings);
+
+
 
 extern "C" void print_position(uint32_t white_men, uint32_t black_men, uint32_t kings);
 extern "C" int count_bits(uint32_t bitfield);

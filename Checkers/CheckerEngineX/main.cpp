@@ -37,13 +37,13 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
 
     network.load("model.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
+    network.addLayer(Layer{120, 512});
+    network.addLayer(Layer{512, 16});
+    network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
@@ -51,6 +51,7 @@ int main(int argl, const char **argc) {
 
 
 
+/*
     TT.resize(23);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("W:W5,29:BK3,K12");
@@ -59,7 +60,9 @@ int main(int argl, const char **argc) {
     Move best;
     searchValue(board, best, MAX_PLY, 200000000, true);
     board.makeMove(best);
-    board.printBoard();
+    board.printBoard();*/
+
+
 
     std::string current;
     while (std::cin >> current) {

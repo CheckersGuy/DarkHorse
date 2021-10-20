@@ -15,11 +15,18 @@ Sample PosStreamer::get_next() {
         do {
             if (stream.peek() == EOF) {
                 stream.clear();
-                stream.seekg(std::ios::beg);
+                stream.seekg(0, std::ios::beg);
             }
             std::istream_iterator<Sample> begin(stream);
             std::istream_iterator<Sample> end;
+
             for (; (begin != end) && read_elements < buffer_size; ++begin) {
+                Sample current = *begin;
+
+                if (current.position.hasJumps(current.position.getColor()))
+                    continue;
+
+
                 buffer[read_elements++] = (*begin);
             }
         } while (read_elements < buffer_size);

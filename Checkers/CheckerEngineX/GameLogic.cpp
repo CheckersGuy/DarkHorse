@@ -17,7 +17,7 @@ Network network;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6yy.weights");
     Zobrist::initializeZobrisKeys();
 
 }

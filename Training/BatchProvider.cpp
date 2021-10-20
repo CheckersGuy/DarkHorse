@@ -4,8 +4,65 @@
 
 #include "BatchProvider.h"
 
+void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk,
+                             int64_t *patt_op,
+                             int64_t *patt_end) {
+    auto fill = [&](Sample s, size_t offset_small, size_t offset_big) {
+        size_t big_counter = 0;
+        size_t small_counter = 0;
 
-void BatchProvider::next(float *results, float *inputs) {
+
+        const size_t offset1 = 8ull * 157464ull;
+        const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
+        if (s.position.K == 0) {
+            //FOR THE PROMO_SQUARES
+
+        } else {
+            for (auto i = 0; i < 3; ++i) {
+                for (auto k = 0; k < 3; ++k) {
+                    const uint32_t sub_reg = region << (8 * i + k);
+                    size_t index = getIndex2(sub_reg, s.position.WP, s.position.BP, s.position.K);
+                    size_t sub_index_op = 18 * index + 2 * k + 6 * i;
+                    size_t sub_index_end = 18 * index + 2 * k + 6 * i + 1;
+                    patt_op_small[offset_small + small_counter_op++] = offset2 + sub_index_op;
+                    patt_end_small[offset_small + small_counter_end++] = offset2 + sub_index_end;
+                }
+            }
+
+        }
+    };
+
+    for (auto i = 0; i < get_batch_size(); ++i) {
+        Sample s = get_streamer().get_next();
+        size_t off_small = 9 * i;
+        size_t off_big = 6 * i;
+
+        num_wp[i] = (float) (Bits::pop_count(s.position.WP & (~s.position.K)));
+        num_bp[i] = (float) (Bits::pop_count(s.position.BP & (~s.position.K)));
+        num_wk[i] = (float) (Bits::pop_count(s.position.WP & s.position.K));
+        num_bk[i] = (float) (Bits::pop_count(s.position.BP & s.position.K));
+        if (s.position.getColor() == BLACK) {
+            s.position = s.position.getColorFlip();
+            s.result = -s.result;
+        }
+        float res_temp;
+        if (s.result == -1)
+            res_temp = 0;
+        else if (s.result == 0)
+            res_temp = 0.5;
+        else
+            res_temp = 1.0;
+        results[i] = res_temp;
+
+        fill(s, off_small, off_big);
+
+
+    }
+
+}
+
+
+void NetBatchProvider::next(float *results, float *inputs) {
     static constexpr size_t INPUT_SIZE = 120;
     auto create_input = [](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
@@ -13,9 +70,6 @@ void BatchProvider::next(float *results, float *inputs) {
             s.result = -s.result;
         }
         float result;
-        /*      res_temp = 1
-              if res == 1 else 0
-              if res == -1 else 0.5;*/
         if (s.result == -1)
             result = 0.0f;
         else if (s.result == 0)
@@ -57,11 +111,8 @@ void BatchProvider::next(float *results, float *inputs) {
         return result;
     };
 
-    for (auto i = 0; i < batch_size; ++i) {
-        Sample current;
-        do {
-            current = streamer.get_next();
-        } while (current.position.hasJumps(current.position.getColor()));
+    for (auto i = 0; i < get_batch_size(); ++i) {
+        Sample current = get_streamer().get_next();
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
@@ -78,6 +129,6 @@ size_t BatchProvider::get_buffer_size() const {
     return buffer_size;
 }
 
-const PosStreamer &BatchProvider::get_streamer() const {
+PosStreamer &BatchProvider::get_streamer() {
     return streamer;
 }
