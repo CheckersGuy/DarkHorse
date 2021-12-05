@@ -84,8 +84,21 @@ int main(int argl, const char **argc) {
 
 
 */
+/*
+    std::mt19937_64 generator(231231231ull);
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data.train", std::ios::binary);
+    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
+    std::vector<Sample> samples;
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
+    std::copy(begin, end, std::back_inserter(samples));
+    std::shuffle(samples.begin(), samples.end(), generator);
+
+    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream));
 
 
+*/
 
 
 
@@ -157,16 +170,17 @@ return 0;
 
 
 
-/*
 
 
-    Match engine_match("test", "xxxx4");
+
+    Match engine_match("model12depth3", "modelbigdepth3");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(14);
+    engine_match.setNumThreads(1);
     engine_match.setHashSize(21);
     engine_match.start();
-*/
+
+
 
 
 
@@ -204,7 +218,6 @@ return 0;
     trainer.startTune();
     auto loss = trainer.calculateLoss();
     std::cout << "Loss: " << loss << std::endl;
-
 
 
     return 0;

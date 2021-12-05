@@ -4,9 +4,10 @@
 
 #include "BatchProvider.h"
 
-void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk,
-                             int64_t *patt_op,
-                             int64_t *patt_end) {
+void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
+                             int64_t *patt_end_big,int64_t *patt_op_small,
+                             int64_t *patt_end_small) {
+/*
     auto fill = [&](Sample s, size_t offset_small, size_t offset_big) {
         size_t big_counter = 0;
         size_t small_counter = 0;
@@ -57,7 +58,7 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
         fill(s, off_small, off_big);
 
 
-    }
+    }*/
 
 }
 
