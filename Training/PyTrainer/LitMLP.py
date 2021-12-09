@@ -136,7 +136,7 @@ class LayerStack(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="modelbig.weights"):
+    def __init__(self, hidden, output="small50net.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
