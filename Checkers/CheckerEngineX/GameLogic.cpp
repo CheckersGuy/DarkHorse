@@ -23,7 +23,7 @@ void initialize() {
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx2.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
     Zobrist::initializeZobrisKeys(seed);
 
 }
@@ -50,15 +50,18 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
     MoveListe liste;
     getMoves(board.getPosition(), liste);
+/*
 
     if (liste.length() == 1) {
         best = liste[0];
         return last_eval;
     }
+*/
 
 
 
     endTime = getSystemTime() + time;
+    auto start_time =getSystemTime();
     Value eval = INFINITE;
     Local local;
 
@@ -88,7 +91,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
             temp += "\n";
             temp += "\n";
             std::cout << temp;
-            std::cout << "Time needed: " << (getSystemTime() - endTime + time) << "\n";
+            std::cout << "Time needed: " << (getSystemTime() - start_time) << "\n";
         }
 
         if (isMateVal(local.best_score)) {
@@ -262,7 +265,7 @@ namespace Search {
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
 
             if (!u_classical) {
-                bestValue = network.evaluate(board.getPosition(), ply);
+                bestValue = network.evaluate(board.getPosition(),ply);
             } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }

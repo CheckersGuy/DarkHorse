@@ -84,10 +84,12 @@ int main(int argl, const char **argc) {
 
 
 */
+
+
 /*
     std::mt19937_64 generator(231231231ull);
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data.train", std::ios::binary);
-    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
+    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/opening_shuffle.train", std::ios::binary);
     std::vector<Sample> samples;
     std::istream_iterator<Sample> begin(stream);
     std::istream_iterator<Sample> end;
@@ -95,8 +97,14 @@ int main(int argl, const char **argc) {
     std::copy(begin, end, std::back_inserter(samples));
     std::shuffle(samples.begin(), samples.end(), generator);
 
-    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream));
+    size_t counter = 0;
+    std::copy_if(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream),[&](Sample s) {
+        if (Bits::pop_count(s.position.BP | s.position.WP) > 10)
+            counter++;
+        return Bits::pop_count(s.position.BP | s.position.WP) > 10;
+    } );
 
+    std::cout << "Num_Position: " << counter << std::endl;
 
 */
 
@@ -136,24 +144,16 @@ return 0;
       return 0;
 */
 
-
-
-
-
-
 /*
 
-    Generator generator("train3.pos", "/home/robin/DarkHorse/Training/TrainData/reinf.games");
+Generator generator("11manballots.pos", "/home/robin/DarkHorse/Training/TrainData/small_dataset_ballots_10m.games");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(12);
+    generator.set_parallelism(16);
     generator.set_time(10);
-    generator.set_max_position(1000000000ull);
+    generator.set_max_position(10000000ull);
     generator.startx();
-
-
 */
-
 
 
 /*
@@ -170,15 +170,18 @@ return 0;
 
 
 
-
-
-
-    Match engine_match("model12depth3", "modelbigdepth3");
+    Match engine_match("modeltest", "test");
     engine_match.setTime(100);
     engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(1);
-    engine_match.setHashSize(21);
+    engine_match.setNumThreads(12);
+    engine_match.setHashSize(20);
     engine_match.start();
+
+
+
+
+
+
 
 
 
@@ -209,15 +212,15 @@ return 0;
     //0.188813 1e-3
     //0.127496
 
-    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/lastcheck.samples");
-    trainer.setLearningRate(12000);
-    trainer.setEpochs(100);
+/*    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset_1m.train");
+    trainer.setLearningRate(32000);
+    trainer.setEpochs(30);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
-    std::cout << "Loss: " << loss << std::endl;
+    std::cout << "Loss: " << loss << std::endl;*/
 
 
     return 0;

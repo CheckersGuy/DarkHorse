@@ -4,8 +4,9 @@
 
 #include "BatchProvider.h"
 
-void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
-                             int64_t *patt_end_big,int64_t *patt_op_small,
+void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk,
+                             int64_t *patt_op_big,
+                             int64_t *patt_end_big, int64_t *patt_op_small,
                              int64_t *patt_end_small) {
 /*
     auto fill = [&](Sample s, size_t offset_small, size_t offset_big) {
@@ -120,6 +121,51 @@ void NetBatchProvider::next(float *results, float *inputs) {
     }
 
 
+}
+
+void NetBatchProvider2::next(float *results, float *patt1, float *patt2, float *patt3, float *patt4) {
+    auto create_input = [](Sample s, float *patt1, float *patt2, float *patt3, float *patt4, size_t offset) {
+        if (s.position.color == BLACK) {
+            s.position = s.position.getColorFlip();
+            s.result = -s.result;
+        }
+        float result;
+        if (s.result == -1)
+            result = 0.0f;
+        else if (s.result == 0)
+            result = 0.5f;
+        else if (s.result == 1)
+            result = 1.0f;
+        else
+            result = 0.5f;
+
+        Position pos = s.position;
+        //for now just a dummy below
+        uint32_t reg = region;
+        uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
+        uint32_t pieces = (pos.BP | pos.WP);
+        pieces = Bits::pext(pieces, reg);
+
+        uint32_t BP = pos.BP & (~pos.K);
+        uint32_t WP = pos.WP & (~pos.K);
+        uint32_t BK = pos.BP & pos.K;
+        uint32_t WK = pos.WP & pos.K;
+
+        size_t index = 0ull;
+        while (orig_pieces) {
+            uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
+            size_t temp_index = Bits::bitscan_foward(pieces);
+            size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull + ((BK & lsb) != 0u) * 3ull +
+                             ((WK & lsb) != 0u) * 4ull;
+
+            index += current * powers5[temp_index];
+            pieces &= pieces - 1u;
+            orig_pieces &= orig_pieces - 1u;
+        }
+
+
+        return result;
+    };
 }
 
 size_t BatchProvider::get_batch_size() const {

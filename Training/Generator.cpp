@@ -108,7 +108,7 @@ void Generator::startx() {
                 initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
                 Position previous = opening;
                 int move_count;
-                for (move_count = 0; move_count < 400; ++move_count) {
+                for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
                     game.emplace_back(board.getPosition());

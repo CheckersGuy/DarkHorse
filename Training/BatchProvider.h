@@ -66,8 +66,18 @@ public:
     using BatchProvider::BatchProvider;
 
     void next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
-              int64_t *patt_end_big,int64_t *patt_op_small,
-    int64_t *patt_end_small);
+              int64_t *patt_end_big, int64_t *patt_op_small,
+              int64_t *patt_end_small);
+};
+
+
+class NetBatchProvider2 : public BatchProvider {
+    //trying out a different network architecture
+public:
+
+    using BatchProvider::BatchProvider;
+
+    void next(float *results, float *patt1, float *patt2, float *patt3, float *patt4);
 };
 
 

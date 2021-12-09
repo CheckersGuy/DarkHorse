@@ -8,7 +8,7 @@
 
 int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
     auto num_pieces = pos.piece_count();
-    if (num_pieces > 8)
+    if (num_pieces > 10)
         return net1.evaluate(pos, ply);
 
     return net1.evaluate(pos, ply);

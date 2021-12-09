@@ -34,6 +34,7 @@ inline Position posFromString(const std::string &pos) {
 #include <Network.h>
 #include <iterator>
 #include <types.h>
+
 int main(int argl, const char **argc) {
     initialize();
     Board board;
@@ -41,45 +42,45 @@ int main(int argl, const char **argc) {
 
 
 
+
 /*
-    network.load("model12shuff.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
+    network.load("modelbigbig.weights");
+    network.addLayer(Layer{120, 1024});
+    network.addLayer(Layer{1024, 16});
+    network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
 
     network.init();
 */
 
-
-
-
-
-    network.load("modelbig.weights");
-    network.addLayer(Layer{120, 512});
-    network.addLayer(Layer{512, 16});
-    network.addLayer(Layer{16, 32});
+    network.load("modeltest.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-
     network.init();
 
 
 
 
-
-
-
-
-
-    TT.resize(23);
+    TT.resize(21);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
+    board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
     board.printBoard();
 
     Move best;
-    searchValue(board, best, MAX_PLY, 200000000, true);
+    searchValue(board, best, MAX_PLY, 10000000, true);
     board.makeMove(best);
     board.printBoard();
+
+
+
+
+
+
+
+
+
 
 
 
@@ -132,7 +133,7 @@ int main(int argl, const char **argc) {
 
             MoveListe liste;
             getMoves(board.getPosition(), liste);
-            searchValue(board, bestMove, 5, std::stoi(time_string), false);
+            searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
             std::cout << std::to_string(bestMove.getToIndex()) << "\n";

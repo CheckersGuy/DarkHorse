@@ -204,7 +204,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + "newworld.weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("xxxx6.weights");
+        gameWeights.storeWeights("small.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
