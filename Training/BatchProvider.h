@@ -57,7 +57,7 @@ class NetBatchProvider : public BatchProvider {
 public:
     using BatchProvider::BatchProvider;
 
-    void next(float *results, float *inputs);
+    void next(float *results,int64_t * moves,float *inputs);
 };
 
 class PattBatchProvider : public BatchProvider {
@@ -71,14 +71,6 @@ public:
 };
 
 
-class NetBatchProvider2 : public BatchProvider {
-    //trying out a different network architecture
-public:
-
-    using BatchProvider::BatchProvider;
-
-    void next(float *results, float *patt1, float *patt2, float *patt3, float *patt4);
-};
 
 
 #endif //READING_BATCHPROVIDER_H

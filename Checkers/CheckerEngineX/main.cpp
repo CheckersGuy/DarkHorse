@@ -43,16 +43,20 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-    network.load("modelbigbig.weights");
-    network.addLayer(Layer{120, 1024});
-    network.addLayer(Layer{1024, 16});
+
+
+/*    network.load("modeltest2.weights");
+    network.addLayer(Layer{120, 512});
+    network.addLayer(Layer{512, 16});
     network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
 
-    network.init();
-*/
+    network.init();*/
 
+
+
+
+/*
     network.load("modeltest.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
@@ -60,23 +64,31 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
     network.init();
 
+*/
+
+    network.load("verybig.weights");
+    network.addLayer(Layer{120, 1024});
+    network.addLayer(Layer{1024, 16});
+    network.addLayer(Layer{16, 32});
+    network.addLayer(Layer{32, 1});
+
+    network.init();
 
 
 
-    TT.resize(21);
+
+
+
+
+    TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
+    //board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
     board.printBoard();
 
     Move best;
     searchValue(board, best, MAX_PLY, 10000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
 
 
 

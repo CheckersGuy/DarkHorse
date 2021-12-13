@@ -71,22 +71,7 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
-/*
 
-    std::vector<Position> positions;
-    Board board;
-    TT.resize(21);
-    board = Position::getStartPosition();
-    Utilities::createNMoveBook(std::back_inserter(positions), 6, board, -2000, 2000);
-    Utilities::write_to_binary<Position>(positions.begin(), positions.end(),
-                                         "/home/robin/DarkHorse/Training/Positions/train2.pos");
-    std::cout << "Positions: " << positions.size() << std::endl;
-
-
-*/
-
-
-/*
     std::mt19937_64 generator(231231231ull);
     std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
     std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/opening_shuffle.train", std::ios::binary);
@@ -101,12 +86,13 @@ int main(int argl, const char **argc) {
     std::copy_if(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream),[&](Sample s) {
         if (Bits::pop_count(s.position.BP | s.position.WP) > 10)
             counter++;
+        std::cout<<(int)s.move<<std::endl;
         return Bits::pop_count(s.position.BP | s.position.WP) > 10;
     } );
 
     std::cout << "Num_Position: " << counter << std::endl;
 
-*/
+
 
 
 
@@ -169,17 +155,19 @@ Generator generator("11manballots.pos", "/home/robin/DarkHorse/Training/TrainDat
 */
 
 
+/*
 
-    Match engine_match("modeltest", "test");
-    engine_match.setTime(100);
+    Match engine_match("verybig", "test");
+    engine_match.setTime(1000);
     engine_match.setMaxGames(100000);
     engine_match.setNumThreads(12);
-    engine_match.setHashSize(20);
+    engine_match.setHashSize(21);
     engine_match.start();
 
 
 
 
+*/
 
 
 
