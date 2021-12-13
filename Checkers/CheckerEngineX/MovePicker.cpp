@@ -23,7 +23,6 @@ namespace Statistics {
     }
 
     int MovePicker::get_move_encoding(Color color, Move move) {
-        //range of values 0...90
 
         if (color == BLACK) {
             move.from = getMirrored(move.from);

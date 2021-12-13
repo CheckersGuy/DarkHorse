@@ -50,13 +50,15 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
     MoveListe liste;
     getMoves(board.getPosition(), liste);
-/*
+
+
 
     if (liste.length() == 1) {
         best = liste[0];
         return last_eval;
     }
-*/
+
+
 
 
 

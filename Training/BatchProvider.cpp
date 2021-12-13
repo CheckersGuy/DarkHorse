@@ -64,22 +64,22 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
 }
 
 
-void NetBatchProvider::next(float *results, float *inputs) {
+void NetBatchProvider::next(float *results,int64_t * moves,float *inputs) {
     static constexpr size_t INPUT_SIZE = 120;
     auto create_input = [](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
             s.position = s.position.getColorFlip();
             s.result = -s.result;
         }
-        float result;
-        if (s.result == -1)
+        float result=0.5f;
+        if (s.result == -1){
             result = 0.0f;
-        else if (s.result == 0)
-            result = 0.5f;
-        else if (s.result == 1)
+        }
+        else if (s.result == 1){
             result = 1.0f;
-        else
-            result = 0.5f;
+        }
+
+
         uint32_t white_men = s.position.WP & (~s.position.K);
         uint32_t black_men = s.position.BP & (~s.position.K);
         uint32_t white_kings = s.position.K & s.position.WP;
@@ -118,55 +118,12 @@ void NetBatchProvider::next(float *results, float *inputs) {
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
+        moves[i]=current.move;
     }
 
 
 }
 
-void NetBatchProvider2::next(float *results, float *patt1, float *patt2, float *patt3, float *patt4) {
-    auto create_input = [](Sample s, float *patt1, float *patt2, float *patt3, float *patt4, size_t offset) {
-        if (s.position.color == BLACK) {
-            s.position = s.position.getColorFlip();
-            s.result = -s.result;
-        }
-        float result;
-        if (s.result == -1)
-            result = 0.0f;
-        else if (s.result == 0)
-            result = 0.5f;
-        else if (s.result == 1)
-            result = 1.0f;
-        else
-            result = 0.5f;
-
-        Position pos = s.position;
-        //for now just a dummy below
-        uint32_t reg = region;
-        uint32_t orig_pieces = (pos.BP | pos.WP) & reg;
-        uint32_t pieces = (pos.BP | pos.WP);
-        pieces = Bits::pext(pieces, reg);
-
-        uint32_t BP = pos.BP & (~pos.K);
-        uint32_t WP = pos.WP & (~pos.K);
-        uint32_t BK = pos.BP & pos.K;
-        uint32_t WK = pos.WP & pos.K;
-
-        size_t index = 0ull;
-        while (orig_pieces) {
-            uint32_t lsb = (orig_pieces & ~(orig_pieces - 1u));
-            size_t temp_index = Bits::bitscan_foward(pieces);
-            size_t current = ((BP & lsb) != 0u) * 1ull + ((WP & lsb) != 0u) * 2ull + ((BK & lsb) != 0u) * 3ull +
-                             ((WK & lsb) != 0u) * 4ull;
-
-            index += current * powers5[temp_index];
-            pieces &= pieces - 1u;
-            orig_pieces &= orig_pieces - 1u;
-        }
-
-
-        return result;
-    };
-}
 
 size_t BatchProvider::get_batch_size() const {
     return batch_size;
@@ -179,3 +136,4 @@ size_t BatchProvider::get_buffer_size() const {
 PosStreamer &BatchProvider::get_streamer() {
     return streamer;
 }
+

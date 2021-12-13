@@ -36,20 +36,20 @@ extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *fi
 }
 
 
-extern "C" void get_next_batch(float *results, float *inputs) {
+extern "C" void get_next_batch(float *results,int64_t *moves, float *inputs) {
     if (streamer.get() == nullptr) {
         std::exit(-1);
     }
     NetBatchProvider *provider = static_cast<NetBatchProvider *>(streamer.get());
-    provider->next(results, inputs);
+    provider->next(results,moves, inputs);
 }
 
-extern "C" void get_next_val_batch(float *results, float *inputs) {
+extern "C" void get_next_val_batch(float *results,int64_t *moves, float *inputs) {
     if (val_streamer.get() == nullptr) {
         std::exit(-1);
     }
     NetBatchProvider *provider = static_cast<NetBatchProvider *>(val_streamer.get());
-    provider->next(results, inputs);
+    provider->next(results,moves, inputs);
 }
 
 extern "C" void
