@@ -71,6 +71,7 @@ int main(int argl, const char **argc) {
     use_classical(true);
 
 
+/*
 
     std::mt19937_64 generator(231231231ull);
     std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
@@ -86,13 +87,25 @@ int main(int argl, const char **argc) {
     std::copy_if(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream),[&](Sample s) {
         if (Bits::pop_count(s.position.BP | s.position.WP) > 10)
             counter++;
-        std::cout<<(int)s.move<<std::endl;
         return Bits::pop_count(s.position.BP | s.position.WP) > 10;
     } );
 
     std::cout << "Num_Position: " << counter << std::endl;
 
+*/
+/*
+    std::ifstream stream("/home/robin/DarkHorse/Training/Positions/11manballots.pos", std::ios::binary);
+    std::ifstream stream2("/home/robin/DarkHorse/Training/Positions/train3.pos", std::ios::binary);
+    std::ofstream ostream("/home/robin/DarkHorse/Training/Positions/train4.pos", std::ios::binary);
+    std::istream_iterator<Position> begin1(stream);
+    std::istream_iterator<Position> end1;
 
+    std::istream_iterator<Position> begin2(stream2);
+    std::istream_iterator<Position> end2;
+
+    std::copy(begin1, end1, std::ostream_iterator<Position>(ostream));
+    std::copy(begin2, end2, std::ostream_iterator<Position>(ostream));
+*/
 
 
 
@@ -130,44 +143,29 @@ return 0;
       return 0;
 */
 
-/*
-
-Generator generator("11manballots.pos", "/home/robin/DarkHorse/Training/TrainData/small_dataset_ballots_10m.games");
-    generator.set_hash_size(20);
+    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/bigopenset.games");
+    generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(16);
+    generator.set_parallelism(96);
     generator.set_time(10);
-    generator.set_max_position(10000000ull);
+    generator.set_max_position(1000000000ull);
     generator.startx();
-*/
+
 
 
 /*
 
-    PosStreamer streamer("/home/robin/DarkHorse/Training/TrainData/test2.positions", 10000,false);
-
-    std::cout<<"Size: "<<streamer.get_file_size()<<std::endl;
-    for(auto i=0;i<10;++i){
-        auto example = streamer.get_next();
-        example.position.printPosition();
-    }
-    return 0;
-*/
-
-
-/*
-
-    Match engine_match("verybig", "test");
-    engine_match.setTime(1000);
-    engine_match.setMaxGames(100000);
-    engine_match.setNumThreads(12);
-    engine_match.setHashSize(21);
-    engine_match.start();
-
-
-
+     Match engine_match("test4", "test3");
+     engine_match.setTime(100);
+     engine_match.setMaxGames(100000);
+     engine_match.setNumThreads(14);
+     engine_match.setHashSize(21);
+     engine_match.start();
 
 */
+
+
+
 
 
 

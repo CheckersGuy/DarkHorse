@@ -38,9 +38,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
-
-
+    use_classical(true);
 
 
 
@@ -55,16 +53,24 @@ int main(int argl, const char **argc) {
 
 
 
-
-/*
-    network.load("modeltest.weights");
+ /*   network.load("test4.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
+
     network.init();
 
-*/
+    network2.load("endgame.weights");
+    network2.addLayer(Layer{120, 1024});
+    network2.addLayer(Layer{1024, 16});
+    network2.addLayer(Layer{16, 32});
+    network2.addLayer(Layer{32, 1});
+
+    network2.init();*/
+
+
+/*
 
     network.load("verybig.weights");
     network.addLayer(Layer{120, 1024});
@@ -73,9 +79,7 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
 
     network.init();
-
-
-
+*/
 
 
 
@@ -83,19 +87,15 @@ int main(int argl, const char **argc) {
     TT.resize(23);
     board = Position::getStartPosition();
     //board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
+    //board = Position::pos_from_fen("W:WK6:B4,3");
     board.printBoard();
 
     Move best;
-    searchValue(board, best, MAX_PLY, 10000000, true);
+    searchValue(board, best, MAX_PLY, 100000000, true);
     board.makeMove(best);
     board.printBoard();
-
-
-
-
-
-
-
+    MoveListe liste;
+    getMoves(board.getPosition(), liste);
 
 
 

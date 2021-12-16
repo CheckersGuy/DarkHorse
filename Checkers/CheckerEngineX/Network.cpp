@@ -11,7 +11,7 @@ int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
     if (num_pieces > 10)
         return net1.evaluate(pos, ply);
 
-    return net1.evaluate(pos, ply);
+    return net2.evaluate(pos, ply);
 
 }
 

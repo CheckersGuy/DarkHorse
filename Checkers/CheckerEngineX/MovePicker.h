@@ -17,7 +17,6 @@ namespace Statistics {
 
         std::array<int, 32 * 16> history{0};
         std::array<int, 32 * 16> bfScore{0};
-
     public:
         Network policy;
         int getMoveScore(Position pos, Move move);

@@ -9,15 +9,14 @@ extern Line mainPV;
 
 void MoveListe::sort(Position current,Depth depth, int ply, Move ttMove, int start_index) {
 
-
     if (moveCounter-start_index <= 1)
         return;
+    //Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
         scores[i] =(short) Statistics::mPicker.getMoveScore(current,depth, ply, m, ttMove);
     }
-
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
         const int tmp = scores[i];
