@@ -4,15 +4,12 @@ import torchmetrics
 
 import Helper as h
 import pytorch_lightning as pl
-import TrainData as Train
 from torch.utils.data import DataLoader
 from ranger import Ranger
-from typing import Optional
 import struct
 import ctypes
 import pathlib
 import numpy as np
-
 
 def init_weights(layer):
     if isinstance(layer, nn.Linear):
@@ -138,7 +135,7 @@ class LayerStack(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="small50net.weights"):
+    def __init__(self, hidden, output="test4.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -215,7 +212,7 @@ class Network(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self, hidden, output="small50net.weights"):
+    def __init__(self, hidden, output="endgame.weights"):
         super(PolicyNetwork, self).__init__()
         layers = []
         self.output = output
@@ -245,8 +242,23 @@ class PolicyNetwork(pl.LightningModule):
         out = self.forward(x)
         loss = self.criterion(out, move.squeeze())
         tensorboard_logs = {"avg_val_loss": loss}
-        self.log('train_loss', loss)
+        self.accuracy(out, move.squeeze())
+        self.log('train_acc_step', self.accuracy)
         return {"loss": loss, "log": tensorboard_logs}
+
+    def training_epoch_end(self, outs):
+        # log epoch metric
+        self.log('train_acc_epoch', self.accuracy)
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move, x = val_batch
+        out = self.forward(x)
+        self.accuracy(out, move.squeeze())
+        self.log('val_loss', self.accuracy)
+        return {"val_loss": self.accuracy}
+
+    def validation_epoch_end(self, outputs):
+        self.log('train_acc_epoch', self.accuracy)
 
 
     def init_weights(self):

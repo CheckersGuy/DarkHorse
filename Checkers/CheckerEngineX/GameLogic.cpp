@@ -13,16 +13,18 @@ Weights<double> gameWeights;
 
 
 SearchGlobal glob;
-Network network;
+Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
+    Statistics::mPicker.init();
     gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
     Zobrist::initializeZobrisKeys();
 
 }
 
 void initialize(uint64_t seed) {
+    Statistics::mPicker.init();
     gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
     Zobrist::initializeZobrisKeys(seed);
 
@@ -52,11 +54,11 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     getMoves(board.getPosition(), liste);
 
 
-
     if (liste.length() == 1) {
         best = liste[0];
         return last_eval;
     }
+
 
 
 
@@ -267,7 +269,7 @@ namespace Search {
             //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
 
             if (!u_classical) {
-                bestValue = network.evaluate(board.getPosition(),ply);
+                bestValue = Network::evaluate(network,network2,board.getPosition(),ply);
             } else {
                 bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
             }

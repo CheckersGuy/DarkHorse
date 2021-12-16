@@ -118,6 +118,17 @@ void Generator::startx() {
 
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.back());
+
+                    if(  (Bits::pop_count(board.getPosition().BP|board.getPosition().WP)<=10 &&
+                          !board.getPosition().hasJumps(BLACK) && !board.getPosition().hasJumps(WHITE))
+                            ){
+                        std::cout<<"TEST"<<std::endl;
+                        for (auto &pos: game) {
+                            buffer[(*buffer_length)++] = pos;
+                            (*counter)++;
+                        }
+                        break;
+                    }
                     if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
