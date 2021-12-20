@@ -17,6 +17,18 @@ struct Layer {
     int out_features;
 };
 
+struct Accumulator {
+    std::unique_ptr<float[]> acc;
+
+    Accumulator(size_t size) {
+        acc = std::make_unique<float[]>(2 * size);
+    }
+
+    //to be implemented
+    void update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP, uint32_t r_BP,
+                uint32_t r_WK, uint32_t r_BK);
+};
+
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
 
 struct AlignedDeleter {
@@ -26,7 +38,7 @@ struct AlignedDeleter {
     }
 };
 
-template<typename T> using aligned_ptr = std::unique_ptr<T,AlignedDeleter>;
+template<typename T> using aligned_ptr = std::unique_ptr<T, AlignedDeleter>;
 
 struct Network {
 
@@ -53,12 +65,13 @@ struct Network {
 
     float compute_incre_forward_pass(Position next);
 
-    float* get_output();
+    float *get_output();
 
-    float forward_pass()const;
+    float forward_pass() const;
 
-    int evaluate(Position pos,int ply);
-    static int evaluate(Network&net1, Network& net2,Position pos, int ply);
+    int evaluate(Position pos, int ply);
+
+    static int evaluate(Network &net1, Network &net2, Position pos, int ply);
 
 
 };

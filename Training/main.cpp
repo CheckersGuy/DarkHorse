@@ -63,19 +63,29 @@ void remove_duplicates(std::string input, std::string output) {
 }
 
 #include <BatchProvider.h>
-
+#include "Util/File.h"
 int main(int argl, const char **argc) {
 
     initialize();
 
     use_classical(true);
+/*
+
+
+    merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset_removed.games","/home/robin/DarkHorse/Training/TrainData/bigdataopen.train"},"/home/robin/DarkHorse/Training/TrainData/open.train");
+    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/open.train","/home/robin/DarkHorse/Training/TrainData/open.train");
+
+*/
+
+
+
 
 
 /*
 
     std::mt19937_64 generator(231231231ull);
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/big_data_shuffl.train", std::ios::binary);
-    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/opening_shuffle.train", std::ios::binary);
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/open.train", std::ios::binary);
+    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/open_shuffled.train", std::ios::binary);
     std::vector<Sample> samples;
     std::istream_iterator<Sample> begin(stream);
     std::istream_iterator<Sample> end;
@@ -84,28 +94,13 @@ int main(int argl, const char **argc) {
     std::shuffle(samples.begin(), samples.end(), generator);
 
     size_t counter = 0;
-    std::copy_if(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream),[&](Sample s) {
-        if (Bits::pop_count(s.position.BP | s.position.WP) > 10)
-            counter++;
-        return Bits::pop_count(s.position.BP | s.position.WP) > 10;
-    } );
-
+    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream));
     std::cout << "Num_Position: " << counter << std::endl;
 
+    return 0;
 */
-/*
-    std::ifstream stream("/home/robin/DarkHorse/Training/Positions/11manballots.pos", std::ios::binary);
-    std::ifstream stream2("/home/robin/DarkHorse/Training/Positions/train3.pos", std::ios::binary);
-    std::ofstream ostream("/home/robin/DarkHorse/Training/Positions/train4.pos", std::ios::binary);
-    std::istream_iterator<Position> begin1(stream);
-    std::istream_iterator<Position> end1;
 
-    std::istream_iterator<Position> begin2(stream2);
-    std::istream_iterator<Position> end2;
 
-    std::copy(begin1, end1, std::ostream_iterator<Position>(ostream));
-    std::copy(begin2, end2, std::ostream_iterator<Position>(ostream));
-*/
 
 
 
@@ -114,15 +109,6 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-
-
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/bloomcloudrescored",
-                      "/home/robin/DarkHorse/Training/TrainData/bloomcloudrescored");
-
-    return 0;
-
-*/
 /*
 std::ofstream out("/home/robin/DarkHorse/Training/TrainData/policyopen.samples",std::ios::binary);
 std::ifstream stream("/home/robin/PycharmProjects/pythonProject2/TrainData/policy.samples",std::ios::binary);
@@ -142,56 +128,30 @@ return 0;
       Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/lastcheck.games", "/home/robin/DarkHorse/Training/TrainData/xxx.samples");
       return 0;
 */
-
+/*
     Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/bigopenset.games");
     generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
     generator.set_parallelism(96);
     generator.set_time(10);
     generator.set_max_position(1000000000ull);
-    generator.startx();
+    generator.startx();*/
 
 
 
-/*
 
-     Match engine_match("test4", "test3");
+
+     Match engine_match("bla", "test");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
      engine_match.setNumThreads(14);
      engine_match.setHashSize(21);
      engine_match.start();
 
-*/
 
 
 
 
-
-
-
-
-
-
-
-
-/*
-  BatchProvider provider("/home/robin/DarkHorse/Training/TrainData/lastcheck.samples",1000,10);
-
-  for(auto i=0;i<100000;++i){
-      std::array<float,120>inputs;
-      std::array<float,1>results;
-      provider.next(&results.front(),&inputs.front());
-      float s = 0;
-      for(auto k=0;k<120;++k)
-          s+=inputs[k];
-      if(s>10000){
-          std::cout<<s<<std::endl;
-          std::cout<<i<<std::endl;
-          break;
-      }
-  }
-*/
 
     // 0.190537  1e-4
     //0.188262   6e-4
