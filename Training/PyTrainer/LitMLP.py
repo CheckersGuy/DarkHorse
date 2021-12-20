@@ -135,7 +135,7 @@ class LayerStack(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="test4.weights"):
+    def __init__(self, hidden, output="test5.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -212,7 +212,7 @@ class Network(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self, hidden, output="endgame.weights"):
+    def __init__(self, hidden, output="policy.weights"):
         super(PolicyNetwork, self).__init__()
         layers = []
         self.output = output

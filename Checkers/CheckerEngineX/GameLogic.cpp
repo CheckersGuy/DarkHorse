@@ -17,14 +17,12 @@ Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    Statistics::mPicker.init();
     gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
     Zobrist::initializeZobrisKeys();
 
 }
 
 void initialize(uint64_t seed) {
-    Statistics::mPicker.init();
     gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
     Zobrist::initializeZobrisKeys(seed);
 
@@ -52,12 +50,14 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
     MoveListe liste;
     getMoves(board.getPosition(), liste);
+/*
 
 
     if (liste.length() == 1) {
         best = liste[0];
         return last_eval;
     }
+*/
 
 
 

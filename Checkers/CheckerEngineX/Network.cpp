@@ -5,6 +5,11 @@
 #include <complex>
 #include "Network.h"
 
+void Accumulator::update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP,
+                         uint32_t r_BP, uint32_t r_WK, uint32_t r_BK) {
+
+}
+
 
 int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
     auto num_pieces = pos.piece_count();
@@ -19,9 +24,8 @@ std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t nex
     //computes the indices which need to be either set to 0
     //or for which we need to compute the matrix-vec multiply
     uint32_t changed_to_ones = next & (~previous);
-    uint32_t n_previous = ~previous;
     uint32_t n_next = ~next;
-    uint32_t changed_to_zeros = n_next & (~n_previous);
+    uint32_t changed_to_zeros = n_next & (previous);
     return std::make_pair(changed_to_zeros, changed_to_ones);
 }
 
