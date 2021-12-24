@@ -35,10 +35,10 @@ void Network::load(std::string file) {
         std::exit(-1);
     int num_weights, num_bias;
     stream.read((char *) &num_weights, sizeof(int));
-    weights = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_weights, 32));;
+    weights = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_weights, 32));;
     stream.read((char *) weights.get(), sizeof(float) * num_weights);
     stream.read((char *) &num_bias, sizeof(int));
-    biases = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_bias, 32));
+    biases = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_bias, 32));
     stream.read((char *) biases.get(), sizeof(float) * num_bias);
     stream.close();
 
@@ -56,16 +56,16 @@ void Network::init() {
     for (Layer l: layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
-    temp = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
-    input = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
+    temp = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
+    input = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
 
     for (auto i = 0; i < max_units; ++i) {
         temp[i] = 0;
         input[i] = 0;
     }
     const size_t units = layers[0].out_features;
-    z_black = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
-    z_white = aligned_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
+    z_black = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
+    z_white = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
     //initializing those two vectors
     for (auto i = 0; i < units; ++i) {
         z_black[i] = biases[i];

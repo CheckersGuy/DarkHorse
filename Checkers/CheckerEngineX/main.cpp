@@ -38,7 +38,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
     Statistics::mPicker.init();
 
@@ -53,21 +53,20 @@ int main(int argl, const char **argc) {
 
 
 
-    network.load("test5.weights");
-    network.addLayer(Layer{120, 1024});
-    network.addLayer(Layer{1024, 16});
-    network.addLayer(Layer{16, 32});
+    network.load("test4.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();
 
-    network2.load("endgame.weights");
-    network2.addLayer(Layer{120, 1024});
-    network2.addLayer(Layer{1024, 16});
-    network2.addLayer(Layer{16, 32});
+    network2.load("endgame2.weights");
+    network2.addLayer(Layer{120, 256});
+    network2.addLayer(Layer{256, 32});
+    network2.addLayer(Layer{32, 32});
     network2.addLayer(Layer{32, 1});
 
     network2.init();
-
 
 /*
 

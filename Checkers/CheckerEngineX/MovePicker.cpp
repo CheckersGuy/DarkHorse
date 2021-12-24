@@ -9,11 +9,12 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-        policy.load("policy.weights");
+        policy.load("policyend.weights");
         policy.addLayer(Layer{120, 256});
         policy.addLayer(Layer{256, 32});
         policy.addLayer(Layer{32, 32});
         policy.addLayer(Layer{32, 100});
+
         policy.init();
 
     }
@@ -119,13 +120,15 @@ namespace Statistics {
         std::fill(history.begin(), history.end(), 0);
     }
 
-    int MovePicker::getMoveScore(Position pos, Move move) {
-  /*    const int index = getHistoryIndex(pos, move);
-        const int score = history[index];
-        const int bf_score = bfScore[index] + 1;
+    int MovePicker::getMoveScore(Position pos, Move move, Depth depth) {
+            const int index = getHistoryIndex(pos, move);
+            const int score = history[index];
+            const int bf_score = bfScore[index] + 1;
+            return score;
+
+
+    /*    auto score = policy.get_output()[get_move_encoding(pos.getColor(), move)] * 100;
         return score;*/
-       auto score = policy.get_output()[get_move_encoding(pos.getColor(), move)] * 100;
-        return score;
     }
 
     int MovePicker::getMoveScore(Position current, Depth depth, int ply, Move move, Move ttMove) {
@@ -136,7 +139,7 @@ namespace Statistics {
             return (int) Bits::pop_count(move.captures);
         }
 
-        return getMoveScore(current, move);
+        return getMoveScore(current, move,depth);
 
     }
 

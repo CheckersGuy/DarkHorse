@@ -69,13 +69,10 @@ int main(int argl, const char **argc) {
     initialize();
 
     use_classical(true);
-/*
 
 
-    merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset_removed.games","/home/robin/DarkHorse/Training/TrainData/bigdataopen.train"},"/home/robin/DarkHorse/Training/TrainData/open.train");
-    remove_duplicates("/home/robin/DarkHorse/Training/TrainData/open.train","/home/robin/DarkHorse/Training/TrainData/open.train");
+    merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset.games","/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train"},"/home/robin/DarkHorse/Training/TrainData/patt.train");
 
-*/
 
 
 
@@ -140,14 +137,16 @@ return 0;
 
 
 
+/*
 
-     Match engine_match("bla", "test");
+     Match engine_match("small", "test");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(14);
+     engine_match.setNumThreads(10);
      engine_match.setHashSize(21);
      engine_match.start();
 
+*/
 
 
 
@@ -158,15 +157,17 @@ return 0;
     //0.188813 1e-3
     //0.127496
 
-/*    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset_1m.train");
-    trainer.setLearningRate(32000);
-    trainer.setEpochs(30);
+
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/patt.train");
+    trainer.setLearningRate(15000);
+    trainer.setEpochs(3000);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
-    std::cout << "Loss: " << loss << std::endl;*/
+    std::cout << "Loss: " << loss << std::endl;
+
 
 
     return 0;
