@@ -24,6 +24,8 @@ struct Accumulator {
         acc = std::make_unique<float[]>(2 * size);
     }
 
+    Accumulator()=default;
+
     //to be implemented
     void update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP, uint32_t r_BP,
                 uint32_t r_WK, uint32_t r_BK);
@@ -31,25 +33,17 @@ struct Accumulator {
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
 
-struct AlignedDeleter {
-    void operator()(float *ptr) {
-        //needs to be different fo MSVC
-        _mm_free(ptr);
-    }
-};
-
-template<typename T> using aligned_ptr = std::unique_ptr<T, AlignedDeleter>;
 
 struct Network {
 
     Position p_black, p_white;
     std::vector<Layer> layers;
-    aligned_ptr<float[]> biases;
-    aligned_ptr<float[]> weights;
-    aligned_ptr<float[]> input;
-    aligned_ptr<float[]> temp;
-    aligned_ptr<float[]> z_black;
-    aligned_ptr<float[]> z_white;
+    std::unique_ptr<float[]> biases;
+    std::unique_ptr<float[]> weights;
+    std::unique_ptr<float[]> input;
+    std::unique_ptr<float[]> temp;
+    std::unique_ptr<float[]> z_black;
+    std::unique_ptr<float[]> z_white;
     int max_units{0};
 
 

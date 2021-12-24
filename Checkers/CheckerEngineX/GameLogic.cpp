@@ -17,13 +17,13 @@ Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/smallxxx.weights");
     Zobrist::initializeZobrisKeys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxx6.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/xxxxy6.weights");
     Zobrist::initializeZobrisKeys(seed);
 
 }

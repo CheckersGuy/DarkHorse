@@ -271,7 +271,7 @@ void Match::start() {
 
     for (int p = 0; p < num_matches; ++p) {
         Engine engine{first, Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
-        engine.setTime(time);
+        engine.setTime(2*time);
         engine.setHashSize(hash_size);
         Engine engine2{second, Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
         engine2.setTime(time);

@@ -7,15 +7,15 @@ void MoveListe::reset() {
 
 extern Line mainPV;
 
-void MoveListe::sort(Position current,Depth depth, int ply, Move ttMove, int start_index) {
+void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int start_index) {
 
-    if (moveCounter-start_index <= 1)
+    if (moveCounter - start_index <= 1)
         return;
-    Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
+   // Statistics::mPicker.policy.compute_incre_forward_pass(current);
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] =(short) Statistics::mPicker.getMoveScore(current,depth, ply, m, ttMove);
+        scores[i] = (short) Statistics::mPicker.getMoveScore(current, depth, ply, m, ttMove);
     }
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
@@ -27,7 +27,7 @@ void MoveListe::sort(Position current,Depth depth, int ply, Move ttMove, int sta
             scores[j] = scores[j - 1];
         }
         liste[j] = tmpMove;
-        scores[j] = (short)tmp;
+        scores[j] = (short) tmp;
     }
 
 }
