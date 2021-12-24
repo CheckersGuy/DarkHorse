@@ -23,9 +23,9 @@ void print_msgs(char* msg)
 
 
 
-std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
+Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
     if (pos.hasJumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-        return std::nullopt;
+        return UNKNOWN;
 
     EGDB_NORMAL_BITBOARD board;
     board.white = pos.WP;
@@ -37,39 +37,39 @@ std::optional<int>get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handl
     auto val = handle->lookup(handle, &normal, (pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE, 0);
 
     if (val == EGDB_UNKNOWN)
-        return std::nullopt;
+        return UNKNOWN;
 
     if (val == EGDB_WIN)
-        return pos.color;
+        return (pos.color ==BLACK)?BLACK_WON : WHITE_WON;
 
     if (val == EGDB_LOSS)
-        return -pos.color;
+        return (pos.color==BLACK)?WHITE_WON : BLACK_WON;
 
     if (val == EGDB_DRAW)
-        return 0;
+        return DRAW;
 
 
 
-    return std::nullopt;
+    return UNKNOWN;
 }
 
-int get_game_result(std::vector<Position>& game) {
+Result get_game_result(std::vector<Position>& game) {
     MoveListe liste;
     getMoves(game.back(), liste);
     const size_t rep_count = std::count(game.begin(), game.end(), game.back());
 
     if (liste.length() == 0) {
         const int result = -game.back().color;
-        return result;
+        return (result == -1) ? BLACK_WON : WHITE_WON;
     }
     else if (rep_count >= 3) {
-        return 0;
+        return DRAW;
     }
 }
 
 std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_pieces, EGDB_DRIVER* handle) {
     std::vector<Sample> sample_data;
-    const int result = get_game_result(game);
+    const Result result = get_game_result(game);
     for (auto p : game) {
         Sample s;
         s.result = result;
@@ -80,12 +80,12 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
     int last_stop = -1;
     for (auto i = 0; i < game.size(); ++i) {
         auto tb_result = get_tb_result(game[i], max_pieces, handle);
-        if (!tb_result.has_value())
+        if (tb_result == UNKNOWN)
             continue;
             for (int k = i; k > last_stop; k--) {
                 Sample s;
                 s.position = game[k];
-                s.result =tb_result.value();
+                s.result =tb_result;
                 sample_data[k] = s;
             }
             last_stop = i;
@@ -104,9 +104,9 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
             copy = previous;
             copy.makeMove(move);
             if (copy != pos) {
-                std::cerr << "Couldnt extract the move" << std::endl;
-                std::exit(-1);
+                return  std::vector<Sample>{};
             }
+        
 
             sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.getColor(), move);
             if (sample_data[k - 1].move >= 100) {
@@ -158,23 +158,20 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
      
             for (auto s : samples) {
                 total_count++;
-                if (!filter.has(s)) {
-                    filter.insert(s);
-                    buffer.emplace_back(s);
-                    uniq_count++;
-                }
+                buffer.emplace_back(s);
             }
             game.clear();
             game_counter++;
         }
         previous = pos;
         if (buffer.size() >= max_cap_buffer) {
+            std::cout << "Clearing buffer" << std::endl;
             std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
             buffer.clear();
         }
         
     }
-    std::cout << "Total Position: " << total_count << " after removing: " << uniq_count << std::endl;
+    std::cout << "Total Position: " << std::endl;
     std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
 }
 
@@ -184,10 +181,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 
 int main(int argl, const char **argc) {
 
-    if (argl < 3) {
-        std::cerr << "You did not pass enough arguments" << std::endl;
-        std::exit(-1);
-    }
+  
 
     int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
@@ -208,14 +202,11 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return(1);
     }
-    pthread_mutex_lock(pmutex);
-    std::string in_file(argc[1]);
-    std::string out_file(argc[2]);
+    std::string in_file("C:\\Users\\leagu\\Downloads\\small_dataset.games");
+    std::string out_file("C:\\Users\\leagu\\Downloads\\small_dataset.train");
 
-    std::string path(in_file);
-    std::string output(out_file);
   
-    create_samples_from_games(path, output, max_pieces, handle);
+    create_samples_from_games(in_file, out_file, max_pieces, handle);
 
 
      handle->close(handle);
