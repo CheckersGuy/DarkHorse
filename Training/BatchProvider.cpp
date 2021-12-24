@@ -69,13 +69,13 @@ void NetBatchProvider::next(float *results,int64_t * moves,float *inputs) {
     auto create_input = [](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
             s.position = s.position.getColorFlip();
-            s.result = -s.result;
+            s.result = ~s.result;
         }
         float result=0.5f;
-        if (s.result == -1){
+        if (s.result == BLACK_WON){
             result = 0.0f;
         }
-        else if (s.result == 1){
+        else if (s.result == WHITE_WON){
             result = 1.0f;
         }
 

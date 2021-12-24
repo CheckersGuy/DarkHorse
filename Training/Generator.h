@@ -28,6 +28,7 @@ class Generator {
 private:
     size_t buffer_clear_count{100000};
     size_t max_positions{0};
+    size_t piece_lim{0};
     std::string output;
     size_t parallelism{1};
     std::vector<Position> openings;
@@ -62,6 +63,8 @@ public:
     void set_hash_size(int size);
 
     void set_max_position(size_t max);
+
+    void set_piece_limit(size_t num_pieces);
 
 };
 
