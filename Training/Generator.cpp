@@ -24,6 +24,10 @@ void Generator::set_max_position(size_t max) {
     max_positions = max;
 }
 
+void Generator::set_piece_limit(size_t num_pieces) {
+    piece_lim = num_pieces;
+}
+
 void Generator::startx() {
     //Positions to be saved to a file
     initialize();
@@ -105,12 +109,21 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 std::vector<Position> game;
                 TT.clear();
-                initialize(std::chrono::high_resolution_clock::now().time_since_epoch().count());
-                Position previous = opening;
+                Zobrist::initializeZobrisKeys(std::chrono::high_resolution_clock::now().time_since_epoch().count());
                 int move_count;
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     getMoves(board.getPosition(), liste);
+
+                    //if the position happens to be an illegal position
+                    //we skip this position
+                    if (!board.getPosition().islegal()) {
+                        pthread_mutex_lock(pmutex);
+                        (*error_counter)++;
+                        pthread_mutex_unlock(pmutex);
+                        break;
+                    }
+
                     game.emplace_back(board.getPosition());
 
                     //some form of adjudication trying
@@ -118,11 +131,10 @@ void Generator::startx() {
 
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.back());
-
-                    if(  (Bits::pop_count(board.getPosition().BP|board.getPosition().WP)<=10 &&
-                          !board.getPosition().hasJumps(BLACK) && !board.getPosition().hasJumps(WHITE))
-                            ){
-                        std::cout<<"TEST"<<std::endl;
+                    //experimental stuff below
+                    if ((Bits::pop_count(board.getPosition().BP | board.getPosition().WP) <= piece_lim &&
+                         !board.getPosition().hasJumps(BLACK) && !board.getPosition().hasJumps(WHITE))
+                            ) {
                         for (auto &pos: game) {
                             buffer[(*buffer_length)++] = pos;
                             (*counter)++;
@@ -140,7 +152,7 @@ void Generator::startx() {
                         }
                         pthread_mutex_unlock(pmutex);
                         break;
-                    }else if (count >= 3) {
+                    } else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
                         //draw by repetition
@@ -153,21 +165,8 @@ void Generator::startx() {
                     }
 
                     Move best;
-                    auto t1 = std::chrono::high_resolution_clock::now();
                     auto value = searchValue(board, best, MAX_PLY, time_control, false);
-                    auto t2 = std::chrono::high_resolution_clock::now();
-                    auto dur = t2-t1;
-                    //std::cout<<"Took: "<<dur.count()/1000000<<std::endl;
                     board.makeMove(best);
-
-                    if (Bits::pop_count(board.getPosition().BP | board.getPosition().WP) >
-                        Bits::pop_count(previous.BP | previous.WP)) {
-                        pthread_mutex_lock(pmutex);
-                        *stop = true;
-                        (*error_counter)++;
-                        pthread_mutex_unlock(pmutex);
-                    }
-                    previous = board.getPosition();
                 }
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {

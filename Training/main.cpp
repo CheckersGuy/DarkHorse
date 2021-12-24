@@ -70,11 +70,13 @@ int main(int argl, const char **argc) {
 
     use_classical(true);
 
+/*
 
     merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset.games","/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train"},"/home/robin/DarkHorse/Training/TrainData/patt.train");
 
 
 
+*/
 
 
 
@@ -125,14 +127,15 @@ return 0;
       Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/lastcheck.games", "/home/robin/DarkHorse/Training/TrainData/xxx.samples");
       return 0;
 */
-/*
-    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/bigopenset.games");
+
+    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
     generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(96);
+    generator.set_parallelism(6);
     generator.set_time(10);
+    generator.set_piece_limit(10);
     generator.set_max_position(1000000000ull);
-    generator.startx();*/
+    generator.startx();
 
 
 
@@ -158,7 +161,7 @@ return 0;
     //0.127496
 
 
-    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+/*    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/patt.train");
     trainer.setLearningRate(15000);
     trainer.setEpochs(3000);
@@ -166,7 +169,7 @@ return 0;
     trainer.setCValue(-1e-3);
     trainer.startTune();
     auto loss = trainer.calculateLoss();
-    std::cout << "Loss: " << loss << std::endl;
+    std::cout << "Loss: " << loss << std::endl;*/
 
 
 

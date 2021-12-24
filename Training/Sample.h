@@ -8,9 +8,24 @@
 #include "Position.h"
 #include <random>
 
+enum Result : int {
+    BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0
+};
+
+constexpr Result operator~(Result one) {
+    if (one == BLACK_WON)
+        return WHITE_WON;
+    if (one == WHITE_WON)
+        return BLACK_WON;
+    return one;
+}
+
+//Needs some more changes above
+//Draw shouldnt be zero
+
 struct Sample {
     Position position;
-    int result{1000};
+    Result result{UNKNOWN};
     int move{-1};
 
     friend std::ostream &operator<<(std::ostream &stream, const Sample s);

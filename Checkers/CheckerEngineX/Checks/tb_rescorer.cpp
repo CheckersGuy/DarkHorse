@@ -208,7 +208,7 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return(1);
     }
-
+    pthread_mutex_lock(pmutex);
     std::string in_file(argc[1]);
     std::string out_file(argc[2]);
 

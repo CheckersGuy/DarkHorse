@@ -69,12 +69,15 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
     double result;
-    if (sample.result == -1)
+    if (sample.result == BLACK_WON)
         result = 0.0;
-    else if (sample.result == 1)
+    else if (sample.result == WHITE_WON)
         result = 1.0;
-    else
+    else if(sample.result == DRAW)
         result = 0.5;
+    else if(sample.result == UNKNOWN){
+        return;
+    }
     double c = getCValue();
 
     double error = sigmoid(c, qStatic) - result;
@@ -173,9 +176,8 @@ void Trainer::epoch() {
         uint32_t WK = sample.position.WP & (sample.position.K);
         uint32_t BK = sample.position.BP & (sample.position.K);
 
-        if (num_pieces > 24 || std::abs(sample.position.color) != 1 || num_pieces == 0 ||
-            ((WP & BP) != 0) || ((WK & BK) != 0)) {
-            sample.position.printPosition();
+        if (!sample.position.islegal()) {
+            continue;
         }
 
         gradientUpdate(sample);

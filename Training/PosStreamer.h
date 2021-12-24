@@ -33,7 +33,7 @@ private:
 public:
 
     PosStreamer(std::string file_path, size_t buffer_size, bool shuffle = true, size_t seed = 231231231ull)
-            : buffer_size(buffer_size), shuffle(shuffle) {
+            : buffer_size(buffer_size), shuffle(shuffle),file_path(file_path) {
 
         //computing the file_size
         ptr = buffer_size + 1;
@@ -43,7 +43,6 @@ public:
             std::cerr << "Could not open the stream" << std::endl;
             std::exit(-1);
         }
-        file_path = file_path;
         buffer = std::make_unique<Sample[]>(buffer_size);
         generator = std::mt19937_64(seed);
     }

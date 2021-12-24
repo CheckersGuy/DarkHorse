@@ -228,6 +228,11 @@ bool Position::islegal() const {
     if ((K != 0) && (K & (BP | WP)) == 0)
         return false;
 
+    uint32_t num_wp = Bits::pop_count(WP);
+    uint32_t num_bp = Bits::pop_count(BP);
+    if (num_wp > 12 || num_bp > 12)
+        return false;
+
     return true;
 }
 

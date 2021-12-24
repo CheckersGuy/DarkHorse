@@ -51,7 +51,12 @@ namespace Utilities {
                     for (auto p: game) {
                         Sample s;
                         s.position = p;
-                        s.result = result;
+                        if(result ==-1)
+                            s.result = BLACK_WON;
+                        else if(result ==1)
+                            s.result = WHITE_WON;
+                        else
+                            s.result = DRAW;
                         if (!filter.has(s)) {
                             filter.insert(s);
                             buffer.emplace_back(s);
@@ -64,7 +69,7 @@ namespace Utilities {
                     for (auto p: game) {
                         Sample s;
                         s.position = p;
-                        s.result = 0;
+                        s.result = DRAW;
                         if (!filter.has(s)) {
                             filter.insert(s);
                             buffer.emplace_back(s);
