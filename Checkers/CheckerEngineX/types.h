@@ -69,21 +69,6 @@ constexpr int MAX_ASP = 3000;
 
 
 
-
-/*
-
-constexpr int prob_cut = 30;
-constexpr int sing_ext = 50;
-constexpr int asp_wind =15;
-constexpr int MAX_ASP = 300;
-
-*/
-
-
-
-
-
-
 using Depth = int;
 using Ply = int;
 using Value = int;

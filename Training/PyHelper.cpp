@@ -19,7 +19,7 @@ extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_p
         }
 
     }
-    return streamer->get_streamer().get_file_size();
+    return streamer->get_streamer().get_num_positions();
 }
 
 extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path, bool patterns) {
@@ -32,7 +32,7 @@ extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *fi
             val_streamer = std::make_unique<PattBatchProvider>(path, buffer_size, batch_size);
         }
     }
-    return val_streamer->get_streamer().get_file_size();
+    return val_streamer->get_streamer().get_num_positions();
 }
 
 

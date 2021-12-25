@@ -73,9 +73,9 @@ void Trainer::gradientUpdate(const Sample &sample) {
         result = 0.0;
     else if (sample.result == WHITE_WON)
         result = 1.0;
-    else if(sample.result == DRAW)
+    else if (sample.result == DRAW)
         result = 0.5;
-    else if(sample.result == UNKNOWN){
+    else if (sample.result == UNKNOWN) {
         return;
     }
     double c = getCValue();
@@ -98,9 +98,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
             diff *= end_phase * color;
         }
 
-        const size_t offset1 = 8ull * 157464ull;
-        const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
-
         auto f = [&](size_t index) {
             size_t sub_index = index + p;
             momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
@@ -113,6 +110,7 @@ void Trainer::gradientUpdate(const Sample &sample) {
             Bits::small_index(f, x_flipped.WP, x_flipped.BP, x_flipped.K);
         }
     }
+
 
     //for king_op
     {
@@ -131,7 +129,6 @@ void Trainer::gradientUpdate(const Sample &sample) {
         momentums[SIZE + 1] = beta * momentums[SIZE + 1] + (1.0 - beta) * diff;
         gameWeights.kingEnd = gameWeights.kingEnd - getLearningRate() * momentums[SIZE + 1];
     }
-
     {
         //for tempo ranks black side
         uint32_t man = x.BP & (~x.K);
@@ -167,15 +164,9 @@ void Trainer::gradientUpdate(const Sample &sample) {
 
 
 void Trainer::epoch() {
-    size_t num_samples = pos_streamer.get_file_size();
+    size_t num_samples = pos_streamer.get_num_positions();
     for (auto i = size_t{0}; i < num_samples; ++i) {
         Sample sample = pos_streamer.get_next();
-        auto num_pieces = Bits::pop_count(sample.position.BP | sample.position.WP);
-        uint32_t WP = sample.position.WP & (~sample.position.K);
-        uint32_t BP = sample.position.BP & (~sample.position.K);
-        uint32_t WK = sample.position.WP & (sample.position.K);
-        uint32_t BK = sample.position.BP & (sample.position.K);
-
         if (!sample.position.islegal()) {
             continue;
         }
@@ -188,11 +179,11 @@ void Trainer::epoch() {
 
 void Trainer::startTune() {
     int counter = 0;
-    std::cout << "Data_size: " << pos_streamer.get_file_size() << std::endl;
+    std::cout << "Data_size: " << pos_streamer.get_num_positions() << std::endl;
     while (counter < getEpochs()) {
         std::cout << "Start of epoch: " << counter << "\n\n" << std::endl;
         std::cout << "CValue: " << getCValue() << std::endl;
-        double num_games = pos_streamer.get_file_size();
+        double num_games = (double)(pos_streamer.get_num_positions());
         double loss = accu_loss / ((double) num_games);
         loss = sqrt(loss);
         accu_loss = 0.0;
@@ -206,7 +197,7 @@ void Trainer::startTune() {
         counter++;
         std::string name = "X" + std::to_string(counter) + "newworld.weights";
         gameWeights.storeWeights(name);
-        gameWeights.storeWeights("small2.weights");
+        gameWeights.storeWeights("small2xx.weights");
         std::cout << "LearningRate: " << learningRate << std::endl;
         std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
         std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;

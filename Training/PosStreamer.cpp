@@ -30,11 +30,9 @@ Sample PosStreamer::get_next() {
                 buffer[read_elements++] = (*begin);
             }
         } while (read_elements < buffer_size);
-        //std::cout << "buffer is full now" << std::endl;
         //the buffer is filled now so we can shuffle the elements
         if (shuffle) {
             std::shuffle(buffer.get(), buffer.get() + buffer_size, generator);
-            //std::cout << "buffer is shuffled" << std::endl;
         }
     }
     return buffer[ptr++];
@@ -53,12 +51,13 @@ const std::string &PosStreamer::get_file_path() {
     return file_path;
 }
 
-size_t PosStreamer::get_file_size(std::string path) {
-    struct stat stat_buf;
-    int rc = stat(path.c_str(), &stat_buf);
-    return rc == 0 ? stat_buf.st_size : -1;
+
+size_t PosStreamer::get_file_size() const{
+    std::filesystem::path my_path(file_path);
+    return std::filesystem::file_size(my_path);
 }
 
-size_t PosStreamer::get_file_size() const {
-    return file_size;
+
+size_t PosStreamer::get_num_positions() const {
+    return get_file_size() / sizeof(Sample);
 }
