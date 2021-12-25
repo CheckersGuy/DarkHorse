@@ -17,7 +17,7 @@
 #include <fcntl.h>
 #include <types.h>
 #include <sys/mman.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
 #include <iterator>
 #include "Sample.h"

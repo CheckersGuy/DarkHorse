@@ -64,69 +64,70 @@ void remove_duplicates(std::string input, std::string output) {
 
 #include <BatchProvider.h>
 #include "Util/File.h"
+
 int main(int argl, const char **argc) {
 
     initialize();
 
     use_classical(true);
 
+    /*   std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train", std::ios::binary);
+       std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/endgame.train",std::ios::binary);
+       std::istream_iterator<Sample> begin(stream);
+       std::istream_iterator<Sample> end{};
+   */
+    /*   std::for_each(begin, end, [](Sample s) {
+           int result = static_cast<int>(s.result);
+           if(result == -1){
+              s.result = BLACK_WON;
+           }else if(result ==1){
+               s.result = WHITE_WON;
+           }else if(result ==0){
+               s.result = DRAW;
+           }else{
+               s.result = UNKNOWN;
+           }
+           std::cout << result << std::endl;
+       });
+       */
+    /*  std::transform(begin,end,std::ostream_iterator<Sample>(stream_out),[](Sample s){
+          int result = static_cast<int>(s.result);
+          Sample copy = s;
+          if(result == -1){
+              copy.result = BLACK_WON;
+          }else if(result ==1){
+              copy.result = WHITE_WON;
+          }else if(result ==0){
+              copy.result = DRAW;
+          }else{
+              copy.result = UNKNOWN;
+          }
+          return copy;
+          });
+
+  */
+
+
+    /*   merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset.train",
+                            "/home/robin/DarkHorse/Training/TrainData/endgame.train"},
+                           "/home/robin/DarkHorse/Training/TrainData/patt.train");
+
+   */
+
+
+    /*   std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
+       std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/patt_val.train", std::ios::binary);
+       std::istream_iterator<Sample> begin(stream);
+       std::istream_iterator<Sample> end;
+       std::copy_n(begin,100000000, std::ostream_iterator<Sample>(ostream));
+
+       return 0;*/
+
+
+
+
+
 /*
-
-    merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset.games","/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train"},"/home/robin/DarkHorse/Training/TrainData/patt.train");
-
-
-
-*/
-
-
-
-/*
-
-    std::mt19937_64 generator(231231231ull);
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/open.train", std::ios::binary);
-    std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/open_shuffled.train", std::ios::binary);
-    std::vector<Sample> samples;
-    std::istream_iterator<Sample> begin(stream);
-    std::istream_iterator<Sample> end;
-
-    std::copy(begin, end, std::back_inserter(samples));
-    std::shuffle(samples.begin(), samples.end(), generator);
-
-    size_t counter = 0;
-    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(ostream));
-    std::cout << "Num_Position: " << counter << std::endl;
-
-    return 0;
-*/
-
-
-
-
-
-//number of samples: 200117
-
-
-
-
-/*
-std::ofstream out("/home/robin/DarkHorse/Training/TrainData/policyopen.samples",std::ios::binary);
-std::ifstream stream("/home/robin/PycharmProjects/pythonProject2/TrainData/policy.samples",std::ios::binary);
-std::istream_iterator<Sample>begin(stream);
-std::istream_iterator<Sample>end;
-std::copy_if(begin,end,std::ostream_iterator<Sample>(out),[](Sample s){
-    return Bits::pop_count(s.position.BP | s.position.WP)>8;
-});
-return 0;
-
-*/
-
-
-/*
-
-
-      Utilities::create_samples_from_games("/home/robin/DarkHorse/Training/TrainData/lastcheck.games", "/home/robin/DarkHorse/Training/TrainData/xxx.samples");
-      return 0;
-*/
 
     Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
     generator.set_hash_size(18);
@@ -136,13 +137,15 @@ return 0;
     generator.set_piece_limit(10);
     generator.set_max_position(1000000000ull);
     generator.startx();
+*/
+
 
 
 
 
 /*
 
-     Match engine_match("small", "test");
+     Match engine_match("dumm", "model42");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
      engine_match.setNumThreads(10);
@@ -153,24 +156,30 @@ return 0;
 
 
 
-
-
-    // 0.190537  1e-4
-    //0.188262   6e-4
-    //0.188813 1e-3
-    //0.127496
-
-
-/*    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
+//0.254145
+/*
+    std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
     Trainer trainer("/home/robin/DarkHorse/Training/TrainData/patt.train");
-    trainer.setLearningRate(15000);
+    trainer.setLearningRate(30000);
     trainer.setEpochs(3000);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);
     trainer.startTune();
-    auto loss = trainer.calculateLoss();
-    std::cout << "Loss: " << loss << std::endl;*/
+*/
 
+
+    std::mt19937_64 generator(12312312ull);
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
+    std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train");
+
+    std::vector<Sample> samples;
+    std::copy(begin, end, std::back_inserter(samples));
+    std::shuffle(samples.begin(), samples.end(), generator);
+
+    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(stream_out));
 
 
     return 0;

@@ -23,7 +23,7 @@ private:
     double accu_loss{0};
     double last_loss_value;
     double beta{0.99};
-    double decay{0.07};
+    double decay{0.08};
     std::unique_ptr<double[]> momentums;
     std::mt19937_64 generator;
     PosStreamer pos_streamer;
@@ -33,8 +33,8 @@ public:
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.05), generator(std::mt19937_64(231231241ull)),
-                                            pos_streamer(PosStreamer(data_path, 80000000)) {
-        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u);
+                                            pos_streamer(PosStreamer(data_path, 160000000)) {
+        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u+4);
 
     };
 
