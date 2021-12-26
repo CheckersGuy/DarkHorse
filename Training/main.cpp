@@ -143,16 +143,18 @@ int main(int argl, const char **argc) {
 
 
 
+
 /*
 
-     Match engine_match("dumm", "model42");
+     Match engine_match("small2", "small");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(10);
+     engine_match.setNumThreads(8);
      engine_match.setHashSize(21);
      engine_match.start();
 
 */
+
 
 
 
@@ -164,22 +166,29 @@ int main(int argl, const char **argc) {
     trainer.setEpochs(3000);
     trainer.setl2Reg(0.000000000000);
     trainer.setCValue(-1e-3);
-    trainer.startTune();
-*/
+    trainer.startTune();*/
+
+
 
 
     std::mt19937_64 generator(12312312ull);
     std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
-    std::istream_iterator<Sample> begin(stream);
-    std::istream_iterator<Sample> end;
+
+
+    std::filesystem::path my_path("/home/robin/DarkHorse/Training/TrainData/patt.train");
+
+    auto file_size = std::filesystem::file_size(my_path);
+
+    std::unique_ptr<Sample[]> samples = std::make_unique<Sample[]>(file_size / (sizeof(Sample)));
+
+    stream.read((char *) &samples[0], file_size);
+
 
     std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train");
 
-    std::vector<Sample> samples;
-    std::copy(begin, end, std::back_inserter(samples));
-    std::shuffle(samples.begin(), samples.end(), generator);
+    std::shuffle(samples.get(), samples.get() + ((file_size) / sizeof(Sample)), generator);
 
-    std::copy(samples.begin(), samples.end(), std::ostream_iterator<Sample>(stream_out));
+    stream_out.write((char *) &samples[0], file_size);
 
 
     return 0;
