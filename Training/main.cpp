@@ -188,8 +188,13 @@ int main(int argl, const char **argc) {
 
     std::shuffle(samples.get(), samples.get() + ((file_size) / sizeof(Sample)), generator);
 
-    stream_out.write((char *) &samples[0], file_size);
+    FILE *out = fopen("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train", "w");
 
+    auto blocks_written = fwrite(samples.get(), sizeof(Sample), file_size / sizeof(Sample), out);
+    fclose(out);
+    if (blocks_written < (file_size / sizeof(Sample))) {
+        std::cerr << "Error could not write file" << std::endl;
+    }
 
     return 0;
 }
