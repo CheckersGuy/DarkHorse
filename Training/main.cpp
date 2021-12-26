@@ -168,6 +168,7 @@ int main(int argl, const char **argc) {
     trainer.setCValue(-1e-3);
     trainer.startTune();*/
 
+    std::filesystem::path my_path("/home/robin/DarkHorse/Training/TrainData/patt.train");
 
 
 
@@ -175,7 +176,6 @@ int main(int argl, const char **argc) {
     std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
 
 
-    std::filesystem::path my_path("/home/robin/DarkHorse/Training/TrainData/patt.train");
 
     auto file_size = std::filesystem::file_size(my_path);
 
@@ -183,8 +183,6 @@ int main(int argl, const char **argc) {
 
     stream.read((char *) &samples[0], file_size);
 
-
-    std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train");
 
     std::shuffle(samples.get(), samples.get() + ((file_size) / sizeof(Sample)), generator);
 
