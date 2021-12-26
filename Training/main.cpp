@@ -170,6 +170,8 @@ int main(int argl, const char **argc) {
 
     std::filesystem::path my_path("/home/robin/DarkHorse/Training/TrainData/patt.train");
 
+    auto file_size = std::filesystem::file_size(my_path);
+
 
 
     std::mt19937_64 generator(12312312ull);
@@ -177,16 +179,15 @@ int main(int argl, const char **argc) {
 
 
 
-    auto file_size = std::filesystem::file_size(my_path);
-
     std::unique_ptr<Sample[]> samples = std::make_unique<Sample[]>(file_size / (sizeof(Sample)));
 
     stream.read((char *) &samples[0], file_size);
+    stream.close();
 
 
     std::shuffle(samples.get(), samples.get() + ((file_size) / sizeof(Sample)), generator);
 
-    FILE *out = fopen("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train", "w");
+    FILE *out = fopen("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train", "wb");
 
     auto blocks_written = fwrite(samples.get(), sizeof(Sample), file_size / sizeof(Sample), out);
     fclose(out);
