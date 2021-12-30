@@ -9,6 +9,7 @@
 #include "MGenerator.h"
 #include "../../Training/Sample.h"
 #include "../../Training/SampleFilter.h"
+
 #ifdef ITALIAN_RULES
 #define DB_PATH "c:/kr_english_wld"
 #else
@@ -16,14 +17,12 @@
 #endif
 
 
-void print_msgs(char* msg)
-{
+void print_msgs(char *msg) {
     printf("%s", msg);
 }
 
 
-
-Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
+Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
     if (pos.hasJumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
         return UNKNOWN;
 
@@ -34,61 +33,63 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER* handle) {
 
     EGDB_BITBOARD normal;
     normal.normal = board;
-    auto val = handle->lookup(handle, &normal, (pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE, 0);
+    auto val = handle->lookup(handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
     if (val == EGDB_UNKNOWN)
         return UNKNOWN;
 
     if (val == EGDB_WIN)
-        return (pos.color ==BLACK)?BLACK_WON : WHITE_WON;
+        return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
 
     if (val == EGDB_LOSS)
-        return (pos.color==BLACK)?WHITE_WON : BLACK_WON;
+        return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
 
     if (val == EGDB_DRAW)
         return DRAW;
 
 
-
     return UNKNOWN;
 }
 
-Result get_game_result(std::vector<Position>& game) {
+Result get_game_result(std::vector<Position> &game) {
     MoveListe liste;
     getMoves(game.back(), liste);
     const size_t rep_count = std::count(game.begin(), game.end(), game.back());
 
     if (liste.length() == 0) {
-        const int result = -game.back().color;
-        return (result == -1) ? BLACK_WON : WHITE_WON;
-    }
-    else if (rep_count >= 3) {
+        return (game.back().color == BLACK) ? WHITE_WON : BLACK_WON;
+    } else if (rep_count >= 3) {
         return DRAW;
     }
+    return UNKNOWN;
 }
 
-std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_pieces, EGDB_DRIVER* handle) {
+std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_pieces, EGDB_DRIVER *handle) {
     std::vector<Sample> sample_data;
     const Result result = get_game_result(game);
-    for (auto p : game) {
+
+    for (auto p: game) {
         Sample s;
-        s.result = result;
         s.position = p;
         sample_data.emplace_back(s);
     }
-
     int last_stop = -1;
     for (auto i = 0; i < game.size(); ++i) {
         auto tb_result = get_tb_result(game[i], max_pieces, handle);
         if (tb_result == UNKNOWN)
             continue;
-            for (int k = i; k > last_stop; k--) {
-                Sample s;
-                s.position = game[k];
-                s.result =tb_result;
-                sample_data[k] = s;
-            }
-            last_stop = i;
+        for (int k = i; k > last_stop; k--) {
+            Sample s;
+            s.position = game[k];
+            s.result = tb_result;
+            sample_data[k] = s;
+        }
+        last_stop = i;
+    }
+    for (auto s : sample_data) {
+        if(s.result !=UNKNOWN)
+            continue;
+        s.result = result;
     }
 
     //Getting the moves played
@@ -104,28 +105,29 @@ std::vector<Sample> get_rescored_game(std::vector<Position>& game, int max_piece
             copy = previous;
             copy.makeMove(move);
             if (copy != pos) {
-                return  std::vector<Sample>{};
+                return std::vector<Sample>{};
             }
-        
 
-            sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.getColor(), move);
+
+            sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.getColor(),
+                                                                            move);
             if (sample_data[k - 1].move >= 100) {
-                std::cerr << "Error move: " << sample_data[k - 1].move<< std::endl;
+                std::cerr << "Error move: " << sample_data[k - 1].move << std::endl;
                 std::exit(-1);
             }
         }
-   
+
 
     }
-   
+
     return sample_data;
-  
+
 }
 
 
-void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER* handle) {
-    size_t uniq_count{ 0 };
-    size_t total_count{ 0 };
+void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
+    size_t uniq_count{0};
+    size_t total_count{0};
     SampleFilter filter(5751035027, 10);
     std::vector<Sample> buffer;
     const size_t max_cap_buffer = 10000;
@@ -142,21 +144,20 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     game.emplace_back(previous);
     ++it;
     for (; it != end; ++it) {
-      
+
         Position pos = *it;
         const size_t piece_count = Bits::pop_count(pos.BP | pos.WP);
         const size_t prev_piec_count = Bits::pop_count(previous.BP | previous.WP);
         MoveListe liste;
         getMoves(previous, liste);
 
-        if (piece_count <= prev_piec_count && liste.length()>0) {
+        if (piece_count <= prev_piec_count && liste.length() > 0) {
             game.emplace_back(pos);
-        }
-        else {
-         
+        } else {
+
             auto samples = get_rescored_game(game, max_pieces, handle);
-     
-            for (auto s : samples) {
+
+            for (auto s: samples) {
                 total_count++;
                 buffer.emplace_back(s);
             }
@@ -169,19 +170,15 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
             std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
             buffer.clear();
         }
-        
+
     }
     std::cout << "Total Position: " << std::endl;
     std::copy(buffer.begin(), buffer.end(), std::ostream_iterator<Sample>(out_stream));
 }
 
 
-
-
-
 int main(int argl, const char **argc) {
 
-  
 
     int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
@@ -192,7 +189,7 @@ int main(int argl, const char **argc) {
 
     if (status) {
         printf("No database found at %s\n", DB_PATH);
-        return(1);
+        return (1);
     }
     printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
 
@@ -200,16 +197,16 @@ int main(int argl, const char **argc) {
     handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
     if (!handle) {
         printf("Error returned from egdb_open()\n");
-        return(1);
+        return (1);
     }
     std::string in_file("C:\\Users\\leagu\\Downloads\\small_dataset.games");
     std::string out_file("C:\\Users\\leagu\\Downloads\\small_dataset.train");
 
-  
+
     create_samples_from_games(in_file, out_file, max_pieces, handle);
 
 
-     handle->close(handle);
+    handle->close(handle);
 
     return 0;
 }

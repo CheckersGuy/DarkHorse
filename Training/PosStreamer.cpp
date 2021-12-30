@@ -25,6 +25,8 @@ Sample PosStreamer::get_next() {
 
                 if (current.position.hasJumps(current.position.getColor()) || current.move == -1)
                     continue;
+                if(current.result == UNKNOWN)
+                    continue;
 
 
                 buffer[read_elements++] = (*begin);

@@ -128,16 +128,19 @@ int main(int argl, const char **argc) {
 
 
 /*
-
-    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/test.games");
+    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/small_dataset2.train");
     generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(6);
+    generator.set_parallelism(16);
     generator.set_time(10);
     generator.set_piece_limit(10);
     generator.set_max_position(1000000000ull);
     generator.startx();
+
 */
+
+
+
 
 
 
@@ -146,10 +149,12 @@ int main(int argl, const char **argc) {
 
 /*
 
-     Match engine_match("small2", "small");
+
+
+     Match engine_match("smalltest", "master");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(8);
+     engine_match.setNumThreads(12);
      engine_match.setHashSize(21);
      engine_match.start();
 
@@ -158,44 +163,23 @@ int main(int argl, const char **argc) {
 
 
 
-//0.254145
-/*
+
+
+
+
+
     std::cout << "NonZeroWeights: " << gameWeights.numNonZeroValues() << std::endl;
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/patt.train");
-    trainer.setLearningRate(30000);
-    trainer.setEpochs(3000);
-    trainer.setl2Reg(0.000000000000);
-    trainer.setCValue(-1e-3);
-    trainer.startTune();*/
-
-    std::filesystem::path my_path("/home/robin/DarkHorse/Training/TrainData/patt.train");
-
-    auto file_size = std::filesystem::file_size(my_path);
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset2.train");
+    trainer.setLearningRate(50000);
+    trainer.set_decay(0.05);
+    trainer.set_weights_path("smalltest.weights");
+    trainer.set_savepoint_step(10000000);
+    trainer.setEpochs(2000);
+    trainer.setCValue(-5e-3);
+    trainer.startTune();
 
 
 
-    std::mt19937_64 generator(12312312ull);
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
 
-
-
-    std::unique_ptr<Sample[]> samples = std::make_unique<Sample[]>(file_size / (sizeof(Sample)));
-
-    stream.read((char *) &samples[0], file_size);
-    stream.close();
-
-
-    std::shuffle(samples.get(), samples.get() + ((file_size) / sizeof(Sample)), generator);
-
-    std::cout<<"Done shuffling"<<std::endl;
-
-    FILE *out = fopen("/home/robin/DarkHorse/Training/TrainData/patt_shuffled.train", "wb");
-
-    auto blocks_written = fwrite(samples.get(), sizeof(Sample), file_size / sizeof(Sample), out);
-
-    if (blocks_written < (file_size / sizeof(Sample))) {
-        std::cerr << "Error could not write file" << std::endl;
-    }
-    fclose(out);
     return 0;
 }
