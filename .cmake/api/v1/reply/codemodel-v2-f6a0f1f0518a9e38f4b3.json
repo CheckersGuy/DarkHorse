@@ -1,0 +1,87 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-Release-5441765b0c1735e99cd5.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Train::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Train-Release-cee63b4bc74d857d02fd.json",
+					"name" : "Train",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "perft_check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-perft_check-Release-e02b150febb75801b43b.json",
+					"name" : "perft_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pyhelper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pyhelper-Release-94bf4e75a469c7e8973f.json",
+					"name" : "pyhelper",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/robin/DarkHorse",
+		"source" : "/home/robin/DarkHorse"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

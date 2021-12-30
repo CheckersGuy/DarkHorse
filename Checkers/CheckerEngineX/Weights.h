@@ -207,6 +207,7 @@ struct Weights {
     }
 
 
+
     T &operator[](size_t index) {
         if (index == SIZE) {
             return kingOp;

@@ -86,10 +86,9 @@ int main(int argl, const char **argc) {
 
 
 
-
-    TT.resize(24);
+    /*TT.resize(23);
     board = Position::getStartPosition();
-    board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
+    //board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
     //board = Position::pos_from_fen("W:WK6:B4,3");
     board.printBoard();
 
@@ -101,7 +100,7 @@ int main(int argl, const char **argc) {
     getMoves(board.getPosition(), liste);
 
 
-
+*/
 
 
 

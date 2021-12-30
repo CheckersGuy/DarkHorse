@@ -9,13 +9,13 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-        policy.load("policyend.weights");
+     /*   policy.load("policyend.weights");
         policy.addLayer(Layer{120, 256});
         policy.addLayer(Layer{256, 32});
         policy.addLayer(Layer{32, 32});
         policy.addLayer(Layer{32, 100});
 
-        policy.init();
+        policy.init();*/
 
     }
 
