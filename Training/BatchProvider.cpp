@@ -64,18 +64,17 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
 }
 
 
-void NetBatchProvider::next(float *results,int64_t * moves,float *inputs) {
+void NetBatchProvider::next(float *results, int64_t *moves, float *inputs) {
     static constexpr size_t INPUT_SIZE = 120;
     auto create_input = [](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
             s.position = s.position.getColorFlip();
             s.result = ~s.result;
         }
-        float result=0.5f;
-        if (s.result == BLACK_WON){
+        float result = 0.5f;
+        if (s.result == BLACK_WON) {
             result = 0.0f;
-        }
-        else if (s.result == WHITE_WON){
+        } else if (s.result == WHITE_WON) {
             result = 1.0f;
         }
 
@@ -114,11 +113,14 @@ void NetBatchProvider::next(float *results,int64_t * moves,float *inputs) {
     };
 
     for (auto i = 0; i < get_batch_size(); ++i) {
-        Sample current = get_streamer().get_next();
+        Sample current;
+        do {
+            current = get_streamer().get_next();
+        } while (current.result == UNKNOWN);
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
-        moves[i]=current.move;
+        moves[i] = current.move;
     }
 
 

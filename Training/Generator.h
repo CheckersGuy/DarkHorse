@@ -23,7 +23,6 @@
 #include "Sample.h"
 
 
-
 class Generator {
 private:
     size_t buffer_clear_count{100000};
@@ -34,9 +33,11 @@ private:
     std::vector<Position> openings;
     int time_control{100};
     int hash_size{21};
+    uint64_t *random;
+    pthread_mutex_t *pmutex;
 
-    void print_stats();
 
+    uint64_t get_shared_random_number();
 
 public:
     Generator(std::string opening, std::string output)
@@ -44,10 +45,10 @@ public:
         std::string opening_path{"../Training/Positions/"};
         opening_path += opening;
 
-        std::ifstream stream(opening_path,std::ios::binary);
-        std::istream_iterator<Position>begin(stream);
-        std::istream_iterator<Position>end;
-        std::copy(begin,end,std::back_inserter(openings));
+        std::ifstream stream(opening_path, std::ios::binary);
+        std::istream_iterator<Position> begin(stream);
+        std::istream_iterator<Position> end;
+        std::copy(begin, end, std::back_inserter(openings));
 
         std::cout << "Size: " << openings.size() << std::endl;
     }

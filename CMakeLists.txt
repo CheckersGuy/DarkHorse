@@ -35,7 +35,7 @@ if (WIN32)
     add_executable(tb_rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/tb_rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/SampleFilter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/SampleFilter.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h )
 endif ()
 
-add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${TSources} ${THeaders})
+add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${TSources} ${THeaders} Training/Util/LRUCache.h)
 
 
 if (UNIX)

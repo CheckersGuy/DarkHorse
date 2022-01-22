@@ -6,32 +6,28 @@
 #include "Trainer.h"
 
 
-int Trainer::getEpochs() {
+int Trainer::get_num_epochs() {
     return epochs;
 }
 
-void Trainer::setEpochs(int epoch) {
+void Trainer::set_epochs(int epoch) {
     this->epochs = epoch;
 }
 
-void Trainer::setCValue(double cval) {
+void Trainer::set_c_value(double cval) {
     this->cValue = cval;
 }
 
-double Trainer::getCValue() {
+double Trainer::get_c_value() {
     return this->cValue;
 }
 
 
-double Trainer::getLearningRate() {
+double Trainer::get_learning_rate() {
     return learningRate;
 }
 
-void Trainer::setl2Reg(double reg) {
-    l2Reg = reg;
-}
-
-void Trainer::setLearningRate(double learn) {
+void Trainer::set_learning_rate(double learn) {
     learningRate = learn;
 }
 
@@ -43,28 +39,52 @@ double sigmoidDiff(double c, double value) {
     return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
 }
 
-void Trainer::gradientUpdate(Sample &sample) {
-    //one step of stochastic gradient descent
-    //one step of stochastic gradient descent
+void Trainer::gradient_update(Sample &sample) {
     Position x = sample.position;
-    if(sample.result == UNKNOWN)
+    if (sample.result == UNKNOWN)
         return;
 
     if (x.hasJumps(x.getColor()) || x.hasJumps(~x.getColor()))
         return;
-    auto qStatic = gameWeights.evaluate<double>(x, 0);
+    double qStatic = weights.evaluate<double>(x, 0);
 
-    if (isWin((int) qStatic) || !isEval((int) qStatic))
+    if (isWin((int) qStatic))
         return;
 
-    int num_wp = __builtin_popcount(x.WP & (~x.K));
-    int num_bp = __builtin_popcount(x.BP & (~x.K));
-    int num_wk = __builtin_popcount(x.WP & (x.K));
-    int num_bk = __builtin_popcount(x.BP & (x.K));
-    double phase = num_bp + num_wp + num_bk + num_wk;
-    phase /= (double) (stage_size);
-    double end_phase = stage_size - phase;
-    end_phase /= (double) stage_size;
+    step_counter++;
+    if (!weights_path.empty()) {
+        if ((step_counter % save_point_step) == 0) {
+            weights.storeWeights(weights_path);
+            //saving the trainer state
+        }
+    } else {
+        std::cerr << "Weights path was empty" << std::endl;
+        std::exit(-1);
+    }
+
+    auto adam_update = [&](size_t param, double gradient, double weight) {
+        m[param] = beta_one * m[param] + (1.0 - beta_one) * gradient;
+        v[param] = beta_two * v[param] + (1.0 - beta_two) * gradient * gradient;
+        auto m_hat = m[param] * (1.0 - beta_one_t[param]);
+        auto v_hat = v[param] * (1.0 - beta_two_t[param]);
+
+        double alpha = get_learning_rate();
+        beta_one_t[param] *= beta_one;
+        beta_two_t[param] *= beta_one;
+
+   /*     return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)));*/
+       return alpha * m[param];
+
+    };
+
+
+    int num_wp = Bits::pop_count(x.WP & (~x.K));
+    int num_bp = Bits::pop_count(x.BP & (~x.K));
+    int num_wk = Bits::pop_count(x.WP & (x.K));
+    int num_bk = Bits::pop_count(x.BP & (x.K));
+    double tot_pieces = num_bp + num_wp + num_bk + num_wk;
+    double phase = tot_pieces / ((double)stage_size);
+    double end_phase = 1.0-phase;
 
 
     double result;
@@ -74,7 +94,7 @@ void Trainer::gradientUpdate(Sample &sample) {
         result = 1.0;
     else
         result = 0.5;
-    double c = getCValue();
+    double c = get_c_value();
 
     double error = sigmoid(c, qStatic) - result;
     double color = x.color;
@@ -94,13 +114,9 @@ void Trainer::gradientUpdate(Sample &sample) {
             diff *= end_phase * color;
         }
 
-        const size_t offset1 = 8ull * 157464ull;
-        const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
-
         auto f = [&](size_t index) {
             size_t sub_index = index + p;
-            momentums[sub_index] = beta * momentums[sub_index] + (1.0 - beta) * diff;
-            gameWeights[sub_index] = gameWeights[sub_index] - getLearningRate() * momentums[sub_index];
+            weights[sub_index] = weights[sub_index] - adam_update(sub_index, diff, weights[sub_index]);
         };
 
         if (x_flipped.K == 0) {
@@ -115,8 +131,7 @@ void Trainer::gradientUpdate(Sample &sample) {
         double diff = temp;
         double d = phase * ((double) (num_wk - num_bk));
         diff *= d;
-        momentums[SIZE] = beta * momentums[SIZE] + (1.0 - beta) * diff;
-        gameWeights.kingOp = gameWeights.kingOp - getLearningRate() * momentums[SIZE];
+        weights.kingOp = weights.kingOp - adam_update(SIZE, diff, weights.kingOp);
     }
 
     //for king_end
@@ -124,8 +139,7 @@ void Trainer::gradientUpdate(Sample &sample) {
         double diff = temp;
         double d = end_phase * ((double) (num_wk - num_bk));
         diff *= d;
-        momentums[SIZE + 1] = beta * momentums[SIZE + 1] + (1.0 - beta) * diff;
-        gameWeights.kingEnd = gameWeights.kingEnd - getLearningRate() * momentums[SIZE + 1];
+        weights.kingEnd = weights.kingEnd - adam_update(SIZE + 1, diff, weights.kingEnd);
     }
 
     {
@@ -138,9 +152,8 @@ void Trainer::gradientUpdate(Sample &sample) {
             uint32_t index = man >> shift;
             index &= temp_mask;
             const size_t mom_index = SIZE + 2 + i * 16 + index;
-            momentums[mom_index] = beta * momentums[mom_index] + (1.0 - beta) * diff;
-            gameWeights.tempo_ranks[i][index] =
-                    gameWeights.tempo_ranks[i][index] - getLearningRate() * momentums[mom_index];
+            weights.tempo_ranks[i][index] =
+                    weights.tempo_ranks[i][index] - adam_update(mom_index, diff, weights.tempo_ranks[i][index]);
         }
         //for tempo ranks white-side
         man = x.WP & (~x.K);
@@ -152,9 +165,9 @@ void Trainer::gradientUpdate(Sample &sample) {
             uint32_t index = man >> shift;
             index &= temp_mask;
             const size_t mom_index = SIZE + 2 + i * 16 + index;
-            momentums[mom_index] = beta * momentums[mom_index] + (1.0 - beta) * diff;
-            gameWeights.tempo_ranks[i][index] =
-                    gameWeights.tempo_ranks[i][index] - getLearningRate() * momentums[mom_index];
+
+            weights.tempo_ranks[i][index] =
+                    weights.tempo_ranks[i][index] - adam_update(mom_index, diff, weights.tempo_ranks[i][index]);
         }
 
     }
@@ -170,8 +183,12 @@ void Trainer::set_savepoint_step(size_t num_steps) {
     save_point_step = num_steps;
 }
 
-void Trainer::set_decay(double d){
-    decay =d;
+void Trainer::set_weight_decay(double d_value) {
+    l2Reg = d_value;
+}
+
+void Trainer::set_decay(double d) {
+    decay = d;
 }
 
 void Trainer::epoch() {
@@ -182,19 +199,21 @@ void Trainer::epoch() {
             continue;
         }
 
-        gradientUpdate(sample);
+        gradient_update(sample);
     }
+
+
     epoch_counter++;
 
 }
 
 
-void Trainer::startTune() {
+void Trainer::start_tune() {
     int counter = 0;
     std::cout << "Data_size: " << pos_streamer.get_num_positions() << std::endl;
-    while (counter < getEpochs()) {
+    while (counter < get_num_epochs()) {
         std::cout << "Start of epoch: " << counter << "\n\n" << std::endl;
-        std::cout << "CValue: " << getCValue() << std::endl;
+        std::cout << "CValue: " << get_c_value() << std::endl;
         double num_games = (double) (pos_streamer.get_num_positions());
         double loss = accu_loss / ((double) num_games);
         loss = sqrt(loss);
@@ -208,10 +227,10 @@ void Trainer::startTune() {
         std::cout << "Time for epoch: " << dur.count() / 1000000 << std::endl;
         counter++;
         std::cout << "LearningRate: " << learningRate << std::endl;
-        std::cout << "NonZero: " << gameWeights.numNonZeroValues() << std::endl;
-        std::cout << "Max: " << gameWeights.getMaxValue() << std::endl;
-        std::cout << "Min: " << gameWeights.getMinValue() << std::endl;
-        std::cout << "kingScore:" << gameWeights.kingOp << " | " << gameWeights.kingEnd << std::endl;
+        std::cout << "NonZero: " << weights.numNonZeroValues() << std::endl;
+        std::cout << "Max: " << weights.getMaxValue() << std::endl;
+        std::cout << "Min: " << weights.getMinValue() << std::endl;
+        std::cout << "kingScore:" << weights.kingOp << " | " << weights.kingEnd << std::endl;
         learningRate = learningRate * (1.0 - decay);
     }
 }

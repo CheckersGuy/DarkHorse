@@ -140,9 +140,9 @@ struct Position {
 
     bool islegal()const;
 
-    std::string getPositionString() const;
-
     void makeMove(Move &move);
+
+    void makeMove(uint32_t from_index,uint32_t to_index);
 
     void printPosition() const;
 

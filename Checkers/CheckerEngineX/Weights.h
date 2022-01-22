@@ -15,10 +15,6 @@
 #include <cstring>
 
 
-//constexpr uint32_t region = 13107u;
-//constexpr size_t SIZE = 12ull * 531441ull + 24ull * 15625ull;//changing how indices are calculated
-//constexpr size_t SIZE = 12ull * 531441ull + 24ull * 390625ull;
-//constexpr size_t SIZE = 18ull * 390625ull + 12ull * 531441ull;
 
 constexpr size_t SIZE = 18ull * 390625ull + 4ull * 531441ull + 8ull * 157464ull;
 
@@ -30,7 +26,7 @@ struct Weights {
 
     std::array<std::array<T, 16>, 7> tempo_ranks;
 
-    Weights() : kingOp(0), kingEnd(0) {
+    Weights() : kingOp(500), kingEnd(500) {
         weights = std::vector<T>(SIZE, T{0});
         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
@@ -40,8 +36,9 @@ struct Weights {
     Weights(const Weights<T> &other) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::copy(other.weights.begin(), other.weights.end(), weights.begin());
+        std::copy(tempo_ranks.begin(), tempo_ranks.end(), other.tempo_ranks.begin());
         this->kingOp = other.kingOp;
-        this->kingOp = other.kingOp;
+        this->kingEnd = other.kingEnd;
     }
 
 
@@ -137,7 +134,7 @@ struct Weights {
 
 
         const U color = pos.color;
-        constexpr U pawnEval = 1000;
+        constexpr U pawnEval = 0;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
 
@@ -207,7 +204,6 @@ struct Weights {
     }
 
 
-
     T &operator[](size_t index) {
         if (index == SIZE) {
             return kingOp;
@@ -229,13 +225,17 @@ struct Weights {
     size_t getSize() const {
         return SIZE;
     }
+
+    Weights &operator=(const Weights &others) {
+        this->weights = std::make_unique<T[]>(SIZE);
+        std::copy(others.weights.begin(), others.weights.end(), weights.begin());
+        std::copy(tempo_ranks.begin(), tempo_ranks.end(), others.tempo_ranks.begin());
+        this->kingOp = others.kingOp;
+        this->kingEnd = others.kingEnd;
+        return *this;
+    }
+
 };
 
-#ifdef TRAIN
-extern Weights<double> gameWeights;
-#else
-extern Weights<int16_t> gameWeights;
-
-#endif
 
 #endif //CHECKERENGINEX_WEIGHTS_H
