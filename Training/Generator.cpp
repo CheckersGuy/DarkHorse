@@ -16,7 +16,13 @@ void Generator::set_time(int time) {
     time_control = time;
 }
 
-void Generator::print_stats() {
+uint64_t Generator::get_shared_random_number() {
+
+    //locking the acess to the generator
+    pthread_mutex_lock(pmutex);
+
+
+    pthread_mutex_unlock(pmutex);
 
 }
 
@@ -43,6 +49,10 @@ void Generator::startx() {
                                          0);
     //temporary buffer to see if the bloom-filter is working
 
+    //shared random number generator
+    random = (uint64_t *) mmap(NULL, sizeof(uint64_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
+                               0);
+
     int *counter;
     int *error_counter;
     int *num_games;
@@ -65,7 +75,8 @@ void Generator::startx() {
     *num_won = 0;
     *num_games = 0;
     *buffer_length = 0;
-    pthread_mutex_t *pmutex = NULL;
+    *random = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    pmutex = NULL;
     pthread_mutexattr_t attrmutex;
     pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
 
@@ -84,8 +95,7 @@ void Generator::startx() {
         }
         if (id == 0) {
             //child takes a position and generates games
-            const uint64_t seed = 13199312313ull + 12412312314ull * i;
-            initialize(seed);
+            initialize(13199312313ull + 12412312314ull * i);
             use_classical(true);
 
             TT.resize(hash_size);
@@ -109,7 +119,8 @@ void Generator::startx() {
                 pthread_mutex_unlock(pmutex);
                 std::vector<Position> game;
                 TT.clear();
-                Zobrist::initializeZobrisKeys(std::chrono::high_resolution_clock::now().time_since_epoch().count());
+                uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
+                Zobrist::initializeZobrisKeys(seed);
                 int move_count;
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
@@ -163,10 +174,14 @@ void Generator::startx() {
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
+                    if (liste.length() == 1) {
+                        board.makeMove(liste[0]);
+                    } else {
+                        Move best;
+                        auto value = searchValue(board, best, MAX_PLY, time_control, false);
+                        board.makeMove(best);
+                    }
 
-                    Move best;
-                    auto value = searchValue(board, best, MAX_PLY, time_control, false);
-                    board.makeMove(best);
                 }
                 pthread_mutex_lock(pmutex);
                 if (*buffer_length >= buffer_clear_count) {

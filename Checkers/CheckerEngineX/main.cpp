@@ -35,6 +35,7 @@ inline Position posFromString(const std::string &pos) {
 #include <iterator>
 #include <types.h>
 
+/**/
 int main(int argl, const char **argc) {
     initialize();
     Board board;
@@ -44,41 +45,32 @@ int main(int argl, const char **argc) {
 
 
 /*
-    network.load("modeltest2.weights");
-    network.addLayer(Layer{120, 512});
-    network.addLayer(Layer{512, 16});
-    network.addLayer(Layer{16, 32});
+    network.load("open.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
 
-    network.init();
-*/
+    network.init();*/
 
 
 
-/*    network.load("testx1.weights");
+
+
+ /*   network.load("modeltest.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();
 
-    network2.load("testx1.weights");
-    network2.addLayer(Layer{120, 256});
-    network2.addLayer(Layer{256, 32});
-    network2.addLayer(Layer{32, 32});
+    network2.load("endgame.weights");
+    network2.addLayer(Layer{120, 1024});
+    network2.addLayer(Layer{1024, 16});
+    network2.addLayer(Layer{16, 32});
     network2.addLayer(Layer{32, 1});
 
     network2.init();*/
-/*
-
-    network.load("verybig.weights");
-    network.addLayer(Layer{120, 1024});
-    network.addLayer(Layer{1024, 16});
-    network.addLayer(Layer{16, 32});
-    network.addLayer(Layer{32, 1});
-
-    network.init();
-*/
 
 
 
@@ -86,10 +78,17 @@ int main(int argl, const char **argc) {
 
 
 
-    /*TT.resize(23);
+    TT.resize(25);
     board = Position::getStartPosition();
-    //board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
-    //board = Position::pos_from_fen("W:WK6:B4,3");
+    //board = Position::pos_from_fen("B:W18,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,10,11,16");
+
+    board.getPosition().makeMove(11,15);
+    board.getPosition().makeMove(21,17);
+    board.getPosition().makeMove(9,13);
+    board.getPosition().makeMove(23,19);
+    board.getPosition().printPosition();
+
+    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
     board.printBoard();
 
     Move best;
@@ -100,7 +99,8 @@ int main(int argl, const char **argc) {
     getMoves(board.getPosition(), liste);
 
 
-*/
+
+
 
 
 
@@ -128,7 +128,7 @@ int main(int argl, const char **argc) {
         } else if (current == "new_move") {
             //opponent made a move and we need to update the board
             Move move;
-            std::vector<uint32_t> squares;
+            std::vector <uint32_t> squares;
             std::string line;
             std::cin >> line;
             while (!line.empty()) {

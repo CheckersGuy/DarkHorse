@@ -5,11 +5,8 @@ Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
 
-#ifndef TRAIN
+
 Weights<int16_t> gameWeights;
-#else
-Weights<double> gameWeights;
-#endif
 
 
 SearchGlobal glob;
@@ -17,13 +14,13 @@ Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/smallxxx.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/adam2.weights");
     Zobrist::initializeZobrisKeys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/smallxxx.weights");
+    gameWeights.loadWeights<uint32_t>("../Training/Engines/small.weights");
     Zobrist::initializeZobrisKeys(seed);
 
 }
@@ -50,17 +47,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
     MoveListe liste;
     getMoves(board.getPosition(), liste);
-/*
-
-
-    if (liste.length() == 1) {
-        best = liste[0];
-        return last_eval;
-    }
-*/
-
-
-
 
 
 
@@ -465,179 +451,4 @@ namespace Search {
         search_root(local, line, board, -INFINITE, INFINITE, depth);
         mainPV = line;
     }
-}
-
-Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Value beta, bool in_pv) {
-    nodeCounter++;
-    line.clear();
-    MoveListe liste;
-    getMoves(board.getPosition(), liste);
-    if (liste.length() == 0) {
-        return loss(ply - 1);
-    }
-/*    alpha = std::max(alpha, loss(ply));
-    if (alpha >= beta)
-        return alpha;
-    if (alpha >= -loss(ply))
-        return alpha;*/
-
-    int start_index = 0;
-    if (in_pv && ply < mainPV.length()) {
-        liste.putFront(mainPV[ply]);
-        start_index = 1;
-    }
-
-    Value start_alpha = alpha;
-
-
-    liste.sort(board.getPosition(),depth, ply, Move{}, start_index);
-    Move best_move;
-    Depth next_depth = depth - 1;
-    if (board.getPosition().hasJumps() && board.previous().hasJumps() && ply > 0) {
-        next_depth++;
-    } else if (next_depth == 0 &&
-               board.getPosition().hasJumps(~board.getMover())) {
-        next_depth++;
-    }
-
-    for (auto i = 0; i < liste.length(); ++i) {
-        Move mv = liste[i];
-        //Stepping through the move_list
-        Value val = -INFINITE;
-        board.makeMove(mv);
-
-        Line local_pv;
-        if (next_depth <= 0) {
-            val = -qsSearch(board, local_pv, ply + 1, -beta, -alpha);
-        } else {
-            if (!in_pv && next_depth > 2 && isEval(beta) && ply >= 2) {
-                //silent position here
-                Value new_beta = beta + 500;
-                //checking if static_eval fails
-                if (-board.getMover() * gameWeights.evaluate(board.getPosition(), ply) >= new_beta) {
-                    //now we can start the verification search
-                    Depth verif_depth = std::max(next_depth - 4, 1);
-                    Value temp = -alphaBeta(board, local_pv, ply + 1, verif_depth, -(new_beta + 1), -(new_beta),
-                                            false);
-                    if (temp > new_beta) {
-                        val = temp;
-                    }
-                }
-            }
-
-
-            if (val == -INFINITE) {
-                //Pruning goes up here
-                bool do_lmr = !in_pv && !board.getPosition().hasJumps(board.getMover()) && i >= 2;
-                const int pv_depth = next_depth - do_lmr;
-                if (!in_pv || i > 0) {
-                    val = -alphaBeta(board, local_pv, ply + 1, pv_depth, -(alpha + 1), -(alpha), false);
-                    //need to glue the two pvs together
-                }
-                //full width search
-
-                if (val == -INFINITE || (val > alpha && (val < beta || do_lmr))) {
-                    val = -alphaBeta(board, local_pv, ply + 1, next_depth, -beta, -alpha, in_pv);
-                }
-            }
-        }
-
-
-        board.undoMove(mv);
-        if (val > alpha) {
-            best_move = mv;
-            if (val >= beta) {
-                if (!board.getPosition().hasJumps(board.getMover())) {
-                    Statistics::mPicker.update_scores(board.getPosition(), &liste[0], best_move, depth);
-                }
-                return beta;
-            }
-            alpha = val;
-            line.concat(best_move, local_pv);
-        }
-    }
-
-
-    /*   if (!best_move.isEmpty() && board.isSilentPosition()) {
-           Statistics::mPicker.killer_moves[ply] = best_move;
-       }*/
-
-
-    return alpha;
-}
-
-Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta) {
-    nodeCounter++;
-    line.clear();
-    if ((nodeCounter & 16383u) == 0u && getSystemTime() >= endTime) {
-        throw std::string{"Time_out"};
-    }
-
-
-    MoveListe liste;
-    getCaptures(board.getPosition(), liste);
-
-    if (liste.isEmpty() || ply >= MAX_PLY) {
-        return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
-    }
-
-    Move best_move;
-    for (Move mv: liste) {
-        board.makeMove(mv);
-        Line local_pv;
-        Value val = -qsSearch(board, local_pv, ply + 1, -beta, -alpha);
-        board.undoMove(mv);
-        if (val >= beta) {
-            return beta;
-        }
-        if (val > alpha) {
-            best_move = mv;
-            alpha = val;
-            line.concat(best_move, local_pv);
-        }
-
-    }
-
-
-    return alpha;
-}
-
-
-Value search(Board board, Move &best, Depth depth, uint32_t time, bool print) {
-    Statistics::mPicker.clearScores();
-    glob.sel_depth = 0u;
-    TT.age_counter++;
-    nodeCounter = 0;
-    mainPV.clear();
-    //TT.clear();
-    endTime = getSystemTime() + time;
-    Value eval = INFINITE;
-    Statistics::mPicker.clearScores();
-    for (int i = 2; i <= depth; i += 2) {
-        Line line;
-        Value val;
-        try {
-            //implementing aspiration search
-            val = alphaBeta(board, line, 0, i, -INFINITE, INFINITE, true);
-            mainPV = line;
-
-        } catch (std::string msg) {
-            break;
-        }
-        best = mainPV.getFirstMove();
-        eval = val;
-
-
-        if (print) {
-            std::string temp = std::to_string(eval) + " ";
-            temp += " Depth:" + std::to_string(i) + " | " + std::to_string(glob.sel_depth) + " | ";
-            temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
-            temp += mainPV.toString();
-            temp += "\n";
-            temp += "\n";
-            std::cout << temp;
-        }
-
-    }
-    return eval;
 }

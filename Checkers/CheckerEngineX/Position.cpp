@@ -7,30 +7,12 @@ bool Position::hasJumps() const {
     return hasJumps(BLACK) || hasJumps(WHITE);
 }
 
-std::string Position::getPositionString() const {
-    std::string position;
-    for (uint32_t i = 0; i < 32u; ++i) {
-        uint32_t current = 1u << i;
-        if ((current & (BP & K))) {
-            position += "3";
-        } else if ((current & (WP & K))) {
-            position += "4";
-        } else if ((current & BP)) {
-            position += "1";
-        } else if ((current & WP)) {
-            position += "2";
-        } else {
-            position += "0";
-        }
-    }
-    if (getColor() == BLACK) {
-        position += "B";
-    } else {
-        position += "W";
-    }
-    return position;
+void Position::makeMove(uint32_t from_index, uint32_t to_index) {
+    Move move;
+    move.from = 1u << from_index;
+    move.to = 1u << to_index;
+    makeMove(move);
 }
-
 
 struct Scanner {
     std::string msg;

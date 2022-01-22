@@ -4,8 +4,8 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
 
 if __name__ == "__main__":
-    data_loader = LitMLP.LitDataModule(train_data="/home/robin/DarkHorse/Training/TrainData/patt.train",
-                                       val_data="/home/robin/DarkHorse/Training/TrainData/patt_val.train",
+    data_loader = LitMLP.LitDataModule(train_data="/home/robin/DarkHorse/Training/TrainData/small_dataset4.train",
+                                       val_data="/home/robin/DarkHorse/Training/TrainData/medium_dataset.train",
                                        batch_size=20000, buffer_size=100000000)
     device = torch.device("cpu")
 
