@@ -119,9 +119,6 @@ struct Position {
         return movers;
     }
 
-    PieceType get_piece_type(Move move) const;
-
-
     std::string get_fen_string() const;
 
     Color get_color() const;

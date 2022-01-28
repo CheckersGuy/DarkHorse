@@ -35,18 +35,18 @@ namespace Perft {
         std::vector<Cluster>entries;
     public:
         Table(uint32_t capacity) : capacity(capacity) {
-            setCapacity(capacity);
+            set_capacity(capacity);
         }
 
         Table() = default;
 
         void clear();
 
-        uint64_t getCapacity();
+        uint64_t get_capacity();
 
-        void setCapacity(uint32_t capacity);
+        void set_capacity(uint32_t capacity);
 
-        void setCapacity(std::string capa_string);
+        void set_capacity(std::string capa_string);
 
         std::optional<uint64_t> probe(Position pos, int depth);
 
@@ -56,7 +56,7 @@ namespace Perft {
 
     extern Table table;
 
-    uint64_t perftCheck(Position &pos, int depth);
+    uint64_t perft_check(Position &pos, int depth);
 }
 #endif //CHECKERENGINEX_PERFT_H
 

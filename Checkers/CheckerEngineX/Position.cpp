@@ -174,21 +174,6 @@ Position Position::get_color_flip() const {
 }
 
 
-PieceType Position::get_piece_type(Move move) const {
-    PieceType type;
-    if ((move.from & (BP & K)) != 0) {
-        type = BKING;
-    } else if ((move.from & (WP & K)) != 0) {
-        type = WKING;
-    } else if ((move.from & BP) != 0) {
-        type = BPAWN;
-    } else if ((move.from & WP) != 0) {
-        type = WPAWN;
-    } else {
-        type = WPAWN;
-    }
-    return type;
-}
 
 bool Position::is_legal() const {
     const uint32_t b_pawns = BP & (~K);

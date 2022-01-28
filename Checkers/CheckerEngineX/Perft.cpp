@@ -11,24 +11,55 @@ namespace Perft {
 
     Table table;
 
-    uint64_t Table::getCapacity() {
+    uint64_t Table::get_capacity() {
         return capacity;
     }
 
-    void Table::setCapacity(std::string capa_string) {
-        //specifying the ram to use
-        //example "12mb" will use the largest power of
-        //two less than 12mb and so on up to tb/TB for terabytes
-        //of memory :P
-        //Probably best to check
+    void Table::set_capacity(std::string capa_string) {
+        auto length = std::max(0ull, capa_string.length() - 2ull);
+        std::string size_string = capa_string.substr(0, length);
+        std::string unit_string = capa_string.substr(length, 2);
+
+        size_t size_in_bytes = 1;
+        if (size_string.empty() || unit_string.empty()) {
+            set_capacity(0);
+            return;
+        }
+        auto result = std::find_if(size_string.begin(), size_string.end(), [](char c) {
+            return !std::isdigit(c);
+        });
+        if (result == capa_string.end()) {
+            set_capacity(0);
+            return;
+        }
+        std::transform(unit_string.begin(), unit_string.end(), unit_string.begin(), tolower);
+        size_in_bytes = std::stoi(size_string);
+        if (unit_string == "b") {
+            size_in_bytes *= 1ull;
+        } else if (unit_string == "kb") {
+            size_in_bytes *= 1000ull;
+        } else if (unit_string == "mb") {
+            size_in_bytes *= 1000000ull;
+        } else if (unit_string == "gb") {
+            size_in_bytes *= 1000000000ull;
+        } else if (unit_string == "tb") {
+            size_in_bytes *= 1000000000000ull;
+        }
+
+        //we round down to the largest number of entries which uses less than size_in_bytes
+
+        size_t bytes_per_entry = sizeof(Cluster);
+        size_t num_entries = size_in_bytes / bytes_per_entry;
+        set_capacity(num_entries);
+        std::cout<<"entries: "<<num_entries<<std::endl;
     }
 
     void Table::clear() {
         Cluster clust{};
-        std::fill(entries.begin(),entries.end(),clust);
+        std::fill(entries.begin(), entries.end(), clust);
     }
 
-    void Table::setCapacity(uint32_t capacity) {
+    void Table::set_capacity(uint32_t capacity) {
         this->capacity = capacity;
         entries.resize(capacity);
         clear();
@@ -59,7 +90,7 @@ namespace Perft {
         };
     }
 
-    uint64_t perftCheck(Position& pos, int depth) {
+    uint64_t perft_check(Position &pos, int depth) {
         MoveListe liste;
         get_moves(pos, liste);
         if (depth == 1) {
@@ -70,11 +101,11 @@ namespace Perft {
         if (result.has_value()) {
             return result.value();
         }
-        for (int i=0;i<liste.length();++i) {
-            Position copy=pos;
+        for (int i = 0; i < liste.length(); ++i) {
+            Position copy = pos;
             copy.make_move(liste[i]);
             Zobrist::update_zobrist_keys(copy, liste[i]);
-            counter+=perftCheck(copy,depth-1);
+            counter += perft_check(copy, depth - 1);
         }
 
         table.store(pos, depth, counter);
