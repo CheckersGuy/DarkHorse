@@ -13,7 +13,7 @@
 #include <fstream>
 #include <iterator>
 #include <Sample.h>
-#include <SampleFilter.h>
+#include <BloomFilter.h>
 #include <string>
 #include <memory>
 #include <filesystem>

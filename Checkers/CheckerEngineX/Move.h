@@ -12,19 +12,19 @@ struct Move {
     uint32_t to{0u};
     uint32_t captures{0u};
 
-    bool isCapture() const;
+    bool is_capture() const;
 
-    bool isEmpty() const;
+    bool is_empty() const;
 
     bool operator==(const Move &other) const;
 
     bool operator!=(const Move &other) const;
 
-    uint32_t getFromIndex() const;
+    uint32_t get_from_index() const;
 
-    uint32_t getToIndex() const;
+    uint32_t get_to_index() const;
 
-    bool isPromotion(const uint32_t kings);
+    bool is_promotion(const uint32_t kings);
 
 };
 

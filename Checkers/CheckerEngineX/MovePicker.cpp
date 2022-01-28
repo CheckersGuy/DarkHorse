@@ -9,7 +9,7 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-     /*   policy.load("policyend.weights");
+    /*    policy.load("policy.weights");
         policy.addLayer(Layer{120, 256});
         policy.addLayer(Layer{256, 32});
         policy.addLayer(Layer{32, 32});
@@ -101,7 +101,7 @@ namespace Statistics {
             t = 0;
         }
 
-        int orig_sq = move.getFromIndex();
+        int orig_sq = move.get_from_index();
         //direction of the piece
         int dir = 0;
 
@@ -127,7 +127,7 @@ namespace Statistics {
             return score;
 
 
-    /*    auto score = policy.get_output()[get_move_encoding(pos.getColor(), move)] * 100;
+  /*      auto score = policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
         return score;*/
     }
 
@@ -135,7 +135,7 @@ namespace Statistics {
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
-        if (move.isCapture()) {
+        if (move.is_capture()) {
             return (int) Bits::pop_count(move.captures);
         }
 

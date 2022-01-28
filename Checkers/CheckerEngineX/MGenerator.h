@@ -9,7 +9,7 @@
 
 
 template<Color color>
-inline void maskBits(Position &pos, const uint32_t maske) {
+inline void mask_bits(Position &pos, const uint32_t maske) {
     if constexpr (color == BLACK)
         pos.BP ^= maske;
     else
@@ -19,8 +19,8 @@ inline void maskBits(Position &pos, const uint32_t maske) {
 
 template<Color color>
 inline
-void getSilentMoves(const Position &pos, MoveListe &liste) {
-    uint32_t movers = pos.getMovers<color>();
+void get_silent_moves(const Position &pos, MoveListe &liste) {
+    uint32_t movers = pos.get_movers<color>();
     const uint32_t nocc = ~(pos.BP | pos.WP);
     while (movers) {
         const uint32_t maske = movers & ~(movers - 1u);
@@ -29,7 +29,7 @@ void getSilentMoves(const Position &pos, MoveListe &liste) {
         squares &= nocc;
         while (squares) {
             const uint32_t next = squares & ~(squares - 1u);;
-            liste.addMove(Move{maske, next});
+            liste.add_move(Move{maske, next});
             squares &= squares - 1u;
         }
         movers &= movers - 1u;
@@ -39,10 +39,10 @@ void getSilentMoves(const Position &pos, MoveListe &liste) {
 template<Color color, PieceType type>
 inline
 void
-addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures,
-                MoveListe &liste) {
-    const uint32_t opp = pos.getCurrent<~color>() ^captures;
-    const uint32_t nocc = ~(opp | pos.getCurrent<color>());
+add_king_captures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures,
+                  MoveListe &liste) {
+    const uint32_t opp = pos.get_current<~color>() ^ captures;
+    const uint32_t nocc = ~(opp | pos.get_current<color>());
     const uint32_t temp0 = defaultShift<color>(current) & opp;
     const uint32_t temp1 = forwardMask<color>(current) & opp;
     const uint32_t dest0 = forwardMask<color>(temp0) & nocc;
@@ -59,63 +59,63 @@ addKingCaptures(const Position &pos, const uint32_t orig, const uint32_t current
         dest |= dest2 | dest3;
     }
     if (dest == 0u) {
-        liste.addMove(Move{orig, current, captures});
+        liste.add_move(Move{orig, current, captures});
     }
     while (dest) {
         uint32_t destMask = dest & ~(dest - 1u);
         uint32_t capMask = imed & ~(imed - 1u);
         dest &= dest - 1u;
         imed &= imed - 1u;
-        addKingCaptures<color, type>(pos, orig, destMask, (captures | capMask), liste);
+        add_king_captures<color, type>(pos, orig, destMask, (captures | capMask), liste);
     }
 }
 
 template<Color color>
 inline
-void loopCaptures(Position &pos, MoveListe &liste) {
-    uint32_t movers = pos.getJumpers<color>();
-    uint32_t kingJumpers = movers & pos.K;
-    uint32_t pawnJumpers = movers & (~pos.K);
+void loop_captures(Position &pos, MoveListe &liste) {
+    uint32_t movers = pos.get_jumpers<color>();
+    uint32_t king_jumpers = movers & pos.K;
+    uint32_t pawn_jumpers = movers & (~pos.K);
 
 
-    while (kingJumpers) {
-        const uint32_t maske = kingJumpers & ~(kingJumpers - 1u);
-        maskBits<color>(pos, maske);
-        addKingCaptures<color, KING>(pos, maske, maske, 0, liste);
-        maskBits<color>(pos, maske);
-        kingJumpers &= kingJumpers - 1u;
+    while (king_jumpers) {
+        const uint32_t maske = king_jumpers & ~(king_jumpers - 1u);
+        mask_bits<color>(pos, maske);
+        add_king_captures<color, KING>(pos, maske, maske, 0, liste);
+        mask_bits<color>(pos, maske);
+        king_jumpers &= king_jumpers - 1u;
     }
 
-    while (pawnJumpers) {
-        const uint32_t maske = pawnJumpers & ~(pawnJumpers - 1u);
-        addKingCaptures<color, PAWN>(pos, maske, maske, 0, liste);
-        pawnJumpers &= pawnJumpers - 1u;
+    while (pawn_jumpers) {
+        const uint32_t maske = pawn_jumpers & ~(pawn_jumpers - 1u);
+        add_king_captures<color, PAWN>(pos, maske, maske, 0, liste);
+        pawn_jumpers &= pawn_jumpers - 1u;
     }
 
 }
 
 
-inline void getMoves(Position &pos, MoveListe &liste) {
+inline void get_moves(Position &pos, MoveListe &liste) {
     liste.reset();
     if (pos.color == BLACK) {
-        loopCaptures<BLACK>(pos, liste);
-        if (!liste.isEmpty())
+        loop_captures<BLACK>(pos, liste);
+        if (!liste.is_empty())
             return;
-        getSilentMoves<BLACK>(pos, liste);
+        get_silent_moves<BLACK>(pos, liste);
     } else {
-        loopCaptures<WHITE>(pos, liste);
-        if (!liste.isEmpty())
+        loop_captures<WHITE>(pos, liste);
+        if (!liste.is_empty())
             return;
-        getSilentMoves<WHITE>(pos, liste);
+        get_silent_moves<WHITE>(pos, liste);
     }
 }
 
-inline void getCaptures(Position &pos, MoveListe &liste) {
+inline void get_captures(Position &pos, MoveListe &liste) {
     liste.reset();
-    if (pos.getColor() == BLACK) {
-        loopCaptures<BLACK>(pos, liste);
+    if (pos.get_color() == BLACK) {
+        loop_captures<BLACK>(pos, liste);
     } else {
-        loopCaptures<WHITE>(pos, liste);
+        loop_captures<WHITE>(pos, liste);
     }
 }
 

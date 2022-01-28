@@ -101,8 +101,7 @@
 				33,
 				34,
 				35,
-				36,
-				37
+				36
 			]
 		}
 	],
@@ -148,6 +147,7 @@
 				26,
 				27,
 				28,
+				37,
 				38,
 				39,
 				40,
@@ -156,8 +156,7 @@
 				43,
 				44,
 				45,
-				46,
-				47
+				46
 			]
 		},
 		{
@@ -183,8 +182,7 @@
 				33,
 				34,
 				35,
-				36,
-				37
+				36
 			]
 		}
 	],
@@ -380,12 +378,6 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
-			"path" : "Training/SampleFilter.cpp",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"compileGroupIndex" : 0,
 			"path" : "Training/Trainer.cpp",
 			"sourceGroupIndex" : 1
 		},
@@ -408,6 +400,11 @@
 		},
 		{
 			"backtrace" : 1,
+			"path" : "Training/BloomFilter.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
 			"path" : "Training/Generator.h",
 			"sourceGroupIndex" : 0
 		},
@@ -424,11 +421,6 @@
 		{
 			"backtrace" : 1,
 			"path" : "Training/Sample.h",
-			"sourceGroupIndex" : 0
-		},
-		{
-			"backtrace" : 1,
-			"path" : "Training/SampleFilter.h",
 			"sourceGroupIndex" : 0
 		},
 		{

@@ -96,7 +96,7 @@ float Network::compute_incre_forward_pass(Position next) {
     if (color == BLACK) {
         previous = p_black;
         z_previous = z_black.get();
-        next = next.getColorFlip();
+        next = next.get_color_flip();
         p_black = next;
     } else {
         previous = p_white;
@@ -287,7 +287,7 @@ int Network::evaluate(Position pos, int ply) {
 void Network::set_input(Position p) {
     //testing another network architecture
     if (p.color == BLACK) {
-        p = p.getColorFlip();
+        p = p.get_color_flip();
     }
     for (auto i = 0; i < max_units; ++i) {
         input[i] = 0;

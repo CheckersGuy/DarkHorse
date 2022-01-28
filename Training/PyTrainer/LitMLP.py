@@ -212,7 +212,7 @@ class Network(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self, hidden, output="policyend.weights"):
+    def __init__(self, hidden, output="policy.weights"):
         super(PolicyNetwork, self).__init__()
         layers = []
         self.output = output

@@ -14,14 +14,14 @@ Network network,network2;
 bool u_classical = false;
 Value last_eval;
 void initialize() {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/adam2.weights");
-    Zobrist::initializeZobrisKeys();
+    gameWeights.load_weights<uint32_t>("../Training/Engines/adam2.weights");
+    Zobrist::init_zobrist_keys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.loadWeights<uint32_t>("../Training/Engines/small.weights");
-    Zobrist::initializeZobrisKeys(seed);
+    gameWeights.load_weights<uint32_t>("../Training/Engines/small.weights");
+    Zobrist::init_zobrist_keys(seed);
 
 }
 
@@ -46,7 +46,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     //if there is only one move we can return
 
     MoveListe liste;
-    getMoves(board.getPosition(), liste);
+    get_moves(board.get_position(), liste);
 
 
 
@@ -96,8 +96,8 @@ namespace Search {
 
     Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
         Depth red = 0;
-        const bool is_promotion = move.isPromotion(board.getPosition().K);
-        if (local.depth >= 2 && !move.isCapture() && !is_promotion && local.i >= ((in_pv) ? 3 : 1)) {
+        const bool is_promotion = move.is_promotion(board.get_position().K);
+        if (local.depth >= 2 && !move.is_capture() && !is_promotion && local.i >= ((in_pv) ? 3 : 1)) {
             red = 1;
         }
         return red;
@@ -114,10 +114,10 @@ namespace Search {
 
         MoveListe liste;
 
-        getMoves(board.getPosition(), liste);
+        get_moves(board.get_position(), liste);
 
 
-        if (liste.isEmpty()) {
+        if (liste.is_empty()) {
             return loss(ply);
         }
 
@@ -145,15 +145,15 @@ namespace Search {
         Move tt_move;
 
 
-        uint64_t pos_key = board.getPosition().key;
+        uint64_t pos_key = board.get_position().key;
 
 
-        if (!local.skip_move.isEmpty()) {
+        if (!local.skip_move.is_empty()) {
             pos_key ^= Zobrist::skip_hash;
         }
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            return board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
         }
 
 
@@ -162,7 +162,7 @@ namespace Search {
         // tb-probing
 #ifndef TRAIN
 
-        if (TT.findHash(pos_key, info)) {
+        if (TT.find_hash(pos_key, info)) {
             tt_move = info.tt_move;
             auto tt_score = valueFromTT(info.score, ply);
             if (info.depth >= depth && info.flag != Flag::None) {
@@ -190,7 +190,7 @@ namespace Search {
 
         int start_index = 0;
         if (in_pv && ply < mainPV.length()) {
-            liste.putFront(mainPV[ply]);
+            liste.put_front(mainPV[ply]);
             start_index = 1;
         }
 
@@ -198,7 +198,7 @@ namespace Search {
 
 
         //sorting
-        liste.sort(board.getPosition(),depth, ply, tt_move, start_index);
+        liste.sort(board.get_position(), depth, ply, tt_move, start_index);
 
         //move-loop
         Search::move_loop(in_pv, local, board, pv, liste);
@@ -206,8 +206,8 @@ namespace Search {
 
         //updating search stats
         //moved to move-loop
-        if (local.best_score > local.alpha && liste.length() > 1 && board.isSilentPosition()) {
-            Statistics::mPicker.update_scores(board.getPosition(), &liste.liste[0], local.move, depth);
+        if (local.best_score > local.alpha && liste.length() > 1 && board.is_silent_position()) {
+            Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move, depth);
         }
 #ifndef TRAIN
         //storing tb-entries
@@ -220,7 +220,7 @@ namespace Search {
         } else {
             flag = TT_EXACT;
         }
-        TT.storeHash(tt_value, pos_key, flag, depth, local.move);
+        TT.store_hash(tt_value, pos_key, flag, depth, local.move);
 
 #endif
         return local.best_score;
@@ -234,7 +234,7 @@ namespace Search {
         }
 
         if (ply >= MAX_PLY) {
-            return board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            return board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
         }
 
         if (ply > glob.sel_depth)
@@ -242,22 +242,22 @@ namespace Search {
 
 
         MoveListe moves;
-        getCaptures(board.getPosition(), moves);
+        get_captures(board.get_position(), moves);
         Value bestValue = -INFINITE;
 
-        if (moves.isEmpty()) {
-            if (board.getPosition().isEnd()) {
+        if (moves.is_empty()) {
+            if (board.get_position().is_end()) {
                 return loss(ply);
             }
-            if (depth == 0 && board.getPosition().hasJumps(~board.getMover())) {
+            if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
                 return Search::search(in_pv, board, pv, alpha, beta, ply, 1, Move{});
             }
-            //bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+            //bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
 
             if (!u_classical) {
-                bestValue = Network::evaluate(network,network2,board.getPosition(),ply);
+                bestValue = Network::evaluate(network, network2, board.get_position(), ply);
             } else {
-                bestValue = board.getMover() * gameWeights.evaluate(board.getPosition(), ply);
+                bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
             }
 
             if (bestValue >= beta) {
@@ -266,15 +266,15 @@ namespace Search {
         }
 
         if (in_pv && ply < mainPV.length()) {
-            moves.putFront(mainPV[ply]);
+            moves.put_front(mainPV[ply]);
         }
         for (int i = 0; i < moves.length(); ++i) {
             Move move = moves[i];
             Line localPV;
-            board.makeMove(move);
+            board.make_move(move);
             Value value = -Search::qs(((i == 0) ? in_pv : false), board, localPV, -beta, -std::max(alpha, bestValue),
                                       ply + 1, depth - 1);
-            board.undoMove(move);
+            board.undo_move(move);
             if (value > bestValue) {
                 bestValue = value;
                 if (value >= beta)
@@ -296,7 +296,7 @@ namespace Search {
         if (in_pv
             && local.depth >= 8
             && move == local.sing_move
-            && local.skip_move.isEmpty()
+            && local.skip_move.is_empty()
             && extension == 0
                 ) {
             Value new_alpha = local.sing_score - sing_ext;
@@ -317,7 +317,7 @@ namespace Search {
         Value val = -INFINITE;
         Depth new_depth = local.depth - 1 + extension;
 
-        board.makeMove(move);
+        board.make_move(move);
 
         if (!in_pv && new_depth > 2 && isEval(local.beta) && local.ply > 0) {
 
@@ -352,7 +352,7 @@ namespace Search {
             }
 
         }
-        board.undoMove(move);
+        board.undo_move(move);
         return val;
 
     }
@@ -397,7 +397,7 @@ namespace Search {
         local.sing_move = Move{};
         local.move = Move{};
         MoveListe liste;
-        getMoves(board.getPosition(), liste);
+        get_moves(board.get_position(), liste);
 
 
         //removing the excluded moves from the list
@@ -407,10 +407,10 @@ namespace Search {
         }
 
 
-        liste.putFront(mainPV[0]);
+        liste.put_front(mainPV[0]);
         int start_index = 1;
 
-        liste.sort(board.getPosition(),local.depth, local.ply, Move{}, start_index);
+        liste.sort(board.get_position(), local.depth, local.ply, Move{}, start_index);
 
 #ifdef TRAIN
         std::shuffle(liste.begin(), liste.end(), Zobrist::generator);

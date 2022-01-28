@@ -4,7 +4,7 @@
 
 #include "Board.h"
 
-Position &Board::getPosition() {
+Position &Board::get_position() {
     return pStack[pCounter];
 }
 
@@ -14,50 +14,50 @@ Board::Board(const Board &other) {
     this->pCounter = other.pCounter;
 }
 
-void Board::printBoard() const {
+void Board::print_board() const {
     Position pos = pStack[pCounter];
-    pos.printPosition();
+    pos.print_position();
 }
 
 //Requires some more checking here
 //weird that I can not figure that out
-void Board::makeMove(Move move) {
+void Board::make_move(Move move) {
     pStack[pCounter + 1] = pStack[pCounter];
     this->pCounter++;
     moveStack[pCounter] = move;
-    Zobrist::doUpdateZobristKey(getPosition(), move);
-    pStack[pCounter].makeMove(move);
+    Zobrist::update_zobrist_keys(get_position(), move);
+    pStack[pCounter].make_move(move);
 
 
 }
 
-void Board::undoMove(Move move) {
+void Board::undo_move(Move move) {
     this->pCounter--;
 }
 
 Board &Board::operator=(Position pos) {
-    getPosition().BP = pos.BP;
-    getPosition().WP = pos.WP;
-    getPosition().K = pos.K;
-    getPosition().color = pos.color;
-    getPosition().key = Zobrist::generateKey(getPosition());
+    get_position().BP = pos.BP;
+    get_position().WP = pos.WP;
+    get_position().K = pos.K;
+    get_position().color = pos.color;
+    get_position().key = Zobrist::generate_key(get_position());
     return *this;
 }
 
 
-Color Board::getMover() const {
-    return pStack[pCounter].getColor();
+Color Board::get_mover() const {
+    return pStack[pCounter].get_color();
 }
 
-bool Board::isSilentPosition() {
-    return (getPosition().getJumpers<WHITE>() == 0u && getPosition().getJumpers<BLACK>() == 0u);
+bool Board::is_silent_position() {
+    return (get_position().get_jumpers<WHITE>() == 0u && get_position().get_jumpers<BLACK>() == 0u);
 }
 
-uint64_t Board::getCurrentKey() const {
+uint64_t Board::get_current_key() const {
     return pStack[pCounter].key;
 }
 
-bool Board::isRepetition() const {
+bool Board::is_repetition() const {
     int counter = 0;
     const Position check = pStack[pCounter];
     for (int i = pCounter; i >= 0; i -= 2) {
@@ -88,7 +88,7 @@ bool Board::isRepetition2() const {
         if ((moveStack[i].to & pStack[i].K) == 0)
             return false;
 
-        if (moveStack[i].isCapture()) {
+        if (moveStack[i].is_capture()) {
             return false;
         }
     }

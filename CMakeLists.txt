@@ -32,14 +32,14 @@ add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/ma
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 
 if (WIN32)
-    add_executable(tb_rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/tb_rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/SampleFilter.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/SampleFilter.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h )
+    add_executable(tb_rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/tb_rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BloomFilter.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h )
 endif ()
 
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${TSources} ${THeaders} Training/Util/LRUCache.h)
 
 
 if (UNIX)
-    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/SampleFilter.cpp Training/SampleFilter.h Training/Sample.cpp Training/Sample.h Training/PosStreamer.cpp Training/PosStreamer.h Training/BatchProvider.cpp Training/BatchProvider.h)
+    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/BloomFilter.h Training/Sample.cpp Training/Sample.h Training/PosStreamer.cpp Training/PosStreamer.h Training/BatchProvider.cpp Training/BatchProvider.h)
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")

@@ -49,17 +49,17 @@ public:
 
     Transposition() = default;
 
-    size_t getCapacity() const;
+    size_t get_capacity() const;
 
-    uint32_t getHashHits() const;
+    uint32_t get_hash_hits() const;
 
     void clear();
 
     void resize(size_t capa);
 
-    void storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
+    void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
 
-    bool findHash(uint64_t key, NodeInfo &info) const;
+    bool find_hash(uint64_t key, NodeInfo &info) const;
 };
 
 extern Transposition TT;

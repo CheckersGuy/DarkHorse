@@ -24,7 +24,7 @@ inline Position posFromString(const std::string &pos) {
     } else {
         result.color = WHITE;
     }
-    result.key = Zobrist::generateKey(result);
+    result.key = Zobrist::generate_key(result);
     return result;
 }
 
@@ -39,7 +39,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
     Statistics::mPicker.init();
 
@@ -55,9 +55,10 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
 
- /*   network.load("modeltest.weights");
+    network.load("modeltest.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -70,7 +71,8 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{16, 32});
     network2.addLayer(Layer{32, 1});
 
-    network2.init();*/
+    network2.init();
+*/
 
 
 
@@ -79,24 +81,24 @@ int main(int argl, const char **argc) {
 
 
     TT.resize(25);
-    board = Position::getStartPosition();
+    board = Position::get_start_position();
     //board = Position::pos_from_fen("B:W18,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,10,11,16");
 
-    board.getPosition().makeMove(11,15);
-    board.getPosition().makeMove(21,17);
-    board.getPosition().makeMove(9,13);
-    board.getPosition().makeMove(23,19);
-    board.getPosition().printPosition();
+    board.get_position().make_move(11, 15);
+    board.get_position().make_move(21, 17);
+    board.get_position().make_move(9, 13);
+    board.get_position().make_move(23, 19);
+    board.get_position().print_position();
 
     //board = Position::pos_from_fen("W:W5,29:BK3,K12");
-    board.printBoard();
+    board.print_board();
 
     Move best;
     searchValue(board, best, MAX_PLY, 100000000, true);
-    board.makeMove(best);
-    board.printBoard();
+    board.make_move(best);
+    board.print_board();
     MoveListe liste;
-    getMoves(board.getPosition(), liste);
+    get_moves(board.get_position(), liste);
 
 
 
@@ -142,7 +144,7 @@ int main(int argl, const char **argc) {
             for (auto i = 2; i < squares.size(); ++i) {
                 move.captures |= 1u << squares[i];
             }
-            board.makeMove(move);
+            board.make_move(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
             std::string time_string;
@@ -150,18 +152,18 @@ int main(int argl, const char **argc) {
             Move bestMove;
 
             MoveListe liste;
-            getMoves(board.getPosition(), liste);
+            get_moves(board.get_position(), liste);
             searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
             std::cout << "new_move" << "\n";
-            std::cout << std::to_string(bestMove.getFromIndex()) << "\n";
-            std::cout << std::to_string(bestMove.getToIndex()) << "\n";
+            std::cout << std::to_string(bestMove.get_from_index()) << "\n";
+            std::cout << std::to_string(bestMove.get_to_index()) << "\n";
             uint32_t captures = bestMove.captures;
             while (captures) {
                 std::cout << std::to_string(Bits::bitscan_foward(captures)) << "\n";
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
-            board.makeMove(bestMove);
+            board.make_move(bestMove);
         } else if (current == "terminate") {
             //terminating the program
             break;

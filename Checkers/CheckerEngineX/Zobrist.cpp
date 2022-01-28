@@ -6,11 +6,11 @@
 
 namespace Zobrist {
     std::array<std::array<uint64_t, 4>, 32> ZOBRIST_KEYS;
-    uint64_t colorBlack = 0ull;
+    uint64_t color_black = 0ull;
     uint64_t skip_hash = 0ull;
      std::mt19937_64 generator;
 
-    void initializeZobrisKeys(uint64_t seed) {
+    void init_zobrist_keys(uint64_t seed) {
         generator = std::mt19937_64(seed);
         std::uniform_int_distribution<uint64_t> distrib;
         for (int i = 0; i < 32; ++i) {
@@ -19,17 +19,17 @@ namespace Zobrist {
                 ZOBRIST_KEYS[i][j] = value;
             }
         }
-        colorBlack = distrib(generator);
+        color_black = distrib(generator);
         skip_hash = distrib(generator);
     }
 
-    void initializeZobrisKeys() {
+    void init_zobrist_keys() {
         constexpr uint64_t seed = 1070372ull;
-        initializeZobrisKeys(seed);
+        init_zobrist_keys(seed);
     }
 
 
-    uint64_t generateKey(const Position &pos) {
+    uint64_t generate_key(const Position &pos) {
         const uint32_t BK = pos.K & pos.BP;
         const uint32_t WK = pos.K & pos.WP;
         uint64_t nextKey = 0u;
@@ -50,18 +50,18 @@ namespace Zobrist {
             allPieces &= allPieces - 1u;
         }
         if (pos.color == BLACK) {
-            nextKey ^= colorBlack;
+            nextKey ^= color_black;
         }
         return nextKey;
     }
 
-    void doUpdateZobristKey(Position &pos, Move move) {
-        const int pawn_index = (pos.getColor() == BLACK) ? BPAWN : WPAWN;
-        const int king_index = (pos.getColor() == BLACK) ? BKING : WKING;
-        const int opp_king_index = (pos.getColor() == BLACK) ? WKING : BKING;
-        const int opp_pawn_index = (pos.getColor() == BLACK) ? WPAWN : BPAWN;
-        auto toIndex = move.getToIndex();
-        auto fromIndex = move.getFromIndex();
+    void update_zobrist_keys(Position &pos, Move move) {
+        const int pawn_index = (pos.get_color() == BLACK) ? BPAWN : WPAWN;
+        const int king_index = (pos.get_color() == BLACK) ? BKING : WKING;
+        const int opp_king_index = (pos.get_color() == BLACK) ? WKING : BKING;
+        const int opp_pawn_index = (pos.get_color() == BLACK) ? WPAWN : BPAWN;
+        auto toIndex = move.get_to_index();
+        auto fromIndex = move.get_from_index();
         constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
         if (((move.from & pos.K) == 0u) && (move.to & promo_squares) != 0u) {
             pos.key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];
@@ -84,18 +84,18 @@ namespace Zobrist {
             captures &= captures - 1u;
         }
 
-        pos.key ^= Zobrist::colorBlack;
+        pos.key ^= Zobrist::color_black;
 
     }
 
     uint64_t get_move_key(Position &cur_pos, Move move) {
         uint64_t move_key = 0ull;
-        const int pawn_index = (cur_pos.getColor() == BLACK) ? BPAWN : WPAWN;
-        const int king_index = (cur_pos.getColor() == BLACK) ? BKING : WKING;
-        const int opp_king_index = (cur_pos.getColor() == BLACK) ? WKING : BKING;
-        const int opp_pawn_index = (cur_pos.getColor() == BLACK) ? WPAWN : BPAWN;
-        auto toIndex = move.getToIndex();
-        auto fromIndex = move.getFromIndex();
+        const int pawn_index = (cur_pos.get_color() == BLACK) ? BPAWN : WPAWN;
+        const int king_index = (cur_pos.get_color() == BLACK) ? BKING : WKING;
+        const int opp_king_index = (cur_pos.get_color() == BLACK) ? WKING : BKING;
+        const int opp_pawn_index = (cur_pos.get_color() == BLACK) ? WPAWN : BPAWN;
+        auto toIndex = move.get_to_index();
+        auto fromIndex = move.get_from_index();
         constexpr uint32_t promo_squares = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
         if (((move.from & cur_pos.K) == 0u) && (move.to & promo_squares) != 0u) {
             move_key ^= Zobrist::ZOBRIST_KEYS[toIndex][king_index];

@@ -14,7 +14,7 @@
 #include "Generator.h"
 #include <types.h>
 #include <PosStreamer.h>
-
+#include <sstream>
 class Trainer {
 
 private:

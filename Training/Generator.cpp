@@ -120,22 +120,22 @@ void Generator::startx() {
                 std::vector<Position> game;
                 TT.clear();
                 uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
-                Zobrist::initializeZobrisKeys(seed);
+                Zobrist::init_zobrist_keys(seed);
                 int move_count;
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
-                    getMoves(board.getPosition(), liste);
+                    get_moves(board.get_position(), liste);
 
                     //if the position happens to be an illegal position
                     //we skip this position
-                    if (!board.getPosition().islegal()) {
+                    if (!board.get_position().is_legal()) {
                         pthread_mutex_lock(pmutex);
                         (*error_counter)++;
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
 
-                    game.emplace_back(board.getPosition());
+                    game.emplace_back(board.get_position());
 
                     //some form of adjudication trying
 
@@ -143,8 +143,8 @@ void Generator::startx() {
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.back());
                     //experimental stuff below
-                    if ((Bits::pop_count(board.getPosition().BP | board.getPosition().WP) <= piece_lim &&
-                         !board.getPosition().hasJumps(BLACK) && !board.getPosition().hasJumps(WHITE))
+                    if ((Bits::pop_count(board.get_position().BP | board.get_position().WP) <= piece_lim &&
+                         !board.get_position().has_jumps(BLACK) && !board.get_position().has_jumps(WHITE))
                             ) {
                         for (auto &pos: game) {
                             buffer[(*buffer_length)++] = pos;
@@ -175,11 +175,11 @@ void Generator::startx() {
                         break;
                     }
                     if (liste.length() == 1) {
-                        board.makeMove(liste[0]);
+                        board.make_move(liste[0]);
                     } else {
                         Move best;
                         auto value = searchValue(board, best, MAX_PLY, time_control, false);
-                        board.makeMove(best);
+                        board.make_move(best);
                     }
 
                 }

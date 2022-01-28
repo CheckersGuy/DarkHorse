@@ -43,8 +43,8 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
         num_bp[i] = (float) (Bits::pop_count(s.position.BP & (~s.position.K)));
         num_wk[i] = (float) (Bits::pop_count(s.position.WP & s.position.K));
         num_bk[i] = (float) (Bits::pop_count(s.position.BP & s.position.K));
-        if (s.position.getColor() == BLACK) {
-            s.position = s.position.getColorFlip();
+        if (s.position.get_color() == BLACK) {
+            s.position = s.position.get_color_flip();
             s.result = -s.result;
         }
         float res_temp;
@@ -68,7 +68,7 @@ void NetBatchProvider::next(float *results, int64_t *moves, float *inputs) {
     static constexpr size_t INPUT_SIZE = 120;
     auto create_input = [](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
-            s.position = s.position.getColorFlip();
+            s.position = s.position.get_color_flip();
             s.result = ~s.result;
         }
         float result = 0.5f;

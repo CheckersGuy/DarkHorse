@@ -24,12 +24,12 @@ bool Interface::is_n_fold(int n) {
 
 bool Interface::is_legal_move(Move move) {
     MoveListe liste;
-    getMoves(pos, liste);
+    get_moves(pos, liste);
     Position check_pos = pos;
-    check_pos.makeMove(move);
+    check_pos.make_move(move);
     for (auto m : liste.liste) {
         Position copy = pos;
-        copy.makeMove(m);
+        copy.make_move(m);
         if (copy == check_pos)
             return true;
     }
@@ -147,15 +147,15 @@ bool Interface::is_terminal_state() {
         return true;
 
     MoveListe liste;
-    getMoves(pos, liste);
+    get_moves(pos, liste);
     return liste.length() == 0;
 
 }
 
 void Engine::new_move(Move move) {
     writeMessage("new_move");
-    writeMessage(std::to_string(move.getFromIndex()));
-    writeMessage(std::to_string(move.getToIndex()));
+    writeMessage(std::to_string(move.get_from_index()));
+    writeMessage(std::to_string(move.get_to_index()));
     uint32_t captures = move.captures;
     while (captures) {
         writeMessage(std::to_string(__tzcnt_u32(captures)));
@@ -175,19 +175,19 @@ void Interface::process() {
 
     //checking if there is only one possible move
     MoveListe liste;
-    getMoves(pos, liste);
+    get_moves(pos, liste);
 
     Move move{};
 
     move = engines[first_mover].search();
 
 
-    if (!move.isEmpty()) {
+    if (!move.is_empty()) {
 
         if (!Interface::is_legal_move(move)) {
             std::exit(EXIT_FAILURE);
         }
-        pos.makeMove(move);
+        pos.make_move(move);
         history.emplace_back(pos);
         engines[second_mover].new_move(move);
         first_mover = second_mover;
@@ -255,7 +255,7 @@ void Match::start() {
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     std::cout << "Engine1: " << first << std::endl;
     std::cout << "Engine2: " << second << std::endl;
-    Zobrist::initializeZobrisKeys();
+    Zobrist::init_zobrist_keys();
     const int numEngines = 2;
     const int num_matches = this->threads;
 
@@ -314,7 +314,7 @@ void Match::start() {
 
         while (game_count < maxGames) {
             for (auto &inter : interfaces) {
-                if (inter.pos.isEmpty()) {
+                if (inter.pos.is_empty()) {
                     if (inter.first_game) {
                         inter.first_mover = 0;
                         inter.start_pos = get_start_pos();
@@ -335,7 +335,7 @@ void Match::start() {
                     printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
                     std::cout << std::endl;
                     MoveListe liste;
-                    getMoves(inter.pos, liste);
+                    get_moves(inter.pos, liste);
                     if (liste.length() == 0) {
                         if (inter.first_mover == 0) {
                             wins_two++;

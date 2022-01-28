@@ -18,11 +18,11 @@ void Transposition::resize(size_t capa) {
     clear();
 }
 
-size_t Transposition::getCapacity() const {
+size_t Transposition::get_capacity() const {
     return capacity;
 }
 
-uint32_t Transposition::getHashHits() const {
+uint32_t Transposition::get_hash_hits() const {
     return hashHit;
 }
 
@@ -33,8 +33,8 @@ void Transposition::clear() {
     std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 
-void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {
-    const auto index = (key) & (getCapacity() - 1u);
+void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {
+    const auto index = (key) & (get_capacity() - 1u);
     Cluster &cluster = this->entries[index];
     const uint32_t lock = (key >> 32u);
 
@@ -63,8 +63,8 @@ void Transposition::storeHash(Value value, uint64_t key, Flag flag, uint8_t dept
     cluster.ent[0].age = age_counter;
 }
 
-bool Transposition::findHash(uint64_t key, NodeInfo &info) const {
-    const auto index = key & (getCapacity() - 1u);
+bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
+    const auto index = key & (get_capacity() - 1u);
     const uint32_t currKey = key >> 32u;
     for (int i = 0; i < bucket_size; ++i) {
         if (this->entries[index].ent[i].key == currKey) {
