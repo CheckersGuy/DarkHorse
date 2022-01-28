@@ -23,7 +23,7 @@ Sample PosStreamer::get_next() {
             for (; (begin != end) && read_elements < buffer_size; ++begin) {
                 Sample current = *begin;
 
-                if (current.position.hasJumps(current.position.getColor()) || current.move == -1)
+                if (current.position.has_jumps(current.position.get_color()) || current.move == -1)
                     continue;
                 if(current.result == UNKNOWN)
                     continue;

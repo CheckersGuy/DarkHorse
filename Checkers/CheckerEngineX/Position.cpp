@@ -3,15 +3,15 @@
 
 #include "Position.h"
 
-bool Position::hasJumps() const {
-    return hasJumps(BLACK) || hasJumps(WHITE);
+bool Position::has_jumps() const {
+    return has_jumps(BLACK) || has_jumps(WHITE);
 }
 
-void Position::makeMove(uint32_t from_index, uint32_t to_index) {
+void Position::make_move(uint32_t from_index, uint32_t to_index) {
     Move move;
     move.from = 1u << from_index;
     move.to = 1u << to_index;
-    makeMove(move);
+    make_move(move);
 }
 
 struct Scanner {
@@ -119,7 +119,7 @@ Position Position::pos_from_fen(std::string fen_string) {
 }
 
 std::string Position::get_fen_string() const {
-    if (isEmpty())
+    if (is_empty())
         return std::string{};
     std::ostringstream stream;
     stream << ((color == BLACK) ? "B" : "W");
@@ -163,18 +163,18 @@ std::string Position::get_fen_string() const {
     return stream.str();
 }
 
-Position Position::getColorFlip() const {
+Position Position::get_color_flip() const {
     Position next;
     next.BP = getMirrored(WP);
     next.WP = getMirrored(BP);
     next.K = getMirrored(K);
     next.color = ~color;
-    next.key = key ^ Zobrist::colorBlack;
+    next.key = key ^ Zobrist::color_black;
     return next;
 }
 
 
-PieceType Position::getPieceType(Move move) const {
+PieceType Position::get_piece_type(Move move) const {
     PieceType type;
     if ((move.from & (BP & K)) != 0) {
         type = BKING;
@@ -190,7 +190,7 @@ PieceType Position::getPieceType(Move move) const {
     return type;
 }
 
-bool Position::islegal() const {
+bool Position::is_legal() const {
     const uint32_t b_pawns = BP & (~K);
     const uint32_t w_pawns = WP & (~K);
 
@@ -218,7 +218,7 @@ bool Position::islegal() const {
     return true;
 }
 
-Position Position::getStartPosition() {
+Position Position::get_start_position() {
     Position pos{};
     pos.color = BLACK;
     for (int i = 0; i <= 11; i++) {
@@ -227,15 +227,15 @@ Position Position::getStartPosition() {
     for (int i = 20; i <= 31; i++) {
         pos.WP |= 1u << i;
     }
-    pos.key = Zobrist::generateKey(pos);
+    pos.key = Zobrist::generate_key(pos);
     return pos;
 }
 
-bool Position::isEmpty() const {
+bool Position::is_empty() const {
     return (BP == 0u && WP == 0u);
 }
 
-Color Position::getColor() const {
+Color Position::get_color() const {
     return color;
 }
 
@@ -243,27 +243,27 @@ uint32_t Position::piece_count() {
     return Bits::pop_count(WP | BP);
 }
 
-bool Position::hasJumps(Color col) const {
-    if (col == BLACK) {
-        return getJumpers<BLACK>() != 0u;
+bool Position::has_jumps(Color color) const {
+    if (color == BLACK) {
+        return get_jumpers<BLACK>() != 0u;
     } else {
-        return getJumpers<WHITE>() != 0u;
+        return get_jumpers<WHITE>() != 0u;
     }
 }
 
-bool Position::hasThreat() const {
-    return hasJumps(~getColor());
+bool Position::has_threat() const {
+    return has_jumps(~get_color());
 }
 
-bool Position::isWipe() const {
-    return ((getColor() == BLACK && getMovers<BLACK>() == 0u) || (getColor() == WHITE && getMovers<WHITE>() == 0u));
+bool Position::is_wipe() const {
+    return ((get_color() == BLACK && get_movers<BLACK>() == 0u) || (get_color() == WHITE && get_movers<WHITE>() == 0u));
 }
 
-bool Position::isEnd() const {
-    return (color == BLACK && getMovers<BLACK>() == 0u) || (color == WHITE && getMovers<WHITE>() == 0u);
+bool Position::is_end() const {
+    return (color == BLACK && get_movers<BLACK>() == 0u) || (color == WHITE && get_movers<WHITE>() == 0u);
 }
 
-void Position::printPosition() const {
+void Position::print_position() const {
     std::string out;
     uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
@@ -295,11 +295,11 @@ void Position::printPosition() const {
     std::cout << out << std::endl;
 }
 
-void Position::makeMove(Move &move) {
-    assert(!move.isEmpty());
+void Position::make_move(Move &move) {
+    assert(!move.is_empty());
     //setting the piece type
     if (color == BLACK) {
-        if (move.isCapture()) {
+        if (move.is_capture()) {
             WP &= ~move.captures;
             K &= ~move.captures;
         }
@@ -310,7 +310,7 @@ void Position::makeMove(Move &move) {
             K |= move.to;
 
     } else {
-        if (move.isCapture()) {
+        if (move.is_capture()) {
             BP &= ~move.captures;
             K &= ~move.captures;
         }

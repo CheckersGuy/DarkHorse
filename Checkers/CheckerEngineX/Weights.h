@@ -42,21 +42,21 @@ struct Weights {
     }
 
 
-    size_t numNonZeroValues() {
+    size_t num_non_zero_weights() {
         return std::count_if(weights.begin(), weights.end(), [](T val) { return static_cast<int>(val) != 0; });
     }
 
-    T getMaxValue() const {
+    T get_max_weight() const {
         return *std::max_element(weights.begin(), weights.end());
     }
 
-    T getMinValue() const {
+    T get_min_weight() const {
         return *std::min_element(weights.begin(), weights.end());
     }
 
 
     template<typename RunType=uint32_t>
-    void loadWeights(const std::string &path) {
+    void load_weights(const std::string &path) {
         static_assert(std::is_unsigned<RunType>::value);
         std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
@@ -98,7 +98,7 @@ struct Weights {
     }
 
     template<typename RunType=uint32_t>
-    void storeWeights(const std::string &path) const {
+    void store_weights(const std::string &path) const {
         using DataType = double;
         std::ofstream stream(path, std::ios::binary);
         auto end = weights.end();
@@ -163,8 +163,8 @@ struct Weights {
         }
         U opening = 0, ending = 0;
 
-        if (pos.getColor() == BLACK) {
-            pos = pos.getColorFlip();
+        if (pos.get_color() == BLACK) {
+            pos = pos.get_color_flip();
         }
         auto f = [&](size_t op_index) {
             size_t end_index = op_index + 1;

@@ -39,11 +39,11 @@ inline constexpr uint32_t getMirrored(uint32_t b) {
     return getHorizontalFlip(getVerticalFlip(b));
 }
 
-struct Square{
+struct Square {
     PieceType type;
     uint32_t index;
 
-    friend std::ostream& operator<<(std::ostream& stream,Square square);
+    friend std::ostream &operator<<(std::ostream &stream, Square square);
 };
 
 struct Position {
@@ -54,7 +54,7 @@ struct Position {
     uint32_t piece_count();
 
     template<Color color>
-    constexpr uint32_t getCurrent() const {
+    constexpr uint32_t get_current() const {
         if constexpr (color == BLACK)
             return BP;
         else
@@ -64,12 +64,12 @@ struct Position {
     uint32_t getKingAttackSquares(uint32_t bit_mask);
 
     template<Color color>
-    uint32_t attacks()const {
+    uint32_t attacks() const {
         //returns all empty squares that are attacked by color
         uint32_t attacks = 0u;
         const uint32_t empty = ~(BP | WP);
-        auto pawns = getCurrent<color>(); //kings and pawns
-        auto kings = getCurrent<color>() & K; //only kings
+        auto pawns = get_current<color>(); //kings and pawns
+        auto kings = get_current<color>() & K; //only kings
         attacks |= (defaultShift<color>(pawns) | forwardMask<color>(pawns));
         attacks |= (defaultShift<~color>(kings) | forwardMask<~color>(kings));
         attacks &= empty;
@@ -77,9 +77,9 @@ struct Position {
     }
 
     template<Color color>
-    uint32_t getMovers() const {
+    uint32_t get_movers() const {
         const uint32_t nocc = ~(BP | WP);
-        const uint32_t current = getCurrent<color>();
+        const uint32_t current = get_current<color>();
         const uint32_t kings = current & K;
 
         uint32_t movers = (defaultShift<~color>(nocc) | forwardMask<~color>(nocc)) & current;
@@ -90,10 +90,10 @@ struct Position {
     }
 
     template<Color color>
-    uint32_t getJumpers() const {
+    uint32_t get_jumpers() const {
         const uint32_t nocc = ~(BP | WP);
-        const uint32_t current = getCurrent<color>();
-        const uint32_t opp = getCurrent<~color>();
+        const uint32_t current = get_current<color>();
+        const uint32_t opp = get_current<~color>();
         const uint32_t kings = current & K;
 
         uint32_t movers = 0u;
@@ -119,36 +119,36 @@ struct Position {
         return movers;
     }
 
-    PieceType getPieceType(Move move)const;
+    PieceType get_piece_type(Move move) const;
 
 
     std::string get_fen_string() const;
 
-    Color getColor() const;
+    Color get_color() const;
 
-    bool hasJumps(Color color) const;
+    bool has_jumps(Color color) const;
 
-    bool hasJumps() const;
+    bool has_jumps() const;
 
-    bool isWipe() const;
+    bool is_wipe() const;
 
-    bool hasThreat() const;
+    bool has_threat() const;
 
-    bool isEmpty() const;
+    bool is_empty() const;
 
-    bool isEnd() const;
+    bool is_end() const;
 
-    bool islegal()const;
+    bool is_legal() const;
 
-    void makeMove(Move &move);
+    void make_move(Move &move);
 
-    void makeMove(uint32_t from_index,uint32_t to_index);
+    void make_move(uint32_t from_index, uint32_t to_index);
 
-    void printPosition() const;
+    void print_position() const;
 
-    Position getColorFlip() const;
+    Position get_color_flip() const;
 
-    static Position getStartPosition();
+    static Position get_start_position();
 
     static Position pos_from_fen(std::string fen_string);
 

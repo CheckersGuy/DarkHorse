@@ -13,7 +13,7 @@ namespace Utilities {
     void create_samples_from_games(std::string games, std::string output) {
         size_t uniq_count{0};
         size_t total_count{0};
-        SampleFilter filter(5751035027, 10);
+        BloomFilter<Sample> filter(5751035027, 10);
         std::vector<Sample> buffer;
         const size_t max_cap_buffer = 10000;
 
@@ -44,7 +44,7 @@ namespace Utilities {
                 const size_t rep_count = std::count(game.begin(), game.end(), back);
 
                 MoveListe liste;
-                getMoves(back, liste);
+                get_moves(back, liste);
                 if (liste.length() == 0) {
                     const int result = -back.color;
 

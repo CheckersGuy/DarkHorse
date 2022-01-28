@@ -61,7 +61,7 @@ namespace Perft {
 
     uint64_t perftCheck(Position& pos, int depth) {
         MoveListe liste;
-        getMoves(pos, liste);
+        get_moves(pos, liste);
         if (depth == 1) {
             return liste.length();
         }
@@ -72,8 +72,8 @@ namespace Perft {
         }
         for (int i=0;i<liste.length();++i) {
             Position copy=pos;
-            copy.makeMove(liste[i]);
-            Zobrist::doUpdateZobristKey(copy, liste[i]);
+            copy.make_move(liste[i]);
+            Zobrist::update_zobrist_keys(copy, liste[i]);
             counter+=perftCheck(copy,depth-1);
         }
 

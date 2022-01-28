@@ -13,7 +13,7 @@ namespace File {
         std::istream_iterator<Sample>begin(stream);
         std::istream_iterator<Sample>end;
 
-        return std::count_if(begin,end,[](Sample s){return !s.position.islegal();});
+        return std::count_if(begin,end,[](Sample s){return !s.position.is_legal();});
     }
 
     void remove_duplicates(std::string input, std::string output) {
@@ -23,7 +23,7 @@ namespace File {
 
         size_t counter = 0;
         size_t total_elements = 0;
-        SampleFilter filter(5751035027, 10);
+        BloomFilter<Sample> filter(5751035027, 10);
         std::vector<Sample> elements;
         std::for_each(begin, end, [&](Sample s) {
             if (!filter.has(s)) {

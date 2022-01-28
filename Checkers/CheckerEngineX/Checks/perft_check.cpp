@@ -15,18 +15,18 @@ int main(){
             16377718018836900735ull
     };
 
-    Zobrist::initializeZobrisKeys();
+    Zobrist::init_zobrist_keys();
     Perft::table.setCapacity(1u<<23u);
     Board board;
-    board=Position::getStartPosition();
-    board.printBoard();
+    board= Position::get_start_position();
+    board.print_board();
     std::cout<<std::endl;
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
     for(auto i=1;i<node_counts.size();++i){
         std::cout<<"Checking depth: "<<i<<" ";
-        auto count = Perft::perftCheck(board.getPosition(),i);
+        auto count = Perft::perftCheck(board.get_position(), i);
         std::cout<<count<<" ";
 
         auto iter_time = std::chrono::high_resolution_clock::now();

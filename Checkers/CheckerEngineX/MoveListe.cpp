@@ -48,12 +48,12 @@ void MoveListe::remove(Move move) {
 
 }
 
-void MoveListe::putFront(Move move) {
+void MoveListe::put_front(Move other) {
 
     if (moveCounter <= 1)
         return;
 
-    auto it = std::find(begin(), end(), move);
+    auto it = std::find(begin(), end(), other);
     if (it != end()) {
         std::swap(*begin(), *it);
     }

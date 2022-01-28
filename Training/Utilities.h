@@ -4,7 +4,7 @@
 
 #ifndef TRAINING_UTILITIES_H
 #define TRAINING_UTILITIES_H
-#include "SampleFilter.h"
+#include "BloomFilter.h"
 #include <fstream>
 #include "Board.h"
 #include "GameLogic.h"
@@ -13,7 +13,7 @@
 #include <ostream>
 #include <istream>
 #include <iterator>
-
+#include <BloomFilter.h>
 namespace Utilities {
     extern std::unordered_set<uint64_t> hashes;
 
@@ -32,7 +32,7 @@ namespace Utilities {
              Move best;
              Value value = searchValue(board, best, MAX_PLY, 20, false);
              if (value >= lowerBound && value <= upperBound) {
-                 hashes.insert(board.getCurrentKey());
+                 hashes.insert(board.get_current_key());
                  Position currentPos = board.getPosition();
                  *iter = currentPos;
                  std::cout << "Added position" << std::endl;
@@ -40,11 +40,11 @@ namespace Utilities {
              return;
          }
          MoveListe liste;
-         getMoves(board.getPosition(), liste);
+         get_moves(board.get_position(), liste);
          for (int i = 0; i < liste.length(); ++i) {
-             board.makeMove(liste[i]);
+             board.make_move(liste[i]);
              createNMoveBook(iter, N - 1, board, lowerBound, upperBound);
-             board.undoMove(liste[i]);
+             board.undo_move(liste[i]);
          }
      }
  */

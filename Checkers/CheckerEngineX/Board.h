@@ -24,25 +24,25 @@ public:
 
     Board(const Board &board);
 
-    void printBoard() const;
+    void print_board() const;
 
-    void makeMove(Move move);
+    void make_move(Move move);
 
-    void undoMove(Move move);
+    void undo_move(Move move);
 
-    bool isSilentPosition();
+    bool is_silent_position();
 
-    Position &getPosition();
+    Position &get_position();
 
     Position previous();
 
-    uint64_t getCurrentKey() const;
+    uint64_t get_current_key() const;
 
-    bool isRepetition() const;
+    bool is_repetition() const;
 
     bool isRepetition2() const;
 
-    Color getMover() const;
+    Color get_mover() const;
 
     Board &operator=(Position pos);
 };

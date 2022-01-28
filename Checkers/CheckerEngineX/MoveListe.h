@@ -17,28 +17,25 @@ public:
 
     int length() const;
 
-    void addMove(Move next);
+    void add_move(Move next);
 
     void sort(Position current,Depth depth,int ply,Move ttMove, int start_index);
 
-    bool isEmpty() const;
+    bool is_empty() const;
 
     const Move &operator[](int index) const;
 
     Move &operator[](int index);
 
-    void putFront(Move other);
+    void put_front(Move other);
 
     void remove(Move move);
-
 
     void reset();
 
     auto begin() {
         return liste.begin();
     }
-
-   int get_move_index(Move move) const;
 
     auto end() {
         auto it = liste.begin();
@@ -50,7 +47,7 @@ public:
 
 };
 
-inline bool MoveListe::isEmpty() const {
+inline bool MoveListe::is_empty() const {
     return this->moveCounter == 0;
 }
 
@@ -62,7 +59,7 @@ inline Move &MoveListe::operator[](int index) {
     return liste[index];
 }
 
-inline void MoveListe::addMove(Move next) {
+inline void MoveListe::add_move(Move next) {
     liste[this->moveCounter++] = next;
 }
 

@@ -127,7 +127,7 @@ extern "C" int has_jumps(uint32_t white_men, uint32_t black_men, uint32_t kings,
     pos.BP = black_men;
     pos.WP = white_men;
     pos.K = kings;
-    return pos.hasJumps(static_cast<Color>(color));
+    return pos.has_jumps(static_cast<Color>(color));
 }
 
 
@@ -145,7 +145,7 @@ extern "C" void print_position(uint32_t white_men, uint32_t black_men, uint32_t 
     pos.WP = white_men;
     pos.BP = black_men;
     pos.K = kings;
-    pos.printPosition();
+    pos.print_position();
 }
 
 extern "C" int count_bits(uint32_t bitfield) {

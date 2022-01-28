@@ -8,7 +8,7 @@
 #include <vector>
 #include "MGenerator.h"
 #include "../../Training/Sample.h"
-#include "../../Training/SampleFilter.h"
+#include "../../Training/BloomFilter.h"
 
 #ifdef ITALIAN_RULES
 #define DB_PATH "c:/kr_english_wld"

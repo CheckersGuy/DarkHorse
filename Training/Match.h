@@ -33,7 +33,7 @@ inline std::string getPositionString(Position pos) {
             position += "0";
         }
     }
-    if (pos.getColor() == BLACK) {
+    if (pos.get_color() == BLACK) {
         position += "B";
     } else {
         position += "W";
