@@ -7,7 +7,6 @@
 #include <GameLogic.h>
 #include <sys/mman.h>
 #include <BloomFilter.h>
-#include "mysql_connection.h"
 #include "Trainer.h"
 #include <Util/LRUCache.h>
 
