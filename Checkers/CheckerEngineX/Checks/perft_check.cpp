@@ -17,7 +17,7 @@ int main() {
     };
 
     Zobrist::init_zobrist_keys();
-    Perft::table.set_capacity("8000mb");
+    Perft::table.set_capacity("32000mb");
     Board board;
     board = Position::get_start_position();
     board.print_board();
