@@ -53,7 +53,6 @@ public:
     void insert(T sample) {
         num_insertions++;
         uint64_t hash_val = hash(sample);
-        //extracing lower and upper 32 bits
         auto hash1 = static_cast<uint32_t>(hash_val);
         auto hash2 = static_cast<uint32_t>(hash_val >> 32);
 
@@ -67,7 +66,6 @@ public:
 
     bool has(const T &other) {
         uint64_t hash_val = hash(other);
-        //extracing lower and upper 32 bits
         auto hash1 = static_cast<uint32_t>(hash_val);
         auto hash2 = static_cast<uint32_t>(hash_val >> 32);
         for (uint32_t k = 0; k < num_hashes; ++k) {

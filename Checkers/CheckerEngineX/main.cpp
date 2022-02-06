@@ -39,7 +39,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
     Statistics::mPicker.init();
 
@@ -76,6 +76,7 @@ int main(int argl, const char **argc) {
 
 
 
+/*
 
 
 
@@ -100,6 +101,7 @@ int main(int argl, const char **argc) {
     MoveListe liste;
     get_moves(board.get_position(), liste);
 
+*/
 
 
 

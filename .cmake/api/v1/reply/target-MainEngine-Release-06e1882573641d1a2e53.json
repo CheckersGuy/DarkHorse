@@ -48,7 +48,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-Ofast  -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG"
+					"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG"
 				},
 				{
 					"fragment" : "-std=gnu++2a"
@@ -77,7 +77,6 @@
 			"sourceIndexes" : 
 			[
 				0,
-				17,
 				18,
 				19,
 				20,
@@ -87,7 +86,9 @@
 				24,
 				25,
 				26,
-				27
+				27,
+				28,
+				29
 			]
 		}
 	],
@@ -97,7 +98,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-Ofast  -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG",
+				"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG",
 				"role" : "flags"
 			},
 			{
@@ -121,7 +122,6 @@
 			"sourceIndexes" : 
 			[
 				0,
-				17,
 				18,
 				19,
 				20,
@@ -131,7 +131,9 @@
 				24,
 				25,
 				26,
-				27
+				27,
+				28,
+				29
 			]
 		},
 		{
@@ -153,7 +155,8 @@
 				13,
 				14,
 				15,
-				16
+				16,
+				17
 			]
 		}
 	],
@@ -218,6 +221,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "Checkers/CheckerEngineX/Position.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Checkers/CheckerEngineX/Thread.h",
 			"sourceGroupIndex" : 1
 		},
 		{
@@ -297,6 +305,12 @@
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
 			"path" : "Checkers/CheckerEngineX/Position.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "Checkers/CheckerEngineX/Thread.cpp",
 			"sourceGroupIndex" : 0
 		},
 		{

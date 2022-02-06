@@ -123,7 +123,13 @@ struct Position {
 
     Color get_color() const;
 
+    template<Color color>
+    bool has_jumps()const {
+        return get_jumpers<color>() != 0;
+    }
+
     bool has_jumps(Color color) const;
+
 
     bool has_jumps() const;
 
@@ -137,7 +143,10 @@ struct Position {
 
     bool is_legal() const;
 
-    void make_move(Move &move);
+    void make_move(Move move);
+
+
+    void unmake_move(Move move);
 
     void make_move(uint32_t from_index, uint32_t to_index);
 
