@@ -7,7 +7,7 @@
 
 #include <list>
 #include <unordered_map>
-
+#include <optional>
 template<class K, class T, typename Hasher = std::hash<K>>
 class Cache {
 private:
