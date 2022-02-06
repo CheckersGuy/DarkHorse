@@ -174,7 +174,6 @@ Position Position::get_color_flip() const {
 }
 
 
-
 bool Position::is_legal() const {
     const uint32_t b_pawns = BP & (~K);
     const uint32_t w_pawns = WP & (~K);
@@ -230,9 +229,9 @@ uint32_t Position::piece_count() {
 
 bool Position::has_jumps(Color color) const {
     if (color == BLACK) {
-        return get_jumpers<BLACK>() != 0u;
+        return has_jumps<BLACK>();
     } else {
-        return get_jumpers<WHITE>() != 0u;
+        return has_jumps<WHITE>();
     }
 }
 
@@ -280,7 +279,7 @@ void Position::print_position() const {
     std::cout << out << std::endl;
 }
 
-void Position::make_move(Move &move) {
+void Position::make_move(Move move) {
     assert(!move.is_empty());
     //setting the piece type
     if (color == BLACK) {

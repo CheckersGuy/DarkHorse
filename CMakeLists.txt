@@ -5,10 +5,10 @@ if(WIN32)
 add_compile_options("-march=native")
 add_compile_options("-O2")
 else()
-SET(CMAKE_CXX_FLAGS "-Ofast  -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
 endif()
 SET(CMAKE_BUILD_TYPE "Release")
-#set(CMAKE_BUILD_TYPE Debug)
+
 if (UNIX)
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Training")
     file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.h  )
@@ -27,7 +27,7 @@ file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 
 
-add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources} Checkers/CheckerEngineX/Network.cpp Checkers/CheckerEngineX/Network.h)
+add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources} Checkers/CheckerEngineX/Network.cpp Checkers/CheckerEngineX/Network.h Checkers/CheckerEngineX/Thread.cpp Checkers/CheckerEngineX/Thread.h)
 
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 

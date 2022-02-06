@@ -89,20 +89,20 @@ int main(int argl, const char **argc) {
 
 
 
-/*
-     Match engine_match("modeltestpolicy", "modeltest");
+
+     Match engine_match("test", "test");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
      engine_match.setNumThreads(12);
      engine_match.setHashSize(21);
      engine_match.start();
 
-*/
 
 
 
 
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset4.val");
+
+/*    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset4.val");
     trainer.set_learning_rate(50000);
     trainer.set_weight_decay(0.0);
     trainer.set_decay(0.07);
@@ -110,7 +110,7 @@ int main(int argl, const char **argc) {
     trainer.set_savepoint_step(10000000);
     trainer.set_epochs(1000);
     trainer.set_c_value(-1e-3);
-    trainer.start_tune();
+    trainer.start_tune();*/
 
     //creating a subset of my dataset for validation data
 

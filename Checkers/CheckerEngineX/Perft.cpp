@@ -11,7 +11,7 @@ namespace Perft {
 
     Table table;
 
-    uint64_t Table::get_capacity() {
+    size_t Table::get_capacity() {
         return capacity;
     }
 
@@ -51,7 +51,6 @@ namespace Perft {
         size_t bytes_per_entry = sizeof(Cluster);
         size_t num_entries = size_in_bytes / bytes_per_entry;
         set_capacity(num_entries);
-        std::cout<<"entries: "<<num_entries<<std::endl;
     }
 
     void Table::clear() {
@@ -59,34 +58,30 @@ namespace Perft {
         std::fill(entries.begin(), entries.end(), clust);
     }
 
-    void Table::set_capacity(uint32_t capacity) {
+    void Table::set_capacity(size_t capacity) {
         this->capacity = capacity;
         entries.resize(capacity);
         clear();
     }
 
-    std::optional<uint64_t> Table::probe(Position pos, int depth) {
-        auto key = static_cast<uint32_t >(pos.key >> 32u);
-        const uint32_t index = (key) & (this->capacity - 1);
-        if (entries[index][0].pos == pos && entries[index][0].depth == depth) {
-            return std::make_optional(entries[index][0].nodes);
-        } else if (entries[index][1].pos == pos && entries[index][1].depth == depth) {
-            return std::make_optional(entries[index][1].nodes);
+    size_t Table::probe(Position pos, int depth) {
+        auto index = pos.key % capacity;
+        if (entries[index][1].WP == pos.WP && entries[index][1].BP == pos.BP && entries[index][1].K == pos.K &&
+            entries[index][1].depth == depth) {
+            return entries[index][1].nodes;
+        } else if (entries[index][0].WP == pos.WP && entries[index][0].BP == pos.BP && entries[index][0].K == pos.K &&
+                   entries[index][0].depth == depth) {
+            return entries[index][0].nodes;
         }
-        return std::nullopt;
+        return 0;
     }
 
     void Table::store(Position pos, int depth, uint64_t nodes) {
-        auto key = static_cast<uint32_t >(pos.key >> 32u);
-        const uint32_t index = (key) & (this->capacity - 1u);
+        auto index = pos.key % capacity;
         if (depth > entries[index][0].depth) {
-            entries[index][0].pos = pos;
-            entries[index][0].depth = depth;
-            entries[index][0].nodes = nodes;
+            entries[index][0] = Entry(pos, depth, nodes);
         } else {
-            entries[index][1].pos = pos;
-            entries[index][1].depth = depth;
-            entries[index][1].nodes = nodes;
+            entries[index][1] = Entry(pos, depth, nodes);
         };
     }
 
@@ -97,10 +92,10 @@ namespace Perft {
             return liste.length();
         }
         uint64_t counter = 0;
-        auto result = table.probe(pos, depth);
-        if (result.has_value()) {
-            return result.value();
-        }
+        /*     auto result = table.probe(pos, depth);
+             if (result != 0) {
+                 return result;
+             }*/
         for (int i = 0; i < liste.length(); ++i) {
             Position copy = pos;
             copy.make_move(liste[i]);
@@ -111,4 +106,27 @@ namespace Perft {
         table.store(pos, depth, counter);
         return counter;
     }
+
+    void perft_check(Position &pos, int depth, PerftCallBack &call_back) {
+        if (depth == 1) {
+            get_moves(pos, call_back);
+            return;
+        }
+
+        /*    auto result = table.probe(pos, depth);
+            if (result != 0) {
+                call_back.num_nodes += result;
+                return;
+            }*/
+        //uint64_t start_nodes = call_back.num_nodes;
+        MoveReceiver receiver{call_back, pos, depth};
+        get_moves(pos, receiver);
+        //uint64_t nodes_searched = call_back.num_nodes - start_nodes;
+        //table.store(pos, depth, nodes_searched);
+        return;
+    }
+
+
 }
+
+

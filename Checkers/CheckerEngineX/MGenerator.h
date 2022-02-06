@@ -8,6 +8,32 @@
 #include "MoveListe.h"
 
 
+enum MoveType {
+    PawnMove, KingMove, PromoMove
+};
+
+
+struct PerftCallBack {
+    size_t num_nodes{0ull};
+
+    inline void operator()(uint32_t &maske, uint32_t &next) {
+        this->num_nodes++;
+    };
+
+    inline void operator()(uint32_t &from, uint32_t &to, uint32_t &captures) {
+        this->num_nodes++;
+    };
+
+    void visit(uint32_t &maske, uint32_t &next);
+
+    void visit(uint32_t &from, uint32_t &to, uint32_t &captures)
+
+
+};
+
+//seperate struct for other things like, Pawnmove,kingmove,kingjump,pawnjump,promotion-move
+
+
 template<Color color>
 inline void mask_bits(Position &pos, const uint32_t maske) {
     if constexpr (color == BLACK)
@@ -16,31 +42,43 @@ inline void mask_bits(Position &pos, const uint32_t maske) {
         pos.WP ^= maske;
 }
 
-
-template<Color color>
+template<Color color, typename CallBack>
 inline
-void get_silent_moves(const Position &pos, MoveListe &liste) {
-    uint32_t movers = pos.get_movers<color>();
+void get_silent_moves(const Position &pos, CallBack &&call_back) {
+    uint32_t pawn_movers = pos.get_movers<color>() & (~pos.K);
+    uint32_t king_movers = pos.get_movers<color>() & pos.K;
     const uint32_t nocc = ~(pos.BP | pos.WP);
-    while (movers) {
-        const uint32_t maske = movers & ~(movers - 1u);
+
+    while (pawn_movers) {
+        uint32_t maske = pawn_movers & ~(pawn_movers - 1u);
         uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
-        squares |= forwardMask<~color>(maske & pos.K) | defaultShift<~color>(maske & pos.K);
         squares &= nocc;
         while (squares) {
-            const uint32_t next = squares & ~(squares - 1u);;
-            liste.add_move(Move{maske, next});
+            uint32_t next = squares & ~(squares - 1u);
+            std::forward<CallBack>(call_back)(maske, next);
             squares &= squares - 1u;
         }
-        movers &= movers - 1u;
+        pawn_movers &= pawn_movers - 1u;
     }
+    while (king_movers) {
+        uint32_t maske = king_movers & ~(king_movers - 1u);
+        uint32_t squares = get_neighbour_squares<color>(maske);
+        squares &= nocc;
+        while (squares) {
+            uint32_t next = squares & ~(squares - 1u);
+            std::forward<CallBack>(call_back)(maske, next);
+            squares &= squares - 1u;
+        }
+        king_movers &= king_movers - 1u;
+    }
+
 }
 
-template<Color color, PieceType type>
+template<Color color, PieceType type, typename CallBack>
 inline
 void
-add_king_captures(const Position &pos, const uint32_t orig, const uint32_t current, const uint32_t captures,
-                  MoveListe &liste) {
+add_king_captures(const Position &pos, uint32_t orig, uint32_t current, uint32_t captures,
+                  CallBack &&call_back) {
     const uint32_t opp = pos.get_current<~color>() ^ captures;
     const uint32_t nocc = ~(opp | pos.get_current<color>());
     const uint32_t temp0 = defaultShift<color>(current) & opp;
@@ -59,55 +97,76 @@ add_king_captures(const Position &pos, const uint32_t orig, const uint32_t curre
         dest |= dest2 | dest3;
     }
     if (dest == 0u) {
-        liste.add_move(Move{orig, current, captures});
+        call_back(orig, current, captures);
     }
     while (dest) {
         uint32_t destMask = dest & ~(dest - 1u);
         uint32_t capMask = imed & ~(imed - 1u);
         dest &= dest - 1u;
         imed &= imed - 1u;
-        add_king_captures<color, type>(pos, orig, destMask, (captures | capMask), liste);
+        add_king_captures<color, type>
+                (pos, orig, destMask, (captures | capMask), std::forward<CallBack>(call_back));
     }
 }
 
-template<Color color>
+template<Color color, typename CallBack>
 inline
-void loop_captures(Position &pos, MoveListe &liste) {
+void loop_captures(Position &pos, CallBack &&call_back) {
     uint32_t movers = pos.get_jumpers<color>();
     uint32_t king_jumpers = movers & pos.K;
     uint32_t pawn_jumpers = movers & (~pos.K);
 
-
     while (king_jumpers) {
         const uint32_t maske = king_jumpers & ~(king_jumpers - 1u);
         mask_bits<color>(pos, maske);
-        add_king_captures<color, KING>(pos, maske, maske, 0, liste);
+        add_king_captures<color, KING>(pos, maske, maske, 0, std::forward<CallBack>(call_back));
         mask_bits<color>(pos, maske);
         king_jumpers &= king_jumpers - 1u;
     }
 
     while (pawn_jumpers) {
         const uint32_t maske = pawn_jumpers & ~(pawn_jumpers - 1u);
-        add_king_captures<color, PAWN>(pos, maske, maske, 0, liste);
+        add_king_captures<color, PAWN>(pos, maske, maske, 0, std::forward<CallBack>(call_back));
         pawn_jumpers &= pawn_jumpers - 1u;
     }
 
 }
 
 
-inline void get_moves(Position &pos, MoveListe &liste) {
-    liste.reset();
-    if (pos.color == BLACK) {
-        loop_captures<BLACK>(pos, liste);
-        if (!liste.is_empty())
-            return;
-        get_silent_moves<BLACK>(pos, liste);
+template<typename Accumulator>
+inline void get_moves(Position &pos, Accumulator &accu) {
+    using accu_type = std::decay_t<Accumulator>;
+
+
+    if constexpr(std::is_same_v<accu_type, MoveListe>) {
+        accu.reset();
+        if (pos.color == BLACK) {
+            loop_captures<BLACK>(pos, accu);
+            if (!accu.is_empty())
+                return;
+            get_silent_moves<BLACK>(pos, accu);
+        } else {
+            loop_captures<WHITE>(pos, accu);
+            if (!accu.is_empty())
+                return;
+            get_silent_moves<WHITE>(pos, accu);
+        }
     } else {
-        loop_captures<WHITE>(pos, liste);
-        if (!liste.is_empty())
-            return;
-        get_silent_moves<WHITE>(pos, liste);
+        if (pos.color == BLACK) {
+            if (pos.has_jumps<BLACK>())
+                loop_captures<BLACK>(pos, accu);
+            else
+                get_silent_moves<BLACK>(pos, accu);
+
+        } else {
+            if (pos.has_jumps<WHITE>())
+                loop_captures<WHITE>(pos, accu);
+            else
+                get_silent_moves<WHITE>(pos, accu);
+        }
     }
+
+
 }
 
 inline void get_captures(Position &pos, MoveListe &liste) {

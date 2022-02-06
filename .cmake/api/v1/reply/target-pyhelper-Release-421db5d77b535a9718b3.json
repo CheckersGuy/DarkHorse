@@ -48,7 +48,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-Ofast  -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG -fPIC"
+					"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG -fPIC"
 				},
 				{
 					"fragment" : "-std=gnu++2a"
@@ -94,14 +94,15 @@
 				10,
 				11,
 				12,
-				29,
-				30,
+				13,
 				31,
 				32,
 				33,
 				34,
 				35,
-				36
+				36,
+				37,
+				38
 			]
 		}
 	],
@@ -131,7 +132,6 @@
 			"sourceIndexes" : 
 			[
 				0,
-				13,
 				14,
 				15,
 				16,
@@ -147,8 +147,8 @@
 				26,
 				27,
 				28,
-				37,
-				38,
+				29,
+				30,
 				39,
 				40,
 				41,
@@ -156,7 +156,9 @@
 				43,
 				44,
 				45,
-				46
+				46,
+				47,
+				48
 			]
 		},
 		{
@@ -175,14 +177,15 @@
 				10,
 				11,
 				12,
-				29,
-				30,
+				13,
 				31,
 				32,
 				33,
 				34,
 				35,
-				36
+				36,
+				37,
+				38
 			]
 		}
 	],
@@ -256,6 +259,12 @@
 		{
 			"backtrace" : 1,
 			"compileGroupIndex" : 0,
+			"path" : "Checkers/CheckerEngineX/Thread.cpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
 			"path" : "Checkers/CheckerEngineX/Transposition.cpp",
 			"sourceGroupIndex" : 1
 		},
@@ -318,6 +327,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "Checkers/CheckerEngineX/Position.h",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"path" : "Checkers/CheckerEngineX/Thread.h",
 			"sourceGroupIndex" : 0
 		},
 		{

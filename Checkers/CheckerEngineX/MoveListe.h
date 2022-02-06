@@ -45,6 +45,14 @@ public:
 
     MoveListe &operator=(const MoveListe &other);
 
+    inline void operator()(uint32_t &maske, uint32_t &next) {
+        add_move(Move{maske, next});
+    };
+
+    inline void operator()(uint32_t &from, uint32_t &to, uint32_t &captures) {
+        add_move(Move{from, to, captures});
+    };
+
 };
 
 inline bool MoveListe::is_empty() const {
@@ -66,6 +74,8 @@ inline void MoveListe::add_move(Move next) {
 inline int MoveListe::length() const {
     return moveCounter;
 }
+
+
 
 
 #endif //CHECKERSTEST_MOVELISTE_H

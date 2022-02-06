@@ -20,14 +20,34 @@ inline uint64_t getSystemTime() {
             (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 }
 
+//overload trick
 
-constexpr auto powc = [](size_t base, size_t power) {
-    size_t res = 1ull;
-    for (size_t i = 0; i < power; ++i) {
-        res *= base;
-    }
-    return res;
+template<typename... Ts>
+struct overload : Ts ... {
+    using Ts::operator()...;
 };
+template<typename... Ts> overload(Ts...) -> overload<Ts...>;
+
+
+template<size_t base> auto power_lambda = [](size_t exp) {
+    size_t result = 1;
+    for (auto i = 0; i < exp; ++i) {
+        result *= base;
+    }
+    return result;
+};
+
+
+template<size_t size, typename Generator>
+constexpr auto get_lut(Generator &&generator) {
+    using data_type = decltype(generator(0));
+    std::array<data_type, size> result{};
+
+    for (auto i = 0; i < size; ++i) {
+        result[i] = generator(i);
+    }
+    return result;
+}
 
 
 constexpr uint32_t big_region = 30583;
@@ -44,11 +64,11 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
-constexpr std::array<size_t, 8> powers5 = {powc(5, 0), powc(5, 1), powc(5, 2), powc(5, 3), powc(5, 4), powc(5, 5),
-                                           powc(5, 6), powc(5, 7)};
-constexpr std::array<size_t, 12> powers3 = {powc(3, 0), powc(3, 1), powc(3, 2), powc(3, 3), powc(3, 4), powc(3, 5),
-                                            powc(3, 6), powc(3, 7), powc(3, 8),
-                                            powc(3, 9), powc(3, 10), powc(3, 11)};
+
+inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
+
+inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
+
 
 constexpr int stage_size = 24;
 
@@ -61,12 +81,6 @@ constexpr int prob_cut = 300;
 constexpr int sing_ext = 300;
 constexpr int asp_wind = 100;
 constexpr int MAX_ASP = 5000;
-
-
-
-
-
-
 
 
 using Depth = int;
@@ -158,6 +172,14 @@ uint32_t forwardMask(const uint32_t maske) {
     } else {
         return ((maske & MASK_R3) >> 3u) | ((maske & MASK_R5) >> 5u);
     }
+}
+
+template<Color color>
+constexpr
+uint32_t get_neighbour_squares(uint32_t maske) {
+    uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
+    squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);
+    return squares;
 }
 
 
