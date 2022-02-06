@@ -113,16 +113,16 @@ namespace Perft {
             return;
         }
 
-        /*    auto result = table.probe(pos, depth);
+            auto result = table.probe(pos, depth);
             if (result != 0) {
                 call_back.num_nodes += result;
                 return;
-            }*/
-        //uint64_t start_nodes = call_back.num_nodes;
+            }
+        uint64_t start_nodes = call_back.num_nodes;
         MoveReceiver receiver{call_back, pos, depth};
         get_moves(pos, receiver);
-        //uint64_t nodes_searched = call_back.num_nodes - start_nodes;
-        //table.store(pos, depth, nodes_searched);
+        uint64_t nodes_searched = call_back.num_nodes - start_nodes;
+        table.store(pos, depth, nodes_searched);
         return;
     }
 
