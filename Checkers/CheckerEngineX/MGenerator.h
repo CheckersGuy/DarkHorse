@@ -26,7 +26,7 @@ struct PerftCallBack {
 
     void visit(uint32_t &maske, uint32_t &next);
 
-    void visit(uint32_t &from, uint32_t &to, uint32_t &captures)
+    void visit(uint32_t &from, uint32_t &to, uint32_t &captures);
 
 
 };
