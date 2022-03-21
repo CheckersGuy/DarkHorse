@@ -34,7 +34,7 @@ void Generator::set_piece_limit(size_t num_pieces) {
     piece_lim = num_pieces;
 }
 
-void Generator::startx() {
+void Generator::start() {
     //Positions to be saved to a file
     initialize();
     const size_t BUFFER_CAP = 1000000;

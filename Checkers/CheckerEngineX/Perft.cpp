@@ -9,6 +9,58 @@
 namespace Perft {
 
 
+    bool Thread::has_work() {
+        return num_split_points > 0;
+    }
+
+    void Thread::start_thread() {
+        local_thread = std::thread(&Thread::idle_loop, this);
+    }
+
+    void Thread::idle_loop() {
+
+        while (!stop.load()) {
+            auto work = find_work();
+
+            if (work.has_value()) {
+                //execute work
+            }
+        }
+    }
+
+    std::optional<SplitPoint> Thread::get_split_point() {
+        aquire();
+        if (num_split_points <= 0)
+            return std::nullopt;
+        auto sp = split_points[num_split_points--];
+        release();
+        return std::make_optional(sp);
+    }
+
+    std::optional<SplitPoint> Thread::find_work() {
+        //first checking if we have something in our own queue
+        SplitPoint result;
+        if (num_split_points > 0) {
+            result = split_points[num_split_points--];
+            return result;
+        }
+        //if thats not the case, we are looking at the other workers and see if they have some work
+
+        for (auto &th: pool) {
+            if (th.get() == this)
+                continue;
+
+            auto work = th->get_split_point();
+            if (work.has_value())
+                return work;
+
+
+        }
+        return std::nullopt;
+
+    }
+
+
     Table table;
 
     size_t Table::get_capacity() {
@@ -45,8 +97,6 @@ namespace Perft {
         } else if (unit_string == "tb") {
             size_in_bytes *= 1000000000000ull;
         }
-
-        //we round down to the largest number of entries which uses less than size_in_bytes
 
         size_t bytes_per_entry = sizeof(Cluster);
         size_t num_entries = size_in_bytes / bytes_per_entry;
@@ -92,10 +142,10 @@ namespace Perft {
             return liste.length();
         }
         uint64_t counter = 0;
-        /*     auto result = table.probe(pos, depth);
-             if (result != 0) {
-                 return result;
-             }*/
+        auto result = table.probe(pos, depth);
+        if (result != 0) {
+            return result;
+        }
         for (int i = 0; i < liste.length(); ++i) {
             Position copy = pos;
             copy.make_move(liste[i]);
@@ -113,17 +163,16 @@ namespace Perft {
             return;
         }
 
-            auto result = table.probe(pos, depth);
-            if (result != 0) {
-                call_back.num_nodes += result;
-                return;
-            }
+        auto result = table.probe(pos, depth);
+        if (result != 0) {
+            call_back.num_nodes += result;
+            return;
+        }
         uint64_t start_nodes = call_back.num_nodes;
         MoveReceiver receiver{call_back, pos, depth};
         get_moves(pos, receiver);
         uint64_t nodes_searched = call_back.num_nodes - start_nodes;
         table.store(pos, depth, nodes_searched);
-        return;
     }
 
 

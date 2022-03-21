@@ -61,20 +61,23 @@ struct Position {
             return WP;
     }
 
-    uint32_t getKingAttackSquares(uint32_t bit_mask);
+    template<Color color, PieceType type>
+    inline uint32_t get_pieces() const {
+        if constexpr(color == BLACK && type == KING) {
+            return BP & K;
+        }
+        if constexpr(color == WHITE && type == KING) {
+            return WP & K;
+        }
 
-    template<Color color>
-    uint32_t attacks() const {
-        //returns all empty squares that are attacked by color
-        uint32_t attacks = 0u;
-        const uint32_t empty = ~(BP | WP);
-        auto pawns = get_current<color>(); //kings and pawns
-        auto kings = get_current<color>() & K; //only kings
-        attacks |= (defaultShift<color>(pawns) | forwardMask<color>(pawns));
-        attacks |= (defaultShift<~color>(kings) | forwardMask<~color>(kings));
-        attacks &= empty;
-        return attacks;
+        if constexpr(color == BLACK && type == PAWN) {
+            return BP & (~K);
+        }
+        if constexpr(color == WHITE && type == PAWN) {
+            return WP & (~K);
+        }
     }
+
 
     template<Color color>
     uint32_t get_movers() const {
@@ -124,12 +127,11 @@ struct Position {
     Color get_color() const;
 
     template<Color color>
-    bool has_jumps()const {
+    bool has_jumps() const {
         return get_jumpers<color>() != 0;
     }
 
     bool has_jumps(Color color) const;
-
 
     bool has_jumps() const;
 
@@ -169,6 +171,9 @@ struct Position {
     friend std::ostream &operator<<(std::ostream &stream, const Position &pos);
 
     friend std::istream &operator>>(std::istream &stream, Position &pos);
+
+    //given two consecutive positions,returns the move made
+    static Move get_move(Position orig, Position next);
 
 };
 

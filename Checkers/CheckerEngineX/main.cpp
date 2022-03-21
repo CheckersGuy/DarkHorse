@@ -44,18 +44,7 @@ int main(int argl, const char **argc) {
     Statistics::mPicker.init();
 
 
-/*
-    network.load("open.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
-    network.addLayer(Layer{32, 1});
 
-    network.init();*/
-
-
-
-/*
 
 
     network.load("modeltest.weights");
@@ -72,26 +61,23 @@ int main(int argl, const char **argc) {
     network2.addLayer(Layer{32, 1});
 
     network2.init();
-*/
 
 
-
-/*
-
-
-
-
-    TT.resize(25);
+    TT.resize(23);
     board = Position::get_start_position();
     //board = Position::pos_from_fen("B:W18,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,10,11,16");
+
+/*
 
     board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19);
     board.get_position().print_position();
+*/
 
-    //board = Position::pos_from_fen("W:W5,29:BK3,K12");
+
+    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
     board.print_board();
 
     Move best;
@@ -100,10 +86,6 @@ int main(int argl, const char **argc) {
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
-
-*/
-
-
 
 
 

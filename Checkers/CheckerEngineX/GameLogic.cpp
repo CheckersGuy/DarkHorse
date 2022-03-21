@@ -12,9 +12,8 @@ Weights<int16_t> gameWeights;
 SearchGlobal glob;
 Network network,network2;
 bool u_classical = false;
-Value last_eval;
 void initialize() {
-    gameWeights.load_weights<uint32_t>("../Training/Engines/sgd.weights");
+    gameWeights.load_weights<uint32_t>("../Training/Engines/blaadam.weights");
     Zobrist::init_zobrist_keys();
 
 }
@@ -36,7 +35,7 @@ void use_classical(bool flag) {
 
 
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print) {
-    Statistics::mPicker.clearScores();
+    Statistics::mPicker.clear_scores();
     glob.sel_depth = 0u;
     TT.age_counter++;
     nodeCounter = 0;
@@ -51,7 +50,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
 
 
     endTime = getSystemTime() + time;
-    auto start_time =getSystemTime();
+
     Value eval = INFINITE;
     Local local;
 
@@ -60,35 +59,40 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         //returning q-search
         return Search::qs(false, board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
+    size_t total_nodes =0;
 
     for (int i = 1; i <= depth; i += 2) {
+        auto start_time = getSystemTime();
+        std::stringstream ss;
+        nodeCounter =0;
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
             break;
         }
+        total_nodes+=nodeCounter;
 
         if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
+
+        auto time = (getSystemTime() - start_time);
 
         eval = local.best_score;
         best = mainPV.getFirstMove();
         if (print) {
             std::string temp = std::to_string(eval) + " ";
-            temp += " Depth:" + std::to_string(i) + " | " + std::to_string(glob.sel_depth) + " | ";
-            temp += " NodeCount: " + std::to_string(nodeCounter) + "\n";
-            temp += mainPV.toString();
-            temp += "\n";
-            temp += "\n";
-            std::cout << temp;
-            std::cout << "Time needed: " << (getSystemTime() - start_time) << "\n";
+            ss<<eval<<" Depth:" <<i<<" | "<<glob.sel_depth<<" | ";
+            ss<<"Time: "<<time<<"\n";
+            ss<<"Speed: "<<((time>0)?nodeCounter/time : 0)<<" "<<mainPV.toString()<<"\n\n";
+            ss << "Time needed: " <<  time<< "\n";
+            std::cout<<ss.str();
         }
 
         if (isMateVal(local.best_score)) {
             break;
         }
     }
-    last_eval = eval;
+    std::cout<<"TotalNodes: "<<total_nodes<<std::endl;
     return eval;
 }
 

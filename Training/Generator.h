@@ -53,7 +53,7 @@ public:
         std::cout << "Size: " << openings.size() << std::endl;
     }
 
-    void startx();
+    void start();
 
     void set_buffer_clear_count(size_t count);
 

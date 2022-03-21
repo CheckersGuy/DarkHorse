@@ -83,7 +83,7 @@ namespace Statistics {
         return -1;
     }
 
-    int MovePicker::getHistoryIndex(Position pos, Move move) {
+    int MovePicker::get_history_index(Position pos, Move move) {
         //32 source squares
         // 4 piece types
         // 4 directions
@@ -116,12 +116,12 @@ namespace Statistics {
         return index;
     }
 
-    void MovePicker::clearScores() {
+    void MovePicker::clear_scores() {
         std::fill(history.begin(), history.end(), 0);
     }
 
-    int MovePicker::getMoveScore(Position pos, Move move, Depth depth) {
-            const int index = getHistoryIndex(pos, move);
+    int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
+            const int index = get_history_index(pos, move);
             const int score = history[index];
             const int bf_score = bfScore[index] + 1;
             return score;
@@ -131,7 +131,7 @@ namespace Statistics {
         return score;*/
     }
 
-    int MovePicker::getMoveScore(Position current, Depth depth, int ply, Move move, Move ttMove) {
+    int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {
         if (move == ttMove) {
             return std::numeric_limits<int16_t>::max();
         }
@@ -139,7 +139,7 @@ namespace Statistics {
             return (int) Bits::pop_count(move.captures);
         }
 
-        return getMoveScore(current, move,depth);
+        return get_move_score(current, move, depth);
 
     }
 
@@ -147,14 +147,14 @@ namespace Statistics {
     void MovePicker::update_scores(Position pos, Move *liste, Move move, int depth) {
         if (depth <= 2)
             return;
-        const int index = getHistoryIndex(pos, move);
+        const int index = get_history_index(pos, move);
         history[index] += depth * depth;
         Move top = liste[0];
         while (top != move) {
             if (top == move)
                 break;
             top = *liste;
-            history[getHistoryIndex(pos, top)] -= depth * depth;
+            history[get_history_index(pos, top)] -= depth * depth;
             liste++;
         }
     }

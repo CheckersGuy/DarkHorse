@@ -3,6 +3,11 @@
 
 #include "Position.h"
 
+
+Move Position::get_move(Position orig, Position next) {
+
+}
+
 bool Position::has_jumps() const {
     return has_jumps(BLACK) || has_jumps(WHITE);
 }
@@ -312,12 +317,6 @@ void Position::make_move(Move move) {
     this->color = ~this->color;
 }
 
-uint32_t Position::getKingAttackSquares(uint32_t bit_mask) {
-    uint32_t squares = defaultShift<BLACK>(bit_mask) | forwardMask<BLACK>(bit_mask);
-    squares |= defaultShift<WHITE>(bit_mask) | forwardMask<WHITE>(bit_mask);
-    squares &= ~(BP | WP);
-    return squares;
-}
 
 std::ostream &operator<<(std::ostream &stream, const Position &pos) {
     stream.write((char *) &pos, sizeof(Position));

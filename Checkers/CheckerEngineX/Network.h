@@ -24,7 +24,7 @@ struct Accumulator {
         acc = std::make_unique<float[]>(2 * size);
     }
 
-    Accumulator()=default;
+    Accumulator() = default;
 
     //to be implemented
     void update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP, uint32_t r_BP,

@@ -105,6 +105,10 @@ enum Flag : uint8_t {
     None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u
 };
 
+enum MoveType {
+    PawnMove, KingMove, PromoMove, KingCapture, PawnCapture, PromoCapture
+};
+
 inline bool isEval(Value val) {
     return std::abs(val) <= EVAL_INFINITE;
 }
@@ -174,12 +178,29 @@ uint32_t forwardMask(const uint32_t maske) {
     }
 }
 
-template<Color color>
+template<Color color, PieceType type>
 constexpr
 uint32_t get_neighbour_squares(uint32_t maske) {
-    uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
-    squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);
-    return squares;
+
+    if constexpr(type == KING) {
+        uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
+        squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);
+        return squares;
+    } else {
+        return defaultShift<color>(maske) | forwardMask<color>(maske);
+    }
+
+
+}
+
+template<Color color>
+constexpr
+uint32_t get_promotion_rank() {
+    if constexpr(color == WHITE) {
+        return 0xf0;
+    } else {
+        return 0x0f000000;
+    }
 }
 
 

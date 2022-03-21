@@ -2,8 +2,8 @@
 #include <iostream>
 #include "../Perft.h"
 
-int main() {
-    //Checking if the moveGenerator still works
+int main(int argl, const char** argc) {
+    size_t num_ply = std::stoi(argc[1]);
 
     constexpr std::array<uint64_t, 29> node_counts = {
             1ull, 7ull, 49ull, 302ull, 1469ull, 7361ull, 36768ull,
@@ -17,7 +17,7 @@ int main() {
     };
 
     Zobrist::init_zobrist_keys();
-    Perft::table.set_capacity("32000mb");
+    Perft::table.set_capacity("8000mb");
     Board board;
     board = Position::get_start_position();
     board.print_board();
@@ -34,7 +34,7 @@ int main() {
 
 
 
-    for (auto i = 1; i < node_counts.size(); ++i) {
+    for (auto i = 1; i < std::min(num_ply+1,node_counts.size()); ++i) {
         std::cout << "Checking depth: " << i << " ";
         auto start_time = std::chrono::high_resolution_clock::now();
         call_back.num_nodes = 0;
