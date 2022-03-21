@@ -19,7 +19,7 @@ public:
 
     void add_move(Move next);
 
-    void sort(Position current,Depth depth,int ply,Move ttMove, int start_index);
+    void sort(Position current, Depth depth, int ply, Move ttMove, int start_index);
 
     bool is_empty() const;
 
@@ -33,6 +33,8 @@ public:
 
     void reset();
 
+    void reset_counters();
+
     auto begin() {
         return liste.begin();
     }
@@ -45,13 +47,16 @@ public:
 
     MoveListe &operator=(const MoveListe &other);
 
-    inline void operator()(uint32_t &maske, uint32_t &next) {
+    template<MoveType type>
+    inline void visit(uint32_t &maske, uint32_t &next) {
         add_move(Move{maske, next});
     };
 
-    inline void operator()(uint32_t &from, uint32_t &to, uint32_t &captures) {
+    template<MoveType type>
+    inline void visit(uint32_t &from, uint32_t &to, uint32_t &captures) {
         add_move(Move{from, to, captures});
     };
+
 
 };
 
@@ -74,8 +79,6 @@ inline void MoveListe::add_move(Move next) {
 inline int MoveListe::length() const {
     return moveCounter;
 }
-
-
 
 
 #endif //CHECKERSTEST_MOVELISTE_H

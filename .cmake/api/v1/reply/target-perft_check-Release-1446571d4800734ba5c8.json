@@ -51,7 +51,7 @@
 					"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG"
 				},
 				{
-					"fragment" : "-std=gnu++2a"
+					"fragment" : "-std=gnu++20"
 				}
 			],
 			"includes" : 

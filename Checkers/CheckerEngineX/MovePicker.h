@@ -18,14 +18,13 @@ namespace Statistics {
         std::array<int, 32 * 16> history{0};
         std::array<int, 32 * 16> bfScore{0};
     public:
-        Network policy;
-        int getMoveScore(Position pos, Move move,Depth depth);
+        int get_move_score(Position pos, Move move, Depth depth);
 
-        int getHistoryIndex(Position pos, Move move);
+        int get_history_index(Position pos, Move move);
 
-        int getMoveScore(Position current,Depth depth, int ply, Move move, Move ttMove);
+        int get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove);
 
-        void clearScores();
+        void clear_scores();
 
         void update_scores(Position pos, Move *list, Move move, int depth);
 

@@ -72,8 +72,8 @@ void Trainer::gradient_update(Sample &sample) {
         beta_one_t[param] *= beta_one;
         beta_two_t[param] *= beta_one;
 
-   /*     return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)));*/
-       return alpha * m[param];
+        return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)));
+       //return alpha * m[param];
 
     };
 
@@ -211,10 +211,12 @@ void Trainer::epoch() {
 void Trainer::start_tune() {
     //
 
-    std::stringstream ss_stream;
+
     int counter = 0;
-    ss_stream<<"data_size: " << pos_streamer.get_num_positions() << "\n";
+    std::cout <<"data_size: " << pos_streamer.get_num_positions() << "\n";
     while (counter < get_num_epochs()) {
+        std::stringstream ss_stream;
+        ss_stream.clear();
         ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
         ss_stream << "Start of epoch: " << counter << "\n" <<"\n";
         ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";

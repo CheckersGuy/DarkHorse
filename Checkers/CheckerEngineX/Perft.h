@@ -13,8 +13,36 @@
 #include <vector>
 #include <deque>
 #include <cstring>
-
+#include <Thread.h>
+#include <atomic>
 namespace Perft {
+
+    struct SplitPoint {
+        Position pos;
+        uint8_t depth;
+    };
+
+    struct Thread : Lockable {
+
+        static constexpr size_t MAX_SPLITPOINTS = 4;
+
+        std::vector<std::unique_ptr<Thread>> &pool;
+        std::thread local_thread;
+        std::array<SplitPoint, MAX_SPLITPOINTS> split_points;
+        size_t num_split_points{0};
+        std::atomic<bool> stop{false};
+
+        void idle_loop();
+
+        std::optional<SplitPoint> find_work();
+
+        bool has_work();
+
+        std::optional<SplitPoint> get_split_point();
+
+        void start_thread();
+
+    };
 
 
     struct Entry {
@@ -68,27 +96,22 @@ namespace Perft {
         Position &pos;
         int depth;
 
-        inline void operator()(uint32_t &maske, uint32_t &next) {
-
-
-
-
+        template<MoveType type>
+        inline void visit(uint32_t &maske, uint32_t &next) {
             Move mv{maske, next};
             Position copy = pos;
             copy.make_move(mv);
             Zobrist::update_zobrist_keys(copy, mv);
             perft_check(copy, depth - 1, call_back);
-
         };
 
-        inline void operator()(uint32_t &from, uint32_t &to, uint32_t &captures) {
+        template<MoveType type>
+        inline void visit(uint32_t &from, uint32_t &to, uint32_t &captures) {
             Move mv{from, to, captures};
             Position copy = pos;
             copy.make_move(mv);
             Zobrist::update_zobrist_keys(copy, mv);
             perft_check(copy, depth - 1, call_back);
-
-
         };
 
     };

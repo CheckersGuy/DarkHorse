@@ -46,29 +46,26 @@
 		{
 			"compiler" : 
 			{
-				"id" : "Clang",
+				"id" : "GNU",
 				"implicit" : 
 				{
 					"includeDirectories" : 
 					[
-						"/include/c++/10",
-						"/include/x86_64-linux-gnu/c++/10",
-						"/include/c++/10/backward",
+						"/usr/include/c++/11",
+						"/usr/include/x86_64-linux-gnu/c++/11",
+						"/usr/include/c++/11/backward",
+						"/usr/lib/gcc/x86_64-linux-gnu/11/include",
 						"/usr/local/include",
-						"/usr/lib/llvm-10/lib/clang/10.0.0/include",
 						"/usr/include/x86_64-linux-gnu",
 						"/usr/include"
 					],
 					"linkDirectories" : 
 					[
-						"/lib/gcc/x86_64-linux-gnu/10",
-						"/lib/x86_64-linux-gnu",
-						"/lib64",
+						"/usr/lib/gcc/x86_64-linux-gnu/11",
 						"/usr/lib/x86_64-linux-gnu",
-						"/usr/lib64",
-						"/lib",
-						"/usr/lib/llvm-10/lib",
-						"/usr/lib"
+						"/usr/lib",
+						"/lib/x86_64-linux-gnu",
+						"/lib"
 					],
 					"linkFrameworkDirectories" : [],
 					"linkLibraries" : 
@@ -82,8 +79,8 @@
 						"gcc"
 					]
 				},
-				"path" : "/bin/clang++",
-				"version" : "10.0.0"
+				"path" : "/bin/g++-11",
+				"version" : "11.1.0"
 			},
 			"language" : "CXX",
 			"sourceFileExtensions" : 

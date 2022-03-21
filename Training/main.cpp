@@ -10,12 +10,12 @@
 #include "Trainer.h"
 #include <Util/LRUCache.h>
 
-int main(int argl, const char **argc) {
+int main() {
 
 
-    initialize();
+    //initialize();
 
-    use_classical(true);
+    //use_classical(true);
 
     /*   std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train", std::ios::binary);
        std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/endgame.train",std::ios::binary);
@@ -77,45 +77,32 @@ int main(int argl, const char **argc) {
     generator.set_time(20);
     generator.set_piece_limit(10);
     generator.set_max_position(5000000ull);
-    generator.startx();*/
-
-
-
-    //working on a new storage format for opening positions
-    //Positions either start from the regular start position or from
-    //one of the 2500 11 man ballots !!
-    //which means the first bits are used as an index
+    generator.start();*/
 
 
 
 
-     Match engine_match("test", "test");
+     Match engine_match("test", "modeltest2");
      engine_match.setTime(100);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(12);
+     engine_match.setNumThreads(8);
      engine_match.setHashSize(21);
      engine_match.start();
 
 
 
 
-
-
-/*    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset4.val");
-    trainer.set_learning_rate(50000);
+/*
+    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset4.train");
+    trainer.set_learning_rate(2);
     trainer.set_weight_decay(0.0);
-    trainer.set_decay(0.07);
-    trainer.set_weights_path("bla.weights");
+    trainer.set_decay(0.2);
+    trainer.set_weights_path("testtestxx.weights");
     trainer.set_savepoint_step(10000000);
-    trainer.set_epochs(1000);
+    trainer.set_epochs(30);
     trainer.set_c_value(-1e-3);
-    trainer.start_tune();*/
-
-    //creating a subset of my dataset for validation data
-
-
-
-
+    trainer.start_tune();
+*/
 
     return 0;
 }
