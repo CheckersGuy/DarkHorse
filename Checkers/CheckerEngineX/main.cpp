@@ -39,7 +39,7 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
     Statistics::mPicker.init();
 
@@ -47,10 +47,17 @@ int main(int argl, const char **argc) {
 
 
 
-    network.load("modeltest.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
+   /* network.load("testx2.weights");
+    network.addLayer(Layer{120, 4096});
+    network.addLayer(Layer{4096, 16});
+    network.addLayer(Layer{16, 32});
+    network.addLayer(Layer{32, 1});
+    network.init();*/
+
+    network.load("testx2.weights");
+    network.addLayer(Layer{120, 4096});
+    network.addLayer(Layer{4096, 16});
+    network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
     network.init();
 
@@ -77,8 +84,11 @@ int main(int argl, const char **argc) {
 */
 
 
-    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");
-    board.print_board();
+    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");board.print_board();
+
+
+
+
 
     Move best;
     searchValue(board, best, MAX_PLY, 100000000, true);
@@ -86,6 +96,10 @@ int main(int argl, const char **argc) {
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
+
+
+
+
 
 
 

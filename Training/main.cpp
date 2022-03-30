@@ -9,6 +9,7 @@
 #include <BloomFilter.h>
 #include "Trainer.h"
 #include <Util/LRUCache.h>
+#include <Util/Compress.h>
 
 int main() {
 
@@ -82,12 +83,17 @@ int main() {
 
 
 
-     Match engine_match("test", "modeltest2");
-     engine_match.setTime(100);
+
+
+/*
+     Match engine_match("testx2", "master");
+     engine_match.setTime(200);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(8);
-     engine_match.setHashSize(21);
+     engine_match.setNumThreads(6);
+     engine_match.setHashSize(20);
      engine_match.start();
+
+*/
 
 
 
@@ -103,6 +109,26 @@ int main() {
     trainer.set_c_value(-1e-3);
     trainer.start_tune();
 */
+
+    Position start = Position::get_start_position();
+    std::vector<Position> positions;
+    std::vector<Position> read_data;
+    for (auto i = 0; i < 10; ++i) {
+        positions.emplace_back(start);
+        MoveListe liste;
+        get_moves(start, liste);
+        start.make_move(liste[0]);
+        //start.print_position();
+
+    }
+
+    std::ofstream stream("test2.data");
+    std::ifstream stream2("test2.data");
+
+    compress_game(positions.begin(), positions.end(), stream);
+    stream.close();
+    read_compressed_game(std::back_inserter(read_data), stream2);
+
 
     return 0;
 }

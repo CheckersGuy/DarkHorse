@@ -25,117 +25,11 @@ class Relu1(nn.Module):
         return torch.clamp(x, 0.0, 1.0)
 
 
-class LayerStack(pl.LightningModule):
-    input_size = 120
-    L1 = 256
-    L2 = 32
-    L3 = 32
-
-    # count is the number of buckets
-    def __init__(self, count):
-        super(LayerStack, self).__init__()
-        self.count = count
-        self.input = torch.nn.Linear(120, LayerStack.L1)
-        self.l1 = torch.nn.Linear(LayerStack.L1, LayerStack.L2 * count)
-        self.l2 = torch.nn.Linear(LayerStack.L2, LayerStack.L3 * count)
-        self.output = torch.nn.Linear(LayerStack.L3, 1 * count)
-        self.idx_offset = None
-        self.criterion = torch.nn.MSELoss()
-        self._init_layers()
-
-    @staticmethod
-    def transform(wp, bp, k, color, res):
-        if color == -1:
-            res = -res
-
-        res_temp = 1 if res == 1 else 0 if res == -1 else 0.5
-        output = h.create_input(wp, bp, k, color)
-        bucket = h.get_bucket_index(wp, bp, k)
-        return torch.tensor(data=[res_temp], dtype=torch.float32), torch.from_numpy(output), bucket
-
-    def save(self, output):
-        return
-
-    def _init_layers(self):
-        l1_weight = self.l1.weight
-        l1_bias = self.l1.bias
-        l2_weight = self.l2.weight
-        l2_bias = self.l2.bias
-        output_weight = self.output.weight
-        output_bias = self.output.bias
-        with torch.no_grad():
-            output_bias.fill_(0.0)
-
-            for i in range(1, self.count):
-                # Make all layer stacks have the same initialization.
-                # Basically copy the first to all other layer stacks.
-                l1_weight[i * LayerStack.L2:(i + 1) * LayerStack.L2, :] = l1_weight[0:LayerStack.L2, :]
-                l1_bias[i * LayerStack.L2:(i + 1) * LayerStack.L2] = l1_bias[0:LayerStack.L2]
-                l2_weight[i * LayerStack.L3:(i + 1) * LayerStack.L3, :] = l2_weight[0:LayerStack.L3, :]
-                l2_bias[i * LayerStack.L3:(i + 1) * LayerStack.L3] = l2_bias[0:LayerStack.L3]
-                output_weight[i:i + 1, :] = output_weight[0:1, :]
-
-        self.l1.weight = nn.Parameter(l1_weight)
-        self.l1.bias = nn.Parameter(l1_bias)
-        self.l2.weight = nn.Parameter(l2_weight)
-        self.l2.bias = nn.Parameter(l2_bias)
-        self.output.weight = nn.Parameter(output_weight)
-        self.output.bias = nn.Parameter(output_bias)
-
-    def save_parameters(self, output):
-        return
-
-    def forward(self, inp, bucket_index):
-        # forward pass stuff goes here
-
-        if self.idx_offset is None or self.idx_offset.shape[0] != inp.shape[0]:
-            self.idx_offset = torch.arange(0, inp.shape[0] * self.count, self.count)
-
-        indices = bucket_index.flatten() + self.idx_offset
-
-        new_input = self.input(inp)
-        new_input_s = torch.clamp(new_input, 0.0, 1.0)
-
-        l1s_ = self.l1(new_input_s).reshape((-1, self.count, LayerStack.L2))
-        # View the output as a `N * batch_size` chunks
-        # Choose `batch_size` chunks based on the indices we computed before.
-        l1c_ = l1s_.view(-1, LayerStack.L2)[indices]
-        # We could have applied ClippedReLU earlier, doesn't matter.
-        l1y_ = torch.clamp(l1c_, 0.0, 1.0)
-
-        # Same for the second layer.
-        l2s_ = self.l2(l1y_).reshape((-1, self.count, LayerStack.L3))
-        l2c_ = l2s_.view(-1, LayerStack.L3)[indices]
-        l2y_ = torch.clamp(l2c_, 0.0, 1.0)
-
-        # Same for the third layer, but no clamping since it's the output.
-        l3s_ = self.output(l2y_).reshape((-1, self.count, 1))
-        l3y_ = l3s_.view(-1, 1)[indices]
-        return l3y_
-
-    def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), use_gc=False)
-        return optimizer
-
-    def training_step(self, train_batch, batch_idx):
-        y, inp, bucket_index = train_batch
-        out = self.forward(inp, bucket_index)
-        loss = self.criterion(out, y)
-        tensorboard_logs = {"avg_val_loss": loss}
-        self.log('train_loss', loss)
-        return {"loss": loss, "log": tensorboard_logs}
-
-    def validation_step(self, val_batch, batch_idx):
-        y, inp, bucket_index = val_batch
-        out = self.forward(inp, bucket_index)
-        loss = self.criterion(out, y)
-        self.log('val_loss', loss)
-        return {"val_loss": loss}
 
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="testx1.weights"):
+    def __init__(self, hidden, output="testx2.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
