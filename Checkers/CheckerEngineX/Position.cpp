@@ -1,10 +1,20 @@
-#include <sstream>
-#include "Zobrist.h"
 
 #include "Position.h"
+#include "MoveListe.h"
+#include "MGenerator.h"
 
-
-Move Position::get_move(Position orig, Position next) {
+std::optional<Move> Position::get_move(Position orig, Position next) {
+    //needs to be tested
+    MoveListe liste;
+    get_moves(orig, liste);
+    for (auto m: liste) {
+        Position t;
+        t.make_move(m);
+        if (t == next) {
+            return std::make_optional<Move>(m);
+        }
+    }
+    return std::nullopt;
 
 }
 

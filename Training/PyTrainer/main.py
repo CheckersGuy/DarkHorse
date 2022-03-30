@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".",filename="{epoch}")
 
-    model = LitMLP.Network([120, 256, 32, 32, 1])
+    model = LitMLP.Network([120, 4096, 16, 32, 1])
     model.to(device)
     trainer = pl.Trainer(max_epochs=200, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="epoch=1.ckpt")

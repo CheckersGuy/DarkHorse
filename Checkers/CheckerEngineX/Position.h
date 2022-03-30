@@ -8,8 +8,8 @@
 
 #include "Move.h"
 #include "types.h"
-
-
+#include <sstream>
+#include <optional>
 const uint32_t temp_mask = 0xf;
 
 
@@ -173,7 +173,7 @@ struct Position {
     friend std::istream &operator>>(std::istream &stream, Position &pos);
 
     //given two consecutive positions,returns the move made
-    static Move get_move(Position orig, Position next);
+    static std::optional<Move> get_move(Position orig, Position next);
 
 };
 
