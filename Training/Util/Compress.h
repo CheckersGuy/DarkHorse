@@ -59,6 +59,8 @@ struct Game {
     Position previous;
     std::array<uint8_t, 600> indices;
     uint16_t num_indices{0};
+    Result result{Result::UNKNOWN};
+    Result tb_result{Result::UNKNOWN};
 
     Game(const Position start_position) : start_position(start_position) {
         previous = start_position;
@@ -73,11 +75,15 @@ struct Game {
         previous.make_move(liste[index]);
     }
 
+    void set_result(Result res) {
+        result = res;
+    }
+
     void add_position(Position pos) {
         //need to be consecutive positions
 
-        if(num_indices ==0){
-            start_position =pos;
+        if (num_indices == 0) {
+            start_position = pos;
             return;
         }
 
@@ -98,7 +104,8 @@ struct Game {
     friend std::ifstream &operator>>(std::ifstream &stream, Game &game) {
         stream >> game.start_position;
         stream.read((char *) &game.num_indices, sizeof(uint16_t));
-        std::cout << (int) game.num_indices << std::endl;
+        stream.read((char *) &game.result, sizeof(Result));
+        stream.read((char *) &game.tb_result, sizeof(Result));
         stream.read((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
         return stream;
     }
@@ -107,6 +114,8 @@ struct Game {
         Position start_pos = game.start_position;
         stream << start_pos;
         stream.write((char *) &game.num_indices, sizeof(uint16_t));
+        stream.write((char *) &game.result, sizeof(Result));
+        stream.write((char *) &game.tb_result, sizeof(Result));
         stream.write((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
         return stream;
     }
@@ -138,7 +147,7 @@ struct Game {
 
     GameIterator end() {
         GameIterator beg(*this);
-        beg.index = num_indices;
+        beg.index = num_indices + 1;
         return beg;
     }
 };
@@ -156,37 +165,30 @@ bool GameIterator::operator!=(GameIterator &other) {
     return (other.game != game || other.index != index);
 }
 
+//converting old to new training format
 
-template<typename Iter>
-void compress_game(Iter begin, Iter end, std::ofstream &stream) {
-    //storing the starting position and then storing the index of the moves made
-    Position start_pos = Position::get_start_position();
-    stream << start_pos;
-    begin++;
-    Position previous = start_pos;
-    std::vector<uint8_t> indices;
-    std::for_each(begin, end, [&](Position next) {
-        MoveListe liste;
-        get_moves(previous, liste);
-        uint8_t move_index;
-        for (int i = 0; i < liste.length(); ++i) {
-            Position copy = previous;
-            copy.make_move(liste[i]);
-            if (copy == next) {
-                move_index = i;
-                break;
-            }
+void convert_to_new(std::string input, std::string output) {
+    std::ofstream out_stream(output);
+    std::ifstream in_stream(input);
+    std::istream_iterator<Sample> begin(in_stream);
+    std::istream_iterator<Sample> end{};
+    //to be continued
+
+    size_t piece_count = 32u;
+    Game game;
+    std::for_each(begin, end, [&](Sample s) {
+        if (Bits::pop_count(s.position.BP | s.position.WP) <= piece_count) {
+            game.add_position(s.position);
+            piece_count = Bits::pop_count(s.position.WP | s.position.BP);
+        } else {
+            piece_count = 32;
+            out_stream << game;
         }
-        indices.emplace_back(move_index);
-        previous = next;
-    });
-    //storing the number of indices
-    const uint16_t num_indices = indices.size();
 
-    stream.write((char *) &num_indices, sizeof(uint16_t));
-    std::cout << "Test: " << num_indices << std::endl;
-    //now we can store the indices
-    stream.write((char *) &indices[0], sizeof(uint8_t) * num_indices);
+
+    });
+
+
 }
 
 

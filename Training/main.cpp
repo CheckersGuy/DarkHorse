@@ -111,21 +111,14 @@ int main() {
 */
 
 
-   // std::ofstream stream("test2.data");
-    std::ifstream stream2("test2.data");
-
-/*    compress_game(positions.begin(), positions.end(), stream);
-    stream.close();*/
+    /*std::ofstream stream("test3.data", std::ios::app);*/
+    std::ifstream stream("test4.data");
 
     Game game;
-
-    stream2>>game;
-
-    GameIterator iterator{game};
-
-
-    for(auto pos : game){
-        pos.print_position();
+    while(stream>>game){
+        std::cout<<"Game "<<std::endl;
+        for(auto pos : game)
+            pos.print_position();
     }
 
     return 0;
