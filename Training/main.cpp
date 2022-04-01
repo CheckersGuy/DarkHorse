@@ -110,25 +110,23 @@ int main() {
     trainer.start_tune();
 */
 
-    Position start = Position::get_start_position();
-    std::vector<Position> positions;
-    std::vector<Position> read_data;
-    for (auto i = 0; i < 10; ++i) {
-        positions.emplace_back(start);
-        MoveListe liste;
-        get_moves(start, liste);
-        start.make_move(liste[0]);
-        //start.print_position();
 
-    }
-
-    std::ofstream stream("test2.data");
+   // std::ofstream stream("test2.data");
     std::ifstream stream2("test2.data");
 
-    compress_game(positions.begin(), positions.end(), stream);
-    stream.close();
-    read_compressed_game(std::back_inserter(read_data), stream2);
+/*    compress_game(positions.begin(), positions.end(), stream);
+    stream.close();*/
 
+    Game game;
+
+    stream2>>game;
+
+    GameIterator iterator{game};
+
+
+    for(auto pos : game){
+        pos.print_position();
+    }
 
     return 0;
 }
