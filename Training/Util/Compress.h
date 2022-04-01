@@ -10,6 +10,50 @@
 #include <MoveListe.h>
 #include <MGenerator.h>
 
+struct Game;
+
+struct GameIterator {
+    Game &game;
+    int index{0};
+
+    GameIterator(const GameIterator &other) : game(other.game) {
+        index = other.index;
+    }
+
+    GameIterator(Game &game) : game(game) {
+
+    }
+
+    bool operator==(GameIterator &other);
+
+    bool operator!=(GameIterator &other);
+
+    GameIterator &operator++() {
+        index++;
+        return *this;
+    }
+
+    GameIterator &operator--() {
+        index--;
+        return *this;
+    }
+
+    GameIterator operator++(int) {
+        GameIterator copy(*this);
+        index++;
+        return copy;
+    }
+
+    GameIterator operator--(int) {
+        GameIterator copy(*this);
+        index--;
+        return copy;
+    }
+
+    Position operator*();
+
+};
+
 struct Game {
     Position start_position;
     Position previous;
@@ -20,6 +64,8 @@ struct Game {
         previous = start_position;
     }
 
+    Game() = default;
+
     void add_index(uint8_t index) {
         indices[num_indices++] = index;
         MoveListe liste;
@@ -28,6 +74,13 @@ struct Game {
     }
 
     void add_position(Position pos) {
+        //need to be consecutive positions
+
+        if(num_indices ==0){
+            start_position =pos;
+            return;
+        }
+
         MoveListe liste;
         get_moves(previous, liste);
         for (auto i = 0; i < liste.length(); ++i) {
@@ -42,29 +95,67 @@ struct Game {
 
     //overloading read write operators
 
-    friend std::ifstream operator>>(std::ifstream &stream, Game &game) {
-        Position start_pos;
-        stream >> start_pos;
-        start_pos.print_position();
+    friend std::ifstream &operator>>(std::ifstream &stream, Game &game) {
+        stream >> game.start_position;
         stream.read((char *) &game.num_indices, sizeof(uint16_t));
-        Position current = start_pos;
         std::cout << (int) game.num_indices << std::endl;
         stream.read((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
-        for (auto i = 0; i < game.num_indices; ++i) {
-            MoveListe liste;
-            get_moves(start_pos, liste);
-            start_pos.make_move(liste[game.indices[i]]);
-        }
+        return stream;
     }
 
-    friend std::ofstream operator<<(std::ofstream &stream, const Game &game) {
+    friend std::ofstream &operator<<(std::ofstream &stream, const Game &game) {
         Position start_pos = game.start_position;
         stream << start_pos;
-        const uint16_t num_indices = game.indices.size();
-        stream.write((char *) &num_indices, sizeof(uint16_t));
-        stream.write((char *) &game.indices[0], sizeof(uint8_t) * num_indices);
+        stream.write((char *) &game.num_indices, sizeof(uint16_t));
+        stream.write((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
+        return stream;
+    }
+
+    Position get_position(int n) {
+        //returns the position after the nth move
+        Position current = start_position;
+        for (auto i = 0; i < n; ++i) {
+            MoveListe liste;
+            get_moves(current, liste);
+            current.make_move(liste[indices[i]]);
+        }
+        return current;
+    }
+
+    bool operator==(Game &other) {
+        return (other.start_position == start_position &&
+                std::equal(indices.begin(), indices.end(), other.indices.begin()));
+    }
+
+    bool operator!=(Game &other) {
+        return !((*this) == other);
+    }
+
+    GameIterator begin() {
+        GameIterator beg(*this);
+        return beg;
+    }
+
+    GameIterator end() {
+        GameIterator beg(*this);
+        beg.index = num_indices;
+        return beg;
     }
 };
+
+Position GameIterator::operator*() {
+    Position current = game.get_position(index);
+    return current;
+}
+
+bool GameIterator::operator==(GameIterator &other) {
+    return (other.game == game && other.index == index);
+}
+
+bool GameIterator::operator!=(GameIterator &other) {
+    return (other.game != game || other.index != index);
+}
+
 
 template<typename Iter>
 void compress_game(Iter begin, Iter end, std::ofstream &stream) {
@@ -96,28 +187,6 @@ void compress_game(Iter begin, Iter end, std::ofstream &stream) {
     std::cout << "Test: " << num_indices << std::endl;
     //now we can store the indices
     stream.write((char *) &indices[0], sizeof(uint8_t) * num_indices);
-}
-
-template<typename OutIter>
-void read_compressed_game(OutIter iter, std::ifstream &stream) {
-    Position start_pos;
-
-    stream >> start_pos;
-    start_pos.print_position();
-
-    uint16_t num_indices;
-    stream.read((char *) &num_indices, sizeof(uint16_t));
-    std::cout << "NumIndices: " << (int) num_indices << std::endl;
-    Position current = start_pos;
-    std::cout << (int) num_indices << std::endl;
-    std::unique_ptr<uint8_t[]> indices = std::make_unique<uint8_t[]>(num_indices);
-    stream.read((char *) indices.get(), sizeof(uint8_t) * num_indices);
-    for (auto i = 0; i < num_indices; ++i) {
-        MoveListe liste;
-        get_moves(start_pos, liste);
-        start_pos.make_move(liste[indices[i]]);
-    }
-
 }
 
 
