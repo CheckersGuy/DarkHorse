@@ -5,7 +5,6 @@
 #ifndef READING_POSSTREAMER_H
 #define READING_POSSTREAMER_H
 
-#include "Util/File.h"
 #include <string>
 #include <memory>
 #include <../CheckerEngineX/Position.h>

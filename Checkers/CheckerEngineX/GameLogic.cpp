@@ -92,7 +92,9 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
             break;
         }
     }
-    std::cout<<"TotalNodes: "<<total_nodes<<std::endl;
+    if(print){
+        std::cout<<"TotalNodes: "<<total_nodes<<std::endl;
+    }
     return eval;
 }
 
