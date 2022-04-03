@@ -114,12 +114,10 @@ int main() {
     /*std::ofstream stream("test3.data", std::ios::app);*/
     std::ifstream stream("test4.data");
 
-    Game game;
-    while(stream>>game){
-        std::cout<<"Game "<<std::endl;
-        for(auto pos : game)
-            pos.print_position();
-    }
+
+    convert_to_new("/home/robin/DarkHorse/Training/TrainData/small_dataset4.train","/home/robin/DarkHorse/Training/TrainData/new_format.train");
+
+
 
     return 0;
 }
