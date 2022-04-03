@@ -10,6 +10,7 @@
 #include <MoveListe.h>
 #include <MGenerator.h>
 
+
 struct Game;
 
 struct GameIterator {
@@ -52,48 +53,50 @@ struct GameIterator {
 
     Position operator*();
 
+
 };
 
 struct Game {
     Position start_position;
-    Position previous;
     std::array<uint8_t, 600> indices;
     uint16_t num_indices{0};
     Result result{Result::UNKNOWN};
-    Result tb_result{Result::UNKNOWN};
 
     Game(const Position start_position) : start_position(start_position) {
-        previous = start_position;
     }
 
     Game() = default;
 
-    void add_index(uint8_t index) {
-        indices[num_indices++] = index;
-        MoveListe liste;
-        get_moves(previous, liste);
-        previous.make_move(liste[index]);
+    void add_move(uint8_t move_index) {
+        Game::encode_move(indices[num_indices++], move_index);
     }
+
 
     void set_result(Result res) {
         result = res;
     }
 
+    void set_result(Result res, int n) {
+        //sets the result of the nth position
+        Game::encode_result(indices[n], res);
+    }
+
     void add_position(Position pos) {
         //need to be consecutive positions
 
-        if (num_indices == 0) {
+        if (start_position.is_empty()) {
             start_position = pos;
             return;
         }
 
         MoveListe liste;
-        get_moves(previous, liste);
+        Position x = get_last_position();
+        get_moves(x, liste);
         for (auto i = 0; i < liste.length(); ++i) {
-            Position t = previous;
+            Position t = x;
             t.make_move(liste[i]);
             if (t == pos) {
-                indices[num_indices++] = i;
+                Game::encode_move(indices[num_indices++], i);
                 break;
             }
         }
@@ -105,7 +108,6 @@ struct Game {
         stream >> game.start_position;
         stream.read((char *) &game.num_indices, sizeof(uint16_t));
         stream.read((char *) &game.result, sizeof(Result));
-        stream.read((char *) &game.tb_result, sizeof(Result));
         stream.read((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
         return stream;
     }
@@ -115,7 +117,6 @@ struct Game {
         stream << start_pos;
         stream.write((char *) &game.num_indices, sizeof(uint16_t));
         stream.write((char *) &game.result, sizeof(Result));
-        stream.write((char *) &game.tb_result, sizeof(Result));
         stream.write((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
         return stream;
     }
@@ -126,9 +127,13 @@ struct Game {
         for (auto i = 0; i < n; ++i) {
             MoveListe liste;
             get_moves(current, liste);
-            current.make_move(liste[indices[i]]);
+            current.make_move(liste[Game::get_move_index(indices[i])]);
         }
         return current;
+    }
+
+    Position get_last_position() {
+        return get_position(num_indices);
     }
 
     bool operator==(Game &other) {
@@ -150,6 +155,56 @@ struct Game {
         beg.index = num_indices + 1;
         return beg;
     }
+
+
+    static void encode_move(uint8_t &bit_field, uint8_t move_index) {
+        //clearing the move field
+        bit_field &= ~(63);
+        bit_field |= move_index;
+    }
+
+    static void encode_result(uint8_t &bit_field, Result result) {
+        uint8_t temp = static_cast<uint8_t>(result);
+        const uint8_t clear_bits = 3ull << 6;
+        bit_field &= ~clear_bits;
+        bit_field |= temp << 6;
+    }
+
+    static uint8_t get_move_index(uint8_t &bit_field) {
+        const uint8_t clear_bits = 3ull << 6;
+        uint8_t copy = bit_field & (~clear_bits);
+        return copy;
+    }
+
+    static Result get_result(uint8_t &bit_field) {
+        uint8_t copy = (bit_field >> 6) & 3ull;
+        return static_cast<Result>(copy);
+    }
+
+
+    template<typename OutIter>
+    void extract_samples(OutIter iterator) {
+        Sample sample;
+        sample.position = start_position;
+        sample.result = Game::get_result(indices[0]);
+        sample.move = -1;
+        *iterator = sample;
+        iterator++;
+        for (auto i = 1; i < num_indices; ++i) {
+            Position current = get_position(i);
+            sample.position = current;
+            sample.result = Game::get_result(indices[i]);
+            sample.move = -1;
+            *iterator = sample;
+            iterator++;
+        }
+        //last position as well
+        Position current = get_position(num_indices);
+        sample.position = current;
+        sample.result = result;
+        sample.move = -1;
+        *iterator = sample;
+    }
 };
 
 Position GameIterator::operator*() {
@@ -165,31 +220,11 @@ bool GameIterator::operator!=(GameIterator &other) {
     return (other.game != game || other.index != index);
 }
 
-//converting old to new training format
-
-void convert_to_new(std::string input, std::string output) {
-    std::ofstream out_stream(output);
-    std::ifstream in_stream(input);
-    std::istream_iterator<Sample> begin(in_stream);
-    std::istream_iterator<Sample> end{};
-    //to be continued
-
-    size_t piece_count = 32u;
-    Game game;
-    std::for_each(begin, end, [&](Sample s) {
-        if (Bits::pop_count(s.position.BP | s.position.WP) <= piece_count) {
-            game.add_position(s.position);
-            piece_count = Bits::pop_count(s.position.WP | s.position.BP);
-        } else {
-            piece_count = 32;
-            out_stream << game;
-        }
+//not trying to convert to the new format
+//will change game generation and generate new data
+//requires changing rescoring too though
 
 
-    });
-
-
-}
 
 
 #endif //READING_COMPRESS_H
