@@ -10,6 +10,8 @@
 #include "types.h"
 #include <sstream>
 #include <optional>
+#include <random>
+
 const uint32_t temp_mask = 0xf;
 
 
@@ -147,9 +149,6 @@ struct Position {
 
     void make_move(Move move);
 
-
-    void unmake_move(Move move);
-
     void make_move(uint32_t from_index, uint32_t to_index);
 
     void print_position() const;
@@ -176,5 +175,53 @@ struct Position {
     static std::optional<Move> get_move(Position orig, Position next);
 
 };
+
+namespace std {
+    template<>
+    struct hash<Position> {
+        std::array<std::array<uint64_t, 4>, 32> keys;
+        uint64_t color_black;
+        //should not use the existing zobrist keys
+
+        hash() {
+            std::mt19937 generator(23123123ull);
+            std::uniform_int_distribution<uint64_t> distrib;
+            for (int i = 0; i < 32; ++i) {
+                for (int j = 0; j < 4; ++j) {
+                    const auto value = distrib(generator);
+                    keys[i][j] = value;
+                }
+            }
+            color_black = distrib(generator);
+        }
+
+        uint64_t operator()(const Position &s) const {
+            const uint32_t BK = s.K & s.BP;
+            const uint32_t WK = s.K & s.WP;
+            uint64_t nextKey = 0u;
+            uint32_t allPieces = s.BP | s.WP;
+            while (allPieces) {
+                uint32_t index = Bits::bitscan_foward(allPieces);
+                uint32_t maske = 1u << index;
+                if ((maske & BK)) {
+                    nextKey ^= keys[index][BKING];
+                } else if ((maske & s.BP)) {
+                    nextKey ^= keys[index][BPAWN];
+                }
+                if ((maske & WK)) {
+                    nextKey ^= keys[index][WKING];
+                } else if ((maske & s.WP)) {
+                    nextKey ^= keys[index][WPAWN];
+                }
+                allPieces &= allPieces - 1u;
+            }
+            if (s.color == BLACK) {
+                nextKey ^= color_black;
+            }
+            return nextKey;
+        }
+    };
+}
+
 
 #endif //CHECKERENGINEX_POSITION_H

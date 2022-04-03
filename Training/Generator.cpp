@@ -44,11 +44,6 @@ void Generator::start() {
                                       0);
     bool *stop = (bool *) mmap(NULL, sizeof(bool), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                                0);
-    Position *buffer = (Position *) mmap(NULL, sizeof(Position) * BUFFER_CAP, PROT_READ | PROT_WRITE,
-                                         MAP_SHARED | MAP_ANONYMOUS, -1,
-                                         0);
-    //temporary buffer to see if the bloom-filter is working
-
     //shared random number generator
     random = (uint64_t *) mmap(NULL, sizeof(uint64_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                                0);
@@ -94,7 +89,10 @@ void Generator::start() {
             std::exit(-1);
         }
         if (id == 0) {
+            const std::string local_file = output + ".temp" + std::to_string(i);
+            std::ofstream out_stream("/home/robin/DarkHorse/Training/TrainData/" + local_file);
             //child takes a position and generates games
+            std::vector<Game> game_buffer;
             initialize(13199312313ull + 12412312314ull * i);
             use_classical(true);
 
@@ -112,16 +110,16 @@ void Generator::start() {
                     pthread_mutex_unlock(pmutex);
                     break;
                 }
-
+                Game game;
                 Position opening = openings[*opening_counter];
                 Board board;
                 board = opening;
                 pthread_mutex_unlock(pmutex);
-                std::vector<Position> game;
                 TT.clear();
                 uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
                 Zobrist::init_zobrist_keys(seed);
                 int move_count;
+                game.add_position(board.get_position());
                 for (move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
@@ -135,42 +133,25 @@ void Generator::start() {
                         break;
                     }
 
-                    game.emplace_back(board.get_position());
 
                     //some form of adjudication trying
 
 
                     uint32_t count;
-                    count = std::count(game.begin(), game.end(), game.back());
-                    //experimental stuff below
-                    if ((Bits::pop_count(board.get_position().BP | board.get_position().WP) <= piece_lim &&
-                         !board.get_position().has_jumps(BLACK) && !board.get_position().has_jumps(WHITE))
-                            ) {
-                        for (auto &pos: game) {
-                            buffer[(*buffer_length)++] = pos;
-                            (*counter)++;
-                        }
-                        break;
-                    }
+                    count = std::count(game.begin(), game.end(), game.get_last_position());
+
                     if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
                         (*num_won)++;
                         (*num_games)++;
-                        for (auto &pos: game) {
-                            buffer[(*buffer_length)++] = pos;
-                            (*counter)++;
-                        }
+                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
                         break;
                     } else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
-                        //draw by repetition
-                        for (auto &pos: game) {
-                            buffer[(*buffer_length)++] = pos;
-                            (*counter)++;
-                        }
+                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
@@ -180,16 +161,27 @@ void Generator::start() {
                         Move best;
                         auto value = searchValue(board, best, MAX_PLY, time_control, false);
                         board.make_move(best);
+
+                    }
+                    game.add_position(board.get_position());
+
+                    const Position p = board.get_position();
+                    if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
+                        game_buffer.emplace_back(game);
+                        break;
                     }
 
                 }
-                pthread_mutex_lock(pmutex);
-                if (*buffer_length >= buffer_clear_count) {
-                    std::cout << "ClearedBuffer" << std::endl;
-                    std::ofstream stream(output, std::ios::binary | std::ios::app);
-                    std::copy(buffer, buffer + *buffer_length, std::ostream_iterator<Position>(stream));
-                    *buffer_length = 0;
+
+                if (game_buffer.size() >= 100) {
+                    //clearing the buffer after 100 games have been accumulated
+                    for (auto &g: game_buffer) {
+                        out_stream << g;
+                    }
+                    game_buffer.clear();
                 }
+
+                pthread_mutex_lock(pmutex);
                 std::cout << "MoveCount: " << move_count << std::endl;
                 std::cout << "Pos Seen: " << *counter << std::endl;
                 std::cout << "Opening_Counter: " << *opening_counter << std::endl;

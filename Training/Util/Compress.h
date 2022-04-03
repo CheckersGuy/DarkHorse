@@ -9,13 +9,20 @@
 #include <Position.h>
 #include <MoveListe.h>
 #include <MGenerator.h>
-
+#include <regex>
+#include <filesystem>
+#include <BloomFilter.h>
 
 struct Game;
 
 struct GameIterator {
     Game &game;
     int index{0};
+    using iterator_category = std::forward_iterator_tag;
+    using difference_type = size_t;
+    using value_type = Position;
+    using pointer = Position *;  // or also value_type*
+    using reference = Position &;  // or also value_type&
 
     GameIterator(const GameIterator &other) : game(other.game) {
         index = other.index;
@@ -104,7 +111,7 @@ struct Game {
 
     //overloading read write operators
 
-    friend std::ifstream &operator>>(std::ifstream &stream, Game &game) {
+    friend std::istream &operator>>(std::istream &stream, Game &game) {
         stream >> game.start_position;
         stream.read((char *) &game.num_indices, sizeof(uint16_t));
         stream.read((char *) &game.result, sizeof(Result));
@@ -112,7 +119,7 @@ struct Game {
         return stream;
     }
 
-    friend std::ofstream &operator<<(std::ofstream &stream, const Game &game) {
+    friend std::ostream &operator<<(std::ostream &stream, const Game &game) {
         Position start_pos = game.start_position;
         stream << start_pos;
         stream.write((char *) &game.num_indices, sizeof(uint16_t));
@@ -207,16 +214,16 @@ struct Game {
     }
 };
 
-Position GameIterator::operator*() {
+inline Position GameIterator::operator*() {
     Position current = game.get_position(index);
     return current;
 }
 
-bool GameIterator::operator==(GameIterator &other) {
+inline bool GameIterator::operator==(GameIterator &other) {
     return (other.game == game && other.index == index);
 }
 
-bool GameIterator::operator!=(GameIterator &other) {
+inline bool GameIterator::operator!=(GameIterator &other) {
     return (other.game != game || other.index != index);
 }
 
@@ -224,7 +231,89 @@ bool GameIterator::operator!=(GameIterator &other) {
 //will change game generation and generate new data
 //requires changing rescoring too though
 
+template<typename Iterator>
+inline void merge_training_data(Iterator begin, Iterator end, std::string output) {
+    std::ofstream stream_out(output, std::ios::app);
+    for (auto it = begin; it != end; ++it) {
+        auto file_input = *it;
+        std::ifstream stream(file_input.c_str());
+        Game game;
+        while (stream >> game) {
+            stream_out << game;
+        }
+    }
+    //this should merge alle the files into one
+}
 
 
+inline std::optional<std::string> is_temporary_train_file(std::string name) {
+    std::regex reg("[a-z0-9]+[.]train[.]temp[0-9]+");
+    if (std::regex_match(name, reg)) {
+        auto f = name.find('.');
+        return std::make_optional(name.substr(0, f));
+    }
+    return std::nullopt;
+}
+
+template<typename Iterator>
+inline std::pair<size_t,size_t> count_unique_positions(Iterator begin, Iterator end) {
+    BloomFilter<Position> filter(9585058378, 3);
+    size_t unique_count=0;
+    size_t total_positions=0;
+    for (auto it = begin; it != end; ++it) {
+        Game game = (*it);
+        for (auto pos: game) {
+            if(!filter.has(pos)){
+                unique_count++;
+                filter.insert(pos);
+            }
+            total_positions++;
+        }
+
+    }
+    return std::make_pair(unique_count,total_positions);
+}
+
+inline std::pair<size_t,size_t> count_unique_positions(std::string game_file) {
+    std::ifstream stream(game_file);
+    std::istream_iterator<Game> begin(stream);
+    std::istream_iterator<Game> end;
+    return count_unique_positions(begin, end);
+}
+
+inline void merge_temporary_files(std::string directory, std::string out_directory) {
+    std::filesystem::path in_path(directory);
+    std::filesystem::path out_path(out_directory);
+    if (!std::filesystem::is_directory(in_path)) {
+        throw std::string{"Not a directory as in_path"};
+    }
+    if (!std::filesystem::is_directory(out_path)) {
+        throw std::string{"Not a directory as out_path"};
+    }
+    //finding all relevant files
+    std::map<std::string, std::vector<std::filesystem::path>> my_map;
+    for (auto &ent: std::filesystem::directory_iterator(in_path)) {
+        auto path = ent.path();
+        auto t = is_temporary_train_file(path.filename());
+        if (t.has_value()) {
+            my_map[t.value()].emplace_back(path);
+        }
+    }
+    //listing all the temporary files found
+    for (auto &val: my_map) {
+        std::cout << val.first << std::endl;
+        std::vector<std::filesystem::path> local_paths;
+
+        for (auto &path_file: val.second) {
+            local_paths.emplace_back(path_file.c_str());
+        }
+        merge_training_data(local_paths.begin(), local_paths.end(), out_directory + val.first + ".train");
+
+        for (auto &path_file: val.second) {
+            std::filesystem::remove_all(path_file);
+        }
+    }
+
+}
 
 #endif //READING_COMPRESS_H

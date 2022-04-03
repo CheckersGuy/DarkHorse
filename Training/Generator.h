@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <iterator>
 #include "Sample.h"
-
+#include <Util/Compress.h>
 
 class Generator {
 private:

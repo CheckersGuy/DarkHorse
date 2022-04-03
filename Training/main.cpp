@@ -10,7 +10,7 @@
 #include "Trainer.h"
 #include <Util/LRUCache.h>
 #include <Util/Compress.h>
-
+#include <regex>
 int main() {
 
 
@@ -70,15 +70,29 @@ int main() {
 
        return 0;*/
 
+
+
+
+    merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/","/home/robin/DarkHorse/Training/TrainData/");
+
+
+    std::cout<<"Unique: "<<count_unique_positions("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train").first;
+    return 0;
+
 /*
-    Generator generator("train4.pos", "/home/robin/DarkHorse/Training/TrainData/small_dataset6.games");
+
+    Generator generator("train4.pos", "smalldataset6.train");
     generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(14);
-    generator.set_time(20);
-    generator.set_piece_limit(10);
+    generator.set_parallelism(15);
+    generator.set_time(10);
+    generator.set_piece_limit(8);
     generator.set_max_position(5000000ull);
-    generator.start();*/
+    generator.start();
+*/
+
+
+
 
 
 
@@ -112,10 +126,15 @@ int main() {
 
 
     /*std::ofstream stream("test3.data", std::ios::app);*/
+/*
     std::ifstream stream("test4.data");
 
 
     convert_to_new("/home/robin/DarkHorse/Training/TrainData/small_dataset4.train","/home/robin/DarkHorse/Training/TrainData/new_format.train");
+
+*/
+
+//testing regular expressions
 
 
 
