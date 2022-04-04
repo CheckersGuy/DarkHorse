@@ -167,6 +167,8 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 
     for (auto i = 0; i < check_samples.size(); ++i) {
         Sample s = rescored_samples[i];
+       // std::cout << "Result: " << s.result << std::endl;
+        //s.position.print_position();
         //std::cout << "Result: " << s.result << std::endl;
        // s.position.print_position();
         if (check_samples[i].position != rescored_samples[i].position) {
@@ -187,19 +189,15 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 
 void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
   
-    std::ifstream stream(games);
+    std::ifstream stream(games,std::ios::binary);
+    std::istream_iterator<Game> begin(stream);
+    std::istream_iterator<Game>end;
+    size_t counter{ 0 };
+    std::for_each(begin, end, [&](Game game) {
+        counter++;
+        auto r = get_rescored_game(game, max_pieces, handle);
+        });
 
-
-    Game game;
-    while (stream >> game) {
-        for (auto pos : game)
-            pos.print_position();
-    }
-
-
-
-
-    
 }
 
 
@@ -225,11 +223,12 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
-    std::string in_file("C:\\Users\\leagu\\Downloads\\smalldataset6.train");
+    std::string in_file("C:\\Users\\leagu\\DarkHorse\\Training\\TrainData\\smalldataset6.train");
     std::string out_file("C:\\Users\\leagu\\Downloads\\smalldataset7.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);
+
 
 
     handle->close(handle);
