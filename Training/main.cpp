@@ -73,11 +73,22 @@ int main() {
 
 
 
+/*
     merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/","/home/robin/DarkHorse/Training/TrainData/");
 
 
-    std::cout<<"Unique: "<<count_unique_positions("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train").first;
-    return 0;
+    std::cout<<"Unique: "<<count_unique_positions("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train").second;
+*/
+
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train");
+
+    size_t count{ 0};
+    Game game;
+    while(stream>>game){
+        count++;
+    }
+    std::cout<<count<<std::endl;
+
 
 /*
 
@@ -90,6 +101,7 @@ int main() {
     generator.set_max_position(5000000ull);
     generator.start();
 */
+
 
 
 
