@@ -1,0 +1,372 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Debug-2dd155ccf8e46f719ef9.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-Debug-157492436965be65e609.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Debug-17ef7ad5c9e66e999e7a.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "perft_check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-perft_check-Debug-1db08a369de9923a7d27.json",
+					"name" : "perft_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pyhelper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pyhelper-Debug-880931b62679731d99b0.json",
+					"name" : "pyhelper",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tb_rescorer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tb_rescorer-Debug-1f8df6b44ebb048ed417.json",
+					"name" : "tb_rescorer",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-Release-2dd155ccf8e46f719ef9.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-Release-432c3140a3ad06c793e4.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-Release-17ef7ad5c9e66e999e7a.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "perft_check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-perft_check-Release-d161b63d61cdbd7a23f2.json",
+					"name" : "perft_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pyhelper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pyhelper-Release-7148eda82057cac0bb05.json",
+					"name" : "pyhelper",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tb_rescorer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tb_rescorer-Release-9a5cdbd066b1d7ee446d.json",
+					"name" : "tb_rescorer",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-MinSizeRel-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "MinSizeRel",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-MinSizeRel-2dd155ccf8e46f719ef9.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-MinSizeRel-e014d21c0ac73f86d330.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-MinSizeRel-17ef7ad5c9e66e999e7a.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "perft_check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-perft_check-MinSizeRel-e89e99e67b794edd6352.json",
+					"name" : "perft_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pyhelper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pyhelper-MinSizeRel-67b4e87d89225adc744c.json",
+					"name" : "pyhelper",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tb_rescorer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tb_rescorer-MinSizeRel-a76055747c6591046028.json",
+					"name" : "tb_rescorer",
+					"projectIndex" : 0
+				}
+			]
+		},
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-RelWithDebInfo-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"name" : "RelWithDebInfo",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ALL_BUILD::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ALL_BUILD-RelWithDebInfo-2dd155ccf8e46f719ef9.json",
+					"name" : "ALL_BUILD",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-RelWithDebInfo-f97568e52291bf252439.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ZERO_CHECK-RelWithDebInfo-17ef7ad5c9e66e999e7a.json",
+					"name" : "ZERO_CHECK",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "perft_check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-perft_check-RelWithDebInfo-7603496b312ffe10ff31.json",
+					"name" : "perft_check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pyhelper::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pyhelper-RelWithDebInfo-0a80541ef8372dff0083.json",
+					"name" : "pyhelper",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "tb_rescorer::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-tb_rescorer-RelWithDebInfo-251f6a071e331e56fd43.json",
+					"name" : "tb_rescorer",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/leagu/DarkHorse",
+		"source" : "C:/Users/leagu/DarkHorse"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}

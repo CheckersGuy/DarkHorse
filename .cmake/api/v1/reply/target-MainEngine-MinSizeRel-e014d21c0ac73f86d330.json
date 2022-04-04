@@ -2,7 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "cmake-build-debug/MainEngine"
+			"path" : "cmake-build-debug/MinSizeRel/MainEngine.exe"
+		},
+		{
+			"path" : "cmake-build-debug/MinSizeRel/MainEngine.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -11,6 +14,7 @@
 		"commands" : 
 		[
 			"add_executable",
+			"add_compile_options",
 			"include_directories"
 		],
 		"files" : 
@@ -31,11 +35,17 @@
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 13,
+				"line" : 5,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
 				"file" : 0,
 				"line" : 23,
 				"parent" : 0
@@ -48,21 +58,25 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG"
+					"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MD /O1 /Ob1 /DNDEBUG"
 				},
 				{
-					"fragment" : "-std=gnu++20"
+					"backtrace" : 2,
+					"fragment" : "-march=native"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-O2"
+				},
+				{
+					"fragment" : "-std:c++20"
 				}
 			],
 			"includes" : 
 			[
 				{
-					"backtrace" : 2,
-					"path" : "/home/robin/DarkHorse/Training"
-				},
-				{
-					"backtrace" : 3,
-					"path" : "/home/robin/DarkHorse/Checkers/CheckerEngineX"
+					"backtrace" : 4,
+					"path" : "C:/Users/leagu/DarkHorse/Checkers/CheckerEngineX"
 				}
 			],
 			"language" : "CXX",
@@ -92,24 +106,34 @@
 			]
 		}
 	],
+	"dependencies" : 
+	[
+		{
+			"id" : "ZERO_CHECK::@6890427a1f51a3e7e1df"
+		}
+	],
 	"id" : "MainEngine::@6890427a1f51a3e7e1df",
 	"link" : 
 	{
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin -O3 -DNDEBUG",
+				"fragment" : "/DWIN32 /D_WINDOWS /W3 /GR /EHsc /MD /O1 /Ob1 /DNDEBUG",
 				"role" : "flags"
 			},
 			{
-				"fragment" : "",
+				"fragment" : "/machine:x64 /INCREMENTAL:NO /subsystem:console",
 				"role" : "flags"
+			},
+			{
+				"fragment" : "kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib",
+				"role" : "libraries"
 			}
 		],
 		"language" : "CXX"
 	},
 	"name" : "MainEngine",
-	"nameOnDisk" : "MainEngine",
+	"nameOnDisk" : "MainEngine.exe",
 	"paths" : 
 	{
 		"build" : ".",

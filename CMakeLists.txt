@@ -5,7 +5,7 @@ if(WIN32)
 add_compile_options("-march=native")
 add_compile_options("-O2")
 else()
-SET(CMAKE_CXX_FLAGS "-Ofast -mtune=native -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast -mtune=native -lstdc++fs -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
 endif()
 SET(CMAKE_BUILD_TYPE "Release")
 
