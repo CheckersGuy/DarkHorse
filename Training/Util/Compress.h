@@ -11,7 +11,8 @@
 #include <MGenerator.h>
 #include <regex>
 #include <filesystem>
-#include <BloomFilter.h>
+#include  "../BloomFilter.h"
+#include <map>
 
 struct Game;
 
@@ -32,9 +33,9 @@ struct GameIterator {
 
     }
 
-    bool operator==(GameIterator &other);
+    bool operator==(GameIterator &other)const;
 
-    bool operator!=(GameIterator &other);
+    bool operator!=(GameIterator &other)const;
 
     GameIterator &operator++() {
         index++;
@@ -219,11 +220,11 @@ inline Position GameIterator::operator*() {
     return current;
 }
 
-inline bool GameIterator::operator==(GameIterator &other) {
+inline bool GameIterator::operator==(GameIterator &other)const {
     return (other.game == game && other.index == index);
 }
 
-inline bool GameIterator::operator!=(GameIterator &other) {
+inline bool GameIterator::operator!=(GameIterator &other)const {
     return (other.game != game || other.index != index);
 }
 
@@ -294,7 +295,7 @@ inline void merge_temporary_files(std::string directory, std::string out_directo
     std::map<std::string, std::vector<std::filesystem::path>> my_map;
     for (auto &ent: std::filesystem::directory_iterator(in_path)) {
         auto path = ent.path();
-        auto t = is_temporary_train_file(path.filename());
+        auto t = is_temporary_train_file(path.filename().string());
         if (t.has_value()) {
             my_map[t.value()].emplace_back(path);
         }

@@ -3,39 +3,40 @@
 	{
 		"generator" : 
 		{
-			"multiConfig" : false,
-			"name" : "Unix Makefiles"
+			"multiConfig" : true,
+			"name" : "Visual Studio 16 2019",
+			"platform" : "x64"
 		},
 		"paths" : 
 		{
-			"cmake" : "/snap/clion/184/bin/cmake/linux/bin/cmake",
-			"cpack" : "/snap/clion/184/bin/cmake/linux/bin/cpack",
-			"ctest" : "/snap/clion/184/bin/cmake/linux/bin/ctest",
-			"root" : "/snap/clion/184/bin/cmake/linux/share/cmake-3.21"
+			"cmake" : "C:/Program Files/CMake/bin/cmake.exe",
+			"cpack" : "C:/Program Files/CMake/bin/cpack.exe",
+			"ctest" : "C:/Program Files/CMake/bin/ctest.exe",
+			"root" : "C:/Program Files/CMake/share/cmake-3.23"
 		},
 		"version" : 
 		{
 			"isDirty" : false,
 			"major" : 3,
-			"minor" : 21,
-			"patch" : 1,
-			"string" : "3.21.1",
+			"minor" : 23,
+			"patch" : 0,
+			"string" : "3.23.0",
 			"suffix" : ""
 		}
 	},
 	"objects" : 
 	[
 		{
-			"jsonFile" : "codemodel-v2-90fb7bc15e2cf5077c8f.json",
+			"jsonFile" : "codemodel-v2-8423a3820f04be6d062b.json",
 			"kind" : "codemodel",
 			"version" : 
 			{
 				"major" : 2,
-				"minor" : 3
+				"minor" : 4
 			}
 		},
 		{
-			"jsonFile" : "cache-v2-657d5f0f793798a6a587.json",
+			"jsonFile" : "cache-v2-f327859d7378c69853fc.json",
 			"kind" : "cache",
 			"version" : 
 			{
@@ -44,7 +45,7 @@
 			}
 		},
 		{
-			"jsonFile" : "cmakeFiles-v1-1faf9a430c5ade0a9e70.json",
+			"jsonFile" : "cmakeFiles-v1-e20b5572d86ddcddc8d2.json",
 			"kind" : "cmakeFiles",
 			"version" : 
 			{
@@ -53,7 +54,7 @@
 			}
 		},
 		{
-			"jsonFile" : "toolchains-v1-8fcbee052677895b0892.json",
+			"jsonFile" : "toolchains-v1-3e8dbb5725c613e08c7a.json",
 			"kind" : "toolchains",
 			"version" : 
 			{
@@ -66,7 +67,7 @@
 	{
 		"cache-v2" : 
 		{
-			"jsonFile" : "cache-v2-657d5f0f793798a6a587.json",
+			"jsonFile" : "cache-v2-f327859d7378c69853fc.json",
 			"kind" : "cache",
 			"version" : 
 			{
@@ -76,7 +77,7 @@
 		},
 		"cmakeFiles-v1" : 
 		{
-			"jsonFile" : "cmakeFiles-v1-1faf9a430c5ade0a9e70.json",
+			"jsonFile" : "cmakeFiles-v1-e20b5572d86ddcddc8d2.json",
 			"kind" : "cmakeFiles",
 			"version" : 
 			{
@@ -86,17 +87,17 @@
 		},
 		"codemodel-v2" : 
 		{
-			"jsonFile" : "codemodel-v2-90fb7bc15e2cf5077c8f.json",
+			"jsonFile" : "codemodel-v2-8423a3820f04be6d062b.json",
 			"kind" : "codemodel",
 			"version" : 
 			{
 				"major" : 2,
-				"minor" : 3
+				"minor" : 4
 			}
 		},
 		"toolchains-v1" : 
 		{
-			"jsonFile" : "toolchains-v1-8fcbee052677895b0892.json",
+			"jsonFile" : "toolchains-v1-3e8dbb5725c613e08c7a.json",
 			"kind" : "toolchains",
 			"version" : 
 			{
