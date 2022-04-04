@@ -234,7 +234,7 @@ inline bool GameIterator::operator!=(GameIterator &other)const {
 
 template<typename Iterator>
 inline void merge_training_data(Iterator begin, Iterator end, std::string output) {
-    std::ofstream stream_out(output, std::ios::app);
+    std::ofstream stream_out(output, std::ios::app|std::ios::binary);
     for (auto it = begin; it != end; ++it) {
         auto file_input = *it;
         std::ifstream stream(file_input.c_str());
@@ -276,7 +276,7 @@ inline std::pair<size_t,size_t> count_unique_positions(Iterator begin, Iterator 
 }
 
 inline std::pair<size_t,size_t> count_unique_positions(std::string game_file) {
-    std::ifstream stream(game_file);
+    std::ifstream stream(game_file,std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     return count_unique_positions(begin, end);
