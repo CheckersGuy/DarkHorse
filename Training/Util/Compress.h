@@ -33,9 +33,9 @@ struct GameIterator {
 
     }
 
-    bool operator==(GameIterator &other)const;
+    bool operator==(GameIterator &other) const;
 
-    bool operator!=(GameIterator &other)const;
+    bool operator!=(GameIterator &other) const;
 
     GameIterator &operator++() {
         index++;
@@ -220,11 +220,11 @@ inline Position GameIterator::operator*() {
     return current;
 }
 
-inline bool GameIterator::operator==(GameIterator &other)const {
+inline bool GameIterator::operator==(GameIterator &other) const {
     return (other.game == game && other.index == index);
 }
 
-inline bool GameIterator::operator!=(GameIterator &other)const {
+inline bool GameIterator::operator!=(GameIterator &other) const {
     return (other.game != game || other.index != index);
 }
 
@@ -234,7 +234,7 @@ inline bool GameIterator::operator!=(GameIterator &other)const {
 
 template<typename Iterator>
 inline void merge_training_data(Iterator begin, Iterator end, std::string output) {
-    std::ofstream stream_out(output, std::ios::app|std::ios::binary);
+    std::ofstream stream_out(output, std::ios::app | std::ios::binary);
     for (auto it = begin; it != end; ++it) {
         auto file_input = *it;
         std::ifstream stream(file_input.c_str());
@@ -248,7 +248,7 @@ inline void merge_training_data(Iterator begin, Iterator end, std::string output
 
 
 inline std::optional<std::string> is_temporary_train_file(std::string name) {
-    std::regex reg("[a-z0-9]+[.]train[.]temp[0-9]+");
+    std::regex reg("[a-z0-9\\-\\_]+[.]train[.]temp[0-9]+");
     if (std::regex_match(name, reg)) {
         auto f = name.find('.');
         return std::make_optional(name.substr(0, f));
@@ -257,14 +257,14 @@ inline std::optional<std::string> is_temporary_train_file(std::string name) {
 }
 
 template<typename Iterator>
-inline std::pair<size_t,size_t> count_unique_positions(Iterator begin, Iterator end) {
+inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator end) {
     BloomFilter<Position> filter(9585058378, 3);
-    size_t unique_count=0;
-    size_t total_positions=0;
+    size_t unique_count = 0;
+    size_t total_positions = 0;
     for (auto it = begin; it != end; ++it) {
         Game game = (*it);
         for (auto pos: game) {
-            if(!filter.has(pos)){
+            if (!filter.has(pos)) {
                 unique_count++;
                 filter.insert(pos);
             }
@@ -272,14 +272,30 @@ inline std::pair<size_t,size_t> count_unique_positions(Iterator begin, Iterator 
         }
 
     }
-    return std::make_pair(unique_count,total_positions);
+    return std::make_pair(unique_count, total_positions);
 }
 
-inline std::pair<size_t,size_t> count_unique_positions(std::string game_file) {
-    std::ifstream stream(game_file,std::ios::binary);
+inline std::pair<size_t, size_t> count_unique_positions(std::string game_file) {
+    std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     return count_unique_positions(begin, end);
+}
+
+inline size_t count_trainable_positions(std::string game_file) {
+    std::ifstream stream(game_file, std::ios::binary);
+    std::istream_iterator<Game> begin(stream);
+    std::istream_iterator<Game> end;
+    size_t counter{0};
+    std::for_each(begin, end, [&](Game g) {
+        std::vector<Sample> samples;
+        g.extract_samples(std::back_inserter(samples));
+        counter += std::count_if(samples.begin(), samples.end(), [](Sample s) {
+            return s.result != UNKNOWN && !s.position.has_jumps();
+        });
+
+    });
+    return counter;
 }
 
 inline void merge_temporary_files(std::string directory, std::string out_directory) {

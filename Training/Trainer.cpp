@@ -215,6 +215,7 @@ void Trainer::start_tune() {
     int counter = 0;
     std::cout <<"data_size: " << pos_streamer.get_num_positions() << "\n";
     while (counter < get_num_epochs()) {
+
         std::stringstream ss_stream;
         ss_stream.clear();
         ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
@@ -248,6 +249,7 @@ void Trainer::start_tune() {
         learningRate = learningRate * (1.0 - decay);
         std::cout<<ss_stream.str()<<std::endl;
     }
+    weights.store_weights(weights_path);
 
 }
 

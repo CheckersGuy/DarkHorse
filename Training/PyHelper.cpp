@@ -82,41 +82,6 @@ extern "C" void get_next_val_batch_patt(float *results, float *num_wp, float *nu
 extern "C" int num_pieces(uint32_t white_men, uint32_t black_men, uint32_t kings) {
     return Bits::pop_count(white_men) + Bits::pop_count(black_men);
 }
-extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings) {
-
-    //trying out some different buckets
-
-
-
-    auto num_pieces = Bits::pop_count(white_men) + Bits::pop_count(black_men);
-    int index;
-    if (num_pieces > 20) {
-        index = 0;
-    } else if (num_pieces > 18) {
-        index = 1;
-    } else if (num_pieces > 16) {
-        index = 2;
-    } else if (num_pieces > 14) {
-        index = 3;
-    } else if (num_pieces > 12) {
-        index = 5;
-    } else if (num_pieces > 10) {
-        index = 6;
-    } else if (num_pieces > 8) {
-        index = 7;
-    } else if (num_pieces > 4) {
-        index = 8;
-    } else if (num_pieces > 2) {
-        index = 9;
-    } else {
-        index = 10;
-    }
-    if (kings == 0) {
-        return 2 * index;
-    } else {
-        return 2 * index + 1;
-    }
-}
 
 extern "C" int invert_pieces(uint32_t pieces) {
     return static_cast<int>(getMirrored(pieces));
