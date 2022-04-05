@@ -39,41 +39,31 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(false);
+    use_classical(true);
 
     Statistics::mPicker.init();
-
-
-
-
-
-   /* network.load("testx2.weights");
-    network.addLayer(Layer{120, 4096});
-    network.addLayer(Layer{4096, 16});
-    network.addLayer(Layer{16, 32});
-    network.addLayer(Layer{32, 1});
-    network.init();*/
-
-    network.load("testx2.weights");
-    network.addLayer(Layer{120, 4096});
-    network.addLayer(Layer{4096, 16});
-    network.addLayer(Layer{16, 32});
+/*
+    network.load("form_network3.weights");
+    network.addLayer(Layer{120, 256});
+    network.addLayer(Layer{256, 32});
+    network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();
+
+
+
 
     network2.load("endgame.weights");
     network2.addLayer(Layer{120, 1024});
     network2.addLayer(Layer{1024, 16});
     network2.addLayer(Layer{16, 32});
     network2.addLayer(Layer{32, 1});
+    network2.init();*/
 
-    network2.init();
 
 
     TT.resize(23);
     board = Position::get_start_position();
-    //board = Position::pos_from_fen("B:W18,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,7,8,9,10,11,16");
-
 /*
 
     board.get_position().make_move(11, 15);
@@ -81,10 +71,10 @@ int main(int argl, const char **argc) {
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19);
     board.get_position().print_position();
+
 */
 
 
-    //board = Position::pos_from_fen("W:WK2,K32:BK4,K8,K21");board.print_board();
 
 
 
@@ -96,13 +86,6 @@ int main(int argl, const char **argc) {
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
-
-
-
-
-
-
-
 
 
 

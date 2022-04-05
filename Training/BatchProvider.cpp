@@ -12,13 +12,10 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
     auto fill = [&](Sample s, size_t offset_small, size_t offset_big) {
         size_t big_counter = 0;
         size_t small_counter = 0;
-
-
         const size_t offset1 = 8ull * 157464ull;
         const size_t offset2 = 4ull * 531441ull + 8ull * 157464ull;
         if (s.position.K == 0) {
             //FOR THE PROMO_SQUARES
-
         } else {
             for (auto i = 0; i < 3; ++i) {
                 for (auto k = 0; k < 3; ++k) {
@@ -30,15 +27,12 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
                     patt_end_small[offset_small + small_counter_end++] = offset2 + sub_index_end;
                 }
             }
-
         }
     };
-
     for (auto i = 0; i < get_batch_size(); ++i) {
         Sample s = get_streamer().get_next();
         size_t off_small = 9 * i;
         size_t off_big = 6 * i;
-
         num_wp[i] = (float) (Bits::pop_count(s.position.WP & (~s.position.K)));
         num_bp[i] = (float) (Bits::pop_count(s.position.BP & (~s.position.K)));
         num_wk[i] = (float) (Bits::pop_count(s.position.WP & s.position.K));
@@ -55,14 +49,10 @@ void PattBatchProvider::next(float *results, float *num_wp, float *num_bp, float
         else
             res_temp = 1.0;
         results[i] = res_temp;
-
         fill(s, off_small, off_big);
-
-
     }*/
 
 }
-
 
 void NetBatchProvider::next(float *results, int64_t *moves, float *inputs) {
     static constexpr size_t INPUT_SIZE = 120;
@@ -116,7 +106,7 @@ void NetBatchProvider::next(float *results, int64_t *moves, float *inputs) {
         Sample current;
         do {
             current = get_streamer().get_next();
-        } while (current.result == UNKNOWN);
+        } while (current.result == UNKNOWN ||(current.position.has_jumps()));
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;

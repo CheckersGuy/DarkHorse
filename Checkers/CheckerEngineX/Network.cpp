@@ -13,7 +13,7 @@ void Accumulator::update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK
 
 int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
     auto num_pieces = pos.piece_count();
-    if (num_pieces > 10)
+    if (num_pieces > 6)
         return net1.evaluate(pos, ply);
 
     return net2.evaluate(pos, ply);

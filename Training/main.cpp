@@ -11,6 +11,7 @@
 #include <Util/LRUCache.h>
 #include <Util/Compress.h>
 #include <regex>
+
 int main() {
 
 
@@ -73,68 +74,49 @@ int main() {
 
 
 
-/*
-    merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/","/home/robin/DarkHorse/Training/TrainData/");
 
 
-    std::cout<<"Unique: "<<count_unique_positions("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train").second;
-*/
 
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/smalldataset6.train");
-
-    size_t count{ 0};
-    Game game;
-    while(stream>>game){
-        count++;
-    }
-    std::cout<<count<<std::endl;
+    merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
 
 
-/*
+    auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
+    std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
 
-    Generator generator("train4.pos", "smalldataset6.train");
+
+    Generator generator("train4.pos", "large.train");
     generator.set_hash_size(18);
     generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(15);
+    generator.set_parallelism(95);
     generator.set_time(10);
-    generator.set_piece_limit(8);
-    generator.set_max_position(5000000ull);
+    generator.set_piece_limit(6);
+    generator.set_max_position(5000000000ull);
     generator.start();
-*/
-
-
-
-
-
-
-
 
 
 
 /*
-     Match engine_match("testx2", "master");
+     Match engine_match("form_network3", "test");
      engine_match.setTime(200);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(6);
+     engine_match.setNumThreads(14);
      engine_match.setHashSize(20);
-     engine_match.start();
-
-*/
+     engine_match.start();*/
 
 
 
 
-/*
-    Trainer trainer("/home/robin/DarkHorse/Training/TrainData/small_dataset4.train");
-    trainer.set_learning_rate(2);
-    trainer.set_weight_decay(0.0);
-    trainer.set_decay(0.2);
-    trainer.set_weights_path("testtestxx.weights");
-    trainer.set_savepoint_step(10000000);
-    trainer.set_epochs(30);
-    trainer.set_c_value(-1e-3);
-    trainer.start_tune();
-*/
+    /*  Trainer trainer("/home/robin/DarkHorse/Training/TrainData/smalldataset7.train");
+      trainer.set_learning_rate(2);
+      trainer.set_weight_decay(0.0);
+      trainer.set_decay(0.2);
+      trainer.set_weights_path("format.weights");
+      trainer.set_savepoint_step(10000000);
+      trainer.set_epochs(30);
+      trainer.set_c_value(-1e-3);
+      trainer.start_tune();
+  */
+
 
 
     /*std::ofstream stream("test3.data", std::ios::app);*/

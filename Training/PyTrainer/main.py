@@ -4,14 +4,14 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
 
 if __name__ == "__main__":
-    data_loader = LitMLP.LitDataModule(train_data="/home/robin/DarkHorse/Training/TrainData/small_dataset4.train",
-                                       val_data="/home/robin/DarkHorse/Training/TrainData/small_dataset4.val",
-                                       batch_size=20000, buffer_size=100000000)
+    data_loader = LitMLP.LitDataModule(train_data="/home/robin/DarkHorse/Training/TrainData/newformat2.train",
+                                       val_data="/home/robin/DarkHorse/Training/TrainData/smalldataset7.train",
+                                       batch_size=2000, buffer_size=20000000)
     device = torch.device("cpu")
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".",filename="{epoch}")
 
     model = LitMLP.Network([120, 256, 32, 32, 1])
     model.to(device)
-    trainer = pl.Trainer(max_epochs=200, callbacks=[check_point_callback])
+    trainer = pl.Trainer(max_epochs=2000, callbacks=[check_point_callback])
     trainer.fit(model, data_loader)

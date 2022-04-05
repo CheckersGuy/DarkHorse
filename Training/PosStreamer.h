@@ -12,18 +12,18 @@
 #include <Sample.h>
 #include <iterator>
 #include <filesystem>
-
+#include "Util/Compress.h"
 class PosStreamer {
 
 private:
     std::string file_path;
     const size_t buffer_size;
-    std::unique_ptr<Sample[]> buffer;
+    std::vector<Sample> buffer;
     size_t ptr;
     std::ifstream stream;
     std::mt19937_64 generator;
     const bool shuffle;
-    size_t file_size; // number of samples
+    size_t num_samples; // number of samples
 
 private:
 public:
@@ -33,14 +33,13 @@ public:
 
         //computing the file_size
         ptr = buffer_size + 1;
-        file_size = PosStreamer::get_file_size() / sizeof(Sample);
         stream = std::ifstream(file_path, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Could not open the stream" << std::endl;
             std::exit(-1);
         }
-        buffer = std::make_unique<Sample[]>(buffer_size);
         generator = std::mt19937_64(seed);
+        num_samples = count_trainable_positions(file_path);
     }
 
     Sample get_next();
