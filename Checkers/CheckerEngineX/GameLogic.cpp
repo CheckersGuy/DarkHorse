@@ -13,7 +13,7 @@ SearchGlobal glob;
 Network network,network2;
 bool u_classical = false;
 void initialize() {
-    gameWeights.load_weights<uint32_t>("../Training/Engines/blaadam.weights");
+    gameWeights.load_weights<uint32_t>("../Training/Engines/small.weights");
     Zobrist::init_zobrist_keys();
 
 }

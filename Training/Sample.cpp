@@ -4,7 +4,14 @@
 
 #include "Sample.h"
 
-
+std::string result_to_string(Result result) {
+    if(result == BLACK_WON)
+        return "BLACK_WON";
+    if(result == WHITE_WON)
+        return "WHITE_WON";
+    if(result == DRAW)
+        return "DRAW";
+}
 bool Sample::operator==(const Sample &other) const {
     return (position == other.position && result == other.result);
 }

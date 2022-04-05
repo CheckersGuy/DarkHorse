@@ -12,6 +12,8 @@ enum Result : int {
     BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0
 };
 
+std::string result_to_string(Result result);
+
 constexpr Result operator~(Result one) {
     if (one == BLACK_WON)
         return WHITE_WON;

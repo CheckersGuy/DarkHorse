@@ -37,9 +37,7 @@ private:
     size_t step_counter{0};
     size_t epoch_counter{0};
     size_t save_point_step{1000000};
-    size_t look_ahead_step{1000};
     Weights<double> weights;
-    Weights<double> fast_weights;
     //weights for the lookahead optimizer
 public:
 
@@ -64,7 +62,6 @@ public:
     };
 
     void epoch();
-
 
     void gradient_update(Sample &sample);
 
