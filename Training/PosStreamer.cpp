@@ -5,9 +5,13 @@
 #include <sys/stat.h>
 #include "PosStreamer.h"
 
+size_t PosStreamer::get_num_positions() const {
+    return num_samples;
+}
 
 Sample PosStreamer::get_next() {
     if (ptr >= buffer_size) {
+        buffer.clear();
         ptr = 0;
         //if we reached the end of our file
         //we have to wrap around
@@ -17,24 +21,17 @@ Sample PosStreamer::get_next() {
                 stream.clear();
                 stream.seekg(0, std::ios::beg);
             }
-            std::istream_iterator<Sample> begin(stream);
-            std::istream_iterator<Sample> end;
-
-            for (; (begin != end) && read_elements < buffer_size; ++begin) {
-                Sample current = *begin;
-
-                if (current.position.has_jumps(current.position.get_color()) || current.move == -1)
-                    continue;
-                if(current.result == UNKNOWN)
-                    continue;
-
-
-                buffer[read_elements++] = (*begin);
+            Game game;
+            stream >> game;
+            std::vector<Sample> game_samples;
+            game.extract_samples(std::back_inserter(game_samples));
+            for (auto s: game_samples) {
+                buffer.emplace_back(s);
             }
-        } while (read_elements < buffer_size);
+        } while (buffer.size() < buffer_size);
         //the buffer is filled now so we can shuffle the elements
         if (shuffle) {
-            std::shuffle(buffer.get(), buffer.get() + buffer_size, generator);
+            std::shuffle(buffer.begin(), buffer.end(), generator);
         }
     }
     return buffer[ptr++];
@@ -54,12 +51,9 @@ const std::string &PosStreamer::get_file_path() {
 }
 
 
-size_t PosStreamer::get_file_size() const{
+size_t PosStreamer::get_file_size() const {
     std::filesystem::path my_path(file_path);
     return std::filesystem::file_size(my_path);
 }
 
 
-size_t PosStreamer::get_num_positions() const {
-    return get_file_size() / sizeof(Sample);
-}
