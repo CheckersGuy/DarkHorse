@@ -80,15 +80,17 @@ int main() {
     merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
 
 
+/*
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
     std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
 
+*/
 
-    Generator generator("train4.pos", "large.train");
-    generator.set_hash_size(18);
+    Generator generator("train4.pos", "testing25.train");
+    generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
     generator.set_parallelism(95);
-    generator.set_time(10);
+    generator.set_time(25);
     generator.set_piece_limit(6);
     generator.set_max_position(5000000000ull);
     generator.start();
@@ -96,26 +98,32 @@ int main() {
 
 
 /*
-     Match engine_match("form_network3", "test");
+
+     Match engine_match("newformat2", "newformatxx");
      engine_match.setTime(200);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(14);
-     engine_match.setHashSize(20);
-     engine_match.start();*/
+     engine_match.setNumThreads(7);
+     engine_match.setHashSize(21);
+     engine_match.start();
+
+*/
 
 
 
 
-    /*  Trainer trainer("/home/robin/DarkHorse/Training/TrainData/smalldataset7.train");
+
+/*
+      Trainer trainer("/home/robin/DarkHorse/Training/TrainData/largeformatted.train");
       trainer.set_learning_rate(2);
       trainer.set_weight_decay(0.0);
       trainer.set_decay(0.2);
-      trainer.set_weights_path("format.weights");
+      trainer.set_weights_path("format4.weights");
       trainer.set_savepoint_step(10000000);
       trainer.set_epochs(30);
       trainer.set_c_value(-1e-3);
       trainer.start_tune();
-  */
+*/
+
 
 
 

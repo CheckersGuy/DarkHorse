@@ -82,6 +82,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         if (print) {
             std::string temp = std::to_string(eval) + " ";
             ss<<eval<<" Depth:" <<i<<" | "<<glob.sel_depth<<" | ";
+            ss<<"Nodes: "<<total_nodes<<" | ";
             ss<<"Time: "<<time<<"\n";
             ss<<"Speed: "<<((time>0)?nodeCounter/time : 0)<<" "<<mainPV.toString()<<"\n\n";
             ss << "Time needed: " <<  time<< "\n";
