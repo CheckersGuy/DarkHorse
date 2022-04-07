@@ -192,17 +192,23 @@ struct Game {
 
     template<typename OutIter>
     void extract_samples(OutIter iterator) {
+        MoveListe liste;
         Sample sample;
         sample.position = start_position;
+
+        get_moves(sample.position,liste);
+
         sample.result = Game::get_result(indices[0]);
-        sample.move = -1;
+        sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),liste[Game::get_move_index(indices[0])]);
         *iterator = sample;
         iterator++;
         for (auto i = 1; i < num_indices; ++i) {
+            liste = MoveListe{};
             Position current = get_position(i);
             sample.position = current;
+            get_moves(sample.position,liste);
             sample.result = Game::get_result(indices[i]);
-            sample.move = -1;
+            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),liste[Game::get_move_index(indices[i])]);
             *iterator = sample;
             iterator++;
         }
@@ -287,12 +293,14 @@ inline size_t count_trainable_positions(std::string game_file) {
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     size_t counter{0};
+    //std::vector<Sample> samples;
     std::for_each(begin, end, [&](Game g) {
-        std::vector<Sample> samples;
+     /*   samples.clear();
         g.extract_samples(std::back_inserter(samples));
         counter += std::count_if(samples.begin(), samples.end(), [](Sample s) {
             return s.result != UNKNOWN && !s.position.has_jumps();
-        });
+        });*/
+     counter+=g.num_indices+1;
 
     });
     return counter;

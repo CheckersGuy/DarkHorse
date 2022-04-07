@@ -39,11 +39,11 @@ inline Position posFromString(const std::string &pos) {
 int main(int argl, const char **argc) {
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
 
     Statistics::mPicker.init();
-/*
-    network.load("form_network3.weights");
+
+    network.load("test2.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -51,20 +51,22 @@ int main(int argl, const char **argc) {
     network.init();
 
 
-
-
     network2.load("endgame.weights");
     network2.addLayer(Layer{120, 1024});
     network2.addLayer(Layer{1024, 16});
     network2.addLayer(Layer{16, 32});
     network2.addLayer(Layer{32, 1});
-    network2.init();*/
+    network2.init();
 
 
 
+
+
+/*
     TT.resize(23);
     board = Position::get_start_position();
-/*
+    board.get_position().print_position();
+
 
     board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
@@ -72,7 +74,12 @@ int main(int argl, const char **argc) {
     board.get_position().make_move(23, 19);
     board.get_position().print_position();
 
+
+
 */
+
+
+
 
 
 
@@ -86,6 +93,12 @@ int main(int argl, const char **argc) {
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
+
+
+
+
+
+
 
 
 

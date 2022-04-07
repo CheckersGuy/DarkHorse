@@ -37,40 +37,18 @@ void Generator::set_piece_limit(size_t num_pieces) {
 void Generator::start() {
     //Positions to be saved to a file
     initialize();
-    const size_t BUFFER_CAP = 1000000;
     std::cout << "Number of openings: " << openings.size() << std::endl;
 
-    int *buffer_length = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                                      0);
-    bool *stop = (bool *) mmap(NULL, sizeof(bool), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                               0);
-    //shared random number generator
-    random = (uint64_t *) mmap(NULL, sizeof(uint64_t), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                               0);
-
-    int *counter;
-    int *error_counter;
     int *num_games;
     int *num_won;
-    int *opening_counter;
-    counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                           0);
-    error_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                                 0);
     num_won = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                            0);
     num_games = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
                              0);
 
-    opening_counter = (int *) mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1,
-                                   0);
-    *stop = false;
-    *counter = 0;
-    *error_counter = 0;
+
     *num_won = 0;
     *num_games = 0;
-    *buffer_length = 0;
-    *random = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     pmutex = NULL;
     pthread_mutexattr_t attrmutex;
     pthread_mutexattr_setpshared(&attrmutex, PTHREAD_PROCESS_SHARED);
@@ -79,7 +57,7 @@ void Generator::start() {
                                       -1, 0);
 
     pthread_mutex_init(pmutex, &attrmutex);
-
+    bool stop = false;
 
     pid_t id;
     for (auto i = 0; i < parallelism; ++i) {
@@ -101,40 +79,24 @@ void Generator::start() {
             //play a game and increment the opening-counter once more
 
 
-            while (!(*stop)) {
-                pthread_mutex_lock(pmutex);
-
-                if (*counter >= max_positions) {
-                    pthread_mutex_lock(pmutex);
-                    *stop = true;
-                    pthread_mutex_unlock(pmutex);
-                    break;
-                }
+            while (!stop) {
+                const uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
                 Game game;
-                Position opening = openings[*opening_counter];
+
+                std::mt19937_64 generator(seed);
+                std::uniform_int_distribution<size_t>distrib(0,openings.size());
+                const size_t rand_index = distrib(generator);
+                std::cout<<"Chosen opening: "<<rand_index<<std::endl;
+                Position opening = openings[rand_index];
                 Board board;
                 board = opening;
-                pthread_mutex_unlock(pmutex);
                 TT.clear();
-                uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
                 Zobrist::init_zobrist_keys(seed);
-                int move_count;
+
                 game.add_position(board.get_position());
-                for (move_count = 0; move_count < 600; ++move_count) {
+                for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
-
-                    //if the position happens to be an illegal position
-                    //we skip this position
-                    if (!board.get_position().is_legal()) {
-                        pthread_mutex_lock(pmutex);
-                        (*error_counter)++;
-                        pthread_mutex_unlock(pmutex);
-                        break;
-                    }
-
-
-                    //some form of adjudication trying
 
 
                     uint32_t count;
@@ -180,21 +142,6 @@ void Generator::start() {
                     }
                     game_buffer.clear();
                 }
-
-                pthread_mutex_lock(pmutex);
-                std::cout << "MoveCount: " << move_count << std::endl;
-                std::cout << "Pos Seen: " << *counter << std::endl;
-                std::cout << "Opening_Counter: " << *opening_counter << std::endl;
-                std::cout << "Error_Counter: " << *error_counter << std::endl;
-                std::cout << "WinRatio: " << (float) (*num_won) / (float) (*num_games) << std::endl;
-                for (auto x = 0; x < 3; ++x) {
-                    std::cout << "\n";
-                }
-                (*opening_counter)++;
-                if (*opening_counter >= openings.size()) {
-                    *opening_counter = 0;
-                }
-                pthread_mutex_unlock(pmutex);
             }
         }
     }
