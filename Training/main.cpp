@@ -77,10 +77,10 @@ int main() {
 
 
 
-/*
+
     merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
 
-*/
+
 
 /*
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
@@ -104,15 +104,17 @@ int main() {
 
 /*
 
-     Match engine_match("testing25", "newformatxx");
-     engine_match.setTime(100);
+
+     Match engine_match("form_network5", "form_network4");
+     engine_match.setTime(400);
      engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(7);
-     engine_match.setHashSize(21);
+     engine_match.setNumThreads(12);
+     engine_match.setHashSize(20);
      engine_match.start();
+
+
+
 */
-
-
 
 
 
