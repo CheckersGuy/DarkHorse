@@ -63,13 +63,14 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
 
     TT.resize(23);
     board = Position::get_start_position();
     board.get_position().print_position();
 
 
+/*
 
     board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
@@ -90,7 +91,8 @@ int main(int argl, const char **argc) {
 
 
 
-/*
+
+
 
 
     Move best;
@@ -99,7 +101,7 @@ int main(int argl, const char **argc) {
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
-*/
+
 
 
 
