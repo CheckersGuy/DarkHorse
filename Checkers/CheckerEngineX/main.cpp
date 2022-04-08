@@ -43,7 +43,7 @@ int main(int argl, const char **argc) {
 
     Statistics::mPicker.init();
 
-    network.load("test2.weights");
+    network.load("testing25.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
@@ -62,10 +62,13 @@ int main(int argl, const char **argc) {
 
 
 
+
 /*
+
     TT.resize(23);
     board = Position::get_start_position();
     board.get_position().print_position();
+
 
 
     board.get_position().make_move(11, 15);
@@ -73,8 +76,6 @@ int main(int argl, const char **argc) {
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19);
     board.get_position().print_position();
-
-
 
 */
 
@@ -87,12 +88,19 @@ int main(int argl, const char **argc) {
 
 
 
+
+
+/*
+
+
     Move best;
     searchValue(board, best, MAX_PLY, 100000000, true);
     board.make_move(best);
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);
+*/
+
 
 
 

@@ -29,7 +29,7 @@ class Relu1(nn.Module):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="test3.weights"):
+    def __init__(self, hidden, output="testing25.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
