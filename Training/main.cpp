@@ -77,8 +77,10 @@ int main() {
 
 
 
+/*
     merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
 
+*/
 
 /*
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
@@ -86,27 +88,31 @@ int main() {
 
 */
 
-    Generator generator("train4.pos", "testing25.train");
+
+    Generator generator("train4.pos", "largelarge.train");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
     generator.set_parallelism(95);
-    generator.set_time(25);
+    generator.set_time(10);
     generator.set_piece_limit(6);
     generator.set_max_position(5000000000ull);
     generator.start();
 
 
 
+
+
 /*
 
-     Match engine_match("newformat2", "newformatxx");
-     engine_match.setTime(200);
+     Match engine_match("testing25", "newformatxx");
+     engine_match.setTime(100);
      engine_match.setMaxGames(100000);
      engine_match.setNumThreads(7);
      engine_match.setHashSize(21);
      engine_match.start();
-
 */
+
+
 
 
 
