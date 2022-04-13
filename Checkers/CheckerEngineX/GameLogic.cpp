@@ -10,10 +10,10 @@ Weights<int16_t> gameWeights;
 
 
 SearchGlobal glob;
-Network network,network2;
+Network network;
 bool u_classical = false;
 void initialize() {
-    gameWeights.load_weights<uint32_t>("../Training/Engines/small.weights");
+    gameWeights.load_weights<uint32_t>("../Training/Engines/verylarge.weights");
     Zobrist::init_zobrist_keys();
 
 }
@@ -60,6 +60,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         return Search::qs(false, board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
     size_t total_nodes =0;
+    size_t total_time =0;
 
     for (int i = 1; i <= depth; i += 2) {
         auto start_time = getSystemTime();
@@ -76,7 +77,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
             break;
 
         auto time = (getSystemTime() - start_time);
-
+        total_time+=time;
         eval = local.best_score;
         best = mainPV.getFirstMove();
         if (print) {
@@ -95,6 +96,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     }
     if(print){
         std::cout<<"TotalNodes: "<<total_nodes<<std::endl;
+        std::cout<<"TotalTime: "<<total_time<<std::endl;
     }
     return eval;
 }
@@ -262,7 +264,7 @@ namespace Search {
             //bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
 
             if (!u_classical) {
-                bestValue = Network::evaluate(network, network2, board.get_position(), ply);
+                bestValue = network.evaluate(board.get_position(), ply);
             } else {
                 bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
             }

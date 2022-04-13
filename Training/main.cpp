@@ -78,7 +78,7 @@ int main() {
 
 
 
-    merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
+   // merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
 
 
 
@@ -89,6 +89,7 @@ int main() {
 */
 
 
+/*
     Generator generator("train4.pos", "largelarge.train");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(10000);
@@ -97,40 +98,29 @@ int main() {
     generator.set_piece_limit(6);
     generator.set_max_position(5000000000ull);
     generator.start();
-
-
-
-
-
-/*
-
-
-     Match engine_match("form_network5", "form_network4");
-     engine_match.setTime(400);
-     engine_match.setMaxGames(100000);
-     engine_match.setNumThreads(12);
-     engine_match.setHashSize(20);
-     engine_match.start();
-
-
-
 */
 
 
-
-
+     Match engine_match("form_network6", "form_network5");
+     engine_match.setTime(100);
+     engine_match.setMaxGames(100000);
+     engine_match.setNumThreads(6);
+     engine_match.setHashSize(20);
+     engine_match.start();
 
 /*
-      Trainer trainer("/home/robin/DarkHorse/Training/TrainData/largeformatted.train");
+
+      Trainer trainer("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
       trainer.set_learning_rate(2);
       trainer.set_weight_decay(0.0);
       trainer.set_decay(0.2);
-      trainer.set_weights_path("format4.weights");
+      trainer.set_weights_path("largelarge.weights");
       trainer.set_savepoint_step(10000000);
       trainer.set_epochs(30);
       trainer.set_c_value(-1e-3);
       trainer.start_tune();
 */
+
 
 
 

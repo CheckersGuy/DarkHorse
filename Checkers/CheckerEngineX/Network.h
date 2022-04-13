@@ -65,9 +65,6 @@ struct Network {
 
     int evaluate(Position pos, int ply);
 
-    static int evaluate(Network &net1, Network &net2, Position pos, int ply);
-
-
 };
 
 

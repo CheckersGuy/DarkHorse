@@ -10,16 +10,6 @@ void Accumulator::update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK
 
 }
 
-
-int Network::evaluate(Network &net1, Network &net2, Position pos, int ply) {
-    auto num_pieces = pos.piece_count();
-    if (num_pieces > 6)
-        return net1.evaluate(pos, ply);
-
-    return net2.evaluate(pos, ply);
-
-}
-
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
     //computes the indices which need to be either set to 0
     //or for which we need to compute the matrix-vec multiply
@@ -31,8 +21,12 @@ std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t nex
 
 void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
-    if (!stream.good())
+    if (!stream.good()){
+        std::cerr<<"Could not load the weights"<<std::endl;
         std::exit(-1);
+    }
+
+
     int num_weights, num_bias;
     stream.read((char *) &num_weights, sizeof(int));
     weights = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_weights, 32));;
