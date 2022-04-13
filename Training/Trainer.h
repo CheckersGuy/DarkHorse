@@ -18,6 +18,7 @@
 class Trainer {
 
 private:
+    constexpr static size_t num_weights =SIZE + 2u + 16u * 7u + 4;
     int epochs;
     double learningRate, l2Reg, cValue;
     double accu_loss{0};
@@ -60,6 +61,10 @@ public:
         }
 
     };
+
+    void save_trainer_state(std::string output_file);
+
+    void load_trainer_state(std::string input_file);
 
     void epoch();
 

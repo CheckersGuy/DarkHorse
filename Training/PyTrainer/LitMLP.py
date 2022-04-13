@@ -11,6 +11,7 @@ import ctypes
 import pathlib
 import numpy as np
 
+
 def init_weights(layer):
     if isinstance(layer, nn.Linear):
         torch.nn.init.xavier_uniform_(layer.weight)
@@ -25,11 +26,9 @@ class Relu1(nn.Module):
         return torch.clamp(x, 0.0, 1.0)
 
 
-
-
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="testing25.weights"):
+    def __init__(self, hidden, output="form_network6.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -51,8 +50,9 @@ class Network(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
-        return optimizer
+        optimizer = Ranger(self.parameters(), lr=0.001)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.96)
+        return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -106,7 +106,7 @@ class Network(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self, hidden, output="policy.weights"):
+    def __init__(self, hidden, output="verypolicy.weights"):
         super(PolicyNetwork, self).__init__()
         layers = []
         self.output = output
@@ -128,8 +128,10 @@ class PolicyNetwork(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
-        return optimizer
+        # 0.992
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False,lr=2e-3)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.90)
+        return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -153,7 +155,6 @@ class PolicyNetwork(pl.LightningModule):
 
     def validation_epoch_end(self, outputs):
         self.log('train_acc_epoch', self.accuracy)
-
 
     def init_weights(self):
         self.net.apply(init_weights)

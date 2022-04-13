@@ -15,7 +15,6 @@
 #include <cstring>
 
 
-
 constexpr size_t SIZE = 18ull * 390625ull + 4ull * 531441ull + 8ull * 157464ull;
 
 
@@ -56,9 +55,8 @@ struct Weights {
 
 
     template<typename RunType=uint32_t>
-    void load_weights(const std::string &path) {
+    void load_weights(std::ifstream &stream) {
         static_assert(std::is_unsigned<RunType>::value);
-        std::ifstream stream(path, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Error could not load the weights" << std::endl;
             return;
@@ -94,13 +92,18 @@ struct Weights {
                                                (double) std::numeric_limits<int16_t>::max());
             }
         }
-        stream.close();
     }
 
     template<typename RunType=uint32_t>
-    void store_weights(const std::string &path) const {
+    void load_weights(std::string input_file) {
+        std::ifstream stream(input_file, std::ios::binary);
+        load_weights(stream);
+    }
+
+
+    template<typename RunType=uint32_t>
+    void store_weights(std::ofstream &stream) {
         using DataType = double;
-        std::ofstream stream(path, std::ios::binary);
         auto end = weights.end();
         for (auto it = weights.begin(); it != end;) {
             RunType length{0};
@@ -119,7 +122,12 @@ struct Weights {
                 stream.write((char *) &tempo_ranks[i][j], sizeof(DataType));
             }
         }
-        stream.close();
+    }
+
+    template<typename RunType=uint32_t>
+    void store_weights(const std::string &path) {
+        std::ofstream stream(path, std::ios::binary);
+        store_weights<RunType>(stream);
     }
 
     template<typename U=int32_t>

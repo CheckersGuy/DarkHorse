@@ -5,6 +5,34 @@
 
 #include "Trainer.h"
 
+void Trainer::save_trainer_state(std::string output_file) {
+    std::ofstream stream(output_file, std::ios::binary);
+    weights.store_weights(stream);
+    stream.write((char *) m.get(), sizeof(double) * num_weights);
+    stream.write((char *) v.get(), sizeof(double) * num_weights);
+    stream.write((char *) beta_one_t.get(), sizeof(double) * num_weights);
+    stream.write((char *) beta_two_t.get(), sizeof(double) * num_weights);
+    stream.write((char *) momentums.get(), sizeof(double) * num_weights);
+    stream.write((char *) &beta_one, sizeof(double));
+    stream.write((char *) &beta_two, sizeof(double));
+    stream.write((char *) &decay, sizeof(double));
+    stream.write((char *) &learningRate, sizeof(double));
+}
+
+void Trainer::load_trainer_state(std::string input_file) {
+    std::ifstream stream(input_file, std::ios::binary);
+    weights.load_weights(stream);
+    stream.read((char *) m.get(), sizeof(double) * num_weights);
+    stream.read((char *) v.get(), sizeof(double) * num_weights);
+    stream.read((char *) beta_one_t.get(), sizeof(double) * num_weights);
+    stream.read((char *) beta_two_t.get(), sizeof(double) * num_weights);
+    stream.read((char *) momentums.get(), sizeof(double) * num_weights);
+    stream.read((char *) &beta_one, sizeof(double));
+    stream.read((char *) &beta_two, sizeof(double));
+    stream.read((char *) &decay, sizeof(double));
+    stream.read((char *) &learningRate, sizeof(double));
+}
+
 
 int Trainer::get_num_epochs() {
     return epochs;
@@ -55,6 +83,7 @@ void Trainer::gradient_update(Sample &sample) {
     if (!weights_path.empty()) {
         if ((step_counter % save_point_step) == 0) {
             weights.store_weights(weights_path);
+            std::cout << "Saved weights" << std::endl;
             //saving the trainer state
         }
     } else {
@@ -73,7 +102,7 @@ void Trainer::gradient_update(Sample &sample) {
         beta_two_t[param] *= beta_one;
 
         return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)));
-       //return alpha * m[param];
+        //return alpha * m[param];
 
     };
 
@@ -83,8 +112,8 @@ void Trainer::gradient_update(Sample &sample) {
     int num_wk = Bits::pop_count(x.WP & (x.K));
     int num_bk = Bits::pop_count(x.BP & (x.K));
     double tot_pieces = num_bp + num_wp + num_bk + num_wk;
-    double phase = tot_pieces / ((double)stage_size);
-    double end_phase = 1.0-phase;
+    double phase = tot_pieces / ((double) stage_size);
+    double end_phase = 1.0 - phase;
 
 
     double result;
@@ -213,41 +242,41 @@ void Trainer::start_tune() {
 
 
     int counter = 0;
-    std::cout <<"data_size: " << pos_streamer.get_num_positions() << "\n";
+    std::cout << "data_size: " << pos_streamer.get_num_positions() << "\n";
     while (counter < get_num_epochs()) {
 
         std::stringstream ss_stream;
         ss_stream.clear();
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream << "Start of epoch: " << counter << "\n" <<"\n";
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "Start of epoch: " << counter << "\n" << "\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
         ss_stream << "CValue: " << get_c_value() << "\n";
         double num_games = (double) (pos_streamer.get_num_positions());
         double loss = accu_loss / ((double) num_games);
         loss = sqrt(loss);
         accu_loss = 0.0;
         last_loss_value = loss;
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
         ss_stream << "Loss: " << loss << "\n";
         auto t1 = std::chrono::high_resolution_clock::now();
         epoch();
         auto t2 = std::chrono::high_resolution_clock::now();
         auto dur = t2 - t1;
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream << "Time for epoch: " << dur.count() / 1000000 <<"\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "Time for epoch: " << dur.count() / 1000000 << "\n";
         counter++;
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream << "LearningRate: " << learningRate <<"\n";
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream  << "NonZero: " << weights.num_non_zero_weights() << "\n";
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream  << "Max: " << weights.get_max_weight() << "\n";
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream  << "Min: " << weights.get_min_weight() << "\n";
-        ss_stream<<std::setfill('-')<<std::setw(40)<<"\n";
-        ss_stream  << "kingScore:" << weights.kingOp << " | " << weights.kingEnd <<"\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "LearningRate: " << learningRate << "\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "NonZero: " << weights.num_non_zero_weights() << "\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "Max: " << weights.get_max_weight() << "\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "Min: " << weights.get_min_weight() << "\n";
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        ss_stream << "kingScore:" << weights.kingOp << " | " << weights.kingEnd << "\n";
         learningRate = learningRate * (1.0 - decay);
-        std::cout<<ss_stream.str()<<std::endl;
+        std::cout << ss_stream.str() << std::endl;
     }
     weights.store_weights(weights_path);
 
