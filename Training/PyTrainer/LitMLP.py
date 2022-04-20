@@ -28,7 +28,7 @@ class Relu1(nn.Module):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network6.weights"):
+    def __init__(self, hidden, output="newstuff.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -50,8 +50,8 @@ class Network(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), lr=0.001)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.96)
+        optimizer = Ranger(self.parameters())
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.99)
         return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):
@@ -129,7 +129,7 @@ class PolicyNetwork(pl.LightningModule):
 
     def configure_optimizers(self):
         # 0.992
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False,lr=2e-3)
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False, lr=2e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.90)
         return [optimizer], [scheduler]
 
@@ -188,26 +188,12 @@ class PolicyNetwork(pl.LightningModule):
 
 class LitDataModule(pl.LightningDataModule):
 
-    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
+    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000, p_range=None):
         super(LitDataModule, self).__init__()
-        self.train_set = NetBatchDataSet(batch_size, buffer_size, train_data, is_val_set=False)
-        self.val_set = NetBatchDataSet(batch_size, 1000000, val_data, is_val_set=True)
-        self.train_data = train_data
-        self.batch_size = batch_size
-
-    def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=None, batch_sampler=None, shuffle=False)
-
-    def val_dataloader(self):
-        return DataLoader(self.val_set, batch_size=None, batch_sampler=None, shuffle=False)
-
-
-class PattDataModule(pl.LightningDataModule):
-
-    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
-        super(PattDataModule, self).__init__()
-        self.train_set = PattBatchDataSet(batch_size, buffer_size, train_data, is_val_set=False)
-        self.val_set = PattBatchDataSet(batch_size, 1000000, val_data, is_val_set=True)
+        if p_range is None:
+            p_range = [0, 24]
+        self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, is_val_set=False)
+        self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, is_val_set=True)
         self.train_data = train_data
         self.batch_size = batch_size
 
@@ -220,7 +206,9 @@ class PattDataModule(pl.LightningDataModule):
 
 class BatchDataSet(torch.utils.data.IterableDataset):
 
-    def __init__(self, batch_size, buffer_size, file_path, is_val_set=False):
+    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
+        if p_range is None:
+            p_range = [0, 24]
         super(BatchDataSet, self).__init__()
         self.batch_size = batch_size
         self.is_val_set = is_val_set
@@ -230,9 +218,11 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         self.c_lib = ctypes.CDLL(libname)
         if not is_val_set:
             temp = self.c_lib.init_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
+                                            ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
                                             ctypes.c_char_p(self.file_path.encode('utf-8')), ctypes.c_bool(False))
         else:
             temp = self.c_lib.init_val_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
+                                                ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
                                                 ctypes.c_char_p(self.file_path.encode('utf-8')), ctypes.c_bool(False))
         self.file_size = temp
 
@@ -245,8 +235,8 @@ class BatchDataSet(torch.utils.data.IterableDataset):
 
 class NetBatchDataSet(BatchDataSet):
 
-    def __init__(self, batch_size, buffer_size, file_path, is_val_set=False):
-        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, file_path, is_val_set)
+    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
+        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set)
 
     def __next__(self):
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
@@ -261,46 +251,3 @@ class NetBatchDataSet(BatchDataSet):
             self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
 
         return results, moves, inputs
-
-
-class PattBatchDataSet(BatchDataSet):
-
-    def __init__(self, batch_size, buffer_size, file_path, is_val_set=False):
-        super(PattBatchDataSet, self).__init__(batch_size, buffer_size, file_path, True, is_val_set)
-
-    def __next__(self):
-        results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        num_wp = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        num_bp = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        num_wk = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        num_bk = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-
-        patt_op_small = np.zeros(shape=(self.batch_size, 9), dtype=np.int64)
-        patt_end_small = np.zeros(shape=(self.batch_size, 9), dtype=np.int64)
-
-        patt_op_big = np.zeros(shape=(self.batch_size, 6), dtype=np.int64)
-        patt_end_big = np.zeros(shape=(self.batch_size, 6), dtype=np.int64)
-
-        res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        num_wp_p = num_wp.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        num_bp_p = num_bp.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        num_wk_p = num_wk.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        num_bk_p = num_bk.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        patt_op_small_p = patt_op_small.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        patt_end_small_p = patt_end_small.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-
-        patt_op_big_p = patt_op_big.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        patt_end_big_p = patt_end_big.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        if not self.is_val_set:
-            self.c_lib.get_next_batch_patt(res_p, num_wp_p, num_bp_p, num_wk_p, num_bk_p, patt_op_big_p, patt_end_big_p,
-                                           patt_op_small_p,
-                                           patt_end_small_p)
-        else:
-            self.c_lib.get_next_val_batch_patt(res_p, num_wp_p, num_bp_p, num_wk_p, num_bk_p, patt_op_big_p,
-                                               patt_end_big_p,
-                                               patt_op_small_p,
-                                               patt_end_small_p)
-
-        return results, num_wp, num_bp, num_wk, num_bk, patt_op_big, patt_end_big, patt_op_small, patt_end_small

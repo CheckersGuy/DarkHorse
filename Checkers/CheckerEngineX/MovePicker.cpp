@@ -121,13 +121,12 @@ namespace Statistics {
     }
 
     int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
-    /*        const int index = get_history_index(pos, move);
+          const int index = get_history_index(pos, move);
             const int score = history[index];
             const int bf_score = bfScore[index] + 1;
             return score;
-*/
 
-        auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
+           // auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
         return score;
     }
 

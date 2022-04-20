@@ -21,8 +21,8 @@ std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t nex
 
 void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
-    if (!stream.good()){
-        std::cerr<<"Could not load the weights"<<std::endl;
+    if (!stream.good()) {
+        std::cerr << "Could not load the weights" << std::endl;
         std::exit(-1);
     }
 
@@ -276,6 +276,15 @@ int Network::evaluate(Position pos, int ply) {
 
     float val = compute_incre_forward_pass(pos) * 1028.0f;
     return static_cast<int>(val);
+}
+
+int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
+    auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
+    if (num_pieces <= 24 && num_pieces>=18) {
+        return net1.evaluate(pos, ply);
+    } else {
+        return net2.evaluate(pos, ply);
+    }
 }
 
 void Network::set_input(Position p) {

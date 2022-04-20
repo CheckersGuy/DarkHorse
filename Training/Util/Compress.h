@@ -85,13 +85,10 @@ struct Game {
     }
 
     void set_result(Result res, int n) {
-        //sets the result of the nth position
         Game::encode_result(indices[n], res);
     }
 
     void add_position(Position pos) {
-        //need to be consecutive positions
-
         if (start_position.is_empty()) {
             start_position = pos;
             return;
@@ -196,24 +193,59 @@ struct Game {
         Sample sample;
         sample.position = start_position;
 
-        get_moves(sample.position,liste);
+        if(sample.position.is_empty())
+            return;
+
+
+        get_moves(sample.position, liste);
 
         sample.result = Game::get_result(indices[0]);
-        sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),liste[Game::get_move_index(indices[0])]);
+        sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
+                                                            liste[Game::get_move_index(indices[0])]);
         *iterator = sample;
         iterator++;
         for (auto i = 1; i < num_indices; ++i) {
             liste = MoveListe{};
             Position current = get_position(i);
             sample.position = current;
-            get_moves(sample.position,liste);
+            get_moves(sample.position, liste);
             sample.result = Game::get_result(indices[i]);
-            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),liste[Game::get_move_index(indices[i])]);
+            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
+                                                                liste[Game::get_move_index(indices[i])]);
             *iterator = sample;
             iterator++;
         }
         //last position as well
         Position current = get_position(num_indices);
+        sample.position = current;
+        sample.result = result;
+        sample.move = -1;
+        *iterator = sample;
+    }
+
+    template<typename OutIter>
+    void extract_samples_test(OutIter iterator) {
+        Position current = start_position;
+
+        if(current.is_empty())
+            return;
+
+
+        for (auto i = 0; i < num_indices; ++i) {
+            Sample sample;
+            MoveListe liste;
+            get_moves(current, liste);
+            sample.position = current;
+            sample.result = Game::get_result(indices[i]);
+            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
+                                                                liste[Game::get_move_index(indices[i])]);
+
+            Move m = liste[Game::get_move_index(indices[i])];
+            current.make_move(m);
+            *iterator = sample;
+            iterator++;
+        }
+        Sample sample;
         sample.position = current;
         sample.result = result;
         sample.move = -1;
@@ -288,19 +320,20 @@ inline std::pair<size_t, size_t> count_unique_positions(std::string game_file) {
     return count_unique_positions(begin, end);
 }
 
-inline size_t count_trainable_positions(std::string game_file) {
+inline size_t count_trainable_positions(std::string game_file, std::pair<size_t, size_t> range) {
     std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     size_t counter{0};
-    //std::vector<Sample> samples;
     std::for_each(begin, end, [&](Game g) {
-     /*   samples.clear();
-        g.extract_samples(std::back_inserter(samples));
-        counter += std::count_if(samples.begin(), samples.end(), [](Sample s) {
-            return s.result != UNKNOWN && !s.position.has_jumps();
-        });*/
-     counter+=g.num_indices+1;
+        for (auto pos: g) {
+            auto num_p = Bits::pop_count(pos.BP | pos.WP);
+            bool greater = (num_p >= range.first && num_p <= range.second);
+            counter += greater;
+            if (num_p < range.first) {
+                break;
+            }
+        }
 
     });
     return counter;
@@ -340,5 +373,28 @@ inline void merge_temporary_files(std::string directory, std::string out_directo
     }
 
 }
+
+inline auto get_piece_distrib(std::ifstream &stream) {
+    std::array<double, 32> result{0};
+    Game game;
+    size_t total_count = 0;
+    while (stream >> game) {
+        for (auto pos: game) {
+            auto piece_count = Bits::pop_count(pos.BP | pos.WP);
+            result[piece_count] += 1;
+            total_count += 1;
+        }
+    }
+    for (auto &res: result) {
+        res /= static_cast<double>(total_count);
+    }
+    return result;
+}
+
+inline auto get_piece_distrib(std::string input) {
+    std::ifstream stream(input, std::ios::binary);
+    return get_piece_distrib(stream);
+}
+
 
 #endif //READING_COMPRESS_H

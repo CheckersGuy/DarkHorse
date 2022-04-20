@@ -10,8 +10,9 @@ Weights<int16_t> gameWeights;
 
 
 SearchGlobal glob;
-Network network;
+Network network, network2;
 bool u_classical = false;
+
 void initialize() {
     gameWeights.load_weights<uint32_t>("../Training/Engines/verylarge.weights");
     Zobrist::init_zobrist_keys();
@@ -48,7 +49,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     get_moves(board.get_position(), liste);
 
 
-
     endTime = getSystemTime() + time;
 
     Value eval = INFINITE;
@@ -59,44 +59,44 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
         //returning q-search
         return Search::qs(false, board, mainPV, -INFINITE, INFINITE, 0, 0);
     }
-    size_t total_nodes =0;
-    size_t total_time =0;
+    size_t total_nodes = 0;
+    size_t total_time = 0;
 
     for (int i = 1; i <= depth; i += 2) {
         auto start_time = getSystemTime();
         std::stringstream ss;
-        nodeCounter =0;
+        nodeCounter = 0;
         try {
             Search::search_asp(local, board, eval, i);
         } catch (std::string &msg) {
             break;
         }
-        total_nodes+=nodeCounter;
+        total_nodes += nodeCounter;
 
         if (!isMateVal(local.best_score) && !isEval(local.best_score))
             break;
 
         auto time = (getSystemTime() - start_time);
-        total_time+=time;
+        total_time += time;
         eval = local.best_score;
         best = mainPV.getFirstMove();
         if (print) {
             std::string temp = std::to_string(eval) + " ";
-            ss<<eval<<" Depth:" <<i<<" | "<<glob.sel_depth<<" | ";
-            ss<<"Nodes: "<<total_nodes<<" | ";
-            ss<<"Time: "<<time<<"\n";
-            ss<<"Speed: "<<((time>0)?nodeCounter/time : 0)<<" "<<mainPV.toString()<<"\n\n";
-            ss << "Time needed: " <<  time<< "\n";
-            std::cout<<ss.str();
+            ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
+            ss << "Nodes: " << total_nodes << " | ";
+            ss << "Time: " << time << "\n";
+            ss << "Speed: " << ((time > 0) ? nodeCounter / time : 0) << " " << mainPV.toString() << "\n\n";
+            ss << "Time needed: " << time << "\n";
+            std::cout << ss.str();
         }
 
         if (isMateVal(local.best_score)) {
             break;
         }
     }
-    if(print){
-        std::cout<<"TotalNodes: "<<total_nodes<<std::endl;
-        std::cout<<"TotalTime: "<<total_time<<std::endl;
+    if (print) {
+        std::cout << "TotalNodes: " << total_nodes << std::endl;
+        std::cout << "TotalTime: " << total_time << std::endl;
     }
     return eval;
 }
@@ -264,7 +264,7 @@ namespace Search {
             //bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
 
             if (!u_classical) {
-                bestValue = network.evaluate(board.get_position(), ply);
+                bestValue = Network::evaluate(board.get_position(), ply,network,network2);
             } else {
                 bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
             }
