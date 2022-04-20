@@ -8,48 +8,43 @@
 
 std::unique_ptr<BatchProvider> streamer;
 std::unique_ptr<BatchProvider> val_streamer;
-extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_path, bool patterns) {
+extern "C" int
+init_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (streamer.get() == nullptr) {
-        if (!patterns) {
-            streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size);
-        } else {
-            streamer = std::make_unique<PattBatchProvider>(path, buffer_size, batch_size);
-        }
-
+            streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size, a, b);
     }
+    std::cout<<"NumPositions in training set: "<<streamer->get_streamer().get_num_positions()<<std::endl;
     return streamer->get_streamer().get_num_positions();
 }
 
-extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path, bool patterns) {
+extern "C" int
+init_val_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (val_streamer.get() == nullptr) {
-        if (!patterns) {
-            val_streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size);
-        } else {
-            val_streamer = std::make_unique<PattBatchProvider>(path, buffer_size, batch_size);
-        }
+        val_streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size, a, b);
     }
+    std::cout<<"NumPositions in validation set: "<<val_streamer->get_streamer().get_num_positions()<<std::endl;
     return val_streamer->get_streamer().get_num_positions();
 }
 
 
-extern "C" void get_next_batch(float *results,int64_t *moves, float *inputs) {
+extern "C" void get_next_batch(float *results, int64_t *moves, float *inputs) {
     if (streamer.get() == nullptr) {
         std::exit(-1);
     }
     NetBatchProvider *provider = static_cast<NetBatchProvider *>(streamer.get());
-    provider->next(results,moves, inputs);
+    provider->next(results, moves, inputs);
 }
 
-extern "C" void get_next_val_batch(float *results,int64_t *moves, float *inputs) {
+extern "C" void get_next_val_batch(float *results, int64_t *moves, float *inputs) {
     if (val_streamer.get() == nullptr) {
         std::exit(-1);
     }
     NetBatchProvider *provider = static_cast<NetBatchProvider *>(val_streamer.get());
-    provider->next(results,moves, inputs);
+    provider->next(results, moves, inputs);
 }
 
 extern "C" void
@@ -65,7 +60,8 @@ get_next_batch_patt(float *results, float *num_wp, float *num_bp, float *num_wk,
                    patt_end_small);
 }
 
-extern "C" void get_next_val_batch_patt(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
+extern "C" void get_next_val_batch_patt(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk,
+                                        int64_t *patt_op_big,
                                         int64_t *patt_end_big, int64_t *patt_op_small,
                                         int64_t *patt_end_small) {
     if (val_streamer.get() == nullptr) {

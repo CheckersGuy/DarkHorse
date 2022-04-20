@@ -11,8 +11,8 @@
 #include "Position.h"
 extern "C" void get_next_val_batch(float *results,int64_t *moves, float *inputs);
 extern "C" void get_next_batch(float *results,int64_t *moves,float *inputs);
-extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path,bool patterns);
-extern "C" int init_streamer(size_t buffer_size, size_t batch_size, char *file_path,bool patterns);
+extern "C" int init_val_streamer(size_t buffer_size, size_t batch_size,size_t a,size_t b, char *file_path,bool patterns);
+extern "C" int init_streamer(size_t buffer_size, size_t batch_size,size_t a,size_t b, char *file_path,bool patterns);
 
 
 extern "C" int get_bucket_index(uint32_t white_men, uint32_t black_men, uint32_t kings);

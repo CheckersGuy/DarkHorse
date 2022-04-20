@@ -13,9 +13,6 @@ Sample PosStreamer::get_next() {
     if (ptr >= buffer_size) {
         buffer.clear();
         ptr = 0;
-        //if we reached the end of our file
-        //we have to wrap around
-        size_t read_elements = 0;
         do {
             if (stream.peek() == EOF) {
                 stream.clear();
@@ -23,13 +20,19 @@ Sample PosStreamer::get_next() {
             }
             Game game;
             stream >> game;
-            std::vector<Sample> game_samples;
-            game.extract_samples(std::back_inserter(game_samples));
-            for (auto s: game_samples) {
+            game_buffer.clear();
+            game.extract_samples_test(std::back_inserter(game_buffer));
+            for (auto &s: game_buffer) {
+                auto num_p = Bits::pop_count(s.position.BP | s.position.WP);
+                if (num_p > range.second) {
+                    continue;
+                }
+                if (num_p < range.first) {
+                    break;
+                }
                 buffer.emplace_back(s);
             }
         } while (buffer.size() < buffer_size);
-        //the buffer is filled now so we can shuffle the elements
         if (shuffle) {
             std::shuffle(buffer.begin(), buffer.end(), generator);
         }
@@ -54,6 +57,10 @@ const std::string &PosStreamer::get_file_path() {
 size_t PosStreamer::get_file_size() const {
     std::filesystem::path my_path(file_path);
     return std::filesystem::file_size(my_path);
+}
+
+std::pair<size_t, size_t> PosStreamer::get_range() const {
+    return range;
 }
 
 

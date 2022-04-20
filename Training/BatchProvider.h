@@ -37,16 +37,25 @@ private:
     size_t batch_size, buffer_size;
 public:
 
-    BatchProvider(std::string path, size_t buffer_size, size_t batch_size) : streamer(path, buffer_size, batch_size,
+    BatchProvider(std::string path, size_t buffer_size, size_t batch_size) : streamer(path, buffer_size, batch_size,std::make_pair(0,24),
                                                                                       true) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
-        std::cout << "Number of training samples: " << streamer.get_file_size() << std::endl;
+    }
+
+    BatchProvider(std::string path, size_t buffer_size, size_t batch_size, size_t a, size_t b) : streamer(path,
+                                                                                                          buffer_size,
+                                                                                                          batch_size,std::make_pair(a,b),
+                                                                                                          true) {
+        this->batch_size = batch_size;
+        this->buffer_size = buffer_size;
     }
 
     size_t get_batch_size() const;
 
     size_t get_buffer_size() const;
+
+    std::pair<size_t, size_t> get_piece_range() const;
 
     PosStreamer &get_streamer();
 
@@ -57,7 +66,7 @@ class NetBatchProvider : public BatchProvider {
 public:
     using BatchProvider::BatchProvider;
 
-    void next(float *results,int64_t * moves,float *inputs);
+    void next(float *results, int64_t *moves, float *inputs);
 };
 
 class PattBatchProvider : public BatchProvider {
@@ -69,8 +78,6 @@ public:
               int64_t *patt_end_big, int64_t *patt_op_small,
               int64_t *patt_end_small);
 };
-
-
 
 
 #endif //READING_BATCHPROVIDER_H

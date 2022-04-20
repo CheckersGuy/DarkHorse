@@ -101,12 +101,14 @@ int main() {
 */
 
 
-     Match engine_match("form_network6", "form_network5");
-     engine_match.setTime(100);
-     engine_match.setMaxGames(100000);
+
+     Match engine_match("form6depth3", "testdepth3");
+     engine_match.setTime(200);
+     engine_match.setMaxGames(3000);
      engine_match.setNumThreads(6);
      engine_match.setHashSize(20);
      engine_match.start();
+
 
 /*
 
@@ -121,7 +123,36 @@ int main() {
       trainer.start_tune();
 */
 
+    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
+    Game g;
+    while(stream>>g){
+        std::vector<Sample> vec;
+        std::vector<Sample> vec2;
+        g.extract_samples_test(std::back_inserter(vec));
+        g.extract_samples(std::back_inserter(vec2));
 
+        for(int i=0;i<vec2.size();++i){
+            Sample s = vec[i];
+            Sample s2 = vec2[i];
+            if(s!=s2){
+                g.start_position.print_position();
+                std::cout<<std::endl;
+
+            }
+
+        }
+
+    }
+
+
+/*
+    auto result = get_piece_distrib("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
+
+    for(auto i=0;i<result.size();++i){
+        std::cout<<(i)<<std::endl;
+        std::cout<<result[i]<<std::endl;
+        std::cout<<"........................."<<std::endl;
+    }*/
 
 
 

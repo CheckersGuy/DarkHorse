@@ -80,7 +80,7 @@ constexpr int stage_size = 24;
 constexpr int prob_cut = 300;
 constexpr int sing_ext = 300;
 constexpr int asp_wind = 100;
-constexpr int MAX_ASP = 5000;
+constexpr int MAX_ASP = 2000;
 
 
 using Depth = int;

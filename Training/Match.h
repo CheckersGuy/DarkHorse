@@ -124,6 +124,8 @@ public:
         std::istream_iterator<Position> begin(stream);
         std::istream_iterator<Position> end;
         std::copy(begin, end, std::back_inserter(positions));
+        std::mt19937_64 generator(getSystemTime());
+        std::shuffle(positions.begin(),positions.end(),generator);
 
     };
 
