@@ -76,7 +76,7 @@ constexpr int stage_size = 24;
 
 
 
-
+//should probably change the aspiration window to 200
 constexpr int prob_cut = 300;
 constexpr int sing_ext = 300;
 constexpr int asp_wind = 100;

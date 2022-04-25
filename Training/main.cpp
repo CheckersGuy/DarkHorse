@@ -102,8 +102,8 @@ int main() {
 
 
 
-     Match engine_match("form6depth3", "testdepth3");
-     engine_match.setTime(200);
+     Match engine_match("newstuff", "form_network6");
+     engine_match.setTime(100);
      engine_match.setMaxGames(3000);
      engine_match.setNumThreads(6);
      engine_match.setHashSize(20);

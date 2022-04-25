@@ -3,6 +3,7 @@
 #include "MoveListe.h"
 #include "MGenerator.h"
 
+
 std::optional<Move> Position::get_move(Position orig, Position next) {
     //needs to be tested
     MoveListe liste;
@@ -238,7 +239,7 @@ Color Position::get_color() const {
     return color;
 }
 
-uint32_t Position::piece_count() {
+uint32_t Position::piece_count()const {
     return Bits::pop_count(WP | BP);
 }
 

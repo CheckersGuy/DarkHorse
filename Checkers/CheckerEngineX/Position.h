@@ -53,8 +53,6 @@ struct Position {
     uint32_t WP{0u}, BP{0u}, K{0u};
     uint64_t key{0ull};
 
-    uint32_t piece_count();
-
     template<Color color>
     constexpr uint32_t get_current() const {
         if constexpr (color == BLACK)
@@ -127,6 +125,8 @@ struct Position {
     std::string get_fen_string() const;
 
     Color get_color() const;
+
+    uint32_t piece_count()const;
 
     template<Color color>
     bool has_jumps() const {
