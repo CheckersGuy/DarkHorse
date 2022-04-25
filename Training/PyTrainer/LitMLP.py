@@ -28,7 +28,7 @@ class Relu1(nn.Module):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="newstuff.weights"):
+    def __init__(self, hidden, output="form_network7.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -51,7 +51,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters())
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.99)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.98)
         return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):

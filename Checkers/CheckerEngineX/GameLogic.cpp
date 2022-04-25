@@ -10,7 +10,7 @@ Weights<int16_t> gameWeights;
 
 
 SearchGlobal glob;
-Network network, network2;
+Network network;
 bool u_classical = false;
 
 void initialize() {
@@ -264,7 +264,7 @@ namespace Search {
             //bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
 
             if (!u_classical) {
-                bestValue = Network::evaluate(board.get_position(), ply,network,network2);
+                bestValue = network.evaluate(board.get_position(), ply);
             } else {
                 bestValue = board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
             }
