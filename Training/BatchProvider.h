@@ -11,23 +11,9 @@
 #include <deque>
 #include <Weights.h>
 
-enum OutputType {
-
-};
-
-struct Batch {
-    const size_t batch_size;
-    static constexpr size_t input_size = 120;
-    static constexpr size_t result_size = 1;
-    std::unique_ptr<float[]> results;
-    std::unique_ptr<float[]> inputs;
-    //all the other stuff
-
-    Batch(size_t size) : batch_size(size) {
-        results = std::make_unique<float[]>(batch_size * result_size);
-        inputs = std::make_unique<float[]>(batch_size * input_size);
-    }
-
+//making things a little more readable
+enum class InputFormat{
+    V1,V2
 };
 
 
@@ -65,19 +51,14 @@ class NetBatchProvider : public BatchProvider {
 
 public:
     using BatchProvider::BatchProvider;
-
+    public:
     void next(float *results, int64_t *moves, float *inputs);
 };
 
-class PattBatchProvider : public BatchProvider {
-public:
-
+class NetBatchProvider2 : public BatchProvider{
     using BatchProvider::BatchProvider;
-
-    void next(float *results, float *num_wp, float *num_bp, float *num_wk, float *num_bk, int64_t *patt_op_big,
-              int64_t *patt_end_big, int64_t *patt_op_small,
-              int64_t *patt_end_small);
+    public:
+        void next(float *results, int64_t *moves, float *inputs);
 };
-
 
 #endif //READING_BATCHPROVIDER_H

@@ -4,6 +4,7 @@ import numpy as np
 import Helper as h
 import struct
 
+
 def init_weights(layer):
     if isinstance(layer, nn.Linear):
         torch.nn.init.xavier_uniform_(layer.weight)

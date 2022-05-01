@@ -9,6 +9,7 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
+	/*
         policy.load("verypolicy.weights");
         policy.addLayer(Layer{120, 256});
         policy.addLayer(Layer{256, 32});
@@ -16,7 +17,7 @@ namespace Statistics {
         policy.addLayer(Layer{32, 100});
 
         policy.init();
-
+	*/
     }
 
     int MovePicker::get_move_encoding(Color color, Move move) {

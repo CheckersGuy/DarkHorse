@@ -5,8 +5,6 @@
 # #Lookahead paper --> MZhang,G Hinton  https://arxiv.org/abs/1907.08610
 
 
-
-
 # Some portions = Copyright (c) Facebook, Inc. and its affiliates.
 #
 # This source code is licensed under the MIT license found in the
@@ -15,7 +13,8 @@
 import torch
 from torch.optim.optimizer import Optimizer
 
-#from ..common import param_conv
+
+# from ..common import param_conv
 
 
 class RangerQH(Optimizer):
@@ -51,16 +50,16 @@ class RangerQH(Optimizer):
     """
 
     def __init__(
-        self,
-        params,
-        lr=1e-3,
-        betas=(0.9, 0.999),
-        nus=(.7, 1.0),
-        weight_decay=0.0,
-        k=6,
-        alpha=.5,
-        decouple_weight_decay=False,
-        eps=1e-8,
+            self,
+            params,
+            lr=1e-3,
+            betas=(0.9, 0.999),
+            nus=(.7, 1.0),
+            weight_decay=0.0,
+            k=6,
+            alpha=.5,
+            decouple_weight_decay=False,
+            eps=1e-8,
     ):
         if not 0.0 <= lr:
             raise ValueError("Invalid learning rate: {}".format(lr))
@@ -82,11 +81,10 @@ class RangerQH(Optimizer):
             "eps": eps,
         }
         super().__init__(params, defaults)
-        
-        #look ahead params
+
+        # look ahead params
         self.alpha = alpha
-        self.k = k         
-        
+        self.k = k
 
     def step(self, closure=None):
         """Performs a single optimization step.
@@ -114,8 +112,6 @@ class RangerQH(Optimizer):
                 if d_p.is_sparse:
                     raise RuntimeError("QHAdam does not support sparse gradients")
 
-                
-
                 if weight_decay != 0:
                     if decouple_weight_decay:
                         p.data.mul_(1 - lr * weight_decay)
@@ -123,8 +119,8 @@ class RangerQH(Optimizer):
                         d_p.add_(weight_decay, p.data)
 
                 d_p_sq = d_p.mul(d_p)
-                
-                #prep for saved param loading
+
+                # prep for saved param loading
                 param_state = self.state[p]
 
                 if len(param_state) == 0:
@@ -133,12 +129,11 @@ class RangerQH(Optimizer):
                     param_state['step'] = 0
                     param_state["exp_avg"] = torch.zeros_like(p.data)
                     param_state["exp_avg_sq"] = torch.zeros_like(p.data)
-                    #look ahead weight storage now in state dict 
+                    # look ahead weight storage now in state dict
                     param_state['slow_buffer'] = torch.empty_like(p.data)
                     param_state['slow_buffer'].copy_(p.data)
-                
-                
-                param_state['step'] += 1                
+
+                param_state['step'] += 1
 
                 param_state["beta1_weight"] = 1.0 + beta1 * param_state["beta1_weight"]
                 param_state["beta2_weight"] = 1.0 + beta2 * param_state["beta2_weight"]
@@ -165,18 +160,16 @@ class RangerQH(Optimizer):
                     avg_grad_rms.add_(eps)
 
                 p.data.addcdiv_(-lr, avg_grad, avg_grad_rms)
-                
-                #integrated look ahead...
-                #we do it at the param level instead of group level
-                if param_state['step'] % self.k ==0: #group['k'] == 0:
-                    slow_p = param_state['slow_buffer'] #get access to slow param tensor
-                    slow_p.add_(self.alpha, p.data - slow_p)  #(fast weights - slow weights) * alpha
-                    p.data.copy_(slow_p)  #copy interpolated weights to RAdam param tensor
-                
+
+                # integrated look ahead...
+                # we do it at the param level instead of group level
+                if param_state['step'] % self.k == 0:  # group['k'] == 0:
+                    slow_p = param_state['slow_buffer']  # get access to slow param tensor
+                    slow_p.add_(self.alpha, p.data - slow_p)  # (fast weights - slow weights) * alpha
+                    p.data.copy_(slow_p)  # copy interpolated weights to RAdam param tensor
 
         return loss
 
     @classmethod
     def _params_to_dict(cls, params):
         return {"lr": params.alpha, "nus": (params.nu1, params.nu2), "betas": (params.beta1, params.beta2)}
-

@@ -4,6 +4,7 @@ import math
 import torch
 from torch.optim.optimizer import Optimizer, required
 
+
 class RAdam(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0):
@@ -60,7 +61,9 @@ class RAdam(Optimizer):
 
                     # more conservative since it's an approximated value
                     if N_sma >= 5:
-                        step_size = math.sqrt((1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (N_sma_max - 2)) / (1 - beta1 ** state['step'])
+                        step_size = math.sqrt(
+                            (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
+                                        N_sma_max - 2)) / (1 - beta1 ** state['step'])
                     else:
                         step_size = 1.0 / (1 - beta1 ** state['step'])
                     buffered[2] = step_size
@@ -69,7 +72,7 @@ class RAdam(Optimizer):
                     p_data_fp32.add_(-group['weight_decay'] * group['lr'], p_data_fp32)
 
                 # more conservative since it's an approximated value
-                if N_sma >= 5:            
+                if N_sma >= 5:
                     denom = exp_avg_sq.sqrt().add_(group['eps'])
                     p_data_fp32.addcdiv_(-step_size * group['lr'], exp_avg, denom)
                 else:
@@ -78,6 +81,7 @@ class RAdam(Optimizer):
                 p.data.copy_(p_data_fp32)
 
         return loss
+
 
 class PlainRAdam(Optimizer):
 
@@ -131,8 +135,10 @@ class PlainRAdam(Optimizer):
                     p_data_fp32.add_(-group['weight_decay'] * group['lr'], p_data_fp32)
 
                 # more conservative since it's an approximated value
-                if N_sma >= 5:                    
-                    step_size = group['lr'] * math.sqrt((1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (N_sma_max - 2)) / (1 - beta1 ** state['step'])
+                if N_sma >= 5:
+                    step_size = group['lr'] * math.sqrt(
+                        (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
+                                    N_sma_max - 2)) / (1 - beta1 ** state['step'])
                     denom = exp_avg_sq.sqrt().add_(group['eps'])
                     p_data_fp32.addcdiv_(-step_size, exp_avg, denom)
                 else:
@@ -146,9 +152,9 @@ class PlainRAdam(Optimizer):
 
 class AdamW(Optimizer):
 
-    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, warmup = 0):
+    def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, warmup=0):
         defaults = dict(lr=lr, betas=betas, eps=eps,
-                        weight_decay=weight_decay, warmup = warmup)
+                        weight_decay=weight_decay, warmup=warmup)
         super(AdamW, self).__init__(params, defaults)
 
     def __setstate__(self, state):
@@ -191,14 +197,14 @@ class AdamW(Optimizer):
                 denom = exp_avg_sq.sqrt().add_(group['eps'])
                 bias_correction1 = 1 - beta1 ** state['step']
                 bias_correction2 = 1 - beta2 ** state['step']
-                
+
                 if group['warmup'] > state['step']:
                     scheduled_lr = 1e-8 + state['step'] * group['lr'] / group['warmup']
                 else:
                     scheduled_lr = group['lr']
 
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
-                
+
                 if group['weight_decay'] != 0:
                     p_data_fp32.add_(-group['weight_decay'] * scheduled_lr, p_data_fp32)
 

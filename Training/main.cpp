@@ -102,28 +102,27 @@ int main() {
 
 
 
-     Match engine_match("newstuff", "form_network6");
+         Match engine_match("test6", "test");
      engine_match.setTime(100);
      engine_match.setMaxGames(3000);
      engine_match.setNumThreads(6);
-     engine_match.setHashSize(20);
-     engine_match.start();
-
-
-/*
-
-      Trainer trainer("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
-      trainer.set_learning_rate(2);
+     engine_match.setHashSize(21);
+     engine_match.start();  
+   
+ 
+      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
+      trainer.set_learning_rate(5);
       trainer.set_weight_decay(0.0);
-      trainer.set_decay(0.2);
-      trainer.set_weights_path("largelarge.weights");
+      trainer.set_decay(0.1);
+      trainer.set_weights_path("test6.weights");
       trainer.set_savepoint_step(10000000);
-      trainer.set_epochs(30);
-      trainer.set_c_value(-1e-3);
-      trainer.start_tune();
-*/
+      trainer.set_epochs(60);
+      trainer.set_c_value(-2e-3);
+      trainer.start_tune();      
+        //epoch: 3
+        // 0.157794
 
-    std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
+/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
     Game g;
     while(stream>>g){
         std::vector<Sample> vec;
@@ -135,39 +134,21 @@ int main() {
             Sample s = vec[i];
             Sample s2 = vec2[i];
             if(s!=s2){
-                g.start_position.print_position();
                 std::cout<<std::endl;
+                std::cout<<"First"<<std::endl;
+                std::cout<<"Result: "<<s.result<<std::endl;
+                s.position.print_position();
+                  std::cout<<"Second"<<std::endl;
+                std::cout<<"Result: "<<s2.result<<std::endl;
+                s2.position.print_position();
+                
 
             }
 
         }
 
     }
-
-
-/*
-    auto result = get_piece_distrib("/home/robin/DarkHorse/Training/TrainData/largelargexxxx.train");
-
-    for(auto i=0;i<result.size();++i){
-        std::cout<<(i)<<std::endl;
-        std::cout<<result[i]<<std::endl;
-        std::cout<<"........................."<<std::endl;
-    }*/
-
-
-
-    /*std::ofstream stream("test3.data", std::ios::app);*/
-/*
-    std::ifstream stream("test4.data");
-
-
-    convert_to_new("/home/robin/DarkHorse/Training/TrainData/small_dataset4.train","/home/robin/DarkHorse/Training/TrainData/new_format.train");
-
-*/
-
-//testing regular expressions
-
-
+  */
 
     return 0;
 }
