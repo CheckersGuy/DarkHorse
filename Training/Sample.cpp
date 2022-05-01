@@ -11,6 +11,8 @@ std::string result_to_string(Result result) {
         return "WHITE_WON";
     if(result == DRAW)
         return "DRAW";
+
+    return "UNKNOWN";
 }
 bool Sample::operator==(const Sample &other) const {
     return (position == other.position && result == other.result);

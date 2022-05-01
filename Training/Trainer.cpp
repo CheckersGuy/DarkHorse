@@ -7,6 +7,10 @@
 
 void Trainer::save_trainer_state(std::string output_file) {
     std::ofstream stream(output_file, std::ios::binary);
+    if(!stream.good()){
+        std::cerr<<"Could not save trainer state"<<std::endl;
+        return;
+    }
     weights.store_weights(stream);
     stream.write((char *) m.get(), sizeof(double) * num_weights);
     stream.write((char *) v.get(), sizeof(double) * num_weights);
@@ -17,10 +21,15 @@ void Trainer::save_trainer_state(std::string output_file) {
     stream.write((char *) &beta_two, sizeof(double));
     stream.write((char *) &decay, sizeof(double));
     stream.write((char *) &learningRate, sizeof(double));
+    stream.write((char*)&cValue,sizeof(double));
 }
 
 void Trainer::load_trainer_state(std::string input_file) {
     std::ifstream stream(input_file, std::ios::binary);
+       if(!stream.good()){
+        std::cerr<<"Could not load trainer state"<<std::endl;
+        return;
+    }
     weights.load_weights(stream);
     stream.read((char *) m.get(), sizeof(double) * num_weights);
     stream.read((char *) v.get(), sizeof(double) * num_weights);
@@ -31,6 +40,7 @@ void Trainer::load_trainer_state(std::string input_file) {
     stream.read((char *) &beta_two, sizeof(double));
     stream.read((char *) &decay, sizeof(double));
     stream.read((char *) &learningRate, sizeof(double));
+    stream.read((char*)&cValue,sizeof(double));
 }
 
 
@@ -171,7 +181,7 @@ void Trainer::gradient_update(Sample &sample) {
         weights.kingEnd = weights.kingEnd - adam_update(SIZE + 1, diff, weights.kingEnd);
     }
 
-    {
+     {
         //for tempo ranks black side
         uint32_t man = x.BP & (~x.K);
         for (size_t i = 0; i < 7; ++i) {
@@ -199,7 +209,7 @@ void Trainer::gradient_update(Sample &sample) {
                     weights.tempo_ranks[i][index] - adam_update(mom_index, diff, weights.tempo_ranks[i][index]);
         }
 
-    }
+    } 
 
 }
 

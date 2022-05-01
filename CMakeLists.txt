@@ -1,13 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
+SET(CMAKE_BUILD_TYPE "Release")
 if(WIN32)
 add_compile_options("-march=native")
 add_compile_options("-O2")
 else()
 SET(CMAKE_CXX_FLAGS "-Ofast -mtune=native -lstdc++fs -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
 endif()
-SET(CMAKE_BUILD_TYPE "Release")
+
 
 if (UNIX)
     include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Training")
@@ -35,7 +36,7 @@ if (WIN32)
     add_executable(tb_rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/tb_rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BloomFilter.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h )
 endif ()
 
-add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${TSources} ${THeaders} Training/Util/LRUCache.h)
+add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/Compress.h)
 
 
 if (UNIX)

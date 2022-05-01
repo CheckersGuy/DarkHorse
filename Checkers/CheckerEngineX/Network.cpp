@@ -327,3 +327,8 @@ void Network::set_input(Position p) {
     }
 }
 
+float Network::get_win_p(Position pos){
+    auto value = compute_incre_forward_pass(pos);
+    return sigmoid(value);
+}
+

@@ -33,7 +33,7 @@ namespace Bits {
 #ifndef _WIN32
         return __builtin_popcount(val);
 #else
-        return __popcnt(val);
+        return __popcntq(val);
 #endif
     }
 

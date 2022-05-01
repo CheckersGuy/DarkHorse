@@ -325,15 +325,21 @@ inline size_t count_trainable_positions(std::string game_file, std::pair<size_t,
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     size_t counter{0};
-    std::for_each(begin, end, [&](Game g) {
+    //temporary before I can speed this thing up
+    //way too slow
+    std::for_each(begin, end, [&](const Game& g) {
+         counter+=g.num_indices+1;
+           /*
         for (auto pos: g) {
-            auto num_p = Bits::pop_count(pos.BP | pos.WP);
+           auto num_p = Bits::pop_count(pos.BP | pos.WP);
             bool greater = (num_p >= range.first && num_p <= range.second);
             counter += greater;
             if (num_p < range.first) {
                 break;
-            }
+            } 
+           
         }
+        */
 
     });
     return counter;

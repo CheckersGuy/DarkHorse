@@ -84,14 +84,14 @@ struct Weights {
         this->kingOp = static_cast<T>(kingOpVal);
         this->kingEnd = static_cast<T>(kingEndVal);
 
-        for (auto i = 0; i < tempo_ranks.size(); ++i) {
+          for (auto i = 0; i < tempo_ranks.size(); ++i) {
             for (auto j = 0; j < 16; ++j) {
                 double temp;
                 stream.read((char *) &temp, sizeof(double));
                 tempo_ranks[i][j] = std::clamp(temp, (double) std::numeric_limits<int16_t>::min(),
                                                (double) std::numeric_limits<int16_t>::max());
             }
-        }
+        }  
     }
 
     template<typename RunType=uint32_t>
@@ -117,11 +117,11 @@ struct Weights {
         }
         stream.write((char *) &kingOp, sizeof(DataType));
         stream.write((char *) &kingEnd, sizeof(DataType));
-        for (auto i = 0; i < tempo_ranks.size(); ++i) {
+         for (auto i = 0; i < tempo_ranks.size(); ++i) {
             for (auto j = 0; j < 16; ++j) {
                 stream.write((char *) &tempo_ranks[i][j], sizeof(DataType));
             }
-        }
+        } 
     }
 
     template<typename RunType=uint32_t>
@@ -140,7 +140,6 @@ struct Weights {
             return loss(ply);
         }
 
-
         const U color = pos.color;
         constexpr U pawnEval = 0;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
@@ -152,14 +151,14 @@ struct Weights {
         U tempi = 0;
 
 
-        for (int i = 0; i < 7; ++i) {
+         for (int i = 0; i < 7; ++i) {
             uint32_t shift = 4u * i;
             const uint32_t mask_white = (man_white >> shift) & temp_mask;
             const uint32_t mask_black = (man_black >> shift) & temp_mask;
             tempi -= tempo_ranks[i][mask_black];
             tempi += tempo_ranks[i][mask_white];
         }
-
+ 
         U phase = WP + BP;
 
         U WK = 0;
