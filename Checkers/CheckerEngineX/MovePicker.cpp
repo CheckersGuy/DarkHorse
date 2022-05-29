@@ -9,15 +9,15 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-	/*
+/* 	
         policy.load("verypolicy.weights");
         policy.addLayer(Layer{120, 256});
         policy.addLayer(Layer{256, 32});
         policy.addLayer(Layer{32, 32});
         policy.addLayer(Layer{32, 100});
 
-        policy.init();
-	*/
+        policy.init(); */
+	
     }
 
     int MovePicker::get_move_encoding(Color color, Move move) {
@@ -122,11 +122,11 @@ namespace Statistics {
     }
 
     int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
-          const int index = get_history_index(pos, move);
+           const int index = get_history_index(pos, move);
             const int score = history[index];
             const int bf_score = bfScore[index] + 1;
-            return score;
-           // auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
+            return score; 
+            //auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
         return score;
     }
 

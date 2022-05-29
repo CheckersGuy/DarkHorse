@@ -15,6 +15,29 @@
 int main() {
 
 
+    //testing new policy format
+
+/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/medium.train");
+    if(!stream.good())
+        std::exit(-1);
+
+    std::istream_iterator<Game> begin(stream);
+    std::istream_iterator<Game>end;
+    std::vector<Game> games;
+    std::copy(begin,end,std::back_inserter(games));
+    size_t counter  =0;
+    std::cout<<"Start"<<std::endl;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::for_each(games.begin(),games.end(),[&](Game game){
+        for(auto pos : game){
+            counter++;
+        }
+    });
+   auto t2 = std::chrono::high_resolution_clock::now();
+   auto dur = (t2-t1).count();
+   std::cout<<"Duration: "<<(dur/1000000)<<std::endl;
+   std::cout<<"Counter: "<<counter<<std::endl; */
+
     //initialize();
 
     //use_classical(true);
@@ -102,23 +125,28 @@ int main() {
 
 
 
-         Match engine_match("test6", "test");
+
+
+
+     Match engine_match("form6", "form6");
      engine_match.setTime(100);
      engine_match.setMaxGames(3000);
      engine_match.setNumThreads(6);
      engine_match.setHashSize(21);
      engine_match.start();  
-   
- 
-      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
+    
+/*  
+       Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
       trainer.set_learning_rate(5);
       trainer.set_weight_decay(0.0);
       trainer.set_decay(0.1);
-      trainer.set_weights_path("test6.weights");
+      trainer.set_weights_path("bla.weights");
       trainer.set_savepoint_step(10000000);
-      trainer.set_epochs(60);
+      trainer.set_epochs(1);
       trainer.set_c_value(-2e-3);
-      trainer.start_tune();      
+      trainer.start_tune();   
+ */
+
         //epoch: 3
         // 0.157794
 

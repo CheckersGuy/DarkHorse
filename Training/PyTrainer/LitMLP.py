@@ -9,6 +9,117 @@ import ctypes
 import pathlib
 import numpy as np
 import torch.nn.functional as F
+from enum import Enum
+from enum import IntEnum
+
+
+class InputFormat(IntEnum):
+    V1 = 0,
+    V2 = 1
+
+
+class ResBlock(pl.LightningModule):
+
+    def __init__(self, in_channels, out_channels, down_sample=False):
+        super().__init__()
+        self.bn1 = nn.BatchNorm2d(out_channels)
+        self.bn2 = nn.BatchNorm2d(out_channels)
+        if down_sample:
+            self.conv1 = nn.Conv2d(in_channels, out_channels, stride=2, kernel_size=3,
+                                   padding=1)
+            self.short_cut = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=2),
+                nn.BatchNorm2d(out_channels)
+            )
+        else:
+            self.conv1 = nn.Conv2d(in_channels, out_channels, stride=1, kernel_size=3,
+                                   padding=1)
+            self.short_cut = nn.Sequential()
+        self.conv2 = nn.Conv2d(out_channels, out_channels, stride=1, kernel_size=3, padding=1)
+
+    def forward(self, x):
+        shortcut = self.short_cut(x)
+        x = nn.Mish()(self.bn1(self.conv1(x)))
+        x = nn.Mish()(self.bn2(self.conv2(x)))
+        x = x + shortcut
+        return nn.Mish()(x)
+
+
+class ResNet(pl.LightningModule):
+
+    def __init__(self):
+        super().__init__()
+        self.first = nn.Sequential(
+            nn.Conv2d(kernel_size=5, in_channels=4, out_channels=128, stride=1, padding=2),
+            nn.BatchNorm2d(128),
+            nn.Mish()
+        )
+        self.input_format = InputFormat.V2
+        self.every = 1000
+        self.second = nn.Sequential(ResBlock(in_channels=128, out_channels=128, down_sample=False),
+                                    ResBlock(in_channels=128, out_channels=128, down_sample=False)
+                                    )
+        self.third = nn.Sequential(ResBlock(in_channels=128, out_channels=128, down_sample=False),
+                                   ResBlock(in_channels=128, out_channels=128, down_sample=False))
+        self.fourth = nn.Sequential(ResBlock(in_channels=128, out_channels=128, down_sample=False),
+                                    ResBlock(in_channels=128, out_channels=128, down_sample=False)
+                                    )
+
+        self.last = nn.AdaptiveAvgPool2d(1)
+        self.policy_out = nn.Sequential(nn.Linear(128, 32 * 32))
+        self.value_out = nn.Sequential(nn.Linear(128, 128), nn.Mish(), nn.Linear(128, 1))
+
+    def forward(self, input):
+        y = self.first(input)
+        y = self.second(y)
+        y = self.third(y)
+        y = self.fourth(y)
+        y = self.last(y)
+        y = y.view(input.size(0), -1)
+        policy = self.policy_out(y)
+        value = self.value_out(y)
+        value = torch.sigmoid(value)
+        return policy, value
+
+    def accuracy(self, logits, target):
+        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
+        return acc
+
+    def training_step(self, train_batch, batch_idx):
+        result, move, x = train_batch
+        policy, value = self.forward(x)
+        loss_value = F.mse_loss(value, result)
+        loss_policy = F.cross_entropy(policy, move.squeeze(dim=1))
+
+        acc = self.accuracy(policy, move.squeeze())
+        self.log('train_acc_step', acc, prog_bar=True)
+        combined_loss = (loss_policy + loss_value)
+        self.log('combined_loss', combined_loss, prog_bar=True)
+        self.log('value_loss', loss_value, prog_bar=True)
+        return combined_loss
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move, x = val_batch
+        policy, value = self.forward(x)
+        loss_value = F.mse_loss(value, result)
+        loss_policy = F.cross_entropy(policy, move.squeeze(dim=1))
+        combined_loss = 0.5 * (loss_policy + loss_value)
+        self.log('val_loss', combined_loss)
+        return combined_loss
+
+    def configure_optimizers(self):
+        # optimizer = torch.optim.SGD(lr=0.01, momentum=0.9, params=self.parameters())
+        optimizer = Ranger(params=self.parameters(), weight_decay=1e-5)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=40, gamma=0.90)
+        return optimizer
+
+    def accuracy(self, logits, target):
+        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
+        acc = 100 * acc
+        return acc
+
+    def validation_epoch_end(self, outputs):
+        self.log("val_acc", torch.stack(outputs).mean(), prog_bar=True)
 
 
 def init_weights(layer):
@@ -29,7 +140,77 @@ class ConvNet(pl.LightningModule):
 
     def __init__(self):
         super(ConvNet, self).__init__()
+        self.input_format = InputFormat.V2
         self.conv1 = nn.Sequential(nn.Conv2d(in_channels=4, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
+                                   nn.BatchNorm2d(128),
+                                   nn.ReLU(),
+                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
                                    nn.BatchNorm2d(128),
                                    nn.ReLU(),
                                    nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
@@ -61,7 +242,8 @@ class ConvNet(pl.LightningModule):
                                    nn.ReLU()
                                    )
 
-        self.decoder = nn.Sequential(nn.Linear(128 * 4 * 8, 2048),nn.BatchNorm1d(2048), nn.ReLU(),nn.Linear(2048, 2048),nn.BatchNorm1d(2048), nn.ReLU(), nn.Linear(2048, 1), nn.Sigmoid())
+        self.decoder = nn.Sequential(nn.Linear(128 * 4 * 8, 256), nn.BatchNorm1d(256), nn.ReLU(), nn.Linear(256, 256),
+                                     nn.BatchNorm1d(256), nn.ReLU(), nn.Linear(256, 1), nn.Sigmoid())
 
     def forward(self, x):
         # tensor has the form batchsizex8x4
@@ -72,8 +254,7 @@ class ConvNet(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters())
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.98)
-        return [optimizer], [scheduler]
+        return optimizer
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -92,7 +273,7 @@ class ConvNet(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network7.weights"):
+    def __init__(self, hidden, output="form_network8.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -105,6 +286,7 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*layers)
         self.criterion = torch.nn.MSELoss()
         self.init_weights()
+        self.input_format = InputFormat.V1
         print(self.net)
 
     def forward(self, x):
@@ -114,9 +296,8 @@ class Network(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.98)
-        return [optimizer], [scheduler]
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3)
+        return optimizer
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -142,26 +323,29 @@ class Network(pl.LightningModule):
         self.net.apply(init_weights)
 
     def save_parameters(self, output):
-        # buffer_weights = bytearray()
-        # buffer_bias = bytearray()
-        # num_weights = 0
-        # num_bias = 0
-        # file = open(output, "wb")
-        # for layer in self.net:
-        #     if isinstance(layer, torch.nn.Linear):
-        #         weights = layer.weight.detach().numpy().flatten("F")
-        #         bias = layer.bias.detach().numpy().flatten("F")
-        #         buffer_weights += weights.tobytes()
-        #         buffer_bias += bias.tobytes()
-        #         num_weights += len(weights)
-        #         num_bias += len(bias)
-        #
-        # file.write(struct.pack("I", num_weights))
-        # file.write(buffer_weights)
-        # file.write(struct.pack("I", num_bias))
-        # file.write(buffer_bias)
-        # file.close()
+        device = torch.device("cpu")
+        device_gpu = torch.device("cuda")
+        self.to(device)
+        buffer_weights = bytearray()
+        buffer_bias = bytearray()
+        num_weights = 0
+        num_bias = 0
+        file = open(output, "wb")
+        for layer in self.net:
+            if isinstance(layer, torch.nn.Linear):
+                weights = layer.weight.detach().numpy().flatten("F")
+                bias = layer.bias.detach().numpy().flatten("F")
+                buffer_weights += weights.tobytes()
+                buffer_bias += bias.tobytes()
+                num_weights += len(weights)
+                num_bias += len(bias)
 
+        file.write(struct.pack("I", num_weights))
+        file.write(buffer_weights)
+        file.write(struct.pack("I", num_bias))
+        file.write(buffer_bias)
+        file.close()
+        self.to(device_gpu)
         return
 
     def save(self, output):
@@ -182,8 +366,14 @@ class PolicyNetwork(pl.LightningModule):
         self.net = nn.Sequential(*layers)
         self.criterion = torch.nn.CrossEntropyLoss()
         self.init_weights()
-        self.accuracy = torchmetrics.Accuracy()
+        self.input_format = InputFormat.V1
         print(self.net)
+
+
+    def accuracy(self, logits, target):
+        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
+        acc = 100 * acc
+        return acc
 
     def forward(self, x):
         return self.net.forward(x)
@@ -192,7 +382,6 @@ class PolicyNetwork(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        # 0.992
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False, lr=2e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.90)
         return [optimizer], [scheduler]
@@ -202,28 +391,24 @@ class PolicyNetwork(pl.LightningModule):
         out = self.forward(x)
         loss = self.criterion(out, move.squeeze())
         tensorboard_logs = {"avg_val_loss": loss}
-        self.accuracy(out, move.squeeze())
-        self.log('train_acc_step', self.accuracy)
+        acc = self.accuracy(out, move.squeeze())
+        self.log('train_acc_step', acc,prog_bar=True)
         return {"loss": loss, "log": tensorboard_logs}
-
-    def training_epoch_end(self, outs):
-        # log epoch metric
-        self.log('train_acc_epoch', self.accuracy)
 
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
         out = self.forward(x)
-        self.accuracy(out, move.squeeze())
-        self.log('val_loss', self.accuracy)
-        return {"val_loss": self.accuracy}
-
-    def validation_epoch_end(self, outputs):
-        self.log('train_acc_epoch', self.accuracy)
+        acc=self.accuracy(out, move.squeeze())
+        self.log('val_loss', acc)
+        return {"val_loss": acc}
 
     def init_weights(self):
         self.net.apply(init_weights)
 
     def save_parameters(self, output):
+        device = torch.device("cpu")
+        device_gpu = torch.device("cuda")
+        self.to(device)
         buffer_weights = bytearray()
         buffer_bias = bytearray()
         num_weights = 0
@@ -243,21 +428,62 @@ class PolicyNetwork(pl.LightningModule):
         file.write(struct.pack("I", num_bias))
         file.write(buffer_bias)
         file.close()
-
+        self.to(device_gpu)
         return
 
     def save(self, output):
         torch.save(self.state_dict(), output)
 
 
+class PatternModel(pl.LightningModule):
+
+    def __init__(self):
+        #playedholder
+        #size to be determined
+        self.weights = torch.zeros(1000000)
+
+    def forward(self, op_indices,end_indices,wp,bp,wk,bk):
+        #to be implemented
+        return self.net.forward(x)
+
+    def on_epoch_end(self) -> None:
+        self.save_parameters(self.output)
+
+    def configure_optimizers(self):
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3)
+        return optimizer
+
+    def training_step(self, train_batch, batch_idx):
+        result, move, x = train_batch
+        out = self.forward(x)
+        loss = self.criterion(out, result)
+        tensorboard_logs = {"avg_val_loss": loss}
+        self.log('train_loss', loss)
+        return {"loss": loss, "log": tensorboard_logs}
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move, x = val_batch
+        out = self.forward(x)
+        loss = self.criterion(out, result)
+        self.log('val_loss', loss.detach())
+        return {"val_loss": loss.detach()}
+
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        tensorboard_logs = {"avg_val_loss": avg_loss}
+        return {"loss": avg_loss, "log": tensorboard_logs}
+
 class LitDataModule(pl.LightningDataModule):
 
-    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000, p_range=None):
+    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000, p_range=None,
+                 input_format=InputFormat.V1):
         super(LitDataModule, self).__init__()
         if p_range is None:
             p_range = [6, 24]
-        self.train_set = NetBatchDataSet2(batch_size, buffer_size, p_range, train_data, is_val_set=False)
-        self.val_set = NetBatchDataSet2(batch_size, 1000000, p_range, val_data, is_val_set=True)
+        print(input_format.value)
+        self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, False,
+                                         input_format)
+        self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, True, input_format)
         self.train_data = train_data
         self.batch_size = batch_size
 
@@ -270,10 +496,11 @@ class LitDataModule(pl.LightningDataModule):
 
 class BatchDataSet(torch.utils.data.IterableDataset):
 
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
+    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
         if p_range is None:
             p_range = [6, 24]
         super(BatchDataSet, self).__init__()
+        self.input_format = input_format
         self.batch_size = batch_size
         self.is_val_set = is_val_set
         self.buffer_size = buffer_size
@@ -283,11 +510,13 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         if not is_val_set:
             temp = self.c_lib.init_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
                                             ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
-                                            ctypes.c_char_p(self.file_path.encode('utf-8')), ctypes.c_bool(False))
+                                            ctypes.c_char_p(self.file_path.encode('utf-8')),
+                                            ctypes.c_int32(input_format))
         else:
             temp = self.c_lib.init_val_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
                                                 ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
-                                                ctypes.c_char_p(self.file_path.encode('utf-8')), ctypes.c_bool(False))
+                                                ctypes.c_char_p(self.file_path.encode('utf-8')),
+                                                ctypes.c_int32(input_format))
         self.file_size = temp
 
     def __iter__(self):
@@ -297,15 +526,18 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         return self.file_size // self.batch_size
 
 
+# needs to be fixed somehow
 class NetBatchDataSet(BatchDataSet):
 
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
-        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set)
+    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
+        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set,
+                                              input_format)
 
     def __next__(self):
+        input_size = 120 if self.input_format == InputFormat.V1 else 128
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
         moves = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
-        inputs = np.zeros(shape=(self.batch_size, 120), dtype=np.float32)
+        inputs = np.zeros(shape=(self.batch_size, input_size), dtype=np.float32)
         res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
@@ -314,13 +546,20 @@ class NetBatchDataSet(BatchDataSet):
         else:
             self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
 
+        if self.input_format == InputFormat.V2:
+            inputs = torch.Tensor(inputs)
+            moves = torch.LongTensor(moves)
+            results = torch.tensor(results)
+            inputs = inputs.view(self.batch_size, 4, 8, 4)
+
         return results, moves, inputs
 
 
 class NetBatchDataSet2(BatchDataSet):
 
     def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
-        super(NetBatchDataSet2, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set)
+        super(NetBatchDataSet2, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set,
+                                               input_format=InputFormat.V2)
 
     def __next__(self):
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
@@ -330,10 +569,8 @@ class NetBatchDataSet2(BatchDataSet):
         inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
         if not self.is_val_set:
-            self.c_lib.get_next_batch2(res_p, moves_p, inp_p)
+            self.c_lib.get_next_batch(res_p, moves_p, inp_p)
         else:
-            self.c_lib.get_next_val_batch2(res_p, moves_p, inp_p)
+            self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
 
-        inputs = torch.Tensor(inputs)
-        inputs = inputs.view(self.batch_size, 4, 8, 4)
         return results, moves, inputs

@@ -12,15 +12,12 @@
 #include <Weights.h>
 
 //making things a little more readable
-enum class InputFormat{
-    V1,V2
-};
-
 
 class BatchProvider {
 private:
     PosStreamer streamer;
     size_t batch_size, buffer_size;
+    InputFormat in_format;
 public:
 
     BatchProvider(std::string path, size_t buffer_size, size_t batch_size) : streamer(path, buffer_size, batch_size,std::make_pair(0,24),
@@ -45,20 +42,10 @@ public:
 
     PosStreamer &get_streamer();
 
-};
+    void set_input_format(InputFormat format);
 
-class NetBatchProvider : public BatchProvider {
-
-public:
-    using BatchProvider::BatchProvider;
-    public:
     void next(float *results, int64_t *moves, float *inputs);
 };
 
-class NetBatchProvider2 : public BatchProvider{
-    using BatchProvider::BatchProvider;
-    public:
-        void next(float *results, int64_t *moves, float *inputs);
-};
 
 #endif //READING_BATCHPROVIDER_H

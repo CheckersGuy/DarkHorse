@@ -5,7 +5,7 @@
 
 
 std::optional<Move> Position::get_move(Position orig, Position next) {
-    //needs to be tested
+    //returns the move leading from position org to next
     MoveListe liste;
     get_moves(orig, liste);
     for (auto m: liste) {
@@ -264,7 +264,11 @@ bool Position::is_end() const {
 }
 
 void Position::print_position() const {
-    std::string out;
+    std::cout << get_pos_string() << std::endl;
+}
+
+std::string Position::get_pos_string()const{
+        std::string out;
     uint32_t counter = 32u;
     for (int i = 0; i < 64; i++) {
         int row = i / 8;
@@ -292,7 +296,7 @@ void Position::print_position() const {
             out += "\n";
         }
     }
-    std::cout << out << std::endl;
+    return out;
 }
 
 void Position::make_move(Move move) {
@@ -338,12 +342,6 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
     stream.read((char *) &pos, sizeof(Position));
     return stream;
 }
-
-std::ostream &operator<<(std::ostream &stream, Square square) {
-
-    return stream;
-}
-
 
 
 

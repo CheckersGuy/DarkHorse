@@ -78,6 +78,7 @@ struct Position {
         }
     }
 
+    
 
     template<Color color>
     uint32_t get_movers() const {
@@ -91,6 +92,21 @@ struct Position {
         }
         return movers;
     }
+
+    template<Color color>
+    uint32_t get_attack_squares(uint32_t maske)const{
+        const uint32_t nocc = ~(BP | WP);
+        const uint32_t current = get_current<color>()&maske;
+        const uint32_t kings = current & K;
+
+        
+        uint32_t movers = (defaultShift<color>(current) | forwardMask<color>(current));
+        movers |= (defaultShift<~color>(kings) | forwardMask<~color>(kings));
+        movers&=nocc;
+        return movers;
+    }
+
+
 
     template<Color color>
     uint32_t get_jumpers() const {
@@ -153,6 +169,8 @@ struct Position {
 
     void print_position() const;
 
+    std::string get_pos_string()const;
+
     Position get_color_flip() const;
 
     static Position get_start_position();
@@ -169,7 +187,7 @@ struct Position {
 
     friend std::ostream &operator<<(std::ostream &stream, const Position &pos);
 
-    friend std::istream &operator>>(std::istream &stream, Position &pos);
+    friend std::istream &operator>>(std::istream &stream, Position &pos); 
 
     //given two consecutive positions,returns the move made
     static std::optional<Move> get_move(Position orig, Position next);

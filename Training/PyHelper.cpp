@@ -6,58 +6,44 @@
 #include <PosStreamer.h>
 #include <BatchProvider.h>
 
+
+//still requires some smaller changes to just "change " the input format
+
+
 std::unique_ptr<BatchProvider> streamer;
 std::unique_ptr<BatchProvider> val_streamer;
 extern "C" int
-init_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
+init_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, int format) {
+    InputFormat form =static_cast<InputFormat>(format);
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (streamer.get() == nullptr) {
-            streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size, a, b);
+            streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size, a, b);
+            streamer->set_input_format(form);
     }
+    streamer->get_streamer().set_shuffle(true);
     std::cout<<"NumPositions in training set: "<<streamer->get_streamer().get_num_positions()<<std::endl;
     return streamer->get_streamer().get_num_positions();
 }
-
 extern "C" int
-init_val_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
+init_val_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, int format) {
+     InputFormat form =static_cast<InputFormat>(format);
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (val_streamer.get() == nullptr) {
-        val_streamer = std::make_unique<NetBatchProvider>(path, buffer_size, batch_size, a, b);
+        val_streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size, a, b);
+        val_streamer->set_input_format(form);
     }
+    streamer->get_streamer().set_shuffle(false);
     std::cout<<"NumPositions in validation set: "<<val_streamer->get_streamer().get_num_positions()<<std::endl;
     return val_streamer->get_streamer().get_num_positions();
 }
-
-extern "C" int
-init_streamer2(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
-    std::string path(file_path);
-    std::cout << "Path: " << file_path << std::endl;
-    if (streamer.get() == nullptr) {
-            streamer = std::make_unique<NetBatchProvider2>(path, buffer_size, batch_size, a, b);
-    }
-    std::cout<<"NumPositions in training set: "<<streamer->get_streamer().get_num_positions()<<std::endl;
-    return streamer->get_streamer().get_num_positions();
-}
-
-extern "C" int
-init_val_streamer2(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, bool patterns) {
-    std::string path(file_path);
-    std::cout << "Path: " << file_path << std::endl;
-    if (val_streamer.get() == nullptr) {
-        val_streamer = std::make_unique<NetBatchProvider2>(path, buffer_size, batch_size, a, b);
-    }
-    std::cout<<"NumPositions in validation set: "<<val_streamer->get_streamer().get_num_positions()<<std::endl;
-    return val_streamer->get_streamer().get_num_positions();
-}
-
 
 extern "C" void get_next_batch(float *results, int64_t *moves, float *inputs) {
     if (streamer.get() == nullptr) {
         std::exit(-1);
     }
-    NetBatchProvider *provider = static_cast<NetBatchProvider *>(streamer.get());
+    BatchProvider *provider = static_cast<BatchProvider*>(streamer.get());
     provider->next(results, moves, inputs);
 }
 
@@ -65,27 +51,9 @@ extern "C" void get_next_val_batch(float *results, int64_t *moves, float *inputs
     if (val_streamer.get() == nullptr) {
         std::exit(-1);
     }
-    NetBatchProvider *provider = static_cast<NetBatchProvider *>(val_streamer.get());
+    BatchProvider *provider = static_cast<BatchProvider *>(val_streamer.get());
     provider->next(results, moves, inputs);
 }
-
-
-extern "C" void get_next_batch2(float *results, int64_t *moves, float *inputs) {
-    if (streamer.get() == nullptr) {
-        std::exit(-1);
-    }
-    NetBatchProvider2 *provider = static_cast<NetBatchProvider2 *>(streamer.get());
-    provider->next(results, moves, inputs);
-}
-
-extern "C" void get_next_val_batch2(float *results, int64_t *moves, float *inputs) {
-    if (val_streamer.get() == nullptr) {
-        std::exit(-1);
-    }
-    NetBatchProvider2 *provider = static_cast<NetBatchProvider2 *>(val_streamer.get());
-    provider->next(results, moves, inputs);
-}
-
 
 extern "C" void print_fen(const char* fen_string) {
     Position pos = Position::pos_from_fen(std::string(fen_string));
@@ -152,4 +120,19 @@ extern "C" void get_input_from_fen(float* inputs,const char* fen_string){
     dummy.position=pos;
     create_input(dummy,inputs,0);
 
+}
+
+//wrapper functions for ctype
+
+extern "C" Board * create_board(){
+    Board * board =new Board();
+    return board;
+}
+
+extern "C" void delete_board(Board* board){
+    delete board;
+}
+
+extern "C" void print_board(Board* board){
+    board->print_board();
 }

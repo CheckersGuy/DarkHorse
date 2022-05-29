@@ -7,7 +7,7 @@
 
 #include "Position.h"
 #include <random>
-
+#include <fstream>
 enum Result : int {
     BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0
 };
@@ -30,9 +30,18 @@ struct Sample {
     Result result{UNKNOWN};
     int move{-1};
 
-    friend std::ostream &operator<<(std::ostream &stream, const Sample s);
+    friend std::ofstream &operator<<(std::ofstream &stream, const Sample s);
 
-    friend std::istream &operator>>(std::istream &stream, Sample &s);
+    friend std::ifstream &operator>>(std::ifstream &stream, Sample &s);
+
+    friend std::ostream& operator<<(std::ostream&stream, const Sample&s){
+        s.position.print_position();
+        std::cout<<"Color: "<<((s.position.color == BLACK)?"BLACK" : "WHITE")<<std::endl;
+        std::cout<<"Move: "<<s.move<<std::endl;
+         std::cout<<"Result: "<<s.result<<std::endl;
+         return stream;
+    }
+
 
     bool operator==(const Sample &other) const;
 
