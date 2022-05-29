@@ -14,11 +14,11 @@
 #include <filesystem>
 #include "Util/Compress.h"
 
-//the only difference between these two formats is the policy encoding of the moves
-//the nnue-net is not trained on captures and hence the range of possible moves is much less.
-//A conv-policy net will have an output of size 32*31 (from-to square encoding) 
 enum class InputFormat : int{
-    V1=0,V2=1
+    //V1 is for the nnue nets
+    //V2 is for convnets
+    //V3 is for pattern based eval
+    V1=0,V2=1,V3 =1
 };
 
 
@@ -45,7 +45,6 @@ public:
                 std::pair<size_t, size_t> ran = std::make_pair(0, 24), size_t seed = 431231231ull)
             : buffer_size(buffer_size), shuffle(shuffle), file_path(file_path) {
 
-        //computing the file_size
         range = ran;
         ptr = buffer_size + 1;
         stream = std::ifstream(file_path, std::ios::binary);
@@ -62,7 +61,7 @@ public:
         num_samples = count_trainable_positions(file_path, range);
         buffer_size = std::min(num_samples, buffer_size);
         buffer.reserve(buffer_size);
-        game_buffer.reserve(200);
+        game_buffer.reserve(600);
     }
 
     Sample get_next();

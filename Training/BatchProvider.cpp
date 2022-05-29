@@ -11,6 +11,9 @@ void BatchProvider::set_input_format(InputFormat format){
 
 void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
    const bool is_v1 = (in_format == InputFormat::V1);
+   const bool is_v2 = (in_format == InputFormat::V2);
+   const bool is_v3 = (in_format == InputFormat::V3);
+   //needs some refactoring at some point
     auto create_input = [&](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
             s.position = s.position.get_color_flip();
@@ -55,6 +58,40 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
         }
         return result;
     };
+
+    auto create_pattern_input =[&](Sample s, float *input, size_t off){
+        //input will have a particular shape
+        //and we need some fancy indexing for things to make any sense
+        size_t counter_op =0;
+        size_t counter_end =0;
+     
+        std::array<size_t,8> op_pawn_indices;
+        std::array<size_t,8> end_pawn_indices;
+      
+       
+        std::array<size_t,8> op_king_indices;
+        std::array<size_t,8> end_king_indices;
+        
+        
+        Bits::big_index([&](size_t index){
+            op_pawn_indices[counter_op++]=index;
+            end_pawn_indices[counter_end++]=index+1;
+        },s.position.WP,s.position.BP,s.position.K);
+        counter_op =0;
+        counter_end =0;
+        Bits::small_index([&](size_t index){
+            op_king_indices[counter_op++]=index;
+            end_king_indices[counter_end++]=index+1;
+        },s.position.WP,s.position.BP,s.position.K);
+
+        auto wk = s.position.get_pieces<WHITE,KING>();
+        auto bk = s.position.get_pieces<BLACK,KING>();
+        
+        auto wp = s.position.get_pieces<WHITE,PAWN>();
+        auto bp = s.position.get_pieces<BLACK,PAWN>();
+
+    };
+
     const size_t INPUT_SIZE = (in_format == InputFormat::V1)?120 : 128;
 
     auto loop_condition =[&](Sample&current)->bool{

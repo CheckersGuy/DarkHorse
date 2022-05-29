@@ -181,7 +181,6 @@ struct Weights {
             ending += weights[end_index];
         };
         if (pos.K == 0) {
-            //FOR THE PROMO_SQUARES
             Bits::big_index(f, pos.WP, pos.BP, pos.K);
 
         } else {

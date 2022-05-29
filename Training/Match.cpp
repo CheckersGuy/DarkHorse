@@ -274,7 +274,7 @@ void Match::start() {
         engine.setTime(time);
         engine.setHashSize(hash_size);
         Engine engine2{second, Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
-        engine2.setTime(2*time);
+        engine2.setTime(time);
         engine2.setHashSize(hash_size);
         interfaces.emplace_back(Interface{engine, engine2});
     }
