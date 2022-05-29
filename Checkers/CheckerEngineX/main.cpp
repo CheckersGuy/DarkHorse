@@ -45,40 +45,38 @@ int main(int argl, const char **argc) {
 
     Statistics::mPicker.init();
  
-    network.load("form_network6.weights");
+/*      network.load("form_network7.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-    network.init(); 
-
-   TT.resize(21);
+    network.init();  
+ */
+   /*   TT.resize(21);
     board = Position::get_start_position();   
 
- board.get_position().make_move(11, 15);
+  /*   board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
-    board.get_position().make_move(23, 19);
-    board.get_position().print_position();
-
-    board.print_board();
-    std::cout<<board.get_position().get_fen_string()<<std::endl;
-    std::cout<<network.get_win_p(board.get_position())<<std::endl;
-   //board = Position::pos_from_fen(   "W:W7:BK5");
+    board.get_position().make_move(23, 19);  */
+    //board = Position::pos_from_fen("B:WK29:BK4").get_color_flip(); 
+  /*   board.print_board();
+    std::cout<<board.get_position().get_fen_string()<<std::endl; */
+    //std::cout<<network.get_win_p(board.get_position())<<std::endl; 
+ 
    // board =Position::pos_from_fen("B:WK29:BK4");
 
 
     //board.get_position().print_position();
-
-
-   
-     Move best;
+    
+    
+   /*   Move best;
     searchValue(board, best, MAX_PLY, 100000000, true);
     board.make_move(best);
     board.print_board();
     MoveListe liste;
-    get_moves(board.get_position(), liste); 
-
+    get_moves(board.get_position(), liste);     */
+ 
      
 
     std::string current;

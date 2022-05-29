@@ -17,7 +17,7 @@
 struct Game;
 
 struct GameIterator {
-    Game &game;
+    const Game &game;
     int index{0};
     using iterator_category = std::forward_iterator_tag;
     using difference_type = size_t;
@@ -29,7 +29,7 @@ struct GameIterator {
         index = other.index;
     }
 
-    GameIterator(Game &game) : game(game) {
+    GameIterator(const Game &game) : game(game) {
 
     }
 
@@ -59,7 +59,7 @@ struct GameIterator {
         return copy;
     }
 
-    Position operator*();
+    Position operator*() const;
 
 
 };
@@ -126,7 +126,7 @@ struct Game {
         return stream;
     }
 
-    Position get_position(int n) {
+    Position get_position(int n) const {
         //returns the position after the nth move
         Position current = start_position;
         for (auto i = 0; i < n; ++i) {
@@ -137,25 +137,25 @@ struct Game {
         return current;
     }
 
-    Position get_last_position() {
+    Position get_last_position()const {
         return get_position(num_indices);
     }
 
-    bool operator==(Game &other) {
+    bool operator==(Game &other)const {
         return (other.start_position == start_position &&
                 std::equal(indices.begin(), indices.end(), other.indices.begin()));
     }
 
-    bool operator!=(Game &other) {
+    bool operator!=(Game &other)const {
         return !((*this) == other);
     }
 
-    GameIterator begin() {
+    GameIterator begin() const {
         GameIterator beg(*this);
         return beg;
     }
 
-    GameIterator end() {
+    GameIterator end() const {
         GameIterator beg(*this);
         beg.index = num_indices + 1;
         return beg;
@@ -175,7 +175,7 @@ struct Game {
         bit_field |= temp << 6;
     }
 
-    static uint8_t get_move_index(uint8_t &bit_field) {
+    static uint8_t get_move_index(const uint8_t &bit_field) {
         const uint8_t clear_bits = 3ull << 6;
         uint8_t copy = bit_field & (~clear_bits);
         return copy;
@@ -186,45 +186,9 @@ struct Game {
         return static_cast<Result>(copy);
     }
 
-
-    template<typename OutIter>
-    void extract_samples(OutIter iterator) {
-        MoveListe liste;
-        Sample sample;
-        sample.position = start_position;
-
-        if(sample.position.is_empty())
-            return;
-
-
-        get_moves(sample.position, liste);
-
-        sample.result = Game::get_result(indices[0]);
-        sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
-                                                            liste[Game::get_move_index(indices[0])]);
-        *iterator = sample;
-        iterator++;
-        for (auto i = 1; i < num_indices; ++i) {
-            liste = MoveListe{};
-            Position current = get_position(i);
-            sample.position = current;
-            get_moves(sample.position, liste);
-            sample.result = Game::get_result(indices[i]);
-            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
-                                                                liste[Game::get_move_index(indices[i])]);
-            *iterator = sample;
-            iterator++;
-        }
-        //last position as well
-        Position current = get_position(num_indices);
-        sample.position = current;
-        sample.result = result;
-        sample.move = -1;
-        *iterator = sample;
-    }
-
-    template<typename OutIter>
-    void extract_samples_test(OutIter iterator) {
+    template<typename OutIter,typename Lambda>
+    void extract_samples_test(OutIter iterator,Lambda lambda) {
+        //to be checked and continued
         Position current = start_position;
 
         if(current.is_empty())
@@ -237,10 +201,10 @@ struct Game {
             get_moves(current, liste);
             sample.position = current;
             sample.result = Game::get_result(indices[i]);
-            sample.move = Statistics::mPicker.get_move_encoding(sample.position.get_color(),
-                                                                liste[Game::get_move_index(indices[i])]);
-
             Move m = liste[Game::get_move_index(indices[i])];
+            sample.move = lambda(current.get_color(),m);
+
+            
             current.make_move(m);
             *iterator = sample;
             iterator++;
@@ -251,19 +215,29 @@ struct Game {
         sample.move = -1;
         *iterator = sample;
     }
+
+        template<typename OutIter>
+    void extract_samples_test(OutIter iterator) {
+        auto lambda = [](Color color,Move move){
+            return Statistics::mPicker.get_move_encoding(color, move);
+        };
+        return extract_samples_test(iterator,lambda);
+
+    }
+
 };
 
-inline Position GameIterator::operator*() {
+inline Position GameIterator::operator*() const {
     Position current = game.get_position(index);
     return current;
 }
 
 inline bool GameIterator::operator==(GameIterator &other) const {
-    return (other.game == game && other.index == index);
+    return (other.index == index);
 }
 
 inline bool GameIterator::operator!=(GameIterator &other) const {
-    return (other.game != game || other.index != index);
+    return (other.index != index);
 }
 
 //not trying to convert to the new format
@@ -380,6 +354,19 @@ inline void merge_temporary_files(std::string directory, std::string out_directo
 
 }
 
+inline void create_subset(std::string file,std::string output,size_t num_games){
+    std::ifstream stream(file,std::ios::binary);
+    std::ofstream out_stream(output,std::ios::binary);
+    std::istream_iterator<Game> begin(stream);
+    std::istream_iterator<Game> end;
+    std::copy_n(begin,num_games,std::ostream_iterator<Game>(out_stream));
+}
+
+inline void create_train_val_split(std::string input, std::initializer_list<std::string> output){
+    return ;
+}
+
+
 inline auto get_piece_distrib(std::ifstream &stream) {
     std::array<double, 32> result{0};
     Game game;
@@ -403,4 +390,32 @@ inline auto get_piece_distrib(std::string input) {
 }
 
 
+inline auto get_capture_distrib(std::ifstream& stream){
+    std::map<size_t,size_t> captures;
+
+    std::istream_iterator<Game>begin(stream);
+    std::istream_iterator<Game>end;
+
+    std::for_each(begin,end,[&](Game game){
+        for(auto pos : game){
+            MoveListe liste;
+            get_moves(pos,liste);
+            for(Move m : liste){
+                auto count = Bits::pop_count(m.captures);
+                if(captures.count(count)>0){
+                    captures[count]+=1;
+                }else{
+                    captures[count]=1;
+                }
+            }
+
+
+        }
+    });
+    return captures;
+}
+inline auto get_capture_distrib(std::string input){
+    std::ifstream stream(input);
+    return get_capture_distrib(stream);
+}
 #endif //READING_COMPRESS_H

@@ -130,9 +130,9 @@ struct Weights {
         store_weights<RunType>(stream);
     }
 
+
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
-
         if (pos.BP == 0) {
             return -loss(ply);
         }
@@ -145,6 +145,8 @@ struct Weights {
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
 
+
+    
         uint32_t man_black = pos.BP & (~pos.K);
         uint32_t man_white = pos.WP & (~pos.K);
         man_white = getMirrored(man_white);
@@ -190,12 +192,14 @@ struct Weights {
         opening *= color;
         ending *= color;
 
+       
         const U pieceEval = (WP - BP) * pawnEval;
         const U kingEvalOp = (pawnEval + kingOp) * (WK - BK);
         const U kingEvalEnd = (pawnEval + kingEnd) * (WK - BK);
         opening += kingEvalOp;
         opening += pieceEval;
         opening += tempi;
+
 
         ending += kingEvalEnd;
         ending += pieceEval;

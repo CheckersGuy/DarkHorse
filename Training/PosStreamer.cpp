@@ -9,6 +9,14 @@ size_t PosStreamer::get_num_positions() const {
     return num_samples;
 }
 
+void PosStreamer::set_input_format(InputFormat format){
+    in_format = format;
+}
+
+InputFormat PosStreamer::get_input_format()const{
+    return in_format;
+}
+
 Sample PosStreamer::get_next() {
     if (ptr >= buffer_size) {
         buffer.clear();
@@ -21,7 +29,24 @@ Sample PosStreamer::get_next() {
             Game game;
             stream >> game;
             game_buffer.clear();
-            game.extract_samples_test(std::back_inserter(game_buffer));
+            auto lambda =[&](Color color, Move move)->int{
+                if(in_format == InputFormat::V1){
+                    return Statistics::MovePicker::get_move_encoding(color,move);
+                }else if(in_format == InputFormat::V2){
+                    //simple policy encoding of all possible from-to moves
+
+                    if(color == BLACK){
+                        move.from = getMirrored(move.from);
+                        move.to = getMirrored(move.to);
+                        move.captures = getMirrored(move.captures);
+                        return 32*move.get_from_index() + move.get_to_index();
+                    }else{
+                        return 32*move.get_from_index() + move.get_to_index();
+                    }
+                }
+            };
+
+            game.extract_samples_test(std::back_inserter(game_buffer),lambda);
             for (auto &s: game_buffer) {
                 auto num_p = Bits::pop_count(s.position.BP | s.position.WP);
                 if (num_p > range.second) {
@@ -63,4 +88,7 @@ std::pair<size_t, size_t> PosStreamer::get_range() const {
     return range;
 }
 
+void PosStreamer::set_shuffle(bool shuff){
+    shuffle=shuff;
+}
 
