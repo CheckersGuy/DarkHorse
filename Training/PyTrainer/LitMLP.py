@@ -369,7 +369,6 @@ class PolicyNetwork(pl.LightningModule):
         self.input_format = InputFormat.V1
         print(self.net)
 
-
     def accuracy(self, logits, target):
         acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
         acc = 100 * acc
@@ -392,13 +391,13 @@ class PolicyNetwork(pl.LightningModule):
         loss = self.criterion(out, move.squeeze())
         tensorboard_logs = {"avg_val_loss": loss}
         acc = self.accuracy(out, move.squeeze())
-        self.log('train_acc_step', acc,prog_bar=True)
+        self.log('train_acc_step', acc, prog_bar=True)
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
         out = self.forward(x)
-        acc=self.accuracy(out, move.squeeze())
+        acc = self.accuracy(out, move.squeeze())
         self.log('val_loss', acc)
         return {"val_loss": acc}
 
@@ -438,12 +437,15 @@ class PolicyNetwork(pl.LightningModule):
 class PatternModel(pl.LightningModule):
 
     def __init__(self):
-        #playedholder
-        #size to be determined
+        # playedholder
+        # size to be determined
         self.weights = torch.zeros(1000000)
+        self.tempo = torch.zeros(1231231)
+        self.king_op = torch.zeros(0)
+        self.king_end = torch.zeros(1)
 
-    def forward(self, op_indices,end_indices,wp,bp,wk,bk):
-        #to be implemented
+    def forward(self, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, maske, wp, bp, wk, bk):
+        # to be implemented
         return self.net.forward(x)
 
     def on_epoch_end(self) -> None:
@@ -472,6 +474,7 @@ class PatternModel(pl.LightningModule):
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
+
 
 class LitDataModule(pl.LightningDataModule):
 
@@ -551,26 +554,5 @@ class NetBatchDataSet(BatchDataSet):
             moves = torch.LongTensor(moves)
             results = torch.tensor(results)
             inputs = inputs.view(self.batch_size, 4, 8, 4)
-
-        return results, moves, inputs
-
-
-class NetBatchDataSet2(BatchDataSet):
-
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False):
-        super(NetBatchDataSet2, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set,
-                                               input_format=InputFormat.V2)
-
-    def __next__(self):
-        results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        moves = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
-        inputs = np.zeros(shape=(self.batch_size, 128), dtype=np.float32)
-        res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        if not self.is_val_set:
-            self.c_lib.get_next_batch(res_p, moves_p, inp_p)
-        else:
-            self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
 
         return results, moves, inputs

@@ -34,8 +34,12 @@ def test_model():
 
 a = torch.Tensor([1,2,3,4,5,6])
 indices = torch.LongTensor([[0,1],[1,2]])
-
+batch_sum =torch.sum(a[indices],dim=1)
+print(batch_sum)
 print(a[indices])
+
+test = torch.Tensor([1,2,3,0,0,0])
+print((test ==0).to(torch.float32))
 
 if __name__ == "__main__s":
 

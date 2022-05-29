@@ -128,9 +128,9 @@ int main() {
 
 
 
-     Match engine_match("form6", "form6");
-     engine_match.setTime(100);
-     engine_match.setMaxGames(3000);
+     Match engine_match("largelarge", "largelarge");
+     engine_match.setTime(10);
+     engine_match.setMaxGames(30000);
      engine_match.setNumThreads(6);
      engine_match.setHashSize(21);
      engine_match.start();  

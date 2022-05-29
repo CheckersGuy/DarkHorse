@@ -14,13 +14,13 @@ Network network;
 bool u_classical = false;
 
 void initialize() {
-    gameWeights.load_weights<uint32_t>("test6.weights");
+    gameWeights.load_weights<uint32_t>("largelarge.weights");
     Zobrist::init_zobrist_keys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.load_weights<uint32_t>("test6.weights");
+    gameWeights.load_weights<uint32_t>("largelarge.weights");
     Zobrist::init_zobrist_keys(seed);
 
 }
