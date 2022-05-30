@@ -15,7 +15,8 @@ from enum import IntEnum
 
 class InputFormat(IntEnum):
     V1 = 0,
-    V2 = 1
+    V2 = 1,
+    V3=2
 
 
 class ResBlock(pl.LightningModule):
