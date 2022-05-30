@@ -27,7 +27,6 @@ struct Entry {
     uint8_t depth{0};//1 byte
     //padding
     //total of 4+12+4+4+1+1 = 26 bytes !!!
-    //horrible, would like a total of 16 bytes one again
 };
 constexpr size_t bucket_size = 4;
 

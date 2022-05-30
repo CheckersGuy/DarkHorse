@@ -62,15 +62,29 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
     auto create_pattern_input =[&](Sample s, float *input, size_t off){
         //input will have a particular shape
         //and we need some fancy indexing for things to make any sense
+
+          if (s.position.color == BLACK) {
+            s.position = s.position.get_color_flip();
+            s.result = ~s.result;
+        }
+        float result = 0.5f;
+        if (s.result == BLACK_WON) {
+            result = 0.0f;
+        } else if (s.result == WHITE_WON) {
+            result = 1.0f;
+        }
+
+
+
         size_t counter_op =0;
         size_t counter_end =0;
      
-        std::array<size_t,8> op_pawn_indices;
-        std::array<size_t,8> end_pawn_indices;
+        std::array<size_t,6> op_pawn_indices;
+        std::array<size_t,6> end_pawn_indices;
       
        
-        std::array<size_t,8> op_king_indices;
-        std::array<size_t,8> end_king_indices;
+        std::array<size_t,9> op_king_indices;
+        std::array<size_t,9> end_king_indices;
         
         
         Bits::big_index([&](size_t index){
@@ -84,12 +98,30 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
             end_king_indices[counter_end++]=index+1;
         },s.position.WP,s.position.BP,s.position.K);
 
-        auto wk = s.position.get_pieces<WHITE,KING>();
-        auto bk = s.position.get_pieces<BLACK,KING>();
+        auto wk = Bits::pop_count(s.position.get_pieces<WHITE,KING>());
+        auto bk =  Bits::pop_count(s.position.get_pieces<BLACK,KING>());
         
-        auto wp = s.position.get_pieces<WHITE,PAWN>();
-        auto bp = s.position.get_pieces<BLACK,PAWN>();
+        auto wp = Bits::pop_count(s.position.get_pieces<WHITE,PAWN>());
+        auto bp =  Bits::pop_count(s.position.get_pieces<BLACK,PAWN>());
 
+        for(auto i=0;i<op_pawn_indices.size();++i){
+            input[i+off]=op_pawn_indices[i];
+        }
+         for(auto i=0;i<end_pawn_indices.size();++i){
+            input[i+off+6]=end_pawn_indices[i];
+        }
+        for(auto i=0;i<op_king_indices.size();++i){
+            input[i+off+12]=op_king_indices[i];
+        }
+
+         for(auto i=0;i<end_king_indices.size();++i){
+            input[i+off+21]=end_king_indices[i];
+        }
+        input[off+30]=wk;
+        input[off+31]=bk;
+        input[off+32]=wp;
+        input[off+33]=bp;
+        return result;
     };
 
     const size_t INPUT_SIZE = (in_format == InputFormat::V1)?120 : 128;
