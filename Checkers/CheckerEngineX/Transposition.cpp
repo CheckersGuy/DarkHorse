@@ -34,18 +34,23 @@ void Transposition::clear() {
 }
 
 void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {
-    const auto index = (key) & (get_capacity() - 1u);
+ const auto index = (key) & (get_capacity() - 1u);
     Cluster &cluster = this->entries[index];
     const uint32_t lock = (key >> 32u);
 
 
     for (auto i = 1; i < bucket_size; ++i) {
         if (cluster.ent[i].key == lock) {
+            cluster.ent[i].depth = depth;
+            cluster.ent[i].flag = flag;
+            cluster.ent[i].bestMove = tt_move;
+            cluster.ent[i].value = value;
             cluster.ent[i].age = age_counter;
+            return;
         }
         const auto age_entry = age_counter - cluster.ent[i].age;
 
-        if (cluster.ent[i].depth < depth || (age_entry != 0)) {
+        if (cluster.ent[i].flag == Flag::None ||cluster.ent[i].depth < depth || (age_entry != 0)) {
             cluster.ent[i].depth = depth;
             cluster.ent[i].flag = flag;
             cluster.ent[i].bestMove = tt_move;

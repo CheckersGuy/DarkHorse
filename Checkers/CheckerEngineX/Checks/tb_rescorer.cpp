@@ -11,11 +11,8 @@
 #include "../../Training/BloomFilter.h"
 #include "../../Training/Util/Compress.h"
 
-#ifdef ITALIAN_RULES
-#define DB_PATH "c:/kr_english_wld"
-#else
-#define DB_PATH "c:/kr_english_wld"
-#endif
+#define DB_PATH "D:\kr_english_wld"
+
 
 
 void print_msgs(char *msg) {
@@ -163,7 +160,7 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
     game.result = last.result;
 
     std::vector<Sample> check_samples;
-    game.extract_samples(std::back_inserter(check_samples));
+    game.extract_samples_test(std::back_inserter(check_samples));
 
     for (auto i = 0; i < check_samples.size(); ++i) {
         Sample s = rescored_samples[i];
@@ -224,8 +221,8 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
-    std::string in_file("C:\\Users\\leagu\\DarkHorse\\Training\\TrainData\\large.train");
-    std::string out_file("C:\\Users\\leagu\\DarkHorse\\Training\\TrainData\\largeformatted.train");
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/test50.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/test50formatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);

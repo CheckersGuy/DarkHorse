@@ -5,6 +5,27 @@
 
 #include "Trainer.h"
 
+double sigmoid(double value) {
+    if(value>=0){
+        double z =std::exp(-value);
+        return 1.0/(1.0+z);
+    }else{
+        double z =std::exp(value);
+        return z/(1.0+z);
+    }
+}
+
+double sigmoid(double c_value,double value){
+    return sigmoid(c_value*value);
+}
+double sigmoidDiff(double c, double value) {
+    return c*(sigmoid(c,value) * (1.0-sigmoid(c,value) ));
+}
+
+void Trainer::set_train_file_locat(std::string train_f){
+    train_file = train_f;
+}
+
 void Trainer::save_trainer_state(std::string output_file) {
     std::ofstream stream(output_file, std::ios::binary);
     if(!stream.good()){
@@ -12,6 +33,8 @@ void Trainer::save_trainer_state(std::string output_file) {
         return;
     }
     weights.store_weights(stream);
+    stream.write((char*)&epoch_counter,sizeof(epoch_counter));
+    stream.write((char*)&step_counter,sizeof(step_counter));
     stream.write((char *) m.get(), sizeof(double) * num_weights);
     stream.write((char *) v.get(), sizeof(double) * num_weights);
     stream.write((char *) beta_one_t.get(), sizeof(double) * num_weights);
@@ -31,6 +54,8 @@ void Trainer::load_trainer_state(std::string input_file) {
         return;
     }
     weights.load_weights(stream);
+    stream.read((char*)&epoch_counter,sizeof(epoch_counter));
+    stream.read((char*)&step_counter,sizeof(step_counter));
     stream.read((char *) m.get(), sizeof(double) * num_weights);
     stream.read((char *) v.get(), sizeof(double) * num_weights);
     stream.read((char *) beta_one_t.get(), sizeof(double) * num_weights);
@@ -69,21 +94,9 @@ void Trainer::set_learning_rate(double learn) {
     learningRate = learn;
 }
 
-double sigmoid(double c, double value) {
-    return 1.0 / (1.0 + std::exp(c * value));
-}
-
-double sigmoidDiff(double c, double value) {
-    return c * (sigmoid(c, value) * (sigmoid(c, value) - 1.0));
-}
-
 void Trainer::gradient_update(Sample &sample) {
     Position x = sample.position;
-    if (sample.result == UNKNOWN)
-        return;
 
-    if (x.has_jumps(x.get_color()) || x.has_jumps(~x.get_color()))
-        return;
     double qStatic = weights.evaluate<double>(x, 0);
 
     if (isWin((int) qStatic))
@@ -111,18 +124,20 @@ void Trainer::gradient_update(Sample &sample) {
         beta_one_t[param] *= beta_one;
         beta_two_t[param] *= beta_one;
 
-        return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)));
+        return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)))+alpha*l2Reg*weights[param]; 
         //return alpha * m[param];
 
     };
 
 
-    int num_wp = Bits::pop_count(x.WP & (~x.K));
-    int num_bp = Bits::pop_count(x.BP & (~x.K));
-    int num_wk = Bits::pop_count(x.WP & (x.K));
-    int num_bk = Bits::pop_count(x.BP & (x.K));
+    const double stage_size = 24.0;
+
+    double num_wp = Bits::pop_count(x.WP & (~x.K));
+    double num_bp = Bits::pop_count(x.BP & (~x.K));
+    double num_wk = Bits::pop_count(x.WP & (x.K));
+    double num_bk = Bits::pop_count(x.BP & (x.K));
     double tot_pieces = num_bp + num_wp + num_bk + num_wk;
-    double phase = tot_pieces / ((double) stage_size);
+    double phase = tot_pieces /stage_size;
     double end_phase = 1.0 - phase;
 
 
@@ -168,7 +183,7 @@ void Trainer::gradient_update(Sample &sample) {
     //for king_op
     {
         double diff = temp;
-        double d = phase * ((double) (num_wk - num_bk));
+        double d = phase * ((num_wk - num_bk));
         diff *= d;
         weights.kingOp = weights.kingOp - adam_update(SIZE, diff, weights.kingOp);
     }
@@ -176,40 +191,11 @@ void Trainer::gradient_update(Sample &sample) {
     //for king_end
     {
         double diff = temp;
-        double d = end_phase * ((double) (num_wk - num_bk));
+        double d = end_phase * ((num_wk - num_bk));
         diff *= d;
         weights.kingEnd = weights.kingEnd - adam_update(SIZE + 1, diff, weights.kingEnd);
     }
 
-     {
-        //for tempo ranks black side
-        uint32_t man = x.BP & (~x.K);
-        for (size_t i = 0; i < 7; ++i) {
-            double diff = temp;
-            diff *= -1.0;
-            uint32_t shift = 4 * i;
-            uint32_t index = man >> shift;
-            index &= temp_mask;
-            const size_t mom_index = SIZE + 2 + i * 16 + index;
-            weights.tempo_ranks[i][index] =
-                    weights.tempo_ranks[i][index] - adam_update(mom_index, diff, weights.tempo_ranks[i][index]);
-        }
-        //for tempo ranks white-side
-        man = x.WP & (~x.K);
-        man = getMirrored(man);
-        for (size_t i = 0; i < 7; ++i) {
-            double diff = temp;
-            diff *= 1.0;
-            uint32_t shift = 4 * i;
-            uint32_t index = man >> shift;
-            index &= temp_mask;
-            const size_t mom_index = SIZE + 2 + i * 16 + index;
-
-            weights.tempo_ranks[i][index] =
-                    weights.tempo_ranks[i][index] - adam_update(mom_index, diff, weights.tempo_ranks[i][index]);
-        }
-
-    } 
 
 }
 
@@ -233,14 +219,14 @@ void Trainer::set_decay(double d) {
 void Trainer::epoch() {
     size_t num_samples = pos_streamer.get_num_positions();
     for (auto i = size_t{0}; i < num_samples; ++i) {
-        Sample sample = pos_streamer.get_next();
-        if (!sample.position.is_legal()) {
-            continue;
-        }
-
+        Sample sample;
+         do{
+            sample = pos_streamer.get_next();
+         }while(sample.result == UNKNOWN || (sample.position.has_jumps()));
+       
         gradient_update(sample);
     }
-
+     //saving the trainer state
 
     epoch_counter++;
 
@@ -251,14 +237,13 @@ void Trainer::start_tune() {
     //
 
 
-    int counter = 0;
     std::cout << "data_size: " << pos_streamer.get_num_positions() << "\n";
-    while (counter < get_num_epochs()) {
+    while (epoch_counter < get_num_epochs()) {
 
         std::stringstream ss_stream;
         ss_stream.clear();
         ss_stream << std::setfill('-') << std::setw(40) << "\n";
-        ss_stream << "Start of epoch: " << counter << "\n" << "\n";
+        ss_stream << "Start of epoch: " << epoch_counter << "\n" << "\n";
         ss_stream << std::setfill('-') << std::setw(40) << "\n";
         ss_stream << "CValue: " << get_c_value() << "\n";
         double num_games = (double) (pos_streamer.get_num_positions());
@@ -268,13 +253,7 @@ void Trainer::start_tune() {
         last_loss_value = loss;
         ss_stream << std::setfill('-') << std::setw(40) << "\n";
         ss_stream << "Loss: " << loss << "\n";
-        auto t1 = std::chrono::high_resolution_clock::now();
-        epoch();
-        auto t2 = std::chrono::high_resolution_clock::now();
-        auto dur = t2 - t1;
-        ss_stream << std::setfill('-') << std::setw(40) << "\n";
-        ss_stream << "Time for epoch: " << dur.count() / 1000000 << "\n";
-        counter++;
+
         ss_stream << std::setfill('-') << std::setw(40) << "\n";
         ss_stream << "LearningRate: " << learningRate << "\n";
         ss_stream << std::setfill('-') << std::setw(40) << "\n";
@@ -287,9 +266,17 @@ void Trainer::start_tune() {
         ss_stream << "kingScore:" << weights.kingOp << " | " << weights.kingEnd << "\n";
         learningRate = learningRate * (1.0 - decay);
         std::cout << ss_stream.str() << std::endl;
+
+        auto t1 = std::chrono::high_resolution_clock::now();
+        epoch();
+        auto t2 = std::chrono::high_resolution_clock::now();
+        auto dur = t2 - t1;
+        ss_stream << std::setfill('-') << std::setw(40) << "\n";
+        std::cout<< "Time for epoch: " << dur.count() / 1000000 << "\n";
+        save_trainer_state(train_file);
     }
     weights.store_weights(weights_path);
-
+   
 }
 
 

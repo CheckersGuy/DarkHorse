@@ -15,6 +15,8 @@
 int main() {
 
 
+
+
     //testing new policy format
 
 /*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/medium.train");
@@ -101,7 +103,7 @@ int main() {
 
 
 
-   // merge_temporary_files("/home/robin/DarkHorse/Training/TrainData/", "/home/robin/DarkHorse/Training/TrainData/");
+   merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
 
 
 
@@ -111,46 +113,41 @@ int main() {
 
 */
 
-
-/*
-    Generator generator("train4.pos", "largelarge.train");
+  /*    Generator generator("train4.pos", "test50.train");
     generator.set_hash_size(20);
-    generator.set_buffer_clear_count(10000);
-    generator.set_parallelism(95);
-    generator.set_time(10);
+    generator.set_buffer_clear_count(1000);
+    generator.set_parallelism(15);
+    generator.set_time(50);
     generator.set_piece_limit(6);
-    generator.set_max_position(5000000000ull);
-    generator.start();
-*/
-
-
-
-
-
-
-     Match engine_match("largelarge", "largelarge");
-     engine_match.setTime(10);
-     engine_match.setMaxGames(30000);
-     engine_match.setNumThreads(6);
-     engine_match.setHashSize(21);
-     engine_match.start();  
-    
-/*  
-       Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
-      trainer.set_learning_rate(5);
-      trainer.set_weight_decay(0.0);
-      trainer.set_decay(0.1);
-      trainer.set_weights_path("bla.weights");
-      trainer.set_savepoint_step(10000000);
-      trainer.set_epochs(1);
-      trainer.set_c_value(-2e-3);
-      trainer.start_tune();   
+    generator.set_max_position(1500000ull);
+    generator.start();  
  */
+  //may be something wrong with the dataloader
+     Match engine_match("lekotest", "newtry");
+     engine_match.setTime(100);
+     engine_match.setMaxGames(30000);
+     engine_match.setNumThreads(5);
+     engine_match.setHashSize(20);
+     engine_match.start();         
+                                
 
-        //epoch: 3
-        // 0.157794
+      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
+      trainer.set_learning_rate(1);
+      trainer.set_train_file_locat("trainer.state");
+      
+      trainer.set_weight_decay(0);
+      trainer.set_decay(0.04);
+      trainer.set_weights_path("newtry7.weights");
+      trainer.set_savepoint_step(10000000);
+      trainer.set_epochs(100);
+      trainer.set_c_value(2.24e-2);
+      //trainer.load_trainer_state("trainer.state");
+      trainer.start_tune();    
+      // 0.192231
 
-/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
+
+
+/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/medium.train");
     Game g;
     while(stream>>g){
         std::vector<Sample> vec;

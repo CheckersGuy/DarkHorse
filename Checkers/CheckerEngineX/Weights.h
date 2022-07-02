@@ -23,19 +23,13 @@ struct Weights {
     T kingOp, kingEnd;
     std::vector<T> weights;
 
-    std::array<std::array<T, 16>, 7> tempo_ranks;
-
     Weights() : kingOp(500), kingEnd(500) {
         weights = std::vector<T>(SIZE, T{0});
-        for (auto i = 0; i < tempo_ranks.size(); ++i) {
-            std::fill(tempo_ranks[i].begin(), tempo_ranks[i].end(), T{0});
-        }
     }
 
     Weights(const Weights<T> &other) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::copy(other.weights.begin(), other.weights.end(), weights.begin());
-        std::copy(tempo_ranks.begin(), tempo_ranks.end(), other.tempo_ranks.begin());
         this->kingOp = other.kingOp;
         this->kingEnd = other.kingEnd;
     }
@@ -61,37 +55,17 @@ struct Weights {
             std::cerr << "Error could not load the weights" << std::endl;
             return;
         }
-
-        size_t counter = 0u;
-        while (stream) {
-            if (counter >= SIZE)
-                break;
-            RunType length;
-            double first;
-            stream.read((char *) &length, sizeof(RunType));
-            stream.read((char *) &first, sizeof(double));
-            if (stream.eof())
-                break;
-            for (RunType i = 0u; i < length; ++i) {
-                weights[counter] = std::clamp(first, (double) std::numeric_limits<int16_t>::min(),
-                                              (double) std::numeric_limits<int16_t>::max());
-                counter++;
-            }
+        
+        for(auto i=0;i<weights.size();++i){
+            double value;
+            stream.read((char*)&value,sizeof(double));
+            weights[i]=std::round(value);
         }
-        double kingOpVal, kingEndVal;
+        double kingOpVal,kingEndVal;
         stream.read((char *) &kingOpVal, sizeof(double));
         stream.read((char *) &kingEndVal, sizeof(double));
         this->kingOp = static_cast<T>(kingOpVal);
-        this->kingEnd = static_cast<T>(kingEndVal);
-
-          for (auto i = 0; i < tempo_ranks.size(); ++i) {
-            for (auto j = 0; j < 16; ++j) {
-                double temp;
-                stream.read((char *) &temp, sizeof(double));
-                tempo_ranks[i][j] = std::clamp(temp, (double) std::numeric_limits<int16_t>::min(),
-                                               (double) std::numeric_limits<int16_t>::max());
-            }
-        }  
+        this->kingEnd = static_cast<T>(kingEndVal);  
     }
 
     template<typename RunType=uint32_t>
@@ -104,24 +78,11 @@ struct Weights {
     template<typename RunType=uint32_t>
     void store_weights(std::ofstream &stream) {
         using DataType = double;
-        auto end = weights.end();
-        for (auto it = weights.begin(); it != end;) {
-            RunType length{0};
-            auto first = *it;
-            while (it != end && length < std::numeric_limits<RunType>::max() && *(it) == first) {
-                length++;
-                it++;
-            }
-            stream.write((char *) &length, sizeof(RunType));
-            stream.write((char *) &first, sizeof(DataType));
+          for(auto i=0;i<weights.size();++i){
+            stream.write((char*)&weights[i],sizeof(double));
         }
-        stream.write((char *) &kingOp, sizeof(DataType));
-        stream.write((char *) &kingEnd, sizeof(DataType));
-         for (auto i = 0; i < tempo_ranks.size(); ++i) {
-            for (auto j = 0; j < 16; ++j) {
-                stream.write((char *) &tempo_ranks[i][j], sizeof(DataType));
-            }
-        } 
+         stream.write((char *) &kingOp, sizeof(double));
+         stream.write((char *) &kingEnd, sizeof(double));
     }
 
     template<typename RunType=uint32_t>
@@ -144,24 +105,7 @@ struct Weights {
         constexpr U pawnEval = 0;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
-
-
-    
-        uint32_t man_black = pos.BP & (~pos.K);
-        uint32_t man_white = pos.WP & (~pos.K);
-        man_white = getMirrored(man_white);
-        U tempi = 0;
-
-
-         for (int i = 0; i < 7; ++i) {
-            uint32_t shift = 4u * i;
-            const uint32_t mask_white = (man_white >> shift) & temp_mask;
-            const uint32_t mask_black = (man_black >> shift) & temp_mask;
-            tempi -= tempo_ranks[i][mask_black];
-            tempi += tempo_ranks[i][mask_white];
-        }
- 
-        U phase = WP + BP;
+        U phase = BP+WP;
 
         U WK = 0;
         U BK = 0;
@@ -174,7 +118,7 @@ struct Weights {
 
         if (pos.get_color() == BLACK) {
             pos = pos.get_color_flip();
-        }
+        } 
         auto f = [&](size_t op_index) {
             size_t end_index = op_index + 1;
             opening += weights[op_index];
@@ -182,7 +126,6 @@ struct Weights {
         };
         if (pos.K == 0) {
             Bits::big_index(f, pos.WP, pos.BP, pos.K);
-
         } else {
             Bits::small_index(f, pos.WP, pos.BP, pos.K);
         }
@@ -192,24 +135,18 @@ struct Weights {
         ending *= color;
 
        
-        const U pieceEval = (WP - BP) * pawnEval;
-        const U kingEvalOp = (pawnEval + kingOp) * (WK - BK);
-        const U kingEvalEnd = (pawnEval + kingEnd) * (WK - BK);
+        const U pieceEval = (WP-BP)*100;
+        const U kingEvalOp = (kingOp) * (WK - BK);
+        const U kingEvalEnd = (kingEnd) * (WK - BK);
         opening += kingEvalOp;
         opening += pieceEval;
-        opening += tempi;
-
-
         ending += kingEvalEnd;
         ending += pieceEval;
-        ending += tempi;
 
+        const U stage_size = U{24};
         U score = (phase * opening + (stage_size - phase) * ending);
-        if constexpr(std::is_floating_point_v<U>) {
-            score = score / stage_size;
-        } else {
-            score = div_round(score, stage_size);
-        }
+        score = score / stage_size;
+
         return score;
     }
 
@@ -222,7 +159,7 @@ struct Weights {
         }
         return weights[index];
     }
-
+    //needs some serious reworking
     const T &operator[](size_t index) const {
         if (index == SIZE) {
             return kingOp;
@@ -239,7 +176,6 @@ struct Weights {
     Weights &operator=(const Weights &others) {
         this->weights = std::make_unique<T[]>(SIZE);
         std::copy(others.weights.begin(), others.weights.end(), weights.begin());
-        std::copy(tempo_ranks.begin(), tempo_ranks.end(), others.tempo_ranks.begin());
         this->kingOp = others.kingOp;
         this->kingEnd = others.kingEnd;
         return *this;

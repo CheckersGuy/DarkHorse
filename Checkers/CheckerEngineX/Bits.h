@@ -118,7 +118,7 @@ namespace Bits {
             size_t index = get_big_index<IndexType::INNER>(sub_reg, WP, BP, K);
             size_t sub_index = 4 * index + 2 * k + offset1;
             func(sub_index);
-        }
+        } 
     }
 
     template<typename Callback>

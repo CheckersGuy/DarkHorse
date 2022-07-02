@@ -11,16 +11,16 @@ Weights<int16_t> gameWeights;
 
 SearchGlobal glob;
 Network network;
-bool u_classical = false;
+bool u_classical = true;
 
 void initialize() {
-    gameWeights.load_weights<uint32_t>("largelarge.weights");
+    gameWeights.load_weights<uint32_t>("newtry7.weights");
     Zobrist::init_zobrist_keys();
 
 }
 
 void initialize(uint64_t seed) {
-    gameWeights.load_weights<uint32_t>("largelarge.weights");
+    gameWeights.load_weights<uint32_t>("newtry7.weights");
     Zobrist::init_zobrist_keys(seed);
 
 }
@@ -41,10 +41,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print)
     TT.age_counter++;
     nodeCounter = 0;
     mainPV.clear();
-    //TT.clear();
-
-    //if there is only one move we can return
-
+    
     MoveListe liste;
     get_moves(board.get_position(), liste);
 
@@ -105,8 +102,7 @@ namespace Search {
 
     Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
         Depth red = 0;
-        const bool is_promotion = move.is_promotion(board.get_position().K);
-        if (local.depth >= 2 && !move.is_capture() && !is_promotion && local.i >= ((in_pv) ? 3 : 1)) {
+        if (!in_pv && local.depth >= 2 && !move.is_capture()&& local.i >=2) {
             red = 1;
         }
         return red;
@@ -117,7 +113,7 @@ namespace Search {
         pv.clear();
         nodeCounter++;
         //checking time-used
-        if (ply > 0 && board.isRepetition2()) {
+        if (ply > 0 && board.is_repetition()) {
             return 0;
         }
 
@@ -157,9 +153,7 @@ namespace Search {
         uint64_t pos_key = board.get_position().key;
 
 
-        if (!local.skip_move.is_empty()) {
-            pos_key ^= Zobrist::skip_hash;
-        }
+    
 
         if (ply >= MAX_PLY) {
             return board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
@@ -171,7 +165,9 @@ namespace Search {
         // tb-probing
 #ifndef TRAIN
 
-        if (TT.find_hash(pos_key, info)) {
+        
+
+        if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
             tt_move = info.tt_move;
             auto tt_score = valueFromTT(info.score, ply);
             if (info.depth >= depth && info.flag != Flag::None) {
@@ -213,8 +209,6 @@ namespace Search {
         Search::move_loop(in_pv, local, board, pv, liste);
 
 
-        //updating search stats
-        //moved to move-loop
         if (local.best_score > local.alpha && liste.length() > 1 && board.is_silent_position()) {
             Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move, depth);
         }
@@ -302,7 +296,7 @@ namespace Search {
         //singular move extension
 
 
-        if (in_pv
+      /*   if (in_pv
             && local.depth >= 8
             && move == local.sing_move
             && local.skip_move.is_empty()
@@ -319,7 +313,7 @@ namespace Search {
                 extension = 1;
             }
 
-        }
+        } */
 
         Value new_alpha = std::max(local.alpha, local.best_score);
 
@@ -328,10 +322,9 @@ namespace Search {
 
         board.make_move(move);
 
-        if (!in_pv && new_depth > 2 && isEval(local.beta) && local.ply > 0) {
+        if (!in_pv && new_depth > 2 && isEval(local.beta) && local.ply >=3) {
 
-            Value margin = prob_cut;
-            Value newBeta = local.beta + margin;
+            Value newBeta = local.beta + prob_cut;
             Depth newDepth = std::max(new_depth - 4, 1);
             Value board_val = -qs(in_pv, board, line, -(newBeta + 1), -newBeta,
                                   local.ply + 1, newDepth);
@@ -369,7 +362,8 @@ namespace Search {
     void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste) {
         local.i = 0;
         const auto num_moves = liste.length();
-        int extension = (liste.length() == 1) ? 1 : 0;
+        const bool has_captures = board.get_position().has_jumps();
+        int extension =has_captures && (in_pv || (local.ply>1 && board.previous().has_jumps(board.previous().get_color())));
 
         while (local.best_score < local.beta && local.i < num_moves) {
             Move move = liste[local.i];
@@ -431,7 +425,7 @@ namespace Search {
 
     }
 
-    //there are various other things I will need to check
+    
     void search_asp(Local &local, Board &board, Value last_score, Depth depth) {
         if (depth >= 3 && isEval(last_score)) {
             Value margin = asp_wind;

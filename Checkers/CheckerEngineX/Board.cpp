@@ -8,6 +8,10 @@ Position &Board::get_position() {
     return pStack[pCounter];
 }
 
+size_t Board::history_length()const{
+    return pStack.size();
+}
+
 Board::Board(const Board &other) {
     std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
     std::copy(other.moveStack.begin(), other.moveStack.end(), moveStack.begin());
@@ -57,32 +61,16 @@ uint64_t Board::get_current_key() const {
     return pStack[pCounter].key;
 }
 
+
 bool Board::is_repetition() const {
     int counter = 0;
     const Position check = pStack[pCounter];
-    for (int i = pCounter; i >= 0; i -= 2) {
-        if (pStack[i] == check) {
-            counter++;
-        }
-        if (counter >= 2) {
-            return true;
-        }
-
-
-    }
-
-    return false;
-}
-
-bool Board::isRepetition2() const {
-    int counter = 0;
-    const Position check = pStack[pCounter];
-    for (int i = pCounter; i >= 0; i -= 2) {
+    for (int i = pCounter-2; i >= 0; i -= 2) {
 
         if (pStack[i] == check) {
             counter++;
         }
-        if (counter >= 2)
+        if (counter >= 1)
             return true;
 
         if ((moveStack[i].to & pStack[i].K) == 0)
@@ -101,5 +89,9 @@ Position Board::previous() {
         return pStack[pCounter - 1];
     }
     return Position{};
+}
+
+Position Board::history_at(size_t idx){
+    return pStack[idx];
 }
 

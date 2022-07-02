@@ -17,10 +17,6 @@ struct Layer {
     int out_features;
 };
 
-inline double sigmoid(double d){
-    return 1.0/(1.0 + std::exp(-d));
-}
-
 struct Accumulator {
     std::unique_ptr<float[]> acc;
 
