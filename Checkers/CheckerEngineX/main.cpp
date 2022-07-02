@@ -51,18 +51,18 @@ int main(int argl, const char **argc) {
 
     initialize();
     Board board;
-    use_classical(true);
+    use_classical(false);
     Statistics::mPicker.init();
 
- /* 
+  
       network.load("form_network8.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();   
-  /* */ 
-/*           TT.resize(23);
+
+           TT.resize(23);
     board = Position::get_start_position();    
     //board = Position::pos_from_fen("W:WK5,29:BK3,K4,K16");
      
@@ -80,7 +80,7 @@ int main(int argl, const char **argc) {
     MoveListe liste;
     get_moves(board.get_position(), liste);   
           
-          */
+          
 
     std::string current;
     while (std::cin >> current) {

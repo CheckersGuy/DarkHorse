@@ -113,15 +113,15 @@ int main() {
 
 */
 
-  /*    Generator generator("train4.pos", "test50.train");
+    Generator generator("train4.pos", "test50.train");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(15);
+    generator.set_parallelism(95);
     generator.set_time(50);
     generator.set_piece_limit(6);
     generator.set_max_position(1500000ull);
     generator.start();  
- */
+ 
   //may be something wrong with the dataloader
      Match engine_match("lekotest", "newtry");
      engine_match.setTime(100);
