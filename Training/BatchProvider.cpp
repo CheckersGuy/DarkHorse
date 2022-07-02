@@ -12,7 +12,6 @@ void BatchProvider::set_input_format(InputFormat format){
 void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
    const bool is_v1 = (in_format == InputFormat::V1);
    const bool is_v2 = (in_format == InputFormat::V2);
-   const bool is_v3 = (in_format == InputFormat::V3);
    //needs some refactoring at some point
     auto create_input = [&](Sample s, float *input, size_t off) {
         if (s.position.color == BLACK) {
@@ -59,70 +58,7 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
         return result;
     };
 
-    auto create_pattern_input =[&](Sample s, float *input, size_t off){
-        //input will have a particular shape
-        //and we need some fancy indexing for things to make any sense
-
-          if (s.position.color == BLACK) {
-            s.position = s.position.get_color_flip();
-            s.result = ~s.result;
-        }
-        float result = 0.5f;
-        if (s.result == BLACK_WON) {
-            result = 0.0f;
-        } else if (s.result == WHITE_WON) {
-            result = 1.0f;
-        }
-
-
-
-        size_t counter_op =0;
-        size_t counter_end =0;
-     
-        std::array<size_t,6> op_pawn_indices;
-        std::array<size_t,6> end_pawn_indices;
-      
-       
-        std::array<size_t,9> op_king_indices;
-        std::array<size_t,9> end_king_indices;
-        
-        
-        Bits::big_index([&](size_t index){
-            op_pawn_indices[counter_op++]=index;
-            end_pawn_indices[counter_end++]=index+1;
-        },s.position.WP,s.position.BP,s.position.K);
-        counter_op =0;
-        counter_end =0;
-        Bits::small_index([&](size_t index){
-            op_king_indices[counter_op++]=index;
-            end_king_indices[counter_end++]=index+1;
-        },s.position.WP,s.position.BP,s.position.K);
-
-        auto wk = Bits::pop_count(s.position.get_pieces<WHITE,KING>());
-        auto bk =  Bits::pop_count(s.position.get_pieces<BLACK,KING>());
-        
-        auto wp = Bits::pop_count(s.position.get_pieces<WHITE,PAWN>());
-        auto bp =  Bits::pop_count(s.position.get_pieces<BLACK,PAWN>());
-
-        for(auto i=0;i<op_pawn_indices.size();++i){
-            input[i+off]=op_pawn_indices[i];
-        }
-         for(auto i=0;i<end_pawn_indices.size();++i){
-            input[i+off+6]=end_pawn_indices[i];
-        }
-        for(auto i=0;i<op_king_indices.size();++i){
-            input[i+off+12]=op_king_indices[i];
-        }
-
-         for(auto i=0;i<end_king_indices.size();++i){
-            input[i+off+21]=end_king_indices[i];
-        }
-        input[off+30]=wk;
-        input[off+31]=bk;
-        input[off+32]=wp;
-        input[off+33]=bp;
-        return result;
-    };
+    
 
     const size_t INPUT_SIZE = (in_format == InputFormat::V1)?120 : 128;
 
@@ -148,6 +84,63 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
 
 
 }
+
+void BatchProvider::next_pattern(float*results,float* mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input){
+ 
+auto create_pattern_input =[&](Sample s, float*mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input, size_t off,size_t pawn_off,size_t king_off){
+        //input will have a particular shape
+        //and we need some fancy indexing for things to make any sense
+        float result = 0.5f;
+        if (s.result == BLACK_WON) {
+            result = 0.0f;
+        } else if (s.result == WHITE_WON) {
+            result = 1.0f;
+        }
+
+        Position copy = s.position.get_color_flip();;
+        size_t counter_op =0;
+        size_t counter_end =0;
+     
+        
+
+         Bits::big_index([&](size_t index){
+            op_pawn_index[counter_op++ +pawn_off]=index;
+            end_pawn_index[counter_end++ +pawn_off]=index+1;
+        },copy.WP,copy.BP,copy.K);
+        counter_op =0;
+        counter_end =0;
+        Bits::small_index([&](size_t index){
+            op_king_index[counter_op++ +king_off]=index;
+            end_king_index[counter_end++ +king_off]=index+1;
+        },copy.WP,copy.BP,copy.K); 
+
+   
+        auto wk = Bits::pop_count(s.position.get_pieces<WHITE,KING>());
+        auto bk =  Bits::pop_count(s.position.get_pieces<BLACK,KING>());
+        auto wp = Bits::pop_count(s.position.get_pieces<WHITE,PAWN>());
+        auto bp =  Bits::pop_count(s.position.get_pieces<BLACK,PAWN>());
+        wk_input[off]=wk;
+        bk_input[off]=bk;
+        wp_input[off]=wp;
+        bp_input[off]=bp;
+        mover[off] = s.position.get_color();
+        return result;
+    };
+    size_t pawn_off =6;
+    size_t king_off = 9;
+   for (auto i = 0; i < get_batch_size(); ++i) {
+        Sample current;
+
+        do {
+            current = get_streamer().get_next();
+        } while (current.result == UNKNOWN || (current.position.has_jumps()));
+
+        auto result = create_pattern_input(current,mover, op_pawn_index,end_pawn_index,op_king_index,end_king_index,wk_input,bk_input,wp_input,bp_input,i,pawn_off*i,king_off*i);
+        results[i] = result;
+    }
+
+}
+
 
 
 size_t BatchProvider::get_batch_size() const {

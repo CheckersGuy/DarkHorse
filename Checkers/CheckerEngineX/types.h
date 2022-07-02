@@ -70,15 +70,13 @@ inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
 inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
 
-constexpr int stage_size = 24;
-
 //constant for extensions and reductions
 
 
-constexpr int prob_cut = 300;
-constexpr int sing_ext = 300;
-constexpr int asp_wind = 100;
-constexpr int MAX_ASP = 2000;
+constexpr int prob_cut = 30;
+constexpr int sing_ext = 30;
+constexpr int asp_wind = 10;
+constexpr int MAX_ASP = 200;
 
 
 using Depth = int;

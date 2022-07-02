@@ -55,6 +55,20 @@ extern "C" void get_next_val_batch(float *results, int64_t *moves, float *inputs
     provider->next(results, moves, inputs);
 }
 
+extern "C" void get_next_val_batch_pattern(float*results,float* mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input){
+      if (val_streamer.get() == nullptr) {
+        std::exit(-1);
+    }
+    val_streamer->next_pattern(results,mover,op_pawn_index,end_pawn_index,op_king_index,end_king_index,wk_input,bk_input, wp_input,bp_input);
+}
+extern "C" void get_next_batch_pattern(float*results, float* mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input){
+        if (streamer.get() == nullptr) {
+        std::exit(-1);
+    }
+    streamer->next_pattern(results,mover,op_pawn_index,end_pawn_index,op_king_index,end_king_index,wk_input,bk_input, wp_input,bp_input);
+}
+
+
 extern "C" void print_fen(const char* fen_string) {
     Position pos = Position::pos_from_fen(std::string(fen_string));
     pos.print_position();

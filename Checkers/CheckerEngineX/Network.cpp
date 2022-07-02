@@ -274,7 +274,7 @@ int Network::evaluate(Position pos, int ply) {
     }
 
 
-    float val = compute_incre_forward_pass(pos) * 1028.0f;
+    float val = compute_incre_forward_pass(pos) * 128.0f;
     return static_cast<int>(val);
 }
 
@@ -329,6 +329,6 @@ void Network::set_input(Position p) {
 
 float Network::get_win_p(Position pos){
     auto value = compute_incre_forward_pass(pos);
-    return sigmoid(value);
+    return 1.0/(1.0+std::exp(-value));
 }
 

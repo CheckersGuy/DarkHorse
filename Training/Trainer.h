@@ -19,7 +19,7 @@ class Trainer {
 
 private:
     constexpr static size_t num_weights =SIZE + 2u + 16u * 7u + 4;
-    int epochs;
+    size_t epochs{0};
     double learningRate, l2Reg, cValue;
     double accu_loss{0};
     double last_loss_value;
@@ -35,6 +35,7 @@ private:
     std::mt19937_64 generator;
     PosStreamer pos_streamer;
     std::string weights_path;
+    std::string train_file; //saves the entire state of the trainer to the location
     size_t step_counter{0};
     size_t epoch_counter{0};
     size_t save_point_step{1000000};
@@ -46,14 +47,16 @@ public:
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.05), generator(std::mt19937_64(231231241ull)),
-                                            pos_streamer(PosStreamer(data_path, 5000000)) {
-        momentums = std::make_unique<double[]>(SIZE + 2u + 16u * 7u + 4);
-        m = std::make_unique<double[]>(SIZE + 2u + 16u * 7u + 4);
-        v = std::make_unique<double[]>(SIZE + 2u + 16u * 7u + 4);
-        beta_one_t = std::make_unique<double[]>(SIZE + 2u + 16u * 7u + 4);
-        beta_two_t = std::make_unique<double[]>(SIZE + 2u + 16u * 7u + 4);
+                                            pos_streamer(PosStreamer(data_path, 2000000)) {
+        const size_t MAX_SIZE = SIZE + (2u + 16u * 7u + 4);
+        momentums = std::make_unique<double[]>(MAX_SIZE);
+        pos_streamer.set_input_format(InputFormat::PATTERN);
+        m = std::make_unique<double[]>(MAX_SIZE);
+        v = std::make_unique<double[]>(MAX_SIZE);
+        beta_one_t = std::make_unique<double[]>(MAX_SIZE);
+        beta_two_t = std::make_unique<double[]>(MAX_SIZE);
 
-        for (auto i = 0; i < SIZE + 2u + 16u * 7u + 4; ++i) {
+        for (auto i = 0; i < MAX_SIZE; ++i) {
             m[i] = 0;
             v[i] = 0;
             beta_one_t[i] = beta_one;
@@ -76,6 +79,8 @@ public:
 
     void set_savepoint_step(size_t num_steps);
 
+    void set_train_file_locat(std::string train_file);
+
     void set_weight_decay(double d_value);
 
     void set_decay(double d);
@@ -92,10 +97,11 @@ public:
 
     void start_tune();
 
-    //refactoring of the trainer
-    //function add trainable parameter
 
 };
 
+double sigmoid(double value);
 
+double sigmoid(double c_value,double value);
+double sigmoidDiff(double c, double value);
 #endif //TRAINING_TRAINER_H

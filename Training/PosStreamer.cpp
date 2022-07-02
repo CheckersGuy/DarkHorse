@@ -18,23 +18,10 @@ InputFormat PosStreamer::get_input_format()const{
 }
 
 Sample PosStreamer::get_next() {
-    if (ptr >= buffer_size) {
-        buffer.clear();
-        ptr = 0;
-        do {
-            if (stream.peek() == EOF) {
-                stream.clear();
-                stream.seekg(0, std::ios::beg);
-            }
-            Game game;
-            stream >> game;
-            game_buffer.clear();
-            auto lambda =[&](Color color, Move move)->int{
+  auto lambda =[&](Color color, Move move)->int{
                 if(in_format == InputFormat::V1){
                     return Statistics::MovePicker::get_move_encoding(color,move);
                 }else if(in_format == InputFormat::V2){
-                    //simple policy encoding of all possible from-to moves
-
                     if(color == BLACK){
                         move.from = getMirrored(move.from);
                         move.to = getMirrored(move.to);
@@ -46,20 +33,30 @@ Sample PosStreamer::get_next() {
                 }
             };
 
-            game.extract_samples_test(std::back_inserter(game_buffer),lambda);
-            for (auto &s: game_buffer) {
-                auto num_p = Bits::pop_count(s.position.BP | s.position.WP);
-                if (num_p > range.second) {
-                    continue;
-                }
-                if (num_p < range.first) {
-                    break;
-                }
-                buffer.emplace_back(s);
+    if (ptr >= buffer_size) {
+        buffer.clear();
+        ptr = 0;
+        do {
+            if (game_offset>=games.size()) {
+                game_offset =0;
+                //shuffling the games each epoch as well
+                std::shuffle(games.begin(),games.end(),generator);
+            }
+            auto game = games[game_offset++];
+                  
+            if(in_format ==InputFormat::PATTERN){
+                  game.extract_samples_test(std::back_inserter(buffer));
+            
+            }else{
+                  game.extract_samples_test(std::back_inserter(buffer),lambda);
+            
             }
         } while (buffer.size() < buffer_size);
         if (shuffle) {
+            auto t1 = std::chrono::high_resolution_clock::now();
             std::shuffle(buffer.begin(), buffer.end(), generator);
+            auto t2 = std::chrono::high_resolution_clock::now();
+            auto dur = t2-t1;       
         }
     }
     return buffer[ptr++];

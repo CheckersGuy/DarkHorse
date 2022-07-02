@@ -13,12 +13,12 @@
 #include <iterator>
 #include <filesystem>
 #include "Util/Compress.h"
-
+#include <chrono>
 enum class InputFormat : int{
     //V1 is for the nnue nets
     //V2 is for convnets
     //V3 is for pattern based eval
-    V1=0,V2=1,V3 =1
+    V1=0,V2=1,PATTERN =2
 };
 
 
@@ -27,27 +27,31 @@ enum class InputFormat : int{
 class PosStreamer {
 
 private:
-    InputFormat in_format{InputFormat::V1};
+    InputFormat in_format{InputFormat::PATTERN};
+    size_t gen_seed;
     std::string file_path;
     size_t buffer_size;
     std::vector<Sample> buffer;
     size_t ptr;
     std::ifstream stream;
     std::mt19937_64 generator;
-    bool shuffle;
+    bool shuffle{true};
     size_t num_samples; // number of samples
     std::pair<size_t, size_t> range;
-    std::vector<Sample> game_buffer;
+    std::vector<Game> games;
+    size_t game_offset{0};
 
 public:
 
-    PosStreamer(std::string file_path, size_t buffer_size, bool shuffle = true,
-                std::pair<size_t, size_t> ran = std::make_pair(0, 24), size_t seed = 431231231ull)
-            : buffer_size(buffer_size), shuffle(shuffle), file_path(file_path) {
-
+    PosStreamer(std::string file_path, size_t buff_size,
+                std::pair<size_t, size_t> ran = std::make_pair(0, 24), size_t seed = 12312312){
+                
+        this->file_path = file_path;
+        gen_seed=seed;
         range = ran;
         ptr = buffer_size + 1;
         stream = std::ifstream(file_path, std::ios::binary);
+        generator = std::mt19937_64(seed);
         if (file_path.empty()) {
             std::cerr << "An empty path was given" << std::endl;
             std::exit(-1);
@@ -57,11 +61,17 @@ public:
             std::cerr << "FileName: " << file_path << std::endl;
             std::exit(-1);
         }
-        generator = std::mt19937_64(seed);
+        //loading the game
+        std::istream_iterator<Game> begin(stream);
+        std::istream_iterator<Game>end;
+        std::copy(begin,end,std::back_inserter(games));
+        std::shuffle(games.begin(),games.end(),generator);
         num_samples = count_trainable_positions(file_path, range);
-        buffer_size = std::min(num_samples, buffer_size);
+                std::cout<<"loading"<<std::endl;
+        this->buffer_size = std::min(num_samples, buff_size);
         buffer.reserve(buffer_size);
-        game_buffer.reserve(600);
+        std::cout<<buffer_size<<std::endl;
+
     }
 
     Sample get_next();

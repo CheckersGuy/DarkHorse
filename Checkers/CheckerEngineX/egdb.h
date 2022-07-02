@@ -130,5 +130,5 @@ EGDB_API EGDB_DRIVER *__cdecl egdb_open(EGDB_BITBOARD_TYPE bitboard_type,
  */
 EGDB_API int __cdecl egdb_identify(const char *directory, EGDB_TYPE *egdb_type, int *max_pieces);
 
-EGDB_API extern unsigned int egdb_version;
+EGDB_API unsigned int egdb_version;
 

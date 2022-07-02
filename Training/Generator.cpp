@@ -68,7 +68,7 @@ void Generator::start() {
         }
         if (id == 0) {
             const std::string local_file = output + ".temp" + std::to_string(i);
-            std::ofstream out_stream("/home/robin/DarkHorse/Training/TrainData/" + local_file);
+            std::ofstream out_stream("/home/leagu/DarkHorse/Training/TrainData/" + local_file);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
             initialize(13199312313ull + 12412312314ull * i);

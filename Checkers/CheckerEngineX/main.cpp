@@ -32,52 +32,55 @@ inline Position posFromString(const std::string &pos) {
 //game-generation
 
 #include <Network.h>
-#include <iterator>
 #include <types.h>
+template<size_t size,typename Generator> constexpr auto get_lut1(Generator&& generator){
+	using Type = decltype(generator(0));
+	std::array<Type,size> result;
 
-/**/
+	for(auto i=0;i<size;++i){
+		result[i]=generator(i);
+	}
+	return result;
+};
+
+constexpr std::array<size_t,32>To64 = get_lut1<32>([](size_t index){auto row = index/4; return ((row&1)==0) ? 2*index+1 : 2*index;});
+
+
 int main(int argl, const char **argc) {
 
 
     initialize();
     Board board;
     use_classical(true);
-
     Statistics::mPicker.init();
- 
-/*      network.load("form_network7.weights");
+
+ /* 
+      network.load("form_network8.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-    network.init();  
- */
-   /*   TT.resize(21);
-    board = Position::get_start_position();   
-
-  /*   board.get_position().make_move(11, 15);
+    network.init();   
+  /* */ 
+/*           TT.resize(23);
+    board = Position::get_start_position();    
+    //board = Position::pos_from_fen("W:WK5,29:BK3,K4,K16");
+     
+    board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
-    board.get_position().make_move(23, 19);  */
-    //board = Position::pos_from_fen("B:WK29:BK4").get_color_flip(); 
-  /*   board.print_board();
-    std::cout<<board.get_position().get_fen_string()<<std::endl; */
-    //std::cout<<network.get_win_p(board.get_position())<<std::endl; 
- 
-   // board =Position::pos_from_fen("B:WK29:BK4");
-
-
-    //board.get_position().print_position();
+    board.get_position().make_move(23, 19); 
+    board.print_board(); 
+   
     
-    
-   /*   Move best;
+      Move best;
     searchValue(board, best, MAX_PLY, 100000000, true);
     board.make_move(best);
     board.print_board();
     MoveListe liste;
-    get_moves(board.get_position(), liste);     */
- 
-     
+    get_moves(board.get_position(), liste);   
+          
+          */
 
     std::string current;
     while (std::cin >> current) {

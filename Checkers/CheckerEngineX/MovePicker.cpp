@@ -144,16 +144,14 @@ namespace Statistics {
 
 
     void MovePicker::update_scores(Position pos, Move *liste, Move move, int depth) {
-        if (depth <= 2)
-            return;
         const int index = get_history_index(pos, move);
-        history[index] += depth * depth;
+        history[index] +=  depth;
         Move top = liste[0];
         while (top != move) {
             if (top == move)
                 break;
             top = *liste;
-            history[get_history_index(pos, top)] -= depth * depth;
+            history[get_history_index(pos, top)] -=  depth;
             liste++;
         }
     }

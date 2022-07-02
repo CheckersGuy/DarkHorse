@@ -40,11 +40,15 @@ public:
 
     bool is_repetition() const;
 
-    bool isRepetition2() const;
-
     Color get_mover() const;
 
     Board &operator=(Position pos);
+
+    size_t history_length()const;
+
+    Position history_at(size_t idx);
+
+
 };
 
 
