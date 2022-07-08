@@ -10,14 +10,16 @@
 #include "Position.h"
 #include "Network.h"
 #include "MoveListe.h"
-
+#include "Move.h"
 namespace Statistics {
     class MovePicker {
     private:
 
         std::array<int, 32 * 16> history{0};
         std::array<int, 32 * 16> bfScore{0};
+      
     public:
+        std::array<std::array<Move,2>,MAX_PLY> killer_moves;
         int get_move_score(Position pos, Move move, Depth depth);
 
         int get_history_index(Position pos, Move move);

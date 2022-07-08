@@ -9,7 +9,7 @@ std::optional<Move> Position::get_move(Position orig, Position next) {
     MoveListe liste;
     get_moves(orig, liste);
     for (auto m: liste) {
-        Position t;
+        Position t = orig;
         t.make_move(m);
         if (t == next) {
             return std::make_optional<Move>(m);

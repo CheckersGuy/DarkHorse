@@ -15,7 +15,7 @@ extern"C" int getmove
     //to be implemented
 
 	if(info & CB_RESET_MOVES){
-		debug<<"Reset moves"<<"\n";
+		//debug<<"Reset moves"<<"\n";
 		game_board = Board{};
 		game_board = Position::get_start_position();
 		TT.age_counter=0;
@@ -27,10 +27,7 @@ extern"C" int getmove
 		const auto cb_index = To64[i];
 		int row = cb_index/8;
 		int col = 7-cb_index%8;
-	
-		auto p_square = board[col][row];
-			debug<<"Row: "<<row<<" Col: "<<col<<" Value: "<<p_square<<"\n";
-
+		const auto p_square = board[col][row];
 		if((p_square==(CB_BLACK|CB_KING))){
 			temp.BP|=1u<<i;
 			temp.K|=1u<<i;
@@ -52,42 +49,38 @@ extern"C" int getmove
 		}
 	}
 	temp.color =(color == CB_BLACK)?BLACK : WHITE;
-	debug<<"\n";
-	std::string test;
-	test = temp.get_pos_string();
-
-	debug<<test;
 	//CheckerBoard Bug
-	int last_piece_count =last_position.piece_count();
-	const auto piece_count = temp.piece_count();
-
-	if(piece_count >last_piece_count){
-		//start of a new game
+		auto m = Position::get_move(game_board.get_position(),temp);
+		if(m.has_value()){
+			//debug<<"Move played by opponent"<<std::endl;
+			//debug<<"From: "<<m->get_from_index()<<" To: "<<m->get_to_index()<<std::endl;
+			game_board.play_move(m.value());
+		}else{
+			//debug<<"Reset move, because we didnt find it"<<std::endl;
+			
 		game_board = Board{};
 		game_board = temp;
 		TT.age_counter=0;
-	}else{
-		//just some temporary stuff to try things
-		auto move = Position::get_move(game_board.get_position(),temp);
-		game_board.make_move(move.value());
-	}
+		}
+	
+	
 
 		if(!engine_initialized){
-			debug<<"Initialized engine"<<std::endl;
+			//debug<<"Initialized engine"<<std::endl;
 			TT.resize(21);
+		init_tablebase(2000,6,debug);
 		initialize();
 		Statistics::mPicker.init();
 		engine_initialized=true;
 	}
-
-	const auto history_length = game_board.history_length();
-	const Position current = last_position;
-
 	uint32_t time_to_use = static_cast<int>(maxtime*1000);
-	debug<<"Time to use: " << time_to_use<<"\n";
+	//debug<<"Time to use: " << time_to_use<<"\n";
+	//debug<<"Fen: "<<game_board.get_position().get_fen_string()<<std::endl;
 	Move best;
-    auto value = searchValue(game_board, best, MAX_PLY, time_to_use, false);
-	game_board.make_move(best); 
+    auto value = searchValue(game_board, best, MAX_PLY, time_to_use, true,debug);
+	//debug<<"\n";
+	//debug<<"Found the move: "<<" From: "<<best.get_from_index()<< " To: "<<best.get_to_index()<<std::endl;
+	game_board.play_move(best); 
 
 /* 	MoveListe liste;
 	get_moves(game_board.get_position(),liste);
@@ -121,15 +114,14 @@ extern"C" int getmove
 			board[col][row]=CB_FREE;
 		}
 	}
-	debug<<"Position after we moved"<<"\n";
-	debug<<game_board.get_position().get_pos_string();
-	if(value>10000){
-		return CB_WIN;
-	}else if(value<-10000){
-		return CB_LOSS;
-	}
-	return CB_UNKNOWN;
+	//debug<<"Position after we moved"<<"\n";
+	//debug<<game_board.get_position().get_pos_string();
 
+	if(isMateVal(value)){
+		return (value<0)?CB_LOSS : CB_WIN;
+	}
+	last_position = game_board.get_position();
+	return CB_UNKNOWN;
 }
 
 int enginecommand(char str[256], char reply[1024]){
@@ -154,7 +146,7 @@ int enginecommand(char str[256], char reply[1024]){
 
 	if (strcmp(command, "staticevaluation") == 0) {
 		Move best;
-		auto value = searchValue(game_board,best, 0, 100000000, true);
+		//auto value = searchValue(game_board,best, 0, 100000000, true,);
 		//static_eval(param1, reply);
 		return(1);
 	}

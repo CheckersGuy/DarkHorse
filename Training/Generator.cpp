@@ -118,11 +118,11 @@ void Generator::start() {
                         break;
                     }
                     if (liste.length() == 1) {
-                        board.make_move(liste[0]);
+                        board.play_move(liste[0]);
                     } else {
                         Move best;
-                        auto value = searchValue(board, best, MAX_PLY, time_control, false);
-                        board.make_move(best);
+                        auto value = searchValue(board, best, MAX_PLY, time_control, false,std::cout);
+                        board.play_move(best);
 
                     }
                     game.add_position(board.get_position());

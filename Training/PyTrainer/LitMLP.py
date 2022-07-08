@@ -274,7 +274,7 @@ class ConvNet(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network8.weights"):
+    def __init__(self, hidden, output="form_network9.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output

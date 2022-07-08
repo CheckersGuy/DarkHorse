@@ -6,7 +6,6 @@
 #define CHECKERSTEST_MOVE_H
 #include "types.h"
 #include "Bits.h"
-
 struct Move {
     uint32_t from{0u};
     uint32_t to{0u};
@@ -25,6 +24,9 @@ struct Move {
     uint32_t get_to_index() const;
 
     bool is_promotion(const uint32_t kings);
+
+    //current is the position before making the move
+    bool is_pawn_move(const uint32_t kings);
 
 };
 

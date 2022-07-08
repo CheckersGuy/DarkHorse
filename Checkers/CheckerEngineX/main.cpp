@@ -33,17 +33,6 @@ inline Position posFromString(const std::string &pos) {
 
 #include <Network.h>
 #include <types.h>
-template<size_t size,typename Generator> constexpr auto get_lut1(Generator&& generator){
-	using Type = decltype(generator(0));
-	std::array<Type,size> result;
-
-	for(auto i=0;i<size;++i){
-		result[i]=generator(i);
-	}
-	return result;
-};
-
-constexpr std::array<size_t,32>To64 = get_lut1<32>([](size_t index){auto row = index/4; return ((row&1)==0) ? 2*index+1 : 2*index;});
 
 
 int main(int argl, const char **argc) {
@@ -53,35 +42,38 @@ int main(int argl, const char **argc) {
     Board board;
     use_classical(false);
     Statistics::mPicker.init();
-
   
-      network.load("form_network8.weights");
+     network.load("form_network9.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-    network.init();   
-
-           TT.resize(23);
+    network.init();    
+   
+      
+    //init_tablebase(2000,6,std::cout);
+   
+    TT.resize(21);
     board = Position::get_start_position();    
-    //board = Position::pos_from_fen("W:WK5,29:BK3,K4,K16");
-     
-    board.get_position().make_move(11, 15);
+    //board = Position::pos_from_fen("W:W5:B4,3");
+    board.print_board();
+      
+     board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19); 
     board.print_board(); 
-   
-    
+          
+         
       Move best;
-    searchValue(board, best, MAX_PLY, 100000000, true);
-    board.make_move(best);
+    searchValue(board, best, MAX_PLY, 100000000, true,std::cout);
+    board.play_move(best);
     board.print_board();
     MoveListe liste;
-    get_moves(board.get_position(), liste);   
-          
-          
-
+    get_moves(board.get_position(), liste);       
+            
+         
+ 
     std::string current;
     while (std::cin >> current) {
         if (current == "init") {
@@ -118,16 +110,14 @@ int main(int argl, const char **argc) {
             for (auto i = 2; i < squares.size(); ++i) {
                 move.captures |= 1u << squares[i];
             }
-            board.make_move(move);
+            //board.make_move(move);
+            board.play_move(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
             std::string time_string;
             std::cin >> time_string;
             Move bestMove;
-
-            MoveListe liste;
-            get_moves(board.get_position(), liste);
-            searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false);
+            searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false,std::cout);
             std::cout << "new_move" << "\n";
             std::cout << std::to_string(bestMove.get_from_index()) << "\n";
             std::cout << std::to_string(bestMove.get_to_index()) << "\n";
@@ -137,7 +127,8 @@ int main(int argl, const char **argc) {
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
-            board.make_move(bestMove);
+            //board.make_move(bestMove);
+             board.play_move(bestMove);
         } else if (current == "terminate") {
             //terminating the program
             break;
