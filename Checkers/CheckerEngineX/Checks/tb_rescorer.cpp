@@ -221,8 +221,8 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/test50.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/test50formatted.train");
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/testfixhash.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/testfixhashformatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);

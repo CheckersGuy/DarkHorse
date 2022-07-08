@@ -38,9 +38,9 @@ if __name__ == "__main__":
     model = LitMLP.Network([120, 256, 32, 32, 1])
     #model = LitMLP.ResNet()
 
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/test50formatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/testfixhashformatted.train",
                                        val_data="../TrainData/smalldataset7.train",
-                                       batch_size=32000, buffer_size=30000000, p_range=[6, 24],
+                                       batch_size=32000, buffer_size=10000000, p_range=[6, 24],
                                        input_format=model.input_format)
 
     # val_loader =  data_loader.val_dataloader()
@@ -49,4 +49,4 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{mediumnet}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader,ckpt_path="mediumnet=0-v1.ckpt")
+    trainer.fit(model, data_loader)

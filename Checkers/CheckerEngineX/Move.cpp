@@ -3,6 +3,10 @@
 //
 #include "Move.h"
 
+bool Move::is_pawn_move(const uint32_t kings){
+    return (from & kings)==0;
+}
+
 bool Move::is_capture() const {
     return captures != 0u;
 }

@@ -247,6 +247,11 @@ inline bool GameIterator::operator!=(GameIterator &other) const {
 template<typename Iterator>
 inline void merge_training_data(Iterator begin, Iterator end, std::string output) {
     std::ofstream stream_out(output, std::ios::app | std::ios::binary);
+    std::cout<<"Merging files"<<std::endl;
+    if(!stream_out.good()){
+        std::cerr<<"Could not merge files"<<std::endl;
+        std::exit(-1);
+    }
     for (auto it = begin; it != end; ++it) {
         auto file_input = *it;
         std::ifstream stream(file_input.c_str());

@@ -11,7 +11,7 @@
 #include <Util/LRUCache.h>
 #include <Util/Compress.h>
 #include <regex>
-
+#include <algorithm>
 int main() {
 
 
@@ -111,35 +111,52 @@ int main() {
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
     std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
 
-*/
-
-    Generator generator("train4.pos", "test50.train");
+/* */
+ 
+    Generator generator("train4.pos", "testfixhash.train");
     generator.set_hash_size(20);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(95);
-    generator.set_time(50);
+    generator.set_parallelism(14);
+    generator.set_time(10);
     generator.set_piece_limit(6);
     generator.set_max_position(1500000ull);
-    generator.start();  
+    generator.start();    
  
   //may be something wrong with the dataloader
-     Match engine_match("lekotest", "newtry");
+    /*   Match engine_match("11man", "newtryx");
      engine_match.setTime(100);
      engine_match.setMaxGames(30000);
-     engine_match.setNumThreads(5);
+     engine_match.setNumThreads(12);
      engine_match.setHashSize(20);
-     engine_match.start();         
-                                
+     engine_match.start();            
+                                   */      
+ 
 
-      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train");
+      //counting training games to do my other test
+/*       std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/11manformatted.train");
+      std::istream_iterator<Game> begin(stream);
+      std::istream_iterator<Game> end;
+
+      size_t counter =0;
+
+      std::for_each(begin,end,[&](Game game){counter++;});
+      std::cout<<"Count: "<<counter<<std::endl;
+      create_subset("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train","/home/leagu/DarkHorse/Training/TrainData/compareto11.train",counter);
+
+      return 0;
+      
+  */
+
+     
+      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/testfixhashformatted.train");
       trainer.set_learning_rate(1);
       trainer.set_train_file_locat("trainer.state");
       
       trainer.set_weight_decay(0);
-      trainer.set_decay(0.04);
-      trainer.set_weights_path("newtry7.weights");
+      trainer.set_decay(0.08);
+      trainer.set_weights_path("11man.weights");
       trainer.set_savepoint_step(10000000);
-      trainer.set_epochs(100);
+      trainer.set_epochs(1000);
       trainer.set_c_value(2.24e-2);
       //trainer.load_trainer_state("trainer.state");
       trainer.start_tune();    

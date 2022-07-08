@@ -75,23 +75,30 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
 constexpr int prob_cut = 30;
 constexpr int sing_ext = 30;
-constexpr int asp_wind = 10;
+constexpr int asp_wind = 20;
 constexpr int MAX_ASP = 200;
+
+constexpr int MAX_KILLERS =2;
+constexpr std::array<int,14> LMR_TABLE = {1,1,1,1,1,1,1,1,2,2,2,2,2,2};
 
 
 using Depth = int;
 using Ply = int;
 using Value = int;
 
-
-enum Score : int {
-    INFINITE = 15000000,
-    EVAL_INFINITE = INFINITE - 100000,
-};
 enum SEARCH : int {
     MAX_PLY = 256
 };
-enum Color : int {
+enum Score : int {
+    INFINITE = 1500000,
+    EVAL_INFINITE = INFINITE - 100000,
+    MATE_IN_MAX_PLY = INFINITE-MAX_PLY,
+    MATED_IN_MAX_PLY =-INFINITE+MAX_PLY,
+    TB_WIN = 150000,
+    TB_LOSS = -150000
+};
+
+enum Color : char {
     BLACK = -1, WHITE = 1
 };
 enum PieceType : uint8_t {
@@ -110,7 +117,7 @@ inline bool isEval(Value val) {
 }
 
 inline bool isMateVal(Value val) {
-    return std::abs(val) >= EVAL_INFINITE && std::abs(val) < INFINITE;
+    return std::abs(val) > MATE_IN_MAX_PLY;
 }
 
 

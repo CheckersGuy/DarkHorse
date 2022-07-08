@@ -6,6 +6,11 @@
 #define CHECKERSTEST_GAMELOGIC_H
 
 
+#ifdef USE_DB
+#include "egdb.h"
+#endif
+
+
 #include "Board.h"
 #include "MGenerator.h"
 #include <chrono>
@@ -32,17 +37,17 @@ extern SearchGlobal glob;
 struct Local {
     Value alpha, beta;
     Value best_score{-INFINITE};
-    Value sing_score;
     Depth depth;
     Ply ply;
     int i;
-    Move skip_move;
-    Move sing_move;
+    Move previous;
     Move move;
 };
 
 void use_classical(bool flag);
-
+#ifdef USE_DB
+void init_tablebase(int db_cache,int max_pieces,std::ostream& stream);
+#endif
 Value alphaBeta(Board &board, Line &line, Ply ply, Depth depth, Value alpha, Value beta, bool in_pv);
 
 Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
@@ -59,21 +64,21 @@ namespace Search {
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
-    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth, Move skip_move);
+    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev);
 
-    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste);
+    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev);
 
-    Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth);
+    Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev);
 
-    Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension);
+    Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev);
 
     Depth reduce(Local &local, Board &board, Move, bool in_pv);
 
 }
 
-Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print);
+Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,std::ostream&stream);
 
-Value searchValue(Board &board, int depth, uint32_t time, bool print);
+
 
 void initialize();
 
