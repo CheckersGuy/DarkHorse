@@ -91,7 +91,7 @@ std::optional<int> get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *hand
 #endif
 
 void initialize(uint64_t seed) {
-    gameWeights.load_weights<uint32_t>("11man.weights");
+    gameWeights.load_weights<uint32_t>("olddata2.weights");
     Zobrist::init_zobrist_keys(seed);
    
 }
