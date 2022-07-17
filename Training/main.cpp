@@ -15,14 +15,13 @@
 #include "Util/Book.h"
 int main() {
 
-/*  
- 
-     merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
-    auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
+
+   merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
+  auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
    std::cout<<"Unique Positions so far: "<<count.first<<std::endl;
    std::cout<<"Total Positions so far: "<<count.second<<std::endl; 
    
-  */
+  
 /*
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
     std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
