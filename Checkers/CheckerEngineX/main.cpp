@@ -36,45 +36,40 @@ inline Position posFromString(const std::string &pos) {
 
 
 int main(int argl, const char **argc) {
-
-
     initialize();
     Board board;
-    use_classical(false);
-    Statistics::mPicker.init();
-  
-     network.load("form_network9.weights");
+    use_classical(true);
+   
+    
+    /*   network.load("form_network13.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
-    network.init();    
-   
+    network.init() */;    
       
     //init_tablebase(2000,6,std::cout);
-   
-    TT.resize(21);
+     
+/*        TT.resize(21);
     board = Position::get_start_position();    
-    //board = Position::pos_from_fen("W:W5:B4,3");
-    board.print_board();
-      
-     board.get_position().make_move(11, 15);
+    //board = Position::pos_from_fen("W:W9,29:BK3,K6,K12");
+          
+       board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19); 
-    board.print_board(); 
-          
+    board.print_board();    
+             
          
-      Move best;
+    Move best;
     searchValue(board, best, MAX_PLY, 100000000, true,std::cout);
     board.play_move(best);
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);       
-            
-         
- 
-    std::string current;
+                   
+    */
+    std::string current; 
     while (std::cin >> current) {
         if (current == "init") {
             TT.age_counter = 0u;

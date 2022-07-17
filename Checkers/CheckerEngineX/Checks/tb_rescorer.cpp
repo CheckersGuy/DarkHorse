@@ -141,7 +141,7 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
     game.result = result;
     //result may still be unknown
 
-    for (auto i = 0; i < game.num_indices; ++i) {
+    for (auto i = 0; i < game.indices.size(); ++i) {
         Game::encode_result(game.indices[i], game.result);
     }
     //there may be an easier way to do this
@@ -152,11 +152,11 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 
     auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
 
-    for (auto i = 0; i <game.num_indices; ++i) {
+    for (auto i = 0; i <game.indices.size(); ++i) {
         Sample s = rescored_samples[i];
         Game::encode_result(game.indices[i], s.result);
     }
-    Sample last = rescored_samples[game.num_indices];
+    Sample last = rescored_samples[game.indices.size()];
     game.result = last.result;
 
     std::vector<Sample> check_samples;
@@ -221,8 +221,8 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/testfixhash.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/testfixhashformatted.train");
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird4formatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);

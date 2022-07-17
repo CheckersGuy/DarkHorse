@@ -15,7 +15,6 @@ class Board {
 
 public:
     std::array<Position, MAX_PLY+600> pStack;
-    std::array<Move,MAX_PLY+600> moveStack;
 public:
     int last_non_rev{0};
     int pCounter = 0;
@@ -28,7 +27,7 @@ public:
 
     void make_move(Move move);
 
-    void undo_move(Move move);
+    void undo_move();
 
     bool is_silent_position();
 

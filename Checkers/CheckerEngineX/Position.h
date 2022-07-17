@@ -163,6 +163,8 @@ struct Position {
 
     bool is_legal() const;
 
+    bool has_any_move()const;
+
     void make_move(Move move);
 
     void make_move(uint32_t from_index, uint32_t to_index);

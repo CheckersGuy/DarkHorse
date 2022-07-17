@@ -12,157 +12,54 @@
 #include <Util/Compress.h>
 #include <regex>
 #include <algorithm>
+#include "Util/Book.h"
 int main() {
 
-
-
-
-    //testing new policy format
-
-/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/medium.train");
-    if(!stream.good())
-        std::exit(-1);
-
-    std::istream_iterator<Game> begin(stream);
-    std::istream_iterator<Game>end;
-    std::vector<Game> games;
-    std::copy(begin,end,std::back_inserter(games));
-    size_t counter  =0;
-    std::cout<<"Start"<<std::endl;
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::for_each(games.begin(),games.end(),[&](Game game){
-        for(auto pos : game){
-            counter++;
-        }
-    });
-   auto t2 = std::chrono::high_resolution_clock::now();
-   auto dur = (t2-t1).count();
-   std::cout<<"Duration: "<<(dur/1000000)<<std::endl;
-   std::cout<<"Counter: "<<counter<<std::endl; */
-
-    //initialize();
-
-    //use_classical(true);
-
-    /*   std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/endgame_shuffle.train", std::ios::binary);
-       std::ofstream stream_out("/home/robin/DarkHorse/Training/TrainData/endgame.train",std::ios::binary);
-       std::istream_iterator<Sample> begin(stream);
-       std::istream_iterator<Sample> end{};
-   */
-    /*   std::for_each(begin, end, [](Sample s) {
-           int result = static_cast<int>(s.result);
-           if(result == -1){
-              s.result = BLACK_WON;
-           }else if(result ==1){
-               s.result = WHITE_WON;
-           }else if(result ==0){
-               s.result = DRAW;
-           }else{
-               s.result = UNKNOWN;
-           }
-           std::cout << result << std::endl;
-       });
-       */
-    /*  std::transform(begin,end,std::ostream_iterator<Sample>(stream_out),[](Sample s){
-          int result = static_cast<int>(s.result);
-          Sample copy = s;
-          if(result == -1){
-              copy.result = BLACK_WON;
-          }else if(result ==1){
-              copy.result = WHITE_WON;
-          }else if(result ==0){
-              copy.result = DRAW;
-          }else{
-              copy.result = UNKNOWN;
-          }
-          return copy;
-          });
-
+/*  
+ 
+     merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
+    auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
+   std::cout<<"Unique Positions so far: "<<count.first<<std::endl;
+   std::cout<<"Total Positions so far: "<<count.second<<std::endl; 
+   
   */
-
-
-    /*   merge_files<Sample>({"/home/robin/DarkHorse/Training/TrainData/bigopenset.train",
-                            "/home/robin/DarkHorse/Training/TrainData/endgame.train"},
-                           "/home/robin/DarkHorse/Training/TrainData/patt.train");
-
-   */
-
-
-    /*   std::ifstream stream("/home/robin/DarkHorse/Training/TrainData/patt.train", std::ios::binary);
-       std::ofstream ostream("/home/robin/DarkHorse/Training/TrainData/patt_val.train", std::ios::binary);
-       std::istream_iterator<Sample> begin(stream);
-       std::istream_iterator<Sample> end;
-       std::copy_n(begin,100000000, std::ostream_iterator<Sample>(ostream));
-
-       return 0;*/
-
-
-
-
-
-
-
-
-   merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
-
-
-
 /*
     auto result = count_unique_positions("/home/robin/DarkHorse/Training/TrainData/large.train");
     std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
 
-/* */
- 
-    Generator generator("train4.pos", "testfixhash.train");
-    generator.set_hash_size(20);
+/* */   
+/*      Generator generator("train.pos", "weird4.train");
+    generator.set_hash_size(21);
     generator.set_buffer_clear_count(1000);
     generator.set_parallelism(14);
-    generator.set_time(10);
+    generator.set_time(30);
     generator.set_piece_limit(6);
-    generator.set_max_position(1500000ull);
-    generator.start();    
- 
-  //may be something wrong with the dataloader
-    /*   Match engine_match("11man", "newtryx");
-     engine_match.setTime(100);
+    generator.set_max_position(150000000ull);
+    generator.start();    */
+              
+    
+    //Book::create_train_file("/home/leagu/DarkHorse/Training/Positions/11manballots.pos","/home/leagu/DarkHorse/Training/Positions/train.pos",3);
+  
+      Match engine_match("test7sgd", "newtryx");
+     engine_match.setTime(30);
      engine_match.setMaxGames(30000);
      engine_match.setNumThreads(12);
      engine_match.setHashSize(20);
-     engine_match.start();            
-                                   */      
- 
-
-      //counting training games to do my other test
-/*       std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/11manformatted.train");
-      std::istream_iterator<Game> begin(stream);
-      std::istream_iterator<Game> end;
-
-      size_t counter =0;
-
-      std::for_each(begin,end,[&](Game game){counter++;});
-      std::cout<<"Count: "<<counter<<std::endl;
-      create_subset("/home/leagu/DarkHorse/Training/TrainData/verylargexxxx.train","/home/leagu/DarkHorse/Training/TrainData/compareto11.train",counter);
-
-      return 0;
-      
-  */
-
-     
-      Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/testfixhashformatted.train");
-      trainer.set_learning_rate(1);
+     engine_match.start();         
+                       
+  
+       Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/weird4formatted.train");
+      trainer.set_learning_rate(6000);
       trainer.set_train_file_locat("trainer.state");
       
       trainer.set_weight_decay(0);
       trainer.set_decay(0.08);
-      trainer.set_weights_path("11man.weights");
+      trainer.set_weights_path("test7bla.weights");
       trainer.set_savepoint_step(10000000);
       trainer.set_epochs(1000);
       trainer.set_c_value(2.24e-2);
       //trainer.load_trainer_state("trainer.state");
       trainer.start_tune();    
-      // 0.192231
-
-
 
 /*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/medium.train");
     Game g;

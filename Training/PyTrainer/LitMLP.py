@@ -274,7 +274,7 @@ class ConvNet(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network9.weights"):
+    def __init__(self, hidden, output="form_network13.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -297,7 +297,7 @@ class Network(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3)
+        optimizer = Ranger(self.parameters())
         return optimizer
 
     def training_step(self, train_batch, batch_idx):
@@ -389,7 +389,7 @@ class PolicyNetwork(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
         out = self.forward(x)
-        loss = self.criterion(out, move.squeeze())
+        loss = F.cross_entropy(out, move.squeeze(dim=1))
         tensorboard_logs = {"avg_val_loss": loss}
         acc = self.accuracy(out, move.squeeze())
         self.log('train_acc_step', acc, prog_bar=True)

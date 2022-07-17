@@ -66,6 +66,7 @@ extern"C" int getmove
 	
 
 		if(!engine_initialized){
+			  use_classical(true);
 			//debug<<"Initialized engine"<<std::endl;
 			TT.resize(21);
 		init_tablebase(2000,6,debug);

@@ -29,6 +29,8 @@ public:
 
     void put_front(Move other);
 
+    void put_front(int start_index,int move_index);
+
     void remove(Move move);
 
     void reset();
@@ -58,6 +60,7 @@ public:
     };
 
 
+
 };
 
 inline bool MoveListe::is_empty() const {
@@ -79,6 +82,7 @@ inline void MoveListe::add_move(Move next) {
 inline int MoveListe::length() const {
     return moveCounter;
 }
+
 
 
 #endif //CHECKERSTEST_MOVELISTE_H

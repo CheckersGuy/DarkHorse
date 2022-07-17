@@ -40,7 +40,7 @@ struct Local {
     Depth depth;
     Ply ply;
     int i;
-    Move previous;
+    Move tt_move;
     Move move;
 };
 

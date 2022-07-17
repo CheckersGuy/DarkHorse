@@ -49,7 +49,6 @@ public:
         std::istream_iterator<Position> begin(stream);
         std::istream_iterator<Position> end;
         std::copy(begin, end, std::back_inserter(openings));
-
         std::cout << "Size: " << openings.size() << std::endl;
     }
 

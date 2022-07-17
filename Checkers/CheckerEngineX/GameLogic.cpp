@@ -91,9 +91,9 @@ std::optional<int> get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *hand
 #endif
 
 void initialize(uint64_t seed) {
-    gameWeights.load_weights<uint32_t>("olddata2.weights");
+    Statistics::mPicker.init();
+    gameWeights.load_weights<uint32_t>("test7sgd.weights");
     Zobrist::init_zobrist_keys(seed);
-   
 }
 
 
@@ -184,22 +184,17 @@ namespace Search {
         if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
             throw std::string{"Time_out"};
         }
-
-        if (ply > 0 && board.is_repetition()) {
-           /*  const int check = nodeCounter&1;;
-            return 2*check-1; */
+        //check again if repetition2 = repetition1
+        if (ply > 0 && board.is_repetition2(last_rev)) {
             return 0;
         }
 
         MoveListe liste;
 
-        get_moves(board.get_position(), liste);
-
-
-        if (liste.is_empty()) {
+       
+        if (!board.get_position().has_any_move()) {
             return loss(ply);
         }
-
 
         if (depth <= 0) {
             return Search::qs(in_pv,board, pv, alpha, beta, ply, depth,last_rev);
@@ -284,19 +279,17 @@ namespace Search {
 
 
 
+         get_moves(board.get_position(), liste);
 
         int start_index = 0;
-        if (in_pv && ply < mainPV.length()) {
-            liste.put_front(mainPV[ply]);
+        if (in_pv && local.ply < mainPV.length()) {
+            liste.put_front(mainPV[local.ply]);
             start_index = 1;
         }
 
+        liste.sort(board.get_position(), local.depth, local.ply, info.tt_move, start_index);
 
-
-
-        //sorting
-        liste.sort(board.get_position(), depth, ply, tt_move, start_index);
-
+    
         //move-loop
         Search::move_loop(in_pv, local, board, pv, liste,last_rev);
 
@@ -367,7 +360,7 @@ namespace Search {
             board.make_move(move);
             Value value = -Search::qs(((i == 0) ? in_pv : false), board, localPV, -beta, -std::max(alpha, bestValue),
                                       ply + 1, depth - 1,last_rev);
-            board.undo_move(move);
+            board.undo_move();
             if (value > bestValue) {
                 bestValue = value;
                 if (value >= beta)
@@ -391,11 +384,6 @@ namespace Search {
 
         if(move.is_capture() || move.is_pawn_move(board.get_position().K)){
             last_rev = board.pCounter;
-       /*      board.get_position().print_position();
-            Position temp = board.get_position();
-            temp.make_move(move);
-            temp.print_position();
-            std::cout<<"\n\n\n"; */
         }
 
         board.make_move(move);
@@ -428,19 +416,20 @@ namespace Search {
             }
 
         }
-        board.undo_move(move);
+        board.undo_move();
         return val;
 
     }
 
     void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev) {
-        local.i = 0;
+
         const auto num_moves = liste.length();
         const bool has_captures = board.get_position().has_jumps();
         int extension =has_captures && (in_pv || (local.ply>1 && board.previous().has_jumps(board.previous().get_color())));
+        local.i = 0;
 
         while (local.best_score < local.beta && local.i < num_moves) {
-            Move move = liste[local.i];
+                Move move = liste[local.i];
                 Line local_pv;
                 Value value = searchMove(((local.i == 0) ? in_pv : false), move, local, board, local_pv, extension,last_rev);
                 if (value > local.best_score) {
@@ -451,13 +440,13 @@ namespace Search {
 
             local.i++;
         }
-        if(local.best_score>=local.beta && !local.move.is_capture() && !local.move.is_empty()){
+    /*     if(local.best_score>=local.beta && !local.move.is_capture() && !local.move.is_empty()){
             for(auto i=1;i<MAX_KILLERS;++i){
                  Statistics::mPicker.killer_moves[local.ply][i] =  Statistics::mPicker.killer_moves[local.ply][i-1];
             }
 
             Statistics::mPicker.killer_moves[local.ply][0]=local.move;
-        }
+        } */
 
     }
 
@@ -490,10 +479,6 @@ namespace Search {
         int start_index = 1;
 
         liste.sort(board.get_position(), local.depth, local.ply, Move{}, start_index);
-
-#ifdef TRAIN
-        std::shuffle(liste.begin(), liste.end(), Zobrist::generator);
-#endif
 
 
         move_loop(true, local, board, line, liste,board.last_non_rev);
