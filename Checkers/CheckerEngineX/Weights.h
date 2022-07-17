@@ -51,6 +51,11 @@ struct Weights {
     template<typename RunType=uint32_t>
     void load_weights(std::ifstream &stream) {
         static_assert(std::is_unsigned<RunType>::value);
+
+            if(!stream.good()){
+            std::cerr<<"Could not load the weights"<<std::endl;
+            std::exit(-1);
+        }
         if (!stream.good()) {
             std::cerr << "Error could not load the weights" << std::endl;
             return;

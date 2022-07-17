@@ -64,8 +64,12 @@ public:
         //loading the game
         std::istream_iterator<Game> begin(stream);
         std::istream_iterator<Game>end;
+        std::cout<<"Loading games"<<std::endl;
         std::copy(begin,end,std::back_inserter(games));
+        std::cout<<"Done loading games"<<std::endl;
         std::shuffle(games.begin(),games.end(),generator);
+        std::cout<<"Done shuffling"<<std::endl;
+        std::cout<<"Memory for games: "<<(games.capacity()*sizeof(Game)/1000000)<<std::endl;
         num_samples = count_trainable_positions(file_path, range);
                 std::cout<<"loading"<<std::endl;
         this->buffer_size = std::min(num_samples, buff_size);

@@ -14,7 +14,7 @@
 namespace Statistics {
     class MovePicker {
     private:
-
+      
         std::array<int, 32 * 16> history{0};
         std::array<int, 32 * 16> bfScore{0};
       
@@ -29,7 +29,7 @@ namespace Statistics {
         void clear_scores();
 
         void update_scores(Position pos, Move *list, Move move, int depth);
-
+        
         static int get_move_encoding(Color color, Move move);
 
         void init();

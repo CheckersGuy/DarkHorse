@@ -9,16 +9,9 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-/* 	
-        policy.load("verypolicy.weights");
-        policy.addLayer(Layer{120, 256});
-        policy.addLayer(Layer{256, 32});
-        policy.addLayer(Layer{32, 32});
-        policy.addLayer(Layer{32, 100});
 
-        policy.init(); */
-	
     }
+
 
     int MovePicker::get_move_encoding(Color color, Move move) {
 
@@ -131,8 +124,7 @@ namespace Statistics {
            const int index = get_history_index(pos, move);
             const int score = history[index];
             const int bf_score = bfScore[index] + 1;
-            return score; 
-            //auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
+           //auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
 
         return std::clamp(score, -max_history,max_history);
     }
@@ -143,10 +135,10 @@ namespace Statistics {
         }
 
         //trying out one killer move first
-                if(move == killer_moves[ply][0] || move == killer_moves[ply][1]){
+         /*         if(move == killer_moves[ply][0] || move == killer_moves[ply][1]){
             return std::numeric_limits<int16_t>::max()-1000;
         }  
-       
+         */
         if (move.is_capture()) {
             return (int) Bits::pop_count(move.captures);
         }

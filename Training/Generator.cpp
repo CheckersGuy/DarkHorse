@@ -71,7 +71,6 @@ void Generator::start() {
             std::ofstream out_stream("/home/leagu/DarkHorse/Training/TrainData/" + local_file);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
-            initialize(13199312313ull + 12412312314ull * i);
             use_classical(true);
 
             TT.resize(hash_size);
@@ -86,22 +85,19 @@ void Generator::start() {
                 std::mt19937_64 generator(seed);
                 std::uniform_int_distribution<size_t>distrib(0,openings.size());
                 const size_t rand_index = distrib(generator);
-                std::cout<<"Chosen opening: "<<rand_index<<std::endl;
                 Position opening = openings[rand_index];
                 Board board;
                 board = opening;
                 TT.clear();
                 Zobrist::init_zobrist_keys(seed);
-
-                game.add_position(board.get_position());
+                
                 for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
-
+                    game.add_position(board.get_position());
 
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.get_last_position());
-
                     if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
@@ -123,10 +119,7 @@ void Generator::start() {
                         Move best;
                         auto value = searchValue(board, best, MAX_PLY, time_control, false,std::cout);
                         board.play_move(best);
-
                     }
-                    game.add_position(board.get_position());
-
                     const Position p = board.get_position();
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
                         game_buffer.emplace_back(game);

@@ -255,6 +255,7 @@ void Match::start() {
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     std::cout << "Engine1: " << first << std::endl;
     std::cout << "Engine2: " << second << std::endl;
+    
     Zobrist::init_zobrist_keys();
     const int numEngines = 2;
     const int num_matches = this->threads;
@@ -278,7 +279,8 @@ void Match::start() {
         engine2.setHashSize(hash_size);
         interfaces.emplace_back(Interface{engine, engine2});
     }
-
+    auto& first = interfaces.front();
+    std::cout<<"Time: "<<first.engines[0].time_move<<" "<<first.engines[1].time_move<<std::endl;
 
     pid_t pid;
     for (int p = 0; p < num_matches; ++p) {

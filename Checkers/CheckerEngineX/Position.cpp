@@ -239,6 +239,11 @@ Color Position::get_color() const {
     return color;
 }
 
+bool Position::has_any_move() const{
+    uint32_t movers =(color == BLACK)?get_movers<BLACK>() : get_movers<WHITE>();
+    return  (movers !=0)||has_jumps(color);
+}
+
 uint32_t Position::piece_count()const {
     return Bits::pop_count(WP | BP);
 }

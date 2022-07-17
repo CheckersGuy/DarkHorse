@@ -37,8 +37,7 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
     model = LitMLP.Network([120, 256, 32, 32, 1])
     #model = LitMLP.ResNet()
-
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/testfixhashformatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/weird4formatted.train",
                                        val_data="../TrainData/smalldataset7.train",
                                        batch_size=32000, buffer_size=10000000, p_range=[6, 24],
                                        input_format=model.input_format)

@@ -14,7 +14,6 @@ size_t Board::history_length()const{
 
 Board::Board(const Board &other) {
     std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
-    std::copy(other.moveStack.begin(), other.moveStack.end(), moveStack.begin());
     this->pCounter = other.pCounter;
 }
 
@@ -35,12 +34,11 @@ void Board::play_move(Move move){
 void Board::make_move(Move move) {
     pStack[pCounter + 1] = pStack[pCounter];
     this->pCounter++;
-    moveStack[pCounter] = move;
     Zobrist::update_zobrist_keys(get_position(), move);
     pStack[pCounter].make_move(move);
 }
 
-void Board::undo_move(Move move) {
+void Board::undo_move() {
     this->pCounter--;
 }
 
@@ -85,24 +83,7 @@ bool Board::is_repetition2(int last_rev)const{
 }
 
 bool Board::is_repetition() const {
-    int counter = 0;
-    const Position check = pStack[pCounter];
-    for (int i = pCounter-2; i >= 0; i -= 2) {
-
-        if (pStack[i] == check) {
-            counter++;
-        }
-        if (counter >= 1)
-            return true;
-
-        if ((moveStack[i].to & pStack[i].K) == 0)
-            return false;
-
-        if (moveStack[i].is_capture()) {
-            return false;
-        }
-    }
-
+ 
     return false;
 }
 

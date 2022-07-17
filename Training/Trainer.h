@@ -47,7 +47,7 @@ public:
     Trainer(const std::string &data_path) : cValue(1.0),
                                             learningRate(0.1), last_loss_value(std::numeric_limits<double>::max()),
                                             l2Reg(0.05), generator(std::mt19937_64(231231241ull)),
-                                            pos_streamer(PosStreamer(data_path, 2000000)) {
+                                            pos_streamer(PosStreamer(data_path, 10000000)) {
         const size_t MAX_SIZE = SIZE + (2u + 16u * 7u + 4);
         momentums = std::make_unique<double[]>(MAX_SIZE);
         pos_streamer.set_input_format(InputFormat::PATTERN);

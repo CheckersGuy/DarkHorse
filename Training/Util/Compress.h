@@ -13,6 +13,7 @@
 #include <filesystem>
 #include  "../BloomFilter.h"
 #include <map>
+#include <vector>
 
 struct Game;
 
@@ -66,8 +67,7 @@ struct GameIterator {
 
 struct Game {
     Position start_position;
-    std::array<uint8_t, 600> indices;
-    uint16_t num_indices{0};
+    std::vector<uint8_t>indices;
     Result result{Result::UNKNOWN};
 
     Game(const Position start_position) : start_position(start_position) {
@@ -76,7 +76,8 @@ struct Game {
     Game() = default;
 
     void add_move(uint8_t move_index) {
-        Game::encode_move(indices[num_indices++], move_index);
+        uint8_t encoding =0;
+        Game::encode_move(encoding, move_index); 
     }
 
 
@@ -101,7 +102,9 @@ struct Game {
             Position t = x;
             t.make_move(liste[i]);
             if (t == pos) {
-                Game::encode_move(indices[num_indices++], i);
+                uint8_t encoding =0;
+                Game::encode_move(encoding, i);
+                indices.emplace_back(encoding);
                 break;
             }
         }
@@ -111,18 +114,21 @@ struct Game {
 
     friend std::istream &operator>>(std::istream &stream, Game &game) {
         stream >> game.start_position;
-        stream.read((char *) &game.num_indices, sizeof(uint16_t));
+        uint16_t num_indices;
+        stream.read((char *) &num_indices, sizeof(uint16_t));
         stream.read((char *) &game.result, sizeof(Result));
-        stream.read((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
+        game.indices = std::vector<uint8_t>(num_indices);
+        stream.read((char *) &game.indices[0], sizeof(uint8_t) * num_indices);
         return stream;
     }
 
     friend std::ostream &operator<<(std::ostream &stream, const Game &game) {
         Position start_pos = game.start_position;
         stream << start_pos;
-        stream.write((char *) &game.num_indices, sizeof(uint16_t));
+        const uint16_t num_indices = game.indices.size();
+        stream.write((char *) &num_indices, sizeof(uint16_t));
         stream.write((char *) &game.result, sizeof(Result));
-        stream.write((char *) &game.indices[0], sizeof(uint8_t) * game.num_indices);
+        stream.write((char *) &game.indices[0], sizeof(uint8_t) * num_indices);
         return stream;
     }
 
@@ -138,7 +144,7 @@ struct Game {
     }
 
     Position get_last_position()const {
-        return get_position(num_indices);
+        return get_position(indices.size());
     }
 
     bool operator==(Game &other)const {
@@ -157,7 +163,7 @@ struct Game {
 
     GameIterator end() const {
         GameIterator beg(*this);
-        beg.index = num_indices + 1;
+        beg.index = indices.size() + 1;
         return beg;
     }
 
@@ -195,7 +201,7 @@ struct Game {
             return;
 
 
-        for (auto i = 0; i < num_indices; ++i) {
+        for (auto i = 0; i < indices.size(); ++i) {
             Sample sample;
             MoveListe liste;
             get_moves(current, liste);
@@ -240,9 +246,6 @@ inline bool GameIterator::operator!=(GameIterator &other) const {
     return (other.index != index);
 }
 
-//not trying to convert to the new format
-//will change game generation and generate new data
-//requires changing rescoring too though
 
 template<typename Iterator>
 inline void merge_training_data(Iterator begin, Iterator end, std::string output) {
@@ -278,17 +281,16 @@ inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator
     BloomFilter<Position> filter(9585058378, 3);
     size_t unique_count = 0;
     size_t total_positions = 0;
-    for (auto it = begin; it != end; ++it) {
-        Game game = (*it);
-        for (auto pos: game) {
+    std::for_each(begin,end,[&](Game game){
+         for (auto pos: game) {
             if (!filter.has(pos)) {
                 unique_count++;
                 filter.insert(pos);
             }
             total_positions++;
         }
-
-    }
+        return;   
+    });
     return std::make_pair(unique_count, total_positions);
 }
 
@@ -307,7 +309,7 @@ inline size_t count_trainable_positions(std::string game_file, std::pair<size_t,
     //temporary before I can speed this thing up
     //way too slow
     std::for_each(begin, end, [&](const Game& g) {
-         counter+=g.num_indices+1;
+         counter+=g.indices.size()+1;
            /*
         for (auto pos: g) {
            auto num_p = Bits::pop_count(pos.BP | pos.WP);

@@ -12,7 +12,7 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int st
     if (moveCounter - start_index <= 1)
         return;
 
-   // Statistics::mPicker.policy.compute_incre_forward_pass(current);
+   //Statistics::mPicker.policy.compute_incre_forward_pass(current);
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
         scores[i] = (short) Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
@@ -57,8 +57,12 @@ void MoveListe::put_front(Move other) {
     if (it != end()) {
         std::swap(*begin(), *it);
     }
+}
 
-
+void MoveListe::put_front(int start_index,int move_index){
+    const Move temp = liste[start_index];
+    liste[start_index]=liste[move_index];
+    liste[move_index]=temp;
 }
 
 MoveListe &MoveListe::operator=(const MoveListe &other) {
