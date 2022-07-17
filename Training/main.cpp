@@ -16,8 +16,8 @@
 int main() {
 
 
-   merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
-  auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
+   merge_temporary_files("/home/leaguerobin/DarkHorse/Training/TrainData/", "/home/leaguerobin/DarkHorse/Training/TrainData/");
+  auto count = count_unique_positions("/home/leaguerobin/DarkHorse/Training/TrainData/weird4.train");
    std::cout<<"Unique Positions so far: "<<count.first<<std::endl;
    std::cout<<"Total Positions so far: "<<count.second<<std::endl; 
    
@@ -30,7 +30,7 @@ int main() {
       Generator generator("train.pos", "weird5.train");
     generator.set_hash_size(21);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(94);
+    generator.set_parallelism(14);
     generator.set_time(30);
     generator.set_piece_limit(6);
     generator.set_max_position(1500000000ull);
