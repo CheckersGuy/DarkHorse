@@ -30,7 +30,7 @@ int main() {
       Generator generator("train.pos", "weird5.train");
     generator.set_hash_size(21);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(14);
+    generator.set_parallelism(94);
     generator.set_time(30);
     generator.set_piece_limit(6);
     generator.set_max_position(1500000000ull);
