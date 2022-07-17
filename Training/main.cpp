@@ -28,25 +28,25 @@ int main() {
     std::cout << "Unique: " << result.first << " Total: " << result.second << std::endl;
 
 /* */   
-/*      Generator generator("train.pos", "weird4.train");
+      Generator generator("train.pos", "weird5.train");
     generator.set_hash_size(21);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(14);
+    generator.set_parallelism(94);
     generator.set_time(30);
     generator.set_piece_limit(6);
-    generator.set_max_position(150000000ull);
-    generator.start();    */
+    generator.set_max_position(1500000000ull);
+    generator.start(); 
               
     
     //Book::create_train_file("/home/leagu/DarkHorse/Training/Positions/11manballots.pos","/home/leagu/DarkHorse/Training/Positions/train.pos",3);
   
-      Match engine_match("test7sgd", "newtryx");
+/*       Match engine_match("test7sgd", "newtryx");
      engine_match.setTime(30);
      engine_match.setMaxGames(30000);
      engine_match.setNumThreads(12);
      engine_match.setHashSize(20);
      engine_match.start();         
-                       
+                        */
   
        Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/weird4formatted.train");
       trainer.set_learning_rate(6000);
