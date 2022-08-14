@@ -274,7 +274,7 @@ int Network::evaluate(Position pos, int ply) {
     }
 
 
-    float val = compute_incre_forward_pass(pos) * 128.0f;
+    float val = compute_incre_forward_pass(pos) * 64.0f;
     return static_cast<int>(val);
 }
 

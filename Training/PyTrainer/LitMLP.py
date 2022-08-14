@@ -274,7 +274,7 @@ class ConvNet(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network13.weights"):
+    def __init__(self, hidden, output="form_network18.weights"):
         super(Network, self).__init__()
         layers = []
         self.output = output
@@ -297,7 +297,7 @@ class Network(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
         return optimizer
 
     def training_step(self, train_batch, batch_idx):
@@ -382,9 +382,8 @@ class PolicyNetwork(pl.LightningModule):
         self.save_parameters(self.output)
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False, lr=2e-3)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.90)
-        return [optimizer], [scheduler]
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
+        return optimizer
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -442,17 +441,10 @@ class LitDataModule(pl.LightningDataModule):
         super(LitDataModule, self).__init__()
         if p_range is None:
             p_range = [6, 24]
-        print(input_format.value)
-        if input_format != InputFormat.PATTERN:
-            self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, False,
+
+        self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, False,
                                              input_format)
-        else:
-            self.train_set = PattDataset(batch_size, buffer_size, p_range, train_data, False,
-                                         input_format)
-        if input_format != InputFormat.PATTERN:
-            self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, True, input_format)
-        else:
-            self.val_set = PattDataset(batch_size, 1000000, p_range, val_data, True, input_format)
+        self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, True, input_format)
         self.train_data = train_data
         self.batch_size = batch_size
 
@@ -495,57 +487,6 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         return self.file_size // self.batch_size
 
 
-class PatternModel(pl.LightningModule):
-
-    def __init__(self):
-        # playedholder
-        # size to be determined
-        super(PatternModel, self).__init__()
-        self.weights = torch.nn.Parameter(torch.zeros(18 * 390625 + 4 * 531441 + 8 * 157464))
-        self.tempo = torch.zeros(1231231)
-        self.king_op = torch.zeros(0)
-        self.king_end = torch.zeros(1)
-        self.input_format = InputFormat.PATTERN
-        self.criterion = torch.nn.MSELoss()
-
-    def forward(self, mover, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, wp, bp, wk, bk):
-        # to be implemented
-
-        out = torch.gather(self.weights, 0, op_pawn_ind.view(-1), sparse_grad=True).view(mover.size(0), -1)
-        val = torch.sum(out, dim=1)
-        val = torch.mul(mover,val)
-
-        return torch.sigmoid(val)
-
-    def on_epoch_end(self) -> None:
-        #self.save_parameters(self.output)
-        pass
-
-    def configure_optimizers(self):
-        optimizer = torch.optim.SparseAdam(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3)
-        return optimizer
-
-    def training_step(self, train_batch, batch_idx):
-        result, mover, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, wp, bp, wk, bk = train_batch
-        out = self.forward(mover, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, wp, bp, wk, bk)
-        loss = self.criterion(out, result)
-        tensorboard_logs = {"avg_val_loss": loss}
-        self.log('train_loss', loss)
-        return {"loss": loss, "log": tensorboard_logs}
-
-    def validation_step(self, val_batch, batch_idx):
-        result, mover, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, wp, bp, wk, bk = val_batch
-        out = self.forward(mover, op_pawn_ind, end_pawn_ind, op_king_ind, end_king_ind, wp, bp, wk, bk)
-        loss = self.criterion(out, result)
-        self.log('val_loss', loss.detach())
-        return {"val_loss": loss.detach()}
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {"avg_val_loss": avg_loss}
-        return {"loss": avg_loss, "log": tensorboard_logs}
-
-
 # needs to be fixed somehow
 class NetBatchDataSet(BatchDataSet):
 
@@ -573,49 +514,3 @@ class NetBatchDataSet(BatchDataSet):
             inputs = inputs.view(self.batch_size, 4, 8, 4)
 
         return results, moves, inputs
-
-
-class PattDataset(BatchDataSet):
-
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
-        super(PattDataset, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set,
-                                          input_format)
-
-    def __next__(self):
-        results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        mover = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-
-        wk = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        bk = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        wp = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-        bp = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
-
-        op_pawn = np.zeros(shape=(self.batch_size, 6), dtype=np.int64)
-        end_pawn = np.zeros(shape=(self.batch_size, 6), dtype=np.int64)
-
-        op_king = np.zeros(shape=(self.batch_size, 9), dtype=np.int64)
-        end_king = np.zeros(shape=(self.batch_size, 9), dtype=np.int64)
-
-        res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        mover_p = mover.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        op_pawn_p = op_pawn.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        end_pawn_p = end_pawn.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-
-        op_king_p = op_king.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        end_king_p = end_king.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-
-        wk_p = wk.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        bk_p = bk.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        wp_p = wp.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-        bp_p = bp.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
-
-        if not self.is_val_set:
-            self.c_lib.get_next_batch_pattern(res_p, mover_p, op_pawn_p, end_pawn_p, op_king_p, end_king_p, wk_p, bk_p,
-                                              wp_p, bp_p)
-        else:
-            self.c_lib.get_next_val_batch_pattern(res_p, mover_p, op_pawn_p, end_pawn_p, op_king_p, end_king_p, wk_p,
-                                                  bk_p, wp_p, bp_p)
-
-        return torch.FloatTensor(results), torch.FloatTensor(mover), torch.LongTensor(op_pawn), torch.LongTensor(end_pawn), torch.LongTensor(op_king), torch.LongTensor(end_king), torch.FloatTensor(wk), torch.FloatTensor(bk), \
-               torch.FloatTensor(wp), torch.FloatTensor(bp)

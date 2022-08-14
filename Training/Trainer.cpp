@@ -117,7 +117,7 @@ void Trainer::gradient_update(Sample &sample) {
     auto adam_update = [&](size_t param, double gradient, double weight) {
         double alpha = get_learning_rate();
         m[param] = beta_one * m[param] + (1.0 - beta_one) * gradient;
-      /*   v[param] = beta_two * v[param] + (1.0 - beta_two) * gradient * gradient;
+         v[param] = beta_two * v[param] + (1.0 - beta_two) * gradient * gradient;
         auto m_hat = m[param] * (1.0 - beta_one_t[param]);
         auto v_hat = v[param] * (1.0 - beta_two_t[param]);
 
@@ -125,7 +125,7 @@ void Trainer::gradient_update(Sample &sample) {
         beta_one_t[param] *= beta_one;
         beta_two_t[param] *= beta_one;
 
-        return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)))+alpha*l2Reg*weights[param];  */
+        //return (alpha * m_hat / ((std::sqrt(v_hat) + 0.000001)))+alpha*l2Reg*weights[param];  
         return alpha * m[param];
 
     };

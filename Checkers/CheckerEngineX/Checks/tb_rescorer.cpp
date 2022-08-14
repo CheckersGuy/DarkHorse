@@ -21,8 +21,9 @@ void print_msgs(char *msg) {
 
 
 Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
-    if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
+    if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP)>max_pieces)
         return UNKNOWN;
+
 
     EGDB_NORMAL_BITBOARD board;
     board.white = pos.WP;
@@ -51,6 +52,8 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 Result get_game_result(Game& game) {
     Position end = game.get_last_position();
+/*     end.print_position();
+    std::cout<<std::endl; */
     MoveListe liste;
     get_moves(end, liste);
     const size_t rep_count = std::count(game.begin(), game.end(),end);
@@ -192,6 +195,8 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     std::istream_iterator<Game>end;
     size_t counter{ 0 };
     std::for_each(begin, end, [&](Game game) {
+        if(game.result!=UNKNOWN)
+            return;
         auto r = get_rescored_game(game, max_pieces, handle);
         out_stream << r;
         });
@@ -208,6 +213,7 @@ int main(int argl, const char **argc) {
 
     /* Check that db files are present, get db type and size. */
     status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
+    std::cout<<"MAX_PIECES: "<<max_pieces<<std::endl;
 
     if (status) {
         printf("No database found at %s\n", DB_PATH);
@@ -221,13 +227,12 @@ int main(int argl, const char **argc) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird4formatted.train");
+    std::cout<<"Starting Rescoring the training data"<<std::endl;
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird8.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird8formatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);
-
-
 
     handle->close(handle);
 

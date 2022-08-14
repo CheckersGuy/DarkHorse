@@ -86,6 +86,7 @@ void Generator::start() {
                 std::uniform_int_distribution<size_t>distrib(0,openings.size());
                 const size_t rand_index = distrib(generator);
                 Position opening = openings[rand_index];
+                //std::cout<<"Opening counter: "<<rand_index<<std::endl;
                 Board board;
                 board = opening;
                 TT.clear();
@@ -95,7 +96,11 @@ void Generator::start() {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
                     game.add_position(board.get_position());
-
+                    const Position p = board.get_position();
+                    if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
+                        game_buffer.emplace_back(game);
+                        break;
+                    }
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.get_last_position());
                     if (liste.length() == 0) {
@@ -120,11 +125,7 @@ void Generator::start() {
                         auto value = searchValue(board, best, MAX_PLY, time_control, false,std::cout);
                         board.play_move(best);
                     }
-                    const Position p = board.get_position();
-                    if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
-                        game_buffer.emplace_back(game);
-                        break;
-                    }
+                
 
                 }
 
