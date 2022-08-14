@@ -258,6 +258,10 @@ inline void merge_training_data(Iterator begin, Iterator end, std::string output
     for (auto it = begin; it != end; ++it) {
         auto file_input = *it;
         std::ifstream stream(file_input.c_str());
+        if(!stream.good()){
+            std::cerr<<"Could not open the stream"<<std::endl;
+            std::exit(-1);
+        }
         Game game;
         while (stream >> game) {
             stream_out << game;

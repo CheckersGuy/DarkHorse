@@ -66,7 +66,15 @@ extern"C" int getmove
 	
 
 		if(!engine_initialized){
-			  use_classical(true);
+			  use_classical(false);
+			     network.load("bignet.weights");
+   			 network.addLayer(Layer{120, 512});
+			network.addLayer(Layer{512, 16});
+			network.addLayer(Layer{16, 32});
+			network.addLayer(Layer{32, 1});
+			network.init();   
+			
+       
 			//debug<<"Initialized engine"<<std::endl;
 			TT.resize(21);
 		init_tablebase(2000,6,debug);

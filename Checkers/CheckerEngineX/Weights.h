@@ -104,7 +104,6 @@ struct Weights {
         }
 
         const U color = pos.color;
-        constexpr U pawnEval = 0;
         const U WP = Bits::pop_count(pos.WP & (~pos.K));
         const U BP = Bits::pop_count(pos.BP & (~pos.K));
         U phase = BP+WP;

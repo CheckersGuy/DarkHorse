@@ -18,16 +18,26 @@ struct Layer {
 };
 
 struct Accumulator {
-    std::unique_ptr<float[]> acc;
+    std::unique_ptr<float[]> black_acc;
+    std::unique_ptr<float[]> white_acc;
+    size_t size;
+    
 
-    Accumulator(size_t size) {
-        acc = std::make_unique<float[]>(2 * size);
+    Accumulator(size_t s) {
+        black_acc = std::make_unique<float[]>(s);
+        white_acc= std::make_unique<float[]>(s);
+        size = s;
+    }
+
+    Accumulator(const Accumulator& other){
+        std::copy(other.black_acc.get(),other.black_acc.get()+size,black_acc.get());
+        std::copy(other.white_acc.get(),other.white_acc.get()+size,white_acc.get());
     }
 
     Accumulator() = default;
 
     //to be implemented
-    void update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP, uint32_t r_BP,
+    void update(Color per, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP, uint32_t r_BP,
                 uint32_t r_WK, uint32_t r_BK);
 };
 

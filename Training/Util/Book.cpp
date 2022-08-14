@@ -44,7 +44,7 @@ void recursive_collect(Board& board,int depth,std::unordered_set<Position>&set,s
         copy = board.get_position();
          auto value = searchValue(copy, best, MAX_PLY, 30, false,std::cout);
        
-         if(std::abs(value)<=30){
+         if(std::abs(value)<=70){
             std::cout<<board.get_mover()*value<<std::endl;
             std::cout<<"Added a position"<<std::endl;
             std::cout<<"Index: "<<op_index<<std::endl;

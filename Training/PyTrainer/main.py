@@ -3,12 +3,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
 import Helper as h
-import argparse
 import torch.nn.functional as F
-import tensorflow as tf
-import tensorflow.keras.losses as losses
-import tensorflow.keras.optimizers as optim
-import time
 
 def test_model():
     model = LitMLP.ResNet.load_from_checkpoint("conv4=0-v2.ckpt")
@@ -37,7 +32,7 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
     model = LitMLP.Network([120, 256, 32, 32, 1])
     #model = LitMLP.ResNet()
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/weird4formatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/weird8formatted.train",
                                        val_data="../TrainData/smalldataset7.train",
                                        batch_size=32000, buffer_size=10000000, p_range=[6, 24],
                                        input_format=model.input_format)
@@ -45,7 +40,7 @@ if __name__ == "__main__":
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
 
-    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{mediumnet}")
+    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{bignetpolicy}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="mediumnet=0-v9.ckpt")
