@@ -32,7 +32,7 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
     model = LitMLP.Network([120, 256, 32, 32, 1])
     #model = LitMLP.ResNet()
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/weird8formatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/mergedformatted.train",
                                        val_data="../TrainData/smalldataset7.train",
                                        batch_size=32000, buffer_size=10000000, p_range=[6, 24],
                                        input_format=model.input_format)
@@ -43,4 +43,4 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{bignetpolicy}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader,ckpt_path="mediumnet=0-v9.ckpt")
+    trainer.fit(model, data_loader)
