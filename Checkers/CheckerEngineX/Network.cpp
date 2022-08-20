@@ -5,9 +5,85 @@
 #include <complex>
 #include "Network.h"
 
-void Accumulator::update(Color perp, uint32_t a_WP, uint32_t a_BP, uint32_t a_WK, uint32_t a_BK, uint32_t r_WP,
-                         uint32_t r_BP, uint32_t r_WK, uint32_t r_BK) {
+void Accumulator::update(Color perp, Position before,Position after) {
 
+    if(perp == BLACK){
+        before = before.get_color_flip();
+        after = after.get_color_flip();
+    }
+
+    //computing the changes
+
+    add_feature(perp,before,after);
+    remove_feature(perp,before,after);
+    
+
+}
+
+void Accumulator::add_feature(Color perp,size_t index){
+    //adding the index-th column to our feature vector
+    float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
+    for(auto i=0;i<network.layers[0].out_features;++i){
+        input[i] += network.weights[index*network.layers[0].out_features+i];
+    }
+}
+
+void Accumulator::remove_feature(Color perp,size_t index){
+    //adding the index-th column to our feature vector
+    float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
+    for(auto i=0;i<network.layers[0].out_features;++i){
+        input[i] -= network.weights[index*network.layers[0].out_features+i];
+    }
+}
+
+void Accumulator::add_feature(Color perp, Position& before, Position&after){
+    //need to check this
+    auto WP = after.WP&(~before.WP);
+    auto BP = after.BP&(~before.BP);
+    auto WK = (after.WP & after.K)&(~(before.WP & before.K));
+    auto BK = (after.BP & after.K)&(~(before.BP & before.K));
+
+    //to be continued
+    while (WP){
+        auto index = Bits::bitscan_foward(WP) - 4;
+        add_feature(perp,index);
+        WP &= WP - 1;
+    }
+
+     while (BP){
+        auto index = Bits::bitscan_foward(WP) ;
+        BP &= BP - 1;
+    }
+
+     while (WK){
+        auto index = Bits::bitscan_foward(WK);
+        WK &= WK - 1;
+    }
+
+     while (BK){
+        auto index = Bits::bitscan_foward(BK);
+        BK &= BK - 1;
+    }
+}
+
+void Accumulator::remove_feature(Color perp, Position &before, Position &after){
+    auto WP = before.WP&(~after.WP);
+    auto BP = before.BP&(~after.BP);
+    auto WK = (before.WP & before.K)&(~(after.WP & after.K));
+    auto BK = (before.BP & before.K)&(~(after.BP & after.K));
+}
+
+
+
+Accumulator &Accumulator::operator=(const Accumulator &other)
+{
+    size = other.size;
+    black_acc = std::make_unique<float[]>(size);
+    white_acc = std::make_unique<float[]>(size);
+
+    std::copy(other.black_acc.get(), other.black_acc.get() + size, black_acc.get());
+    std::copy(other.white_acc.get(), other.white_acc.get() + size, white_acc.get());
+    return *this;
 }
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
@@ -75,7 +151,7 @@ float Network::get_max_weight() {
         num_weights += l.out_features * l.in_features;
     }
     for (int i = 0; i < num_weights; ++i) {
-        max_value = std::max(weights[i], max_value);
+        max_value = std::max(std::abs(weights[i]), max_value);
     }
 
     return max_value;
