@@ -17,73 +17,44 @@ void Accumulator::update(Color perp, Position before,Position after) {
     add_feature(perp,before,after);
     remove_feature(perp,before,after);
     
+}
+
+void Accumulator::init(Network* net){
+    const auto size = net->layers[0].out_features;
+    black_acc = std::make_unique<float[]>(size);
+    white_acc = std::make_unique<float[]>(size);
+    this->size =size;
+    this->net = net;
 
 }
 
 void Accumulator::add_feature(Color perp,size_t index){
     //adding the index-th column to our feature vector
     float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
-    for(auto i=0;i<network.layers[0].out_features;++i){
-        input[i] += network.weights[index*network.layers[0].out_features+i];
+    for(auto i=0;i<size;++i){
+        input[i] += net->weights[index*net->layers[0].out_features+i];
     }
 }
 
 void Accumulator::remove_feature(Color perp,size_t index){
     //adding the index-th column to our feature vector
     float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
-    for(auto i=0;i<network.layers[0].out_features;++i){
-        input[i] -= network.weights[index*network.layers[0].out_features+i];
+    for(auto i=0;i<size;++i){
+        input[i] -= net->weights[index*net->layers[0].out_features+i];
     }
 }
 
-void Accumulator::add_feature(Color perp, Position& before, Position&after){
+void Accumulator::add_feature(Color perp, Position before, Position after){
     //need to check this
-    auto WP = after.WP&(~before.WP);
-    auto BP = after.BP&(~before.BP);
-    auto WK = (after.WP & after.K)&(~(before.WP & before.K));
-    auto BK = (after.BP & after.K)&(~(before.BP & before.K));
-
-    //to be continued
-    while (WP){
-        auto index = Bits::bitscan_foward(WP) - 4;
+    apply(perp,before,after,[this](Color perp, size_t index){
         add_feature(perp,index);
-        WP &= WP - 1;
-    }
-
-     while (BP){
-        auto index = Bits::bitscan_foward(WP) ;
-        BP &= BP - 1;
-    }
-
-     while (WK){
-        auto index = Bits::bitscan_foward(WK);
-        WK &= WK - 1;
-    }
-
-     while (BK){
-        auto index = Bits::bitscan_foward(BK);
-        BK &= BK - 1;
-    }
+    });
 }
 
-void Accumulator::remove_feature(Color perp, Position &before, Position &after){
-    auto WP = before.WP&(~after.WP);
-    auto BP = before.BP&(~after.BP);
-    auto WK = (before.WP & before.K)&(~(after.WP & after.K));
-    auto BK = (before.BP & before.K)&(~(after.BP & after.K));
-}
-
-
-
-Accumulator &Accumulator::operator=(const Accumulator &other)
-{
-    size = other.size;
-    black_acc = std::make_unique<float[]>(size);
-    white_acc = std::make_unique<float[]>(size);
-
-    std::copy(other.black_acc.get(), other.black_acc.get() + size, black_acc.get());
-    std::copy(other.white_acc.get(), other.white_acc.get() + size, white_acc.get());
-    return *this;
+void Accumulator::remove_feature(Color perp, Position before, Position after){
+    apply(perp,before,after,[this](Color perp, size_t index){
+        remove_feature(perp,index);
+    });
 }
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
@@ -142,9 +113,15 @@ void Network::init() {
         z_white[i] = biases[i];
     }
 
+    accumulator.init(this);
+    for(auto i=0;i<layers[0].out_features;++i){
+        accumulator.black_acc[i]=biases[i];
+        accumulator.white_acc[i]=biases[i];
+    }
+
 }
 
-float Network::get_max_weight() {
+float Network::get_max_weight() const {
     float max_value = std::numeric_limits<float>::min();
     size_t num_weights = 0;
     for (Layer l: layers) {
@@ -158,22 +135,32 @@ float Network::get_max_weight() {
 
 }
 
+float Network::get_max_bias() const {
+    float max_value = std::numeric_limits<float>::min();
+    size_t num_bias= 0;
+    for (Layer l: layers) {
+        num_bias += l.out_features;
+    }
+    for (int i = 0; i < num_bias; ++i) {
+        max_value = std::max(std::abs(weights[i]), max_value);
+    }
+
+    return max_value;
+
+}
+
 float Network::compute_incre_forward_pass(Position next) {
     //to be continued
-    Color color = next.color;
+     Color color = next.color;
     float *z_previous;
     Position previous;
     if (color == BLACK) {
-        previous = p_black;
-        z_previous = z_black.get();
-        next = next.get_color_flip();
-        p_black = next;
+        z_previous = accumulator.black_acc.get();
     } else {
-        previous = p_white;
-        z_previous = z_white.get();
-        p_white = next;
+        z_previous = accumulator.white_acc.get();
     }
-
+    
+/*
     size_t weight_index_offset = 0u;
     size_t bias_index_offset = 0u;
     size_t offset = 0u;
@@ -266,15 +253,15 @@ float Network::compute_incre_forward_pass(Position next) {
             }
             p &= p - 1u;
         }
-    }
+    } */
     for (auto i = 0; i < layers[0].out_features; i++) {
         temp[i] = std::clamp(z_previous[i], 0.0f, 1.0f);
     }
     memcpy(input.get(), temp.get(), sizeof(float) * layers[0].out_features);
     memset(temp.get(), 0, sizeof(float) * layers[0].out_features);
 
-    weight_index_offset += layers[0].out_features * layers[0].in_features;
-    bias_index_offset += layers[0].out_features;
+    auto weight_index_offset = layers[0].out_features * layers[0].in_features;
+    auto bias_index_offset = layers[0].out_features;
     //computation for the remaining layers
     for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
