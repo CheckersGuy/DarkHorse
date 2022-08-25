@@ -276,15 +276,15 @@ class Network(pl.LightningModule):
 
     def __init__(self, hidden, output="form_network19.weights"):
         super(Network, self).__init__()
-        layers = []
+        self.layers = []
         self.output = output
         for i in range(len(hidden) - 2):
-            layers.append(nn.Linear(hidden[i], hidden[i + 1]))
-            layers.append(Relu1())
+            self.layers.append(nn.Linear(hidden[i], hidden[i + 1]))
+            self.layers.append(Relu1())
 
-        layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
-        layers.append(nn.Sigmoid())
-        self.net = nn.Sequential(*layers)
+        self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
+        self.layers.append(nn.Sigmoid())
+        self.net = nn.Sequential(*self.layers)
         self.criterion = torch.nn.MSELoss()
         self.init_weights()
         self.input_format = InputFormat.V1
@@ -295,6 +295,8 @@ class Network(pl.LightningModule):
 
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
+        self.save("model.pt")
+        self.save_quantized("model.quant")
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
@@ -323,6 +325,59 @@ class Network(pl.LightningModule):
     def init_weights(self):
         self.net.apply(init_weights)
 
+    def save_quantized(self, output):
+
+        min16 = np.iinfo(np.int16).min
+        max16 = np.iinfo(np.int16).max
+
+        min8 = np.iinfo(np.int8).min
+        max8 = np.iinfo(np.int8).max
+
+        device = torch.device("cpu")
+        device_gpu = torch.device("cuda")
+        self.to(device)
+        buffer_weights = bytearray()
+        buffer_bias = bytearray()
+        num_weights = 0
+        num_bias = 0
+        file = open(output, "wb")
+        layer = self.layers[0]
+        weights = layer.weight.detach().numpy().flatten("F")
+        weights = weights * 127.0
+        np.clip(weights, min16, max16)
+        weights = weights.astype(np.int16)
+        bias = layer.bias.detach().numpy().flatten("F")
+        bias = bias * 127.0
+        np.clip(bias, min16, max16)
+        bias = bias.astype(np.int16)
+        buffer_weights += weights.tobytes()
+        buffer_bias += bias.tobytes()
+        num_weights += len(weights)
+        num_bias += len(bias)
+
+        for layer in self.layers[1:]:
+            if isinstance(layer, torch.nn.Linear):
+                weights = layer.weight.detach().numpy().flatten("F")
+                weights = weights * 64.0
+                np.clip(weights, min16, max16)
+                weights = weights.astype(np.int16)
+                bias = layer.bias.detach().numpy().flatten("F")
+                bias = bias * (127 * 64)
+                np.clip(bias, min16, max16)
+                bias = bias.astype(np.int16)
+                buffer_weights += weights.tobytes()
+                buffer_bias += bias.tobytes()
+                num_weights += len(weights)
+                num_bias += len(bias)
+
+        file.write(struct.pack("I", num_weights))
+        file.write(buffer_weights)
+        file.write(struct.pack("I", num_bias))
+        file.write(buffer_bias)
+        file.close()
+        self.to(device_gpu)
+        return
+
     def save_parameters(self, output):
         device = torch.device("cpu")
         device_gpu = torch.device("cuda")
@@ -347,7 +402,6 @@ class Network(pl.LightningModule):
         file.write(buffer_bias)
         file.close()
         self.to(device_gpu)
-        return
 
     def save(self, output):
         torch.save(self.state_dict(), output)
@@ -443,7 +497,7 @@ class LitDataModule(pl.LightningDataModule):
             p_range = [6, 24]
 
         self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, False,
-                                             input_format)
+                                         input_format)
         self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, True, input_format)
         self.train_data = train_data
         self.batch_size = batch_size

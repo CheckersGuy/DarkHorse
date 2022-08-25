@@ -21,42 +21,65 @@ struct Layer {
 };
 
 struct Accumulator {
-    Network& network;
     std::unique_ptr<float[]> black_acc;
     std::unique_ptr<float[]> white_acc;
     size_t size;
-    
+    Network* net = nullptr;
 
-    Accumulator(size_t s,Network& network): network(network) {
-        black_acc = std::make_unique<float[]>(s);
-        white_acc= std::make_unique<float[]>(s);
-        size = s;
-    }
+    void init(Network* net);
 
-
-
-    Accumulator(const Accumulator &other): network(other.network){
-    size = other.size;
-    black_acc = std::make_unique<float[]>(size);
-    white_acc = std::make_unique<float[]>(size);
-
-    std::copy(other.black_acc.get(), other.black_acc.get() + size, black_acc.get());
-    std::copy(other.white_acc.get(), other.white_acc.get() + size, white_acc.get());
-}
-
-    Accumulator& operator=(const Accumulator& other);
-    Accumulator() = default;
-
-    //to be implemented
     void update(Color per, Position before,Position after);
 
     void add_feature(Color perp,size_t index);
 
-    void add_feature(Color perp,Position& before, Position&after);
+    void add_feature(Color perp,Position before, Position after);
 
     void remove_feature(Color perp,size_t index);
 
-    void remove_feature(Color perp,Position& before, Position&after);
+    void remove_feature(Color perp,Position before, Position after);
+
+    template <typename Func>
+    void apply(Color perp, Position before, Position after, Func function)
+    {
+        auto WP = after.WP & (~before.WP);
+        auto BP = after.BP & (~before.BP);
+        auto WK = (after.WP & after.K) & (~(before.WP));
+        auto BK = (after.BP & after.K) & (~(before.BP));
+
+        size_t offset =0;
+
+        // to be continued
+        while (WP)
+        {
+            auto index = Bits::bitscan_foward(WP) - 4;
+            function(perp, offset+index);
+            WP &= WP - 1;
+        }
+        offset+=28;
+
+        while (BP)
+        {
+            auto index = Bits::bitscan_foward(WP);
+            function(perp, offset+index);
+            BP &= BP - 1;
+        }
+        offset+=28;
+
+        while (WK)
+        {
+            auto index = Bits::bitscan_foward(WK);
+            function(perp, offset+index);
+            WK &= WK - 1;
+        }
+        offset+=32;
+
+        while (BK)
+        {
+            auto index = Bits::bitscan_foward(BK);
+            function(perp, offset+index);
+            BK &= BK - 1;
+        }
+    }
 };
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
@@ -73,9 +96,12 @@ struct Network {
     std::unique_ptr<float[]> z_black;
     std::unique_ptr<float[]> z_white;
     int max_units{0};
+    Accumulator accumulator;
 
 
-    float get_max_weight();
+    float get_max_weight() const;
+
+    float get_max_bias() const;
 
     void addLayer(Layer layer);
 

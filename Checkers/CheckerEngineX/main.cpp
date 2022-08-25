@@ -40,23 +40,23 @@ int main(int argl, const char **argc) {
     Board board;
     use_classical(false);
    
-     network.load("form_network19.weights");
+     network.load("form_network18.weights");
     network.addLayer(Layer{120, 256});
     network.addLayer(Layer{256, 32});
     network.addLayer(Layer{32, 32});
     network.addLayer(Layer{32, 1});
     network.init();   
 
-  /*   auto max = network.get_max_weight();
+     auto max = network.get_max_bias();
 
-    std::cout<<"MaxWeights: "<<max<<std::endl;
+    std::cout<<"MaxBias: "<<max<<std::endl;
        
-  */
+  
     
      //init_tablebase(2000,6,std::cout);
       
            TT.resize(21);
-        board = Position::get_start_position();    
+    board = Position::get_start_position();    
     board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21"); 
           
          /*    board.get_position().make_move(11, 15);
