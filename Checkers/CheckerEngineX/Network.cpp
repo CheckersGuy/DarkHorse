@@ -5,17 +5,16 @@
 #include <complex>
 #include "Network.h"
 
-void Accumulator::update(Color perp, Position before,Position after) {
+void Accumulator::update(Color perp,Position after) {
 
-    if(perp == BLACK){
-        before = before.get_color_flip();
-        after = after.get_color_flip();
+    if (perp == BLACK){
+        add_feature(perp, previous_black.get_color_flip(), after.get_color_flip());
+        remove_feature(perp, previous_black.get_color_flip(), after.get_color_flip());
     }
-
-    //computing the changes
-
-    add_feature(perp,before,after);
-    remove_feature(perp,before,after);
+    else{
+        add_feature(perp, previous_white, after);
+        remove_feature(perp, previous_white, after);
+    }
     
 }
 
@@ -154,6 +153,10 @@ float Network::compute_incre_forward_pass(Position next) {
      Color color = next.color;
     float *z_previous;
     Position previous;
+
+
+    accumulator.update()
+
     if (color == BLACK) {
         z_previous = accumulator.black_acc.get();
     } else {
