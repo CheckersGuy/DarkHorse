@@ -40,40 +40,41 @@ int main(int argl, const char **argc) {
     Board board;
     use_classical(false);
    
-     network.load("form_network18.weights");
-    network.addLayer(Layer{120, 256});
-    network.addLayer(Layer{256, 32});
-    network.addLayer(Layer{32, 32});
+     network.load("form_network20.weights");
+    network.addLayer(Layer{120, 512});
+    network.addLayer(Layer{512, 16});
+    network.addLayer(Layer{16, 32});
     network.addLayer(Layer{32, 1});
     network.init();   
+ 
+    auto max_bias = network.get_max_bias();
+    std::cout<<"MaxBias: "<<max_bias<<std::endl;
 
-     auto max = network.get_max_bias();
 
-    std::cout<<"MaxBias: "<<max<<std::endl;
+    //display_network_data<int16_t>("model.quant");
        
   
-    
+
      //init_tablebase(2000,6,std::cout);
-      
-           TT.resize(21);
+       
+    TT.resize(21);
     board = Position::get_start_position();    
-    board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21"); 
+    board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");  
           
-         /*    board.get_position().make_move(11, 15);
+  /*    board.get_position().make_move(11, 15);
     board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19); 
-    board.print_board() ;      */
-                  
-     Move best;
+    board.print_board() ;       
+                     */
+      Move best;
     searchValue(board, best, MAX_PLY, 100000000, true,std::cout);
     board.play_move(best);
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);       
-   
-         
-                      
+    
+                    
 
 
 
@@ -114,7 +115,6 @@ int main(int argl, const char **argc) {
             for (auto i = 2; i < squares.size(); ++i) {
                 move.captures |= 1u << squares[i];
             }
-            //board.make_move(move);
             board.play_move(move);
             std::cout << "update_ready" << "\n";
         } else if (current == "search") {
@@ -131,7 +131,6 @@ int main(int argl, const char **argc) {
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
-            //board.make_move(bestMove);
              board.play_move(bestMove);
         } else if (current == "terminate") {
             //terminating the program

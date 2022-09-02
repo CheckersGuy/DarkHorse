@@ -107,6 +107,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     glob.sel_depth = 0u;
     TT.age_counter++;
     //TT.clear();
+    network.accumulator.refresh();
     nodeCounter = 0;
     mainPV.clear();
     
@@ -128,6 +129,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     size_t total_time = 0;
     auto test_time = getSystemTime();
     for (int i = 1; i <= depth; i += 2) {
+        network.accumulator.refresh();
         auto start_time = getSystemTime();
         std::stringstream ss;
         nodeCounter = 0;

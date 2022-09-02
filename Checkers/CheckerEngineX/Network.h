@@ -24,77 +24,65 @@ struct Accumulator {
     std::unique_ptr<float[]> black_acc;
     std::unique_ptr<float[]> white_acc;
     size_t size;
+    Position previous_black,previous_white;
     Network* net = nullptr;
 
     void init(Network* net);
 
-    void update(Color per, Position before,Position after);
+    void update(Color per,Position after);
 
-    void add_feature(Color perp,size_t index);
+    void add_feature(float* input,size_t index);
 
-    void add_feature(Color perp,Position before, Position after);
+    void remove_feature(float* input,size_t index);
 
-    void remove_feature(Color perp,size_t index);
+    void apply(Color color,Position before, Position after);
 
-    void remove_feature(Color perp,Position before, Position after);
+    void refresh();
 
-    template <typename Func>
-    void apply(Color perp, Position before, Position after, Func function)
-    {
-        auto WP = after.WP & (~before.WP);
-        auto BP = after.BP & (~before.BP);
-        auto WK = (after.WP & after.K) & (~(before.WP));
-        auto BK = (after.BP & after.K) & (~(before.BP));
-
-        size_t offset =0;
-
-        // to be continued
-        while (WP)
-        {
-            auto index = Bits::bitscan_foward(WP) - 4;
-            function(perp, offset+index);
-            WP &= WP - 1;
-        }
-        offset+=28;
-
-        while (BP)
-        {
-            auto index = Bits::bitscan_foward(WP);
-            function(perp, offset+index);
-            BP &= BP - 1;
-        }
-        offset+=28;
-
-        while (WK)
-        {
-            auto index = Bits::bitscan_foward(WK);
-            function(perp, offset+index);
-            WK &= WK - 1;
-        }
-        offset+=32;
-
-        while (BK)
-        {
-            auto index = Bits::bitscan_foward(BK);
-            function(perp, offset+index);
-            BK &= BK - 1;
-        }
-    }
 };
+
+template<typename T> void display_network_data(std::string network_file){
+        std::ifstream stream(network_file, std::ios::binary);
+    if (!stream.good()) {
+        std::cerr << "Could not load the weights" << std::endl;
+        std::exit(-1);
+    }
+
+
+
+
+    int num_weights, num_bias;
+    stream.read((char *) &num_weights, sizeof(int));
+    auto weights = std::make_unique<T[]>(num_weights);
+
+    stream.read((char *) weights.get(), sizeof(T) * num_weights);
+    stream.read((char *) &num_bias, sizeof(int));
+    auto biases = std::make_unique<T[]>(num_bias);
+    stream.read((char *) biases.get(), sizeof(T) * num_bias);
+    /* for (auto i = 0; i < 100; ++i)
+    {
+        std::cout << weights[i] << std::endl;
+    } */
+
+     for (auto i = 0; i < num_bias; ++i)
+    {
+        std::cout << biases[i] << std::endl;
+    } 
+
+    stream.close();
+}
+
 
 std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
 
 
 struct Network {
-
-    Position p_black, p_white;
     std::vector<Layer> layers;
     std::unique_ptr<float[]> biases;
     std::unique_ptr<float[]> weights;
     std::unique_ptr<float[]> input;
     std::unique_ptr<float[]> temp;
-    std::unique_ptr<float[]> z_black;
-    std::unique_ptr<float[]> z_white;
+    std::unique_ptr<float[]>output;
     int max_units{0};
     Accumulator accumulator;
 
