@@ -75,10 +75,10 @@ int main() {
  */
 
                         
-     Match engine_match("form17", "form19");
-     engine_match.setTime(100);
+     Match engine_match("mednet", "form17");
+     engine_match.setTime(200);
      engine_match.setMaxGames(30000);
-     engine_match.setNumThreads(14);
+     engine_match.setNumThreads(6);
      engine_match.setHashSize(20);
      engine_match.start();                
                                                   

@@ -9,6 +9,7 @@ import ctypes
 import pathlib
 import numpy as np
 import torch.nn.functional as F
+from adan_pytorch import Adan
 from enum import Enum
 from enum import IntEnum
 
@@ -274,7 +275,7 @@ class ConvNet(pl.LightningModule):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network19.weights"):
+    def __init__(self, hidden, output="form_network20.weights"):
         super(Network, self).__init__()
         self.layers = []
         self.output = output
@@ -299,6 +300,12 @@ class Network(pl.LightningModule):
         self.save_quantized("model.quant")
 
     def configure_optimizers(self):
+        # optimizer = Adan(
+        #      self.parameters(),
+        #      lr=1e-3,  # learning rate
+        #      betas=(0.1, 0.1, 0.001),  # beta 1-2-3 as described in paper
+        #      weight_decay=0.  # weight decay
+        #  )
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
         return optimizer
 
@@ -362,9 +369,13 @@ class Network(pl.LightningModule):
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten("F")
+                print("Before")
+                print(bias)
                 bias = bias * (127 * 64)
                 np.clip(bias, min16, max16)
                 bias = bias.astype(np.int16)
+                print("After")
+                print(bias)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()
                 num_weights += len(weights)

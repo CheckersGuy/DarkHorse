@@ -5,15 +5,107 @@
 #include <complex>
 #include "Network.h"
 
-void Accumulator::update(Color perp,Position after) {
+    void Accumulator::refresh(){
+        for(auto i=0;i<size;++i){
+            white_acc[i]=net->biases[i];
+            black_acc[i]=net->biases[i];
+        }
+        previous_black = Position{};
+        previous_white =Position{};
+    }
 
+    void Accumulator::apply(Color perp, Position before, Position after)
+    {
+        float* input =((perp == BLACK)?black_acc.get(): white_acc.get());
+
+        auto WP_O = after.get_pieces<WHITE,PAWN>() & (~before.get_pieces<WHITE,PAWN>());
+        auto BP_O = after.get_pieces<BLACK,PAWN>() & (~before.get_pieces<BLACK,PAWN>());
+        auto WK_O = after.get_pieces<WHITE,KING>() & (~before.get_pieces<WHITE,KING>());
+        auto BK_O = after.get_pieces<BLACK,KING>() & (~before.get_pieces<BLACK,KING>());
+
+        size_t offset =0;
+
+
+        while (WP_O)
+        {
+            auto index = Bits::bitscan_foward(WP_O) - 4+offset;
+            add_feature(input, index);
+            WP_O &= WP_O - 1;
+        }
+        offset += 28;
+
+        while (BP_O)
+        {
+            auto index = Bits::bitscan_foward(BP_O)+offset;
+            add_feature(input, index);
+            BP_O &= BP_O - 1;
+        }
+        offset += 28;
+
+        while (WK_O)
+        {
+            auto index = Bits::bitscan_foward(WK_O)+offset;
+            add_feature(input, index);
+            WK_O &= WK_O - 1;
+        }
+        offset += 32;
+
+        while (BK_O)
+        {
+            auto index = Bits::bitscan_foward(BK_O)+offset;
+            add_feature(input, index);
+            BK_O &= BK_O - 1;
+        } 
+
+        auto WP_Z = (~after.get_pieces<WHITE,PAWN>()) & (before.get_pieces<WHITE,PAWN>());
+        auto BP_Z = (~after.get_pieces<BLACK,PAWN>()) & (before.get_pieces<BLACK,PAWN>());
+        auto WK_Z = (~after.get_pieces<WHITE,KING>()) & (before.get_pieces<WHITE,KING>());
+        auto BK_Z = (~after.get_pieces<BLACK,KING>()) & (before.get_pieces<BLACK,KING>());
+
+        offset =0;
+
+        // to be continued
+        while (WP_Z)
+        {
+            auto index = Bits::bitscan_foward(WP_Z) - 4+offset;
+            remove_feature(input, index);
+            WP_Z &= WP_Z - 1;
+        }
+        offset += 28;
+
+        while (BP_Z)
+        {
+            auto index = Bits::bitscan_foward(BP_Z)+offset;
+            remove_feature(input, index);
+            BP_Z &= BP_Z - 1;
+        }
+        offset += 28;
+
+        while (WK_Z)
+        {
+            auto index = Bits::bitscan_foward(WK_Z)+offset;
+            remove_feature(input, index);
+            WK_Z &= WK_Z - 1;
+        }
+        offset += 32;
+
+        while (BK_Z)
+        {
+            auto index = Bits::bitscan_foward(BK_Z)+offset;
+            remove_feature(input, index);
+            BK_Z &= BK_Z - 1;
+        }
+
+    }
+
+void Accumulator::update(Color perp,Position after) {
     if (perp == BLACK){
-        add_feature(perp, previous_black.get_color_flip(), after.get_color_flip());
-        remove_feature(perp, previous_black.get_color_flip(), after.get_color_flip());
+        apply(perp, previous_black.get_color_flip(), after.get_color_flip());
+        previous_black = after;
     }
     else{
-        add_feature(perp, previous_white, after);
-        remove_feature(perp, previous_white, after);
+        apply(perp, previous_white, after);
+        previous_white = after;
     }
     
 }
@@ -25,44 +117,25 @@ void Accumulator::init(Network* net){
     this->size =size;
     this->net = net;
 
+      for(auto i=0;i<this->net->layers[0].out_features;++i){
+        black_acc[i]=net->biases[i];
+        white_acc[i]=net->biases[i];
+    }
+
 }
 
-void Accumulator::add_feature(Color perp,size_t index){
+void Accumulator::add_feature(float * input,size_t index){
     //adding the index-th column to our feature vector
-    float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
     for(auto i=0;i<size;++i){
         input[i] += net->weights[index*net->layers[0].out_features+i];
     }
 }
 
-void Accumulator::remove_feature(Color perp,size_t index){
+void Accumulator::remove_feature(float* input,size_t index){
     //adding the index-th column to our feature vector
-    float * input = ((perp == BLACK)? black_acc.get() : white_acc.get());
     for(auto i=0;i<size;++i){
         input[i] -= net->weights[index*net->layers[0].out_features+i];
     }
-}
-
-void Accumulator::add_feature(Color perp, Position before, Position after){
-    //need to check this
-    apply(perp,before,after,[this](Color perp, size_t index){
-        add_feature(perp,index);
-    });
-}
-
-void Accumulator::remove_feature(Color perp, Position before, Position after){
-    apply(perp,before,after,[this](Color perp, size_t index){
-        remove_feature(perp,index);
-    });
-}
-
-std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next) {
-    //computes the indices which need to be either set to 0
-    //or for which we need to compute the matrix-vec multiply
-    uint32_t changed_to_ones = next & (~previous);
-    uint32_t n_next = ~next;
-    uint32_t changed_to_zeros = n_next & (previous);
-    return std::make_pair(changed_to_zeros, changed_to_ones);
 }
 
 void Network::load(std::string file) {
@@ -75,10 +148,10 @@ void Network::load(std::string file) {
 
     int num_weights, num_bias;
     stream.read((char *) &num_weights, sizeof(int));
-    weights = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_weights, 32));;
+    weights = std::make_unique<float[]>(num_weights);
     stream.read((char *) weights.get(), sizeof(float) * num_weights);
     stream.read((char *) &num_bias, sizeof(int));
-    biases = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * num_bias, 32));
+    biases = std::make_unique<float[]>(num_weights);
     stream.read((char *) biases.get(), sizeof(float) * num_bias);
     stream.close();
 
@@ -89,34 +162,20 @@ void Network::addLayer(Layer layer) {
 }
 
 void Network::init() {
-
-    p_black = Position{};
-    p_white = Position{};
-
     for (Layer l: layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
-    temp = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
-    input = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * max_units, 32));
+    temp = std::make_unique<float[]>(max_units);
+    input = std::make_unique<float[]>(max_units);
 
     for (auto i = 0; i < max_units; ++i) {
         temp[i] = 0;
         input[i] = 0;
     }
     const size_t units = layers[0].out_features;
-    z_black = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
-    z_white = std::unique_ptr<float[]>((float *) _mm_malloc(sizeof(float) * units, 32));
-    //initializing those two vectors
-    for (auto i = 0; i < units; ++i) {
-        z_black[i] = biases[i];
-        z_white[i] = biases[i];
-    }
 
     accumulator.init(this);
-    for(auto i=0;i<layers[0].out_features;++i){
-        accumulator.black_acc[i]=biases[i];
-        accumulator.white_acc[i]=biases[i];
-    }
+  
 
 }
 
@@ -150,132 +209,39 @@ float Network::get_max_bias() const {
 
 float Network::compute_incre_forward_pass(Position next) {
     //to be continued
-     Color color = next.color;
     float *z_previous;
-    Position previous;
-
-
-    accumulator.update()
-
-    if (color == BLACK) {
+    if (next.color == BLACK) {
         z_previous = accumulator.black_acc.get();
     } else {
         z_previous = accumulator.white_acc.get();
     }
+    accumulator.update(next.color,next);
     
-/*
-    size_t weight_index_offset = 0u;
-    size_t bias_index_offset = 0u;
-    size_t offset = 0u;
-
-    auto diff_men_b = compute_difference(previous.BP & (~previous.K), next.BP & (~next.K));
-    auto diff_men_w = compute_difference(previous.WP & (~previous.K), next.WP & (~next.K));
-    auto diff_men_bk = compute_difference(previous.BP & (previous.K), next.BP & (next.K));
-    auto diff_men_wk = compute_difference(previous.WP & (previous.K), next.WP & (next.K));
-    {
-        uint32_t n = diff_men_w.second;
-        uint32_t p = diff_men_w.first;
-
-
-        while (n != 0) {
-            auto j = Bits::bitscan_foward(n) + offset - 4;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] += weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            n &= n - 1u;
-        }
-        while (p != 0) {
-            auto j = Bits::bitscan_foward(p) + offset - 4;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] -= weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            p &= p - 1u;
-        }
-        offset += 28;
-    }
-    {
-        uint32_t n = diff_men_b.second;
-        uint32_t p = diff_men_b.first;
-
-        while (n != 0) {
-            auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] += weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            n &= n - 1u;
-        }
-
-        while (p != 0) {
-            auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] -= weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            p &= p - 1u;
-        }
-        offset += 28;
-    }
-
-    {
-        uint32_t n = diff_men_wk.second;
-        uint32_t p = diff_men_wk.first;
-
-        while (n != 0) {
-            auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] += weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            n &= n - 1u;
-        }
-
-        while (p != 0) {
-            auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] -= weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            p &= p - 1u;
-        }
-        offset += 32;
-    }
-
-    {
-        uint32_t n = diff_men_bk.second;
-        uint32_t p = diff_men_bk.first;
-
-        while (n != 0) {
-            auto j = Bits::bitscan_foward(n) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] += weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            n &= n - 1u;
-        }
-
-        while (p != 0) {
-            auto j = Bits::bitscan_foward(p) + offset;
-            for (auto i = 0; i < layers[0].out_features; ++i) {
-                z_previous[i] -= weights[weight_index_offset + j * layers[0].out_features + i];
-            }
-            p &= p - 1u;
-        }
-    } */
     for (auto i = 0; i < layers[0].out_features; i++) {
         temp[i] = std::clamp(z_previous[i], 0.0f, 1.0f);
     }
-    memcpy(input.get(), temp.get(), sizeof(float) * layers[0].out_features);
-    memset(temp.get(), 0, sizeof(float) * layers[0].out_features);
+
+    for (auto i = 0; i < layers[0].out_features; ++i)
+    {
+        input[i] = temp[i];
+        temp[i] = 0;
+    }
 
     auto weight_index_offset = layers[0].out_features * layers[0].in_features;
     auto bias_index_offset = layers[0].out_features;
     //computation for the remaining layers
     for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
+        for (auto i = 0; i < l.out_features; ++i) {
+            temp[i] = biases[bias_index_offset + i];
+        }
+
         for (auto j = 0; j < l.in_features; ++j) {
             for (auto i = 0; i < l.out_features; i++) {
                 temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
             }
         }
-
         for (auto i = 0; i < l.out_features; ++i) {
-            temp[i] += biases[bias_index_offset + i];
             if (k < layers.size() - 1) {
                 temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
             }
@@ -332,12 +298,12 @@ float Network::forward_pass() const {
 
 int Network::evaluate(Position pos, int ply) {
 
-    if (pos.BP == 0) {
-        return -pos.color * loss(ply);
-    }
-    if (pos.WP == 0) {
-        return pos.color * loss(ply);
-    }
+      if (pos.BP == 0) {
+            return -loss(ply);
+        }
+        if (pos.WP == 0) {
+            return loss(ply);
+        }
 
 
     float val = compute_incre_forward_pass(pos) * 64.0f;
