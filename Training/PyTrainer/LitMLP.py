@@ -289,15 +289,25 @@ class Network(pl.LightningModule):
         self.criterion = torch.nn.MSELoss()
         self.init_weights()
         self.input_format = InputFormat.V1
+        self.max_weight_hidden =127.0/64.0
+        self.min_weight_hidden = -127.0/64.0
         print(self.net)
 
     def forward(self, x):
         return self.net.forward(x)
 
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        with torch.no_grad():
+            for layer in self.layers[1:]:
+                if isinstance(layer, torch.nn.Linear):
+                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
+
+
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
-        self.save("model.pt")
-        self.save_quantized("model.quant")
+        self.save("small.pt")
+        self.save_quantized("test2.quant")
 
     def configure_optimizers(self):
         # optimizer = Adan(
@@ -364,18 +374,15 @@ class Network(pl.LightningModule):
 
         for layer in self.layers[1:]:
             if isinstance(layer, torch.nn.Linear):
-                weights = layer.weight.detach().numpy().flatten("F")
+                weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
-                bias = layer.bias.detach().numpy().flatten("F")
-                print("Before")
-                print(bias)
+                print(weights)
+                bias = layer.bias.detach().numpy().flatten()
                 bias = bias * (127 * 64)
                 np.clip(bias, min16, max16)
                 bias = bias.astype(np.int16)
-                print("After")
-                print(bias)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()
                 num_weights += len(weights)

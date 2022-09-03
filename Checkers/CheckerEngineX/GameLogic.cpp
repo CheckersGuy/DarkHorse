@@ -92,7 +92,7 @@ std::optional<int> get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *hand
 
 void initialize(uint64_t seed) {
     Statistics::mPicker.init();
-    gameWeights.load_weights<uint32_t>("test12sgd.weights");
+    gameWeights.load_weights<uint32_t>("test10sgd.weights");
     Zobrist::init_zobrist_keys(seed);
 }
 

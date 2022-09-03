@@ -21,8 +21,8 @@ struct Layer {
 };
 
 struct Accumulator {
-    std::unique_ptr<float[]> black_acc;
-    std::unique_ptr<float[]> white_acc;
+    std::unique_ptr<int16_t[]> black_acc;
+    std::unique_ptr<int16_t[]> white_acc;
     size_t size;
     Position previous_black,previous_white;
     Network* net = nullptr;
@@ -31,9 +31,9 @@ struct Accumulator {
 
     void update(Color per,Position after);
 
-    void add_feature(float* input,size_t index);
+    void add_feature(int16_t* input,size_t index);
 
-    void remove_feature(float* input,size_t index);
+    void remove_feature(int16_t* input,size_t index);
 
     void apply(Color color,Position before, Position after);
 
@@ -78,18 +78,20 @@ std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t nex
 
 struct Network {
     std::vector<Layer> layers;
-    std::unique_ptr<float[]> biases;
-    std::unique_ptr<float[]> weights;
-    std::unique_ptr<float[]> input;
-    std::unique_ptr<float[]> temp;
-    std::unique_ptr<float[]>output;
+    std::unique_ptr<int16_t[]>ft_weights;
+    std::unique_ptr<int16_t[]>ft_biases;
+    std::unique_ptr<int16_t[]> biases;
+    std::unique_ptr<int16_t[]> weights;
+    std::unique_ptr<int16_t[]> input;
+    std::unique_ptr<int16_t[]> temp;
+    std::unique_ptr<int16_t[]>output;
     int max_units{0};
     Accumulator accumulator;
 
 
-    float get_max_weight() const;
+    int16_t get_max_weight() const;
 
-    float get_max_bias() const;
+    int16_t get_max_bias() const;
 
     void addLayer(Layer layer);
 
@@ -99,11 +101,11 @@ struct Network {
 
     void set_input(Position p);
 
-    float compute_incre_forward_pass(Position next);
+    int16_t compute_incre_forward_pass(Position next);
 
-    float *get_output();
+    int16_t *get_output();
 
-    float forward_pass() const;
+    int16_t forward_pass() const;
 
     float get_win_p(Position pos);
 

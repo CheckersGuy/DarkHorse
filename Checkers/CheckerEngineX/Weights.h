@@ -96,7 +96,7 @@ struct Weights {
 
     template<typename U=int32_t>
     U evaluate(Position pos, int ply) const {
-        std::cout<<"Test"<<std::endl;
+      
         if (pos.BP == 0) {
             return -loss(ply);
         }
