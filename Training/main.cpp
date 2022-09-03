@@ -75,8 +75,8 @@ int main() {
  */
 
                         
-     Match engine_match("mednet", "form17");
-     engine_match.setTime(200);
+     Match engine_match("quant2", "test10sgd");
+     engine_match.setTime(100);
      engine_match.setMaxGames(30000);
      engine_match.setNumThreads(6);
      engine_match.setHashSize(20);

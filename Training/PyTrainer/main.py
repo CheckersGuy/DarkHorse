@@ -32,6 +32,9 @@ def test_model():
 # model = LitMLP.Network([120, 512, 16, 32, 1])
 # model.load_state_dict(torch.load("model.pt"))
 # model.save_quantized("test.quant")
+
+
+
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
     model = LitMLP.Network([120, 512, 16, 32, 1])

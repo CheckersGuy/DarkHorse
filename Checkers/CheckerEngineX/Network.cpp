@@ -7,8 +7,8 @@
 
     void Accumulator::refresh(){
         for(auto i=0;i<size;++i){
-            white_acc[i]=net->biases[i];
-            black_acc[i]=net->biases[i];
+            white_acc[i]=net->ft_biases[i];
+            black_acc[i]=net->ft_biases[i];
         }
         previous_black = Position{};
         previous_white =Position{};
@@ -16,7 +16,7 @@
 
     void Accumulator::apply(Color perp, Position before, Position after)
     {
-        float* input =((perp == BLACK)?black_acc.get(): white_acc.get());
+        int16_t* input =((perp == BLACK)?black_acc.get(): white_acc.get());
 
         auto WP_O = after.get_pieces<WHITE,PAWN>() & (~before.get_pieces<WHITE,PAWN>());
         auto BP_O = after.get_pieces<BLACK,PAWN>() & (~before.get_pieces<BLACK,PAWN>());
@@ -112,49 +112,59 @@ void Accumulator::update(Color perp,Position after) {
 
 void Accumulator::init(Network* net){
     const auto size = net->layers[0].out_features;
-    black_acc = std::make_unique<float[]>(size);
-    white_acc = std::make_unique<float[]>(size);
+    black_acc = std::make_unique<int16_t[]>(size);
+    white_acc = std::make_unique<int16_t[]>(size);
     this->size =size;
     this->net = net;
 
       for(auto i=0;i<this->net->layers[0].out_features;++i){
-        black_acc[i]=net->biases[i];
-        white_acc[i]=net->biases[i];
+        black_acc[i]=net->ft_biases[i];
+        white_acc[i]=net->ft_biases[i];
     }
 
 }
 
-void Accumulator::add_feature(float * input,size_t index){
+void Accumulator::add_feature(int16_t * input,size_t index){
     //adding the index-th column to our feature vector
     for(auto i=0;i<size;++i){
-        input[i] += net->weights[index*net->layers[0].out_features+i];
+        input[i] += net->ft_weights[index*net->layers[0].out_features+i];
     }
 }
 
-void Accumulator::remove_feature(float* input,size_t index){
+void Accumulator::remove_feature(int16_t* input,size_t index){
     //adding the index-th column to our feature vector
     for(auto i=0;i<size;++i){
-        input[i] -= net->weights[index*net->layers[0].out_features+i];
+        input[i] -= net->ft_weights[index*net->layers[0].out_features+i];
     }
 }
 
 void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
-    if (!stream.good()) {
+    if (!stream.good())
+    {
         std::cerr << "Could not load the weights" << std::endl;
         std::exit(-1);
     }
-
+    const auto num_ft_weights = layers[0].out_features * layers[0].in_features;
+    
+    const auto num_ft_biases = layers[0].out_features;
 
     int num_weights, num_bias;
-    stream.read((char *) &num_weights, sizeof(int));
-    weights = std::make_unique<float[]>(num_weights);
-    stream.read((char *) weights.get(), sizeof(float) * num_weights);
-    stream.read((char *) &num_bias, sizeof(int));
-    biases = std::make_unique<float[]>(num_weights);
-    stream.read((char *) biases.get(), sizeof(float) * num_bias);
+    stream.read((char *)&num_weights, sizeof(int));
+    num_weights -= num_ft_weights;
+    ft_weights = std::make_unique<int16_t[]>(num_ft_weights);
+    weights = std::make_unique<int16_t[]>(num_weights);
+    // first reading the ft layer
+    
+    stream.read((char *)ft_weights.get(), sizeof(int16_t) * num_ft_weights);
+    stream.read((char *)weights.get(), sizeof(int16_t) * num_weights);
+    stream.read((char *)&num_bias, sizeof(int));
+    num_bias -= num_ft_biases;
+    ft_biases =std::make_unique<int16_t[]>(num_ft_biases);
+    biases = std::make_unique<int16_t[]>(num_bias);
+    stream.read((char *)ft_biases.get(), sizeof(int16_t) * num_ft_biases);
+    stream.read((char *)biases.get(), sizeof(int16_t) * num_bias);
     stream.close();
-
 }
 
 void Network::addLayer(Layer layer) {
@@ -165,8 +175,8 @@ void Network::init() {
     for (Layer l: layers)
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
 
-    temp = std::make_unique<float[]>(max_units);
-    input = std::make_unique<float[]>(max_units);
+    temp = std::make_unique<int16_t[]>(max_units);
+    input = std::make_unique<int16_t[]>(max_units);
 
     for (auto i = 0; i < max_units; ++i) {
         temp[i] = 0;
@@ -179,37 +189,40 @@ void Network::init() {
 
 }
 
-float Network::get_max_weight() const {
-    float max_value = std::numeric_limits<float>::min();
+int16_t Network::get_max_weight() const {
+    auto max_value = std::numeric_limits<int16_t>::min();
     size_t num_weights = 0;
     for (Layer l: layers) {
         num_weights += l.out_features * l.in_features;
     }
     for (int i = 0; i < num_weights; ++i) {
-        max_value = std::max(std::abs(weights[i]), max_value);
+          if(std::abs(weights[i])>max_value){
+            max_value = std::abs(weights[i]);
+        }
     }
 
     return max_value;
 
 }
 
-float Network::get_max_bias() const {
-    float max_value = std::numeric_limits<float>::min();
+int16_t Network::get_max_bias() const {
+    auto max_value = std::numeric_limits<int16_t>::min();
     size_t num_bias= 0;
     for (Layer l: layers) {
         num_bias += l.out_features;
     }
     for (int i = 0; i < num_bias; ++i) {
-        max_value = std::max(std::abs(weights[i]), max_value);
+        if(std::abs(biases[i])>max_value){
+            max_value = std::abs(biases[i]);
+        }
     }
 
     return max_value;
 
 }
 
-float Network::compute_incre_forward_pass(Position next) {
-    //to be continued
-    float *z_previous;
+int16_t Network::compute_incre_forward_pass(Position next) {
+    int16_t *z_previous;
     if (next.color == BLACK) {
         z_previous = accumulator.black_acc.get();
     } else {
@@ -218,7 +231,7 @@ float Network::compute_incre_forward_pass(Position next) {
     accumulator.update(next.color,next);
     
     for (auto i = 0; i < layers[0].out_features; i++) {
-        temp[i] = std::clamp(z_previous[i], 0.0f, 1.0f);
+        temp[i] = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
     }
 
     for (auto i = 0; i < layers[0].out_features; ++i)
@@ -226,27 +239,25 @@ float Network::compute_incre_forward_pass(Position next) {
         input[i] = temp[i];
         temp[i] = 0;
     }
-
-    auto weight_index_offset = layers[0].out_features * layers[0].in_features;
-    auto bias_index_offset = layers[0].out_features;
+    auto weight_index_offset = 0;
+    auto bias_index_offset = 0;
     //computation for the remaining layers
     for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
-        for (auto i = 0; i < l.out_features; ++i) {
-            temp[i] = biases[bias_index_offset + i];
-        }
 
-        for (auto j = 0; j < l.in_features; ++j) {
-            for (auto i = 0; i < l.out_features; i++) {
-                temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
+        for (auto i = 0; i < l.out_features; i++)
+        {
+            int sum =biases[i+bias_index_offset];
+            for (auto j = 0; j < l.in_features; ++j)
+            {
+                sum+= weights[weight_index_offset + i * l.in_features + j] * input[j];
+            }
+             if (k < layers.size() - 1) {
+                temp[i] = std::clamp(sum/64,  0, 127);
+            }else{
+                return sum/64; 
             }
         }
-        for (auto i = 0; i < l.out_features; ++i) {
-            if (k < layers.size() - 1) {
-                temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
-            }
-        }
-
 
         for (auto i = 0; i < l.out_features; ++i) {
             input[i] = temp[i];
@@ -261,11 +272,11 @@ float Network::compute_incre_forward_pass(Position next) {
     return input[0];
 }
 
-float *Network::get_output() {
+int16_t *Network::get_output() {
     return input.get();
 }
 
-float Network::forward_pass() const {
+int16_t Network::forward_pass() const {
 
     size_t weight_index_offset = 0u;
     size_t bias_index_offset = 0u;
@@ -281,7 +292,7 @@ float Network::forward_pass() const {
         for (auto i = 0; i < l.out_features; ++i) {
             temp[i] += biases[bias_index_offset + i];
             if (k < layers.size() - 1) {
-                temp[i] = std::clamp(temp[i], 0.0f, 1.0f);
+                temp[i] = std::clamp(temp[i],  int16_t{0}, int16_t{127});
             }
         }
 
@@ -296,18 +307,20 @@ float Network::forward_pass() const {
     return input[0];
 }
 
-int Network::evaluate(Position pos, int ply) {
+int Network::evaluate(Position pos, int ply)
+{
 
-      if (pos.BP == 0) {
-            return -loss(ply);
-        }
-        if (pos.WP == 0) {
-            return loss(ply);
-        }
+    if (pos.BP == 0)
+    {
+        return -loss(ply);
+    }
+    if (pos.WP == 0)
+    {
+        return loss(ply);
+    }
 
-
-    float val = compute_incre_forward_pass(pos) * 64.0f;
-    return static_cast<int>(val);
+    int16_t val = compute_incre_forward_pass(pos) / 2;
+    return val;
 }
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {

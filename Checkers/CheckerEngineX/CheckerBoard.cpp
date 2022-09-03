@@ -67,11 +67,11 @@ extern"C" int getmove
 
 		if(!engine_initialized){
 			  use_classical(false);
-			    network.load("form_network19.weights");
-   			 network.addLayer(Layer{120, 256});
-			network.addLayer(Layer{256, 32});
-			network.addLayer(Layer{32, 32});
+   			network.addLayer(Layer{120, 512});
+			network.addLayer(Layer{512, 16});
+			network.addLayer(Layer{16, 32});
 			network.addLayer(Layer{32, 1});
+			network.load("test.quant");
 			network.init();   
 			
        
