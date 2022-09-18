@@ -9,7 +9,7 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-
+   
     }
 
 
@@ -119,14 +119,13 @@ namespace Statistics {
         }
     }
 
-    int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
-        static constexpr int max_history =std::numeric_limits<int16_t>::max()-10;
-           const int index = get_history_index(pos, move);
-            const int score = history[index];
-            const int bf_score = bfScore[index] + 1;
-           //auto score =(int) policy.get_output()[get_move_encoding(pos.get_color(), move)] * 1000;
-
-        return std::clamp(score, -max_history,max_history);
+    int MovePicker::get_move_score(Position pos, Move move, Depth depth)
+    {
+        static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
+        const int index = get_history_index(pos, move);
+        int score = history[index];
+        const int bf_score = bfScore[index] + 1;
+        return std::clamp(score, -max_history, max_history);
     }
 
     int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {
@@ -134,11 +133,6 @@ namespace Statistics {
             return std::numeric_limits<int16_t>::max();
         }
 
-        //trying out one killer move first
-         /*         if(move == killer_moves[ply][0] || move == killer_moves[ply][1]){
-            return std::numeric_limits<int16_t>::max()-1000;
-        }  
-         */
         if (move.is_capture()) {
             return (int) Bits::pop_count(move.captures);
         }

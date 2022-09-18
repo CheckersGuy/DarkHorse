@@ -73,6 +73,7 @@ public:
         num_samples = count_trainable_positions(file_path, range);
                 std::cout<<"loading"<<std::endl;
         this->buffer_size = std::min(num_samples, buff_size);
+        std::cout<<"BufferSize: "<<buffer_size<<std::endl;
         buffer.reserve(buffer_size);
         std::cout<<buffer_size<<std::endl;
 

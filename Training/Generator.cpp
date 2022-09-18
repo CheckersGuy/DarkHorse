@@ -71,7 +71,13 @@ void Generator::start() {
             std::ofstream out_stream("../Training/TrainData/" + local_file);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
-            use_classical(true);
+            use_classical(false);
+            network.addLayer(Layer{120, 1024});
+            network.addLayer(Layer{1024, 8});
+            network.addLayer(Layer{8, 32});
+            network.addLayer(Layer{32, 1});
+            network.load("bigagain2.quant");
+            network.init();
 
             TT.resize(hash_size);
             std::cout << "Init child: " << i << std::endl;

@@ -78,7 +78,7 @@ constexpr int asp_wind = 20;
 constexpr int MAX_ASP = 200;
 
 constexpr int MAX_KILLERS =2;
-constexpr std::array<int,14> LMR_TABLE = {1,1,1,1,1,1,1,1,2,2,2,2,2,2};
+constexpr std::array<int,19> LMR_TABLE = {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2};
 
 
 using Depth = int;

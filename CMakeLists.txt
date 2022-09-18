@@ -6,7 +6,7 @@ if(WIN32)
 add_compile_options("-march=native -flto -ffat-lto-objects -fuse-linker-plugin")
 add_compile_options("-O3")
 else()
-SET(CMAKE_CXX_FLAGS "-Ofast -ftree-vectorize -fprofile-use -mtune=native -lstdc++fs -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
+SET(CMAKE_CXX_FLAGS "-Ofast  -mtune=native -lstdc++fs -march=native -pthread -flto -ffat-lto-objects -fuse-linker-plugin")
 endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 
