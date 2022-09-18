@@ -20,7 +20,7 @@ int main() {
   //counting unique positions in my book
 
 
-  //Book::create_train_file("/home/leagu/DarkHorse/Training/Positions/11manballots.pos","/home/leagu/DarkHorse/Training/Positions/train3.pos",2);
+  //Book::create_train_file("/home/leagu/DarkHorse/Training/Positions/11manballots.pos","/home/leagu/DarkHorse/Training/Positions/train5.pos",4);
  
  /*  std::ifstream stream("/home/leagu/DarkHorse/Training/Positions/train2.pos");
   std::unordered_set<Position>hash;
@@ -47,44 +47,35 @@ int main() {
 
  
       merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
-     /*      auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird4.train");
+   /*   auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/weird8.train");
    std::cout<<"Unique Positions so far: "<<count.first<<std::endl;
-   std::cout<<"Total Positions so far: "<<count.second<<std::endl;    */ 
-     
- /*   
-    Generator generator("train3.pos", "weird8.train");
+   std::cout<<"Total Positions so far: "<<count.second<<std::endl;     
+    return 0; 
+  */
+
+       
+      
+       Generator generator("train5.pos", "weird8.train");
     generator.set_hash_size(21);
     generator.set_buffer_clear_count(1000);
-    generator.set_parallelism(16);
+    generator.set_parallelism(94);
     generator.set_time(10);
-    generator.set_piece_limit(6);
+    generator.set_piece_limit(5);
     generator.set_max_position(1500000000ull);
     generator.start();   
-           */
+
+ 
 /* 
-
-    BatchProvider provider("/home/leagu/DarkHorse/Training/TrainData/weird7formatted.train",1000000,1000);
-
-    std::unique_ptr<float[]>results = std::make_unique<float[]>(1000);
-    std::unique_ptr<float[]>inputs = std::make_unique<float[]>(1000*120);
-    std::unique_ptr<int64_t[]>moves = std::make_unique<int64_t[]>(1000);
-
-    provider.next(results.get(),moves.get(),inputs.get());
-
-    return 0;
- */
-
-                        
-     Match engine_match("quant2", "test10sgd");
+         Match engine_match("bigagain2", "bigagain");
      engine_match.setTime(100);
      engine_match.setMaxGames(30000);
-     engine_match.setNumThreads(6);
-     engine_match.setHashSize(20);
-     engine_match.start();                
-                                                  
-      
+     engine_match.setNumThreads(14);
+     engine_match.setHashSize(21);
+     engine_match.start();                 
+                                          */         
+        
        Trainer trainer("/home/leagu/DarkHorse/Training/TrainData/weird8formatted.train");
-      trainer.set_learning_rate(2000);
+      trainer.set_learning_rate(8000);
       trainer.set_train_file_locat("trainer.state");
       
       trainer.set_weight_decay(0);

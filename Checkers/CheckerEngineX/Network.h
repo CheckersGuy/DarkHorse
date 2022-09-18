@@ -59,10 +59,6 @@ template<typename T> void display_network_data(std::string network_file){
     stream.read((char *) &num_bias, sizeof(int));
     auto biases = std::make_unique<T[]>(num_bias);
     stream.read((char *) biases.get(), sizeof(T) * num_bias);
-    /* for (auto i = 0; i < 100; ++i)
-    {
-        std::cout << weights[i] << std::endl;
-    } */
 
      for (auto i = 0; i < num_bias; ++i)
     {
@@ -73,18 +69,13 @@ template<typename T> void display_network_data(std::string network_file){
 }
 
 
-std::pair<uint32_t, uint32_t> compute_difference(uint32_t previous, uint32_t next);
-
 
 struct Network {
     std::vector<Layer> layers;
-    std::unique_ptr<int16_t[]>ft_weights;
-    std::unique_ptr<int16_t[]>ft_biases;
     std::unique_ptr<int16_t[]> biases;
     std::unique_ptr<int16_t[]> weights;
     std::unique_ptr<int16_t[]> input;
     std::unique_ptr<int16_t[]> temp;
-    std::unique_ptr<int16_t[]>output;
     int max_units{0};
     Accumulator accumulator;
 
@@ -99,19 +90,15 @@ struct Network {
 
     void init();
 
-    void set_input(Position p);
-
     int16_t compute_incre_forward_pass(Position next);
-
-    int16_t *get_output();
-
-    int16_t forward_pass() const;
 
     float get_win_p(Position pos);
 
     int evaluate(Position pos, int ply);
 
     static int evaluate(Position pos, int ply, Network& net1, Network& net2);
+    
+    int operator[](size_t index);
 
     friend class Accumulator;
 };

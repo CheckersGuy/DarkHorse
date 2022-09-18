@@ -302,7 +302,9 @@ inline std::pair<size_t, size_t> count_unique_positions(std::string game_file) {
     std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
-    return count_unique_positions(begin, end);
+    std::vector<Game> games;
+    std::copy(begin,end,std::back_inserter(games));
+    return count_unique_positions(games.begin(), games.end());
 }
 
 inline size_t count_trainable_positions(std::string game_file, std::pair<size_t, size_t> range) {
@@ -314,18 +316,6 @@ inline size_t count_trainable_positions(std::string game_file, std::pair<size_t,
     //way too slow
     std::for_each(begin, end, [&](const Game& g) {
          counter+=g.indices.size()+1;
-           /*
-        for (auto pos: g) {
-           auto num_p = Bits::pop_count(pos.BP | pos.WP);
-            bool greater = (num_p >= range.first && num_p <= range.second);
-            counter += greater;
-            if (num_p < range.first) {
-                break;
-            } 
-           
-        }
-        */
-
     });
     return counter;
 }
@@ -379,7 +369,7 @@ inline void create_train_val_split(std::string input, std::initializer_list<std:
 
 
 inline auto get_piece_distrib(std::ifstream &stream) {
-    std::array<double, 32> result{0};
+    std::array<double, 24> result{0};
     Game game;
     size_t total_count = 0;
     while (stream >> game) {

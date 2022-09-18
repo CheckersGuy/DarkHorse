@@ -7,8 +7,8 @@
 
     void Accumulator::refresh(){
         for(auto i=0;i<size;++i){
-            white_acc[i]=net->ft_biases[i];
-            black_acc[i]=net->ft_biases[i];
+            white_acc[i]=net->biases[i];
+            black_acc[i]=net->biases[i];
         }
         previous_black = Position{};
         previous_white =Position{};
@@ -118,8 +118,8 @@ void Accumulator::init(Network* net){
     this->net = net;
 
       for(auto i=0;i<this->net->layers[0].out_features;++i){
-        black_acc[i]=net->ft_biases[i];
-        white_acc[i]=net->ft_biases[i];
+        black_acc[i]=net->biases[i];
+        white_acc[i]=net->biases[i];
     }
 
 }
@@ -127,14 +127,14 @@ void Accumulator::init(Network* net){
 void Accumulator::add_feature(int16_t * input,size_t index){
     //adding the index-th column to our feature vector
     for(auto i=0;i<size;++i){
-        input[i] += net->ft_weights[index*net->layers[0].out_features+i];
+        input[i] += net->weights[index*net->layers[0].out_features+i];
     }
 }
 
 void Accumulator::remove_feature(int16_t* input,size_t index){
     //adding the index-th column to our feature vector
     for(auto i=0;i<size;++i){
-        input[i] -= net->ft_weights[index*net->layers[0].out_features+i];
+        input[i] -= net->weights[index*net->layers[0].out_features+i];
     }
 }
 
@@ -145,24 +145,21 @@ void Network::load(std::string file) {
         std::cerr << "Could not load the weights" << std::endl;
         std::exit(-1);
     }
-    const auto num_ft_weights = layers[0].out_features * layers[0].in_features;
-    
-    const auto num_ft_biases = layers[0].out_features;
+
+    //experimental bullshit
+/* 
+    int num_layers;
+    for(auto i=0;i<num_layers;++i){
+        int layer_size;
+        stream.read((char*)&layer_size,sizeof(int));
+    } */
 
     int num_weights, num_bias;
     stream.read((char *)&num_weights, sizeof(int));
-    num_weights -= num_ft_weights;
-    ft_weights = std::make_unique<int16_t[]>(num_ft_weights);
     weights = std::make_unique<int16_t[]>(num_weights);
-    // first reading the ft layer
-    
-    stream.read((char *)ft_weights.get(), sizeof(int16_t) * num_ft_weights);
     stream.read((char *)weights.get(), sizeof(int16_t) * num_weights);
     stream.read((char *)&num_bias, sizeof(int));
-    num_bias -= num_ft_biases;
-    ft_biases =std::make_unique<int16_t[]>(num_ft_biases);
     biases = std::make_unique<int16_t[]>(num_bias);
-    stream.read((char *)ft_biases.get(), sizeof(int16_t) * num_ft_biases);
     stream.read((char *)biases.get(), sizeof(int16_t) * num_bias);
     stream.close();
 }
@@ -172,8 +169,10 @@ void Network::addLayer(Layer layer) {
 }
 
 void Network::init() {
-    for (Layer l: layers)
+    for (Layer l : layers)
+    {
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
+    }
 
     temp = std::make_unique<int16_t[]>(max_units);
     input = std::make_unique<int16_t[]>(max_units);
@@ -182,11 +181,9 @@ void Network::init() {
         temp[i] = 0;
         input[i] = 0;
     }
-    const size_t units = layers[0].out_features;
 
     accumulator.init(this);
   
-
 }
 
 int16_t Network::get_max_weight() const {
@@ -223,13 +220,13 @@ int16_t Network::get_max_bias() const {
 
 int16_t Network::compute_incre_forward_pass(Position next) {
     int16_t *z_previous;
+ 
     if (next.color == BLACK) {
         z_previous = accumulator.black_acc.get();
     } else {
         z_previous = accumulator.white_acc.get();
     }
     accumulator.update(next.color,next);
-    
     for (auto i = 0; i < layers[0].out_features; i++) {
         temp[i] = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
     }
@@ -239,8 +236,8 @@ int16_t Network::compute_incre_forward_pass(Position next) {
         input[i] = temp[i];
         temp[i] = 0;
     }
-    auto weight_index_offset = 0;
-    auto bias_index_offset = 0;
+    auto weight_index_offset = layers[0].out_features*layers[0].in_features;;
+    auto bias_index_offset = layers[0].out_features;
     //computation for the remaining layers
     for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
@@ -256,6 +253,7 @@ int16_t Network::compute_incre_forward_pass(Position next) {
                 temp[i] = std::clamp(sum/64,  0, 127);
             }else{
                 return sum/64; 
+            
             }
         }
 
@@ -272,39 +270,8 @@ int16_t Network::compute_incre_forward_pass(Position next) {
     return input[0];
 }
 
-int16_t *Network::get_output() {
-    return input.get();
-}
-
-int16_t Network::forward_pass() const {
-
-    size_t weight_index_offset = 0u;
-    size_t bias_index_offset = 0u;
-    for (auto k = 0; k < layers.size(); ++k) {
-        const Layer &l = layers[k];
-        for (auto j = 0; j < l.in_features; ++j) {
-            if (input[j] == 0)
-                continue;
-            for (auto i = 0; i < l.out_features; ++i) {
-                temp[i] += weights[weight_index_offset + j * l.out_features + i] * input[j];
-            }
-        }
-        for (auto i = 0; i < l.out_features; ++i) {
-            temp[i] += biases[bias_index_offset + i];
-            if (k < layers.size() - 1) {
-                temp[i] = std::clamp(temp[i],  int16_t{0}, int16_t{127});
-            }
-        }
-
-        for (auto i = 0; i < l.out_features; ++i) {
-            input[i] = temp[i];
-            temp[i] = 0;
-        }
-        weight_index_offset += l.out_features * l.in_features;
-        bias_index_offset += l.out_features;
-
-    }
-    return input[0];
+int Network::operator[](size_t index){
+    return input[index];
 }
 
 int Network::evaluate(Position pos, int ply)
@@ -332,48 +299,5 @@ int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
     }
 }
 
-void Network::set_input(Position p) {
-    //testing another network architecture
-    if (p.color == BLACK) {
-        p = p.get_color_flip();
-    }
-    for (auto i = 0; i < max_units; ++i) {
-        input[i] = 0;
-        temp[i] = 0;
-    }
-    uint32_t white_men = p.WP & (~p.K);
-    uint32_t black_men = p.BP & (~p.K);
-    uint32_t white_kings = p.K & p.WP;
-    uint32_t black_kings = p.K & p.BP;
 
-    size_t offset = 0u;
-    while (white_men != 0u) {
-        auto index = Bits::bitscan_foward(white_men);
-        white_men &= white_men - 1u;
-        input[offset + index - 4] = 1;
-    }
-    offset += 28;
-    while (black_men != 0u) {
-        auto index = Bits::bitscan_foward(black_men);
-        black_men &= black_men - 1u;
-        input[offset + index] = 1;
-    }
-    offset += 28;
-    while (white_kings != 0u) {
-        auto index = Bits::bitscan_foward(white_kings);
-        white_kings &= white_kings - 1u;
-        input[offset + index] = 1;
-    }
-    offset += 32;
-    while (black_kings != 0u) {
-        auto index = Bits::bitscan_foward(black_kings);
-        black_kings &= black_kings - 1u;
-        input[offset + index] = 1;
-    }
-}
-
-float Network::get_win_p(Position pos){
-    auto value = compute_incre_forward_pass(pos);
-    return 1.0/(1.0+std::exp(-value));
-}
 

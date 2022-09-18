@@ -92,7 +92,7 @@ std::optional<int> get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *hand
 
 void initialize(uint64_t seed) {
     Statistics::mPicker.init();
-    gameWeights.load_weights<uint32_t>("test10sgd.weights");
+    gameWeights.load_weights<uint32_t>("test12sgd.weights");
     Zobrist::init_zobrist_keys(seed);
 }
 
@@ -171,7 +171,7 @@ namespace Search {
         Depth red = 0;
         if (!in_pv && local.depth >= 2 && !move.is_capture()&& local.i >=2) {
             const auto index = std::min(local.ply,(int)LMR_TABLE.size()-1);
-            //red = LMR_TABLE[index];
+            red = LMR_TABLE[index];
             red=1;
         }
         return red;
@@ -442,14 +442,7 @@ namespace Search {
 
             local.i++;
         }
-    /*     if(local.best_score>=local.beta && !local.move.is_capture() && !local.move.is_empty()){
-            for(auto i=1;i<MAX_KILLERS;++i){
-                 Statistics::mPicker.killer_moves[local.ply][i] =  Statistics::mPicker.killer_moves[local.ply][i-1];
-            }
-
-            Statistics::mPicker.killer_moves[local.ply][0]=local.move;
-        } */
-
+     
     }
 
     void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta, Depth depth) {

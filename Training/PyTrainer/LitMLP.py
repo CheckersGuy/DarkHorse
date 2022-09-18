@@ -138,140 +138,6 @@ class Relu1(nn.Module):
         return torch.clamp(x, 0.0, 1.0)
 
 
-class ConvNet(pl.LightningModule):
-
-    def __init__(self):
-        super(ConvNet, self).__init__()
-        self.input_format = InputFormat.V2
-        self.conv1 = nn.Sequential(nn.Conv2d(in_channels=4, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU(),
-                                   nn.Conv2d(in_channels=128, out_channels=128, stride=1, kernel_size=3, padding=1),
-                                   nn.BatchNorm2d(128),
-                                   nn.ReLU()
-                                   )
-
-        self.decoder = nn.Sequential(nn.Linear(128 * 4 * 8, 256), nn.BatchNorm1d(256), nn.ReLU(), nn.Linear(256, 256),
-                                     nn.BatchNorm1d(256), nn.ReLU(), nn.Linear(256, 1), nn.Sigmoid())
-
-    def forward(self, x):
-        # tensor has the form batchsizex8x4
-        out = self.conv1(x)
-        out_hat = out.view(x.size(0), -1)
-        out_hat = self.decoder(out_hat)
-        return out_hat
-
-    def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
-        return optimizer
-
-    def training_step(self, train_batch, batch_idx):
-        result, move, x = train_batch
-        out = self.forward(x)
-        loss = F.mse_loss(out, result)
-        self.log('train_loss', loss)
-        return loss
-
-    def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
-        out = self.forward(x)
-        loss = F.mse_loss(out, result)
-        self.log('val_loss', loss)
-        return loss
-
 
 class Network(pl.LightningModule):
 
@@ -291,33 +157,30 @@ class Network(pl.LightningModule):
         self.input_format = InputFormat.V1
         self.max_weight_hidden =127.0/64.0
         self.min_weight_hidden = -127.0/64.0
+        self.gamma = 0.992
         print(self.net)
 
     def forward(self, x):
         return self.net.forward(x)
 
     def optimizer_step(self, *args, **kwargs):
-        super().optimizer_step(*args, **kwargs)
-        with torch.no_grad():
-            for layer in self.layers[1:]:
-                if isinstance(layer, torch.nn.Linear):
-                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
+         super().optimizer_step(*args, **kwargs)
+        # with torch.no_grad():
+        #     for layer in self.layers[1:]:
+        #         if isinstance(layer, torch.nn.Linear):
+        #             layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
+        #
 
 
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
-        self.save("small.pt")
-        self.save_quantized("test2.quant")
+        self.save("bigagain2.pt")
+        self.save_quantized("bigagain2.quant")
 
     def configure_optimizers(self):
-        # optimizer = Adan(
-        #      self.parameters(),
-        #      lr=1e-3,  # learning rate
-        #      betas=(0.1, 0.1, 0.001),  # beta 1-2-3 as described in paper
-        #      weight_decay=0.  # weight decay
-        #  )
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
-        return optimizer
+        optimizer = Ranger(params=self.parameters(),lr=8.75e-4, betas=(.9, 0.999), eps=1.0e-7)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -347,8 +210,7 @@ class Network(pl.LightningModule):
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
 
-        min8 = np.iinfo(np.int8).min
-        max8 = np.iinfo(np.int8).max
+
 
         device = torch.device("cpu")
         device_gpu = torch.device("cuda")
@@ -378,7 +240,6 @@ class Network(pl.LightningModule):
                 weights = weights * 64.0
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
-                print(weights)
                 bias = layer.bias.detach().numpy().flatten()
                 bias = bias * (127 * 64)
                 np.clip(bias, min16, max16)
@@ -427,54 +288,118 @@ class Network(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self, hidden, output="verypolicy.weights"):
+    def __init__(self, hidden, output="form_network20.weights"):
         super(PolicyNetwork, self).__init__()
-        layers = []
+        self.layers = []
         self.output = output
         for i in range(len(hidden) - 2):
-            layers.append(nn.Linear(hidden[i], hidden[i + 1]))
-            layers.append(Relu1())
+            self.layers.append(nn.Linear(hidden[i], hidden[i + 1]))
+            self.layers.append(Relu1())
 
-        layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
-        self.net = nn.Sequential(*layers)
-        self.criterion = torch.nn.CrossEntropyLoss()
+        self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
+        self.layers.append(nn.Softmax())
+        self.net = nn.Sequential(*self.layers)
+        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
         self.init_weights()
         self.input_format = InputFormat.V1
+        self.max_weight_hidden =127.0/64.0
+        self.min_weight_hidden = -127.0/64.0
         print(self.net)
-
-    def accuracy(self, logits, target):
-        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
-        acc = 100 * acc
-        return acc
 
     def forward(self, x):
         return self.net.forward(x)
 
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        with torch.no_grad():
+            for layer in self.layers[1:]:
+                if isinstance(layer, torch.nn.Linear):
+                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
+
+
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
+        self.save("policy.pt")
+        self.save_quantized("policy.quant")
+
+    def accuracy(self, logits, target):
+        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
+        return 100*acc
+
+    def training_step(self, train_batch, batch_idx):
+        result, move, x = train_batch
+        policy= self.forward(x)
+        loss_policy = self.criterion(policy, move.squeeze(dim=1))
+        acc = self.accuracy(policy, move.squeeze())
+        self.log('train_acc_step', acc, prog_bar=True)
+        return loss_policy
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move, x = val_batch
+        policy= self.forward(x)
+        loss_policy = self.criterion(policy, move.squeeze(dim=1))
+        self.log('val_loss', loss_policy)
+        return loss_policy
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
         return optimizer
 
-    def training_step(self, train_batch, batch_idx):
-        result, move, x = train_batch
-        out = self.forward(x)
-        loss = F.cross_entropy(out, move.squeeze(dim=1))
-        tensorboard_logs = {"avg_val_loss": loss}
-        acc = self.accuracy(out, move.squeeze())
-        self.log('train_acc_step', acc, prog_bar=True)
-        return {"loss": loss, "log": tensorboard_logs}
-
-    def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
-        out = self.forward(x)
-        acc = self.accuracy(out, move.squeeze())
-        self.log('val_loss', acc)
-        return {"val_loss": acc}
-
     def init_weights(self):
         self.net.apply(init_weights)
+
+    def save_quantized(self, output):
+
+        min16 = np.iinfo(np.int16).min
+        max16 = np.iinfo(np.int16).max
+
+        min8 = np.iinfo(np.int8).min
+        max8 = np.iinfo(np.int8).max
+
+        device = torch.device("cpu")
+        device_gpu = torch.device("cuda")
+        self.to(device)
+        buffer_weights = bytearray()
+        buffer_bias = bytearray()
+        num_weights = 0
+        num_bias = 0
+        file = open(output, "wb")
+        layer = self.layers[0]
+        weights = layer.weight.detach().numpy().flatten("F")
+        weights = weights * 127.0
+        np.clip(weights, min16, max16)
+        weights = weights.astype(np.int16)
+        bias = layer.bias.detach().numpy().flatten("F")
+        bias = bias * 127.0
+        np.clip(bias, min16, max16)
+        bias = bias.astype(np.int16)
+        buffer_weights += weights.tobytes()
+        buffer_bias += bias.tobytes()
+        num_weights += len(weights)
+        num_bias += len(bias)
+
+        for layer in self.layers[1:]:
+            if isinstance(layer, torch.nn.Linear):
+                weights = layer.weight.detach().numpy().flatten()
+                weights = weights * 64.0
+                np.clip(weights, min8, max8)
+                weights = weights.astype(np.int8)
+                bias = layer.bias.detach().numpy().flatten()
+                bias = bias * (127 * 64)
+                np.clip(bias, min16, max16)
+                bias = bias.astype(np.int16)
+                buffer_weights += weights.tobytes()
+                buffer_bias += bias.tobytes()
+                num_weights += len(weights)
+                num_bias += len(bias)
+
+        file.write(struct.pack("I", num_weights))
+        file.write(buffer_weights)
+        file.write(struct.pack("I", num_bias))
+        file.write(buffer_bias)
+        file.close()
+        self.to(device_gpu)
+        return
 
     def save_parameters(self, output):
         device = torch.device("cpu")
@@ -500,7 +425,6 @@ class PolicyNetwork(pl.LightningModule):
         file.write(buffer_bias)
         file.close()
         self.to(device_gpu)
-        return
 
     def save(self, output):
         torch.save(self.state_dict(), output)
