@@ -74,6 +74,7 @@ public:
                 std::cout<<"loading"<<std::endl;
         this->buffer_size = std::min(num_samples, buff_size);
         std::cout<<"BufferSize: "<<buffer_size<<std::endl;
+        std::cout<<"Range of positions"<<"["<<range.first<<","<<range.second<<"]"<<std::endl;
         buffer.reserve(buffer_size);
         std::cout<<buffer_size<<std::endl;
 

@@ -12,6 +12,7 @@ Weights<int16_t> gameWeights;
 
 SearchGlobal glob;
 Network network;
+Network open_net,end_net;
 bool u_classical = true;
 
 

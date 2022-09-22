@@ -292,7 +292,7 @@ int Network::evaluate(Position pos, int ply)
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces <= 24 && num_pieces>=12) {
+    if (num_pieces>12) {
         return net1.evaluate(pos, ply);
     } else {
         return net2.evaluate(pos, ply);

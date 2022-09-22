@@ -298,6 +298,8 @@ inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator
     return std::make_pair(unique_count, total_positions);
 }
 
+
+
 inline std::pair<size_t, size_t> count_unique_positions(std::string game_file) {
     std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
@@ -361,10 +363,6 @@ inline void create_subset(std::string file,std::string output,size_t num_games){
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
     std::copy_n(begin,num_games,std::ostream_iterator<Game>(out_stream));
-}
-
-inline void create_train_val_split(std::string input, std::initializer_list<std::string> output){
-    return ;
 }
 
 

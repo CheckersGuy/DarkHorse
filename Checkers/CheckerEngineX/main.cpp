@@ -45,8 +45,8 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
     network.load("bigagain2.quant");
     network.init();   
+
     
- 
    /*  auto max_bias = network.get_max_bias();
     std::cout<<"MaxBias: "<<max_bias<<std::endl; */
 
@@ -57,28 +57,28 @@ int main(int argl, const char **argc) {
 
      //init_tablebase(2000,6,std::cout);
         
-         TT.resize(21);
+           TT.resize(21);
     board = Position::get_start_position();     
-
+  
     board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");   
     
    
-   
-/*                    
-         board.get_position().make_move(11, 15);
+    
+                      
+    /*            board.get_position().make_move(11, 15);
      board.get_position().make_move(21, 17);
     board.get_position().make_move(9, 13);
     board.get_position().make_move(23, 19); 
-    board.print_board() ;            */
-                                       
+    board.print_board() ;                
+                                 */          
         Move best;
     searchValue(board, best, MAX_PLY, 100000000, true,std::cout);
     board.play_move(best);
     board.print_board();
     MoveListe liste;
     get_moves(board.get_position(), liste);       
-    
-                
+     
+                 
 
     std::string current; 
     while (std::cin >> current) {

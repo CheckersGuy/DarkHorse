@@ -174,8 +174,8 @@ class Network(pl.LightningModule):
 
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
-        self.save("bigagain2.pt")
-        self.save_quantized("bigagain2.quant")
+        self.save("smallnet.pt")
+        self.save_quantized("smally.quant")
 
     def configure_optimizers(self):
         optimizer = Ranger(params=self.parameters(),lr=8.75e-4, betas=(.9, 0.999), eps=1.0e-7)
@@ -455,7 +455,7 @@ class BatchDataSet(torch.utils.data.IterableDataset):
 
     def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
         if p_range is None:
-            p_range = [6, 24]
+            p_range = [5, 24]
         super(BatchDataSet, self).__init__()
         self.input_format = input_format
         self.batch_size = batch_size
