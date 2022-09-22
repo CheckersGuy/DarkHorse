@@ -69,13 +69,15 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
             return (current.result == UNKNOWN  || current.move == -1);
         }
     };
- */
-
+ */ 
+    auto range = streamer.get_range();
     for (auto i = 0; i < get_batch_size(); ++i) {
         Sample current;
+        int piece_count;
         do {
             current = get_streamer().get_next();
-        } while (current.result == UNKNOWN || current.position.has_jumps());
+            piece_count = Bits::pop_count(current.position.WP|current.position.BP);
+        } while ((current.result == UNKNOWN || current.position.has_jumps()) || (piece_count<range.first || piece_count>range.second));
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;

@@ -29,19 +29,18 @@ def test_model():
 
 # test_model()
 
-# model = LitMLP.Network([120, 512, 16, 32, 1])
-# model.load_state_dict(torch.load("model.pt"))
-# model.save_quantized("test.quant")
+# model = LitMLP.Network([120, 1024, 8, 32, 1])
+# model.load_state_dict(torch.load("basemodel.pt"))
 
 
 
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.Network([120, 1024, 8, 32, 1])
+    model = LitMLP.Network([120, 2048, 8, 32, 1])
     #model = LitMLP.ResNet()
     data_loader = LitMLP.LitDataModule(train_data="../TrainData/weird8formatted.train",
                                        val_data="../TrainData/smalldataset7.train",
-                                       batch_size=32000, buffer_size=90000000, p_range=[6, 24],
+                                       batch_size=32000, buffer_size=90000000, p_range=[0, 24],
                                        input_format=model.input_format)
 
     # val_loader =  data_loader.val_dataloader()
@@ -50,7 +49,7 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{newbignet}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=2000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="newbignet=0-v8.ckpt")
 
 
 

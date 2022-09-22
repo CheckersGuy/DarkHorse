@@ -18,7 +18,7 @@ void create_train_file(std::string base_book, std::string output,int depth){
     network.addLayer(Layer{32, 1});
     network.load("bigagain2.quant");
     network.init();   
-    
+
     std::unordered_set<Position> positions;
     std::ofstream out_stream (output);
     std::ifstream in_stream(base_book);
@@ -50,7 +50,7 @@ void recursive_collect(Board& board,int depth,std::unordered_set<Position>&set,s
         Move best;
         Board copy;
         copy = board.get_position();
-         auto value = searchValue(copy, best, MAX_PLY, 30, false,std::cout);
+         auto value = searchValue(copy, best, 0, 30, false,std::cout);
        
          if(std::abs(value)<=100){
             std::cout<<board.get_mover()*value<<std::endl;
