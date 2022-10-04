@@ -231,8 +231,8 @@ int main(int argl, const char **argc) {
         return (1);
     }
     std::cout<<"Starting Rescoring the training data"<<std::endl;
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird8.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird8formatted.train");
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/reinfformatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);

@@ -76,7 +76,7 @@ void Generator::start() {
             network.addLayer(Layer{1024, 8});
             network.addLayer(Layer{8, 32});
             network.addLayer(Layer{32, 1});
-            network.load("bigagain2.quant");
+            network.load("basemodel.quant");
             network.init();
 
             TT.resize(hash_size);
@@ -105,6 +105,9 @@ void Generator::start() {
                     const Position p = board.get_position();
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
                         game_buffer.emplace_back(game);
+                          pthread_mutex_lock(pmutex);
+                        (*num_games)++;
+                        pthread_mutex_unlock(pmutex);
                         break;
                     }
                     uint32_t count;
@@ -114,14 +117,14 @@ void Generator::start() {
                         pthread_mutex_lock(pmutex);
                         (*num_won)++;
                         (*num_games)++;
-                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
+                        game_buffer.emplace_back(game);
                         break;
                     } else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
-                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
+                        game_buffer.emplace_back(game);
                         break;
                     }
                     if (liste.length() == 1) {
@@ -135,9 +138,11 @@ void Generator::start() {
 
                 }
 
-                if (game_buffer.size() >= 100) {
-                    //clearing the buffer after 100 games have been accumulated
-                    for (auto &g: game_buffer) {
+                if (game_buffer.size() >= buffer_clear_count) {
+                    pthread_mutex_lock(pmutex);
+                    std::cout<<"NumGames: "<<*num_games<<std::endl;
+                    pthread_mutex_unlock(pmutex);
+                    for (auto g: game_buffer) {
                         out_stream << g;
                     }
                     game_buffer.clear();

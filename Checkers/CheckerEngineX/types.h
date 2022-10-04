@@ -73,10 +73,10 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 //constant for extensions and reductions
 
 
-constexpr int prob_cut = 30;//40 prob test
+constexpr int prob_cut = 30;
 constexpr int asp_wind = 20;
 constexpr int MAX_ASP = 200;
-
+constexpr int sing_ext = 30;
 constexpr int MAX_KILLERS =2;
 constexpr std::array<int,19> LMR_TABLE = {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2};
 
