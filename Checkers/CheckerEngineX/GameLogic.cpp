@@ -212,7 +212,7 @@ namespace Search {
         local.depth = depth;
         local.move = Move{};
         //checking win condition
-
+    
 
         NodeInfo info;
         Move tt_move;
@@ -229,6 +229,7 @@ namespace Search {
 
 
 
+          get_moves(board.get_position(), liste);
 
 
         if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
@@ -241,12 +242,11 @@ namespace Search {
                     return tt_score;
                 }
             }
-
+           
             if ((info.flag == TT_LOWER && isWin(tt_score) && tt_score >= local.beta) ||
                 (info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)) {
                 return tt_score;
             }
-
         }
 #ifdef USE_DB
            if(ply>0 && depth>=3){
@@ -282,8 +282,7 @@ namespace Search {
 
 
 
-         get_moves(board.get_position(), liste);
-
+       
         int start_index = 0;
         if (in_pv && local.ply < mainPV.length()) {
             liste.put_front(mainPV[local.ply]);
@@ -378,6 +377,12 @@ namespace Search {
 
 
     Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev) {
+
+          
+     /*    if(std::abs(local.sing_score)<1000){
+            std::cout<<"Score: "<<local.sing_score<<std::endl;  
+        } */
+
         Depth reduction = Search::reduce(local, board, move, in_pv);
         Value new_alpha = std::max(local.alpha, local.best_score);
 
@@ -431,15 +436,18 @@ namespace Search {
         int extension =has_captures && (in_pv || (local.ply>1 && board.previous().has_jumps(board.previous().get_color())));
         local.i = 0;
 
+
         while (local.best_score < local.beta && local.i < num_moves) {
-                Move move = liste[local.i];
-                Line local_pv;
-                Value value = searchMove(((local.i == 0) ? in_pv : false), move, local, board, local_pv, extension,last_rev);
-                if (value > local.best_score) {
-                    local.move = move;
-                    local.best_score = value;
-                    pv.concat(move, local_pv);
-                }
+            Move move = liste[local.i];
+
+            Line local_pv;
+            Value value = searchMove(((local.i == 0) ? in_pv : false), move, local, board, local_pv, extension, last_rev);
+            if (value > local.best_score)
+            {
+                local.move = move;
+                local.best_score = value;
+                pv.concat(move, local_pv);
+            }
 
             local.i++;
         }

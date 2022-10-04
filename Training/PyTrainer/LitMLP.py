@@ -141,7 +141,7 @@ class Relu1(nn.Module):
 
 class Network(pl.LightningModule):
 
-    def __init__(self, hidden, output="form_network20.weights"):
+    def __init__(self, hidden, output="basemodel"):
         super(Network, self).__init__()
         self.layers = []
         self.output = output
@@ -172,13 +172,15 @@ class Network(pl.LightningModule):
         #
 
 
+    def save_model_weights(self):
+        self.save(self.output + ".pt")
+        self.save_quantized(self.output + ".quant")
+
     def on_epoch_end(self) -> None:
-        self.save_parameters(self.output)
-        self.save("smallnet.pt")
-        self.save_quantized("smally.quant")
+        self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = Ranger(params=self.parameters(),lr=8.75e-4, betas=(.9, 0.999), eps=1.0e-7)
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7,lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 
@@ -209,8 +211,6 @@ class Network(pl.LightningModule):
 
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
-
-
 
         device = torch.device("cpu")
         device_gpu = torch.device("cuda")
@@ -256,31 +256,6 @@ class Network(pl.LightningModule):
         file.close()
         self.to(device_gpu)
         return
-
-    def save_parameters(self, output):
-        device = torch.device("cpu")
-        device_gpu = torch.device("cuda")
-        self.to(device)
-        buffer_weights = bytearray()
-        buffer_bias = bytearray()
-        num_weights = 0
-        num_bias = 0
-        file = open(output, "wb")
-        for layer in self.net:
-            if isinstance(layer, torch.nn.Linear):
-                weights = layer.weight.detach().numpy().flatten("F")
-                bias = layer.bias.detach().numpy().flatten("F")
-                buffer_weights += weights.tobytes()
-                buffer_bias += bias.tobytes()
-                num_weights += len(weights)
-                num_bias += len(bias)
-
-        file.write(struct.pack("I", num_weights))
-        file.write(buffer_weights)
-        file.write(struct.pack("I", num_bias))
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
 
     def save(self, output):
         torch.save(self.state_dict(), output)
