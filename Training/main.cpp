@@ -45,8 +45,8 @@ int main() {
   
   return 0;
 /*  */
-   merge_temporary_files("/home/leagurobin/DarkHorse/Training/TrainData/", "/home/leagurobin/DarkHorse/Training/TrainData/");
-  auto count = count_unique_positions("/home/leagurobin/DarkHorse/Training/TrainData/reinf.train");
+   merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
+  auto count = count_unique_positions("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
   std::cout << "Unique Positions so far: " << count.first << std::endl;
   std::cout << "Total Positions so far: " << count.second << std::endl;
   //return 0;  
