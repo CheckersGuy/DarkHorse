@@ -10,6 +10,7 @@
 #include "../../Training/Sample.h"
 #include "../../Training/BloomFilter.h"
 #include "../../Training/Util/Compress.h"
+#include "CmdParser.h"
 
 #define DB_PATH "D:\kr_english_wld"
 
@@ -190,7 +191,15 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
   
     std::ifstream stream(games,std::ios::binary);
+    if(!stream.good()){
+        std::cerr<<"Could not open input stream"<<std::endl;
+        std::exit(-1);
+    }
     std::ofstream out_stream(output, std::ios::binary);
+    if(!out_stream.good()){
+        std::cerr<<"Could not open output stream"<<std::endl;
+        std::exit(-1);
+    }
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game>end;
     size_t counter{ 0 };
@@ -209,6 +218,17 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 
 int main(int argl, const char **argc) {
 
+
+    CmdParser parser(argl,argc);
+    parser.parse_command_line();
+    std::string input,output;
+
+    if(parser.has_option("input") && parser.has_option("output")){
+        input = parser.as<std::string>("input");
+        output = parser.as<std::string>("output");
+    }else{
+        std::exit(-1);
+    }
 
     int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
@@ -231,11 +251,9 @@ int main(int argl, const char **argc) {
         return (1);
     }
     std::cout<<"Starting Rescoring the training data"<<std::endl;
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/reinfformatted.train");
+  
 
-
-    create_samples_from_games(in_file, out_file, max_pieces, handle);
+    create_samples_from_games(input, output, max_pieces, handle);
 
     handle->close(handle);
 

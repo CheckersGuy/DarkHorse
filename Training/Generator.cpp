@@ -34,6 +34,25 @@ void Generator::set_piece_limit(size_t num_pieces) {
     piece_lim = num_pieces;
 }
 
+void Generator::set_book(std::string book){
+    std::string opening_path{"../Training/Positions/"};
+    opening_path += book;
+
+    std::ifstream stream(opening_path, std::ios::binary);
+    std::istream_iterator<Position> begin(stream);
+    std::istream_iterator<Position> end;
+    std::copy(begin, end, std::back_inserter(openings));
+    std::cout << "Size: " << openings.size() << std::endl;
+}
+
+void Generator::set_output(std::string output){
+    this->output = output;
+}
+
+void Generator::set_max_games(size_t max_games){
+    this->max_games =max_games;
+}
+
 void Generator::start() {
     //Positions to be saved to a file
     initialize();
@@ -68,7 +87,7 @@ void Generator::start() {
         }
         if (id == 0) {
             const std::string local_file = output + ".temp" + std::to_string(i);
-            std::ofstream out_stream("../Training/TrainData/" + local_file);
+            std::ofstream out_stream("../Training/TrainData/" + local_file,std::ios::app);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
             use_classical(false);
@@ -99,10 +118,11 @@ void Generator::start() {
                 Zobrist::init_zobrist_keys(seed);
                 
                 for (int move_count = 0; move_count < 600; ++move_count) {
+                    Position p = board.get_position();
                     MoveListe liste;
-                    get_moves(board.get_position(), liste);
-                    game.add_position(board.get_position());
-                    const Position p = board.get_position();
+                    get_moves(p, liste);
+                    game.add_position(p);
+                   
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
                         game_buffer.emplace_back(game);
                           pthread_mutex_lock(pmutex);
@@ -138,15 +158,23 @@ void Generator::start() {
 
                 }
 
-                if (game_buffer.size() >= buffer_clear_count) {
-                    pthread_mutex_lock(pmutex);
+                 pthread_mutex_lock(pmutex);
+                  if (game_buffer.size() >= buffer_clear_count || (*num_games)>=max_games) {
                     std::cout<<"NumGames: "<<*num_games<<std::endl;
-                    pthread_mutex_unlock(pmutex);
                     for (auto g: game_buffer) {
                         out_stream << g;
                     }
                     game_buffer.clear();
                 }
+                 if((*num_games)>=max_games){
+                    stop=true;
+                 }
+                 pthread_mutex_unlock(pmutex);
+                 if(stop){
+                    std::exit(1);
+                 }
+
+               
             }
         }
     }

@@ -53,7 +53,7 @@ if __name__ == "__main__":
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{newbignet}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=8, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=15, callbacks=[check_point_callback])
     trainer.fit(model, data_loader)
 
 

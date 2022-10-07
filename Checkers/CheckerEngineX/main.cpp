@@ -33,9 +33,13 @@ inline Position posFromString(const std::string &pos) {
 
 #include <Network.h>
 #include <types.h>
-
+#include "CmdParser.h"
 
 int main(int argl, const char **argc) {
+
+    CmdParser parser(argl,argc);
+    parser.parse_command_line();
+
     initialize();
     Board board;
     use_classical(false);
@@ -44,41 +48,57 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{8, 32});
     network.addLayer(Layer{32, 1});
     network.load("basemodel.quant");
-    network.init();   
+    network.init();
+     int time,depth,hash_size;
 
-    
-   /*  auto max_bias = network.get_max_bias();
-    std::cout<<"MaxBias: "<<max_bias<<std::endl; */
+     if (parser.has_option("search"))
+     {
+         if (parser.has_option("time"))
+         {
+             time = parser.as<int>("time");
+         }
+         else
+         {
+             time = 100000000;
+         }
 
+         if (parser.has_option("depth"))
+         {
+             depth = parser.as<int>("depth");
+         }
+         else
+         {
+             depth = MAX_PLY;
+         }
+         if (parser.has_option("hash_size"))
+         {
+             hash_size = parser.as<int>("hash_size");
+         }
+         else
+         {
+             hash_size = 21;
+         }
 
-    //display_network_data<int16_t>("model.quant");
-       
-  
+         if (parser.has_option("position"))
+         {
+             board.get_position() = Position::pos_from_fen(parser.as<std::string>("position"));
+         }
+         else
+         {
+             board.get_position() = Position::get_start_position();
+         }
 
-     //init_tablebase(2000,6,std::cout);
-        
-            TT.resize(21);
-    board = Position::get_start_position();     
-  
-    board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");   
-    
-   
-      
-                           
-     /*              board.get_position().make_move(11, 15);
-     board.get_position().make_move(21, 17);
-    board.get_position().make_move(9, 13);
-    board.get_position().make_move(23, 19); 
-    board.print_board() ;         */            
-                                              
+         TT.resize(21);
+         board = Position::get_start_position();
+
          Move best;
-    searchValue(board, best, MAX_PLY, 100000000, true,std::cout);
-    board.play_move(best);
-    board.print_board();
-    MoveListe liste;
-    get_moves(board.get_position(), liste);       
-      
-                 
+         searchValue(board, best, depth, time, true, std::cout);
+         board.play_move(best);
+         board.print_board();
+         MoveListe liste;
+         get_moves(board.get_position(), liste);
+         return 0;
+     }
 
     std::string current; 
     while (std::cin >> current) {
