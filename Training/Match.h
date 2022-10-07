@@ -105,7 +105,7 @@ private:
     const std::string &second;
     int time{100};
     int hash_size{21};
-    int maxGames{1000};
+    int maxGames{1000000};
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
     std::vector<Position> positions;

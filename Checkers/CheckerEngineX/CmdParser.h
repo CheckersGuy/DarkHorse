@@ -2,24 +2,76 @@
 #include <variant>
 #include <vector>
 #include <string>
+#include <iostream>
+#include <variant>
+#include <sstream>
+#include <map>
+#include <regex>
+
 class CmdParser{
 
-    private:
+    public:
     const int arg_length;
     const char** args;
-    using CmdType = std::variant<std::string,double,std::vector<std::string>,std::vector<double>,int, std::vector<int>
+    using CmdType = std::variant<bool,double,int,std::string,std::vector<double>,std::vector<int>,std::vector<std::string>,std::vector<bool>>;
+    std::map<std::string,CmdType>options;
 
 
+
+    template<typename T> auto convert(std::string arg){
+        if constexpr(std::is_same_v<int,T>){
+            return std::stoi(arg);
+        }
+         if constexpr(std::is_same_v<double,T>){
+            return std::stod(arg);
+        }
+         if constexpr(!std::is_same_v<int,T> && !std::is_same_v<double,T>){
+            return std::string(arg);
+        }
+    };
+
+    template<typename T> auto assign_values(std::vector<std::string>args){
+          auto opt_name = args[0];
+         if(args.size()>2){
+            std::vector<T>converted;
+
+            for(auto i=1;i<args.size();++i){
+                converted.emplace_back(convert<T>(args[i]));
+            }
+            options[opt_name]=converted;
+
+         }else{
+            options[opt_name] = convert<T>(args[1]);
+         }
+    
+    };
+
+
+    void add_option(std::string arg_list);
     public:
      
-     CmdParser(const int argl,const char** arg):arg_length(argl),args(args){
+     CmdParser(const int argl,const char** arg):arg_length(argl),args(arg){
 
      }
 
-     //adding options
-     //what are viable options
-     //using std::variant for the possible types
+     void parse_command_line();
+
+    template<typename T> auto as(std::string option_name)->decltype(auto){
+        return std::get<T>(options[option_name]);
+    }
+
+    bool has_option(std::string option_name){
+        return options.find(option_name)!=options.end();
+    }
+
+    size_t num_options() const;
 
 
+/* 
+    template<typename... T> bool has_option(T... args){
+        //same version as above but for multiple args
+        return true;
+    } */
 
-}
+
+};

@@ -28,6 +28,7 @@ private:
     size_t buffer_clear_count{100000};
     size_t max_positions{0};
     size_t piece_lim{0};
+    size_t max_games{1000000};
     std::string output;
     size_t parallelism{1};
     std::vector<Position> openings;
@@ -52,7 +53,13 @@ public:
         std::cout << "Size: " << openings.size() << std::endl;
     }
 
+    Generator()=default;
+
     void start();
+
+    void set_book(std::string book);
+
+    void set_output(std::string output);
 
     void set_buffer_clear_count(size_t count);
 
@@ -63,6 +70,8 @@ public:
     void set_hash_size(int size);
 
     void set_max_position(size_t max);
+
+    void set_max_games(size_t max_games);
 
     void set_piece_limit(size_t num_pieces);
 
