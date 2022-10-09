@@ -87,7 +87,7 @@ void Generator::start() {
         }
         if (id == 0) {
             const std::string local_file = output + ".temp" + std::to_string(i);
-            std::ofstream out_stream("../Training/TrainData/" + local_file,std::ios::app);
+            std::ofstream out_stream("../Training/TrainData/" + local_file);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
             use_classical(false);
@@ -95,19 +95,16 @@ void Generator::start() {
             network.addLayer(Layer{1024, 8});
             network.addLayer(Layer{8, 32});
             network.addLayer(Layer{32, 1});
-            network.load("basemodel.quant");
+            network.load("bigagain2.quant");
             network.init();
 
             TT.resize(hash_size);
             std::cout << "Init child: " << i << std::endl;
             //play a game and increment the opening-counter once more
-
-
+            const uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
+            std::mt19937_64 generator(seed);
             while (!stop) {
-                const uint64_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count() ^ getpid();
                 Game game;
-
-                std::mt19937_64 generator(seed);
                 std::uniform_int_distribution<size_t>distrib(0,openings.size());
                 const size_t rand_index = distrib(generator);
                 Position opening = openings[rand_index];
@@ -118,16 +115,15 @@ void Generator::start() {
                 Zobrist::init_zobrist_keys(seed);
                 
                 for (int move_count = 0; move_count < 600; ++move_count) {
-                    Position p = board.get_position();
                     MoveListe liste;
-                    get_moves(p, liste);
-                    game.add_position(p);
-                   
+                    get_moves(board.get_position(), liste);
+                    game.add_position(board.get_position());
+                    const Position p = board.get_position();
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
                         game_buffer.emplace_back(game);
-                          pthread_mutex_lock(pmutex);
-                        (*num_games)++;
-                        pthread_mutex_unlock(pmutex);
+                         pthread_mutex_lock(pmutex);
+                         (*num_games)++;
+                          pthread_mutex_unlock(pmutex);
                         break;
                     }
                     uint32_t count;
@@ -137,14 +133,14 @@ void Generator::start() {
                         pthread_mutex_lock(pmutex);
                         (*num_won)++;
                         (*num_games)++;
-                        pthread_mutex_unlock(pmutex);
                         game_buffer.emplace_back(game);
+                        pthread_mutex_unlock(pmutex);
                         break;
                     } else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
-                        pthread_mutex_unlock(pmutex);
                         game_buffer.emplace_back(game);
+                        pthread_mutex_unlock(pmutex);
                         break;
                     }
                     if (liste.length() == 1) {
@@ -157,24 +153,23 @@ void Generator::start() {
                 
 
                 }
+                 
+                if (game_buffer.size() >= buffer_clear_count) {
 
-                 pthread_mutex_lock(pmutex);
-                  if (game_buffer.size() >= buffer_clear_count || (*num_games)>=max_games) {
-                    std::cout<<"NumGames: "<<*num_games<<std::endl;
                     for (auto g: game_buffer) {
                         out_stream << g;
                     }
                     game_buffer.clear();
+                pthread_mutex_lock(pmutex);
+                const int current_games = (*num_games);
+                std::cout<<current_games<<std::endl;
+                pthread_mutex_unlock(pmutex);
+                if(current_games>=max_games){
+                    return;
                 }
-                 if((*num_games)>=max_games){
-                    stop=true;
-                 }
-                 pthread_mutex_unlock(pmutex);
-                 if(stop){
-                    std::exit(1);
-                 }
-
+                }
                
+                  
             }
         }
     }
@@ -202,5 +197,3 @@ void Generator::start() {
 void Generator::set_parallelism(size_t threads) {
     parallelism = threads;
 }
-
-

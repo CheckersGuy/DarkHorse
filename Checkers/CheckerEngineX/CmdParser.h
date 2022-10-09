@@ -8,6 +8,11 @@
 #include <map>
 #include <regex>
 
+//Kleine ToDoListe für CmdParser
+//Alles was in " " eingeschlossen ist, gilt als string, egal ob zwischen den " " auch delimiter vorkommen
+
+std::vector<std::string> split_string(std::string input, std::string delim);
+std::vector<std::string> split_string(std::string input, std::vector<char>delims);
 class CmdParser{
 
     public:

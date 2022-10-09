@@ -168,10 +168,6 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 
     for (auto i = 0; i < check_samples.size(); ++i) {
         Sample s = rescored_samples[i];
-       // std::cout << "Result: " << s.result << std::endl;
-        //s.position.print_position();
-        //std::cout << "Result: " << s.result << std::endl;
-       // s.position.print_position();
         if (check_samples[i].position != rescored_samples[i].position) {
             std::cerr << "Error in rescoring the game" << std::endl;
             std::exit(-1);
@@ -219,18 +215,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 int main(int argl, const char **argc) {
 
 
-    CmdParser parser(argl,argc);
-    parser.parse_command_line();
-    std::string input,output;
-
-    if(parser.has_option("input") && parser.has_option("output")){
-        input = parser.as<std::string>("input");
-        output = parser.as<std::string>("output");
-    }else{
-        std::exit(-1);
-    }
-
-    int i, status, max_pieces, nerrors;
+ int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
     EGDB_DRIVER *handle;
 
@@ -251,9 +236,11 @@ int main(int argl, const char **argc) {
         return (1);
     }
     std::cout<<"Starting Rescoring the training data"<<std::endl;
-  
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird9.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird9formatted.train");
 
-    create_samples_from_games(input, output, max_pieces, handle);
+
+    create_samples_from_games(in_file, out_file, max_pieces, handle);
 
     handle->close(handle);
 
