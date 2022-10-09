@@ -20,6 +20,25 @@ int main(int argl, const char** argc) {
   CmdParser parser(argl, argc);
   parser.parse_command_line();
 
+
+/* 
+  std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+
+  std::istream_iterator<Game>begin(stream);
+  std::istream_iterator<Game>end;
+
+  std::for_each(begin,end,[](Game g){
+    for(auto p : g){
+      p.print_position();
+    }
+    std::cout<<std::endl;
+    std::cout<<std::endl;
+    
+  });
+  return 0;
+   */
+
+
   if (parser.has_option("match"))
   {
     if (parser.has_option("engines") && parser.has_option("time"))
@@ -60,6 +79,8 @@ int main(int argl, const char** argc) {
 
   if (parser.has_option("generate") && parser.has_option("network") && parser.has_option("time"))
   {
+    merge_temporary_files("/home/leagu/DarkHorse/Training/TrainData/", "/home/leagu/DarkHorse/Training/TrainData/");
+    //network not yet supported
     auto network = parser.as<std::string>("network");
     auto time = parser.as<int>("time");
 
@@ -82,7 +103,7 @@ int main(int argl, const char** argc) {
     }
     else
     {
-      generator.set_book("defaultout.train");
+      generator.set_output("reinf.train");
     }
 
        if (parser.has_option("hash_size"))

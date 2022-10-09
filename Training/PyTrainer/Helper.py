@@ -17,3 +17,4 @@ def create_input(fen_string):
     out_hat = torch.Tensor(output)
     out = out_hat.view(4, 8, 4)
     return out
+

@@ -43,13 +43,15 @@ int main(int argl, const char **argc) {
     initialize();
     Board board;
     use_classical(false);
-    network.addLayer(Layer{120, 1024});
-    network.addLayer(Layer{1024, 8});
-    network.addLayer(Layer{8, 32});
-    network.addLayer(Layer{32, 1});
-    network.load("basemodel.quant");
-    network.init();
+   
      int time,depth,hash_size;
+     std::string net_file;
+
+     if(parser.has_option("network")){
+        net_file= parser.as<std::string>("network");
+     }else{
+        net_file ="basemodel.quant";
+     }
 
      if (parser.has_option("search"))
      {
@@ -88,8 +90,22 @@ int main(int argl, const char **argc) {
              board.get_position() = Position::get_start_position();
          }
 
-         TT.resize(21);
+         network.addLayer(Layer{120, 1024});
+         network.addLayer(Layer{1024, 8});
+         network.addLayer(Layer{8, 32});
+         network.addLayer(Layer{32, 1});
+         network.load(net_file);
+         network.init();
+
+         TT.resize(hash_size);
          board = Position::get_start_position();
+
+         board.get_position().make_move(11, 15);
+         board.get_position().make_move(21, 17);
+         board.get_position().make_move(9, 13);
+         board.get_position().make_move(23, 19);
+         board.print_board();
+        board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");  
 
          Move best;
          searchValue(board, best, depth, time, true, std::cout);
@@ -99,6 +115,8 @@ int main(int argl, const char **argc) {
          get_moves(board.get_position(), liste);
          return 0;
      }
+
+  
 
     std::string current; 
     while (std::cin >> current) {
