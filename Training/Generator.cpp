@@ -95,7 +95,7 @@ void Generator::start() {
             network.addLayer(Layer{1024, 8});
             network.addLayer(Layer{8, 32});
             network.addLayer(Layer{32, 1});
-            network.load("bigagain2.quant");
+            network.load("basemodel.quant");
             network.init();
 
             TT.resize(hash_size);
@@ -165,7 +165,7 @@ void Generator::start() {
                 std::cout<<current_games<<std::endl;
                 pthread_mutex_unlock(pmutex);
                 if(current_games>=max_games){
-                    return;
+                    break;
                 }
                 }
                
