@@ -27,13 +27,22 @@ size_t CmdParser::num_options() const{
     return options.size();
 }
 
+
+std::string clear_white_space(std::string input){
+		std::string output;
+		std::unique_copy(input.begin(), input.end(), std::back_inserter(output),
+						                     [](char c1, char c2){ return c1 == ' ' && c2 == ' '; });
+
+		return output;
+
+}
+
 void CmdParser::add_option(std::string arg_list)
 {
     enum Type{
         IS_STRING,IS_INTEGER,IS_DOUBLE,NONE
     };
-
-    auto get_type = [](std::string arg){
+     auto get_type = [](std::string arg){
         if(is_integer(arg)){
             return IS_INTEGER;
         }
@@ -45,8 +54,6 @@ void CmdParser::add_option(std::string arg_list)
         }
         return NONE;
     };
-
- 
     Type type = NONE;
     auto arguments = split_string(arg_list, std::vector<char>{' ', ','});
     auto opt_name = arguments[0];
@@ -94,33 +101,44 @@ std::vector<std::string> split_string(std::string input, std::string delim)
 }
 std::vector<std::string> split_string(std::string input, std::vector<char> delims)
 {
-    std::vector<std::string> results;
-    if(input.starts_with('"') && input.ends_with('"')){
-	    results.emplace_back(input.substr(1,input.size()-2));
-    	return results;
-    }
-
+    
     
     std::string word = "";
-    
-    
+    std::vector<std::string>results; 
+    auto lambda =[&](std::string w){
+			if(!w.empty())
+					results.emplace_back(w);
+	};
+
     for (auto i = 0; i < input.size(); ++i)
     {
+	if(input[i]=='"'){
+	   lambda(word);
+	   word="";
+	i++;
+	for(;i<input.size() && input[i]!='"';++i){
+		word+=input[i];		
+	}
+	lambda(word);
+	word="";
+	}else{
+
 
         auto it = std::find(delims.begin(), delims.end(), input[i]);
         if (it != delims.end())
         {
-            results.emplace_back(word);
+            lambda(word);
             word = "";
         }else if(i == input.size() - 1){
             word+=input[i];
-            results.emplace_back(word);
+            lambda(word);
             word = "";
         }
         else
         {
             word += input[i];
         }
+	}
     }
 
     return results;
@@ -130,11 +148,13 @@ std::vector<std::string> split_string(std::string input, std::vector<char> delim
         //parsing the command line
         std::string combined="";
         for(auto i=1;i<arg_length-1;++i){
-            combined+=args[i];
+	    combined+=args[i];
             combined+=" ";
         }
         combined+=args[arg_length-1];
+		combined = clear_white_space(combined);
         auto split = split_string(combined,"--");
+
      
         //adding the options
 

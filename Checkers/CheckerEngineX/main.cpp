@@ -90,7 +90,8 @@ int main(int argl, const char **argc) {
 
          if (parser.has_option("position"))
          {
-             board.get_position() = Position::pos_from_fen(parser.as<std::string>("position"));
+	     auto pos_string = parser.as<std::string>("position");
+             board.get_position() = Position::pos_from_fen(pos_string);
          }
          else
          {

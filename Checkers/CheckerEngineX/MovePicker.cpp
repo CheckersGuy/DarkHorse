@@ -92,7 +92,7 @@ namespace Statistics {
         const int score = Statistics::mPicker.policy[get_move_encoding(pos.get_color(),move)];
 	
         
-        return 0;
+        return score;
     }
 
     int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {
