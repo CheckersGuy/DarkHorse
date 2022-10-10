@@ -103,6 +103,7 @@ private:
     size_t opening_counter{0};
     const std::string &first;
     const std::string &second;
+    std::string arg1,arg2;
     int time{100};
     int hash_size{21};
     int maxGames{1000000};
@@ -134,6 +135,10 @@ public:
     int getMaxGames();
 
     void start();
+
+    void set_arg1(std::string arg);
+
+    void set_arg2(std::string arg);
 
     void setHashSize(int hash);
 

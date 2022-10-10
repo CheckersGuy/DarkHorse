@@ -53,6 +53,13 @@ int main(int argl, const char **argc) {
         net_file ="basemodel.quant";
      }
 
+     network.addLayer(Layer{120, 1024});
+     network.addLayer(Layer{1024, 8});
+     network.addLayer(Layer{8, 32});
+     network.addLayer(Layer{32, 1});
+     network.load(net_file);
+     network.init();
+
      if (parser.has_option("search"))
      {
          if (parser.has_option("time"))
@@ -90,12 +97,7 @@ int main(int argl, const char **argc) {
              board.get_position() = Position::get_start_position();
          }
 
-         network.addLayer(Layer{120, 1024});
-         network.addLayer(Layer{1024, 8});
-         network.addLayer(Layer{8, 32});
-         network.addLayer(Layer{32, 1});
-         network.load(net_file);
-         network.init();
+         
 
          TT.resize(hash_size);
          board = Position::get_start_position();

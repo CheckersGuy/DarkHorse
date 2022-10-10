@@ -55,6 +55,15 @@ int main(int argl, const char** argc) {
         engine_match.setMaxGames(num_games);
       }
 
+      if(parser.has_option("networks")){
+        auto networks = parser.as<std::vector<std::string>>("networks");
+        if (!networks[0].empty() && !networks[1].empty())
+        {
+          engine_match.set_arg1("--network " + networks[0]);
+          engine_match.set_arg2("--network " + networks[1]);
+        }
+      }
+
       if (parser.has_option("threads"))
       {
         auto num_threads = parser.as<int>("threads");

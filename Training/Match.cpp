@@ -370,3 +370,11 @@ void Match::start() {
     }
     std::cout << "Finished the match" << std::endl;
 }
+
+void Match::set_arg1(std::string arg){
+    arg1 = arg;
+}
+
+void Match::set_arg2(std::string arg){
+    arg2=arg;
+}
