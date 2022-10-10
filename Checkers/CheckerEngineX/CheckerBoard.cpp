@@ -71,7 +71,7 @@ extern"C" int getmove
 			  network.addLayer(Layer{1024, 8});
 			  network.addLayer(Layer{8, 32});
 			  network.addLayer(Layer{32, 1});
-			  network.load("bigagain2.quant");
+			  network.load("basemodel.quant");
 			  network.init();
 
 			  // debug<<"Initialized engine"<<std::endl;

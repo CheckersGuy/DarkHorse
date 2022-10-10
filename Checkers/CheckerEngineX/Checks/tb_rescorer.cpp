@@ -121,13 +121,14 @@ std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_piece
             copy = previous;
             copy.make_move(move);
             if (copy != pos) {
+                std::cout<<"No move found"<<std::endl;
                 return std::vector<Sample>{};
             }
 
 
             sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.get_color(),
                                                                             move);
-            if (sample_data[k - 1].move >= 100) {
+            if (sample_data[k - 1].move >= 128) {
                 std::cerr << "Error move: " << sample_data[k - 1].move << std::endl;
                 std::exit(-1);
             }
@@ -236,8 +237,8 @@ int main(int argl, const char **argc) {
         return (1);
     }
     std::cout<<"Starting Rescoring the training data"<<std::endl;
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/weird9.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/weird9formatted.train");
+    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/reinfformatted.train");
 
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);

@@ -100,22 +100,33 @@ int main(int argl, const char **argc) {
          
 
          TT.resize(hash_size);
-         board = Position::get_start_position();
+         
+        //board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");  
+      /*   Statistics::mPicker.policy.compute_incre_forward_pass(board.get_position());
 
-         board.get_position().make_move(11, 15);
-         board.get_position().make_move(21, 17);
-         board.get_position().make_move(9, 13);
-         board.get_position().make_move(23, 19);
-         board.print_board();
-        board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");  
+        MoveListe liste;
+        get_moves(board.get_position(),liste);
 
-         Move best;
+        for(auto move : liste){
+            auto from =move.get_from_index();
+            auto to = move.get_to_index();
+            auto enc = Statistics::mPicker.get_move_encoding(board.get_mover(),move);
+            std::cout<<"From: "<<from<<" To: "<<to<<" score: "<<Statistics::mPicker.policy[enc]<<std::endl;
+        }
+
+        for(auto i=0;i<100;++i){
+            std::cout<<Statistics::mPicker.policy[i]<<std::endl;
+        }
+
+        return 0; */
+
+          Move best;
          searchValue(board, best, depth, time, true, std::cout);
          board.play_move(best);
          board.print_board();
          MoveListe liste;
          get_moves(board.get_position(), liste);
-         return 0;
+         return 0; 
      }
 
   

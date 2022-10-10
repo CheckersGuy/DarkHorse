@@ -9,7 +9,12 @@ namespace Statistics {
     MovePicker mPicker;
 
     void MovePicker::init() {
-   
+        policy.addLayer(Layer{120, 1024});
+        policy.addLayer(Layer{1024, 8});
+        policy.addLayer(Layer{8, 32});
+        policy.addLayer(Layer{32, 128});
+        policy.load("policy.quant");
+        policy.init();
     }
 
 
@@ -19,47 +24,8 @@ namespace Statistics {
             move.from = getMirrored(move.from);
             move.to = getMirrored(move.to);
         }
-
-        const uint32_t maske = OUTER_SQUARES;
-
-
-        if ((move.from & maske) != 0) {
-            uint32_t index = Bits::pext(move.from, maske);
-            index = _tzcnt_u32(index);
-            int dir;
-            if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to) << 4) == move.from) ||
-                (((move.to & MASK_L5) << 5) == move.from)) {
-                dir = 0;
-            } else {
-                dir = 1;
-            }
-            return 2 * index + dir;
-        }
-
-        const uint32_t maske2 = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
-
-        if ((move.from & maske2) != 0) {
-            uint32_t index = Bits::pext(move.from, maske2);
-            index = _tzcnt_u32(index);
-            int dir;
-            if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to & MASK_L5) << 5) == move.from)) {
-                dir = 0;
-            } else if (((move.to) << 4) == move.from) {
-                dir = 1;
-            } else if (((move.to) >> 4) == move.from) {
-                dir = 0;
-            } else if ((((move.to & MASK_R3) >> 3) == move.from) || (((move.to & MASK_R5) >> 5) == move.from)) {
-                dir = 1;
-            }
-            return 12 + 2 * index + dir;
-        }
-        const uint32_t maske3 = INNER_SQUARES;
-
-        if ((move.from & maske3) != 0) {
-            uint32_t index = Bits::pext(move.from, maske3);
-            index = _tzcnt_u32(index);
-            int dir;
-            if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to & MASK_L5) << 5) == move.from)) {
+        int dir;
+        if ((((move.to & MASK_L3) << 3) == move.from) || (((move.to & MASK_L5) << 5) == move.from)) {
                 dir = 0;
             } else if (((move.to) << 4) == move.from) {
                 dir = 1;
@@ -68,13 +34,7 @@ namespace Statistics {
             } else if ((((move.to & MASK_R3) >> 3) == move.from) || (((move.to & MASK_R5) >> 5) == move.from)) {
                 dir = 3;
             }
-
-            return 12 + 16 + 4 * index + dir;
-
-        }
-
-
-        return -1;
+        return 4*move.get_from_index()+dir;
     }
 
     int MovePicker::get_history_index(Position pos, Move move) {
@@ -121,11 +81,18 @@ namespace Statistics {
 
     int MovePicker::get_move_score(Position pos, Move move, Depth depth)
     {
-        static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
+        if(move.is_capture())
+            return 0;
+     /*     static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
         const int index = get_history_index(pos, move);
         int score = history[index];
         const int bf_score = bfScore[index] + 1;
-        return std::clamp(score, -max_history, max_history);
+        return std::clamp(score, -max_history, max_history);  */
+
+        const int score = Statistics::mPicker.policy[get_move_encoding(pos.get_color(),move)];
+	
+        
+        return 0;
     }
 
     int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {
@@ -149,6 +116,7 @@ namespace Statistics {
         while (top != move) {
             if (top == move)
                 break;
+            top = *liste;
             top = *liste;
             history[get_history_index(pos, top)] -=  depth;
             liste++;
