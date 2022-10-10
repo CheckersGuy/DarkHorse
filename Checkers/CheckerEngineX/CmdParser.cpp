@@ -95,7 +95,15 @@ std::vector<std::string> split_string(std::string input, std::string delim)
 std::vector<std::string> split_string(std::string input, std::vector<char> delims)
 {
     std::vector<std::string> results;
+    if(input.starts_with('"') && input.ends_with('"')){
+	    results.emplace_back(input.substr(1,input.size()-2));
+    	return results;
+    }
+
+    
     std::string word = "";
+    
+    
     for (auto i = 0; i < input.size(); ++i)
     {
 

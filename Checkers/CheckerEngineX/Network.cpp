@@ -142,7 +142,7 @@ void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
     if (!stream.good())
     {
-        std::cerr << "Could not load the weights" << std::endl;
+        std::cerr << "Could not load network file, path " << file<< std::endl;
         std::exit(-1);
     }
 

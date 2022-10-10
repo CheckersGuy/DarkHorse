@@ -36,6 +36,7 @@ private:
     int hash_size{21};
     uint64_t *random;
     pthread_mutex_t *pmutex;
+    std::string network{"basemodel.quant"};
 
 
     uint64_t get_shared_random_number();
@@ -64,6 +65,8 @@ public:
     void set_buffer_clear_count(size_t count);
 
     void set_time(int time);
+
+    void set_network(std::string net);
 
     void set_parallelism(size_t threads);
 

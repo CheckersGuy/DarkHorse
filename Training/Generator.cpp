@@ -53,6 +53,10 @@ void Generator::set_max_games(size_t max_games){
     this->max_games =max_games;
 }
 
+void Generator::set_network(std::string net){
+    network =net;
+}
+
 void Generator::start() {
     //Positions to be saved to a file
     initialize();
