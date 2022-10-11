@@ -54,7 +54,7 @@ void Generator::set_max_games(size_t max_games){
 }
 
 void Generator::set_network(std::string net){
-    network =net;
+    net_file =net;
 }
 
 void Generator::start() {

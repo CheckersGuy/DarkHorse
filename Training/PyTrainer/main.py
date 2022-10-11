@@ -33,6 +33,8 @@ def test_model():
 # model.init_weights()
 # model.save_model_weights()
 
+#removing input format completly since I will only have one from now on
+#test the get_next_batch function seperately
 
 
 
@@ -44,7 +46,7 @@ if __name__ == "__main__":
 
 
     data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",
-                                       val_data="../TrainData/weird9formatted.train",
+                                       val_data="../TrainData/reinfformatted.train",
                                        batch_size=32000, buffer_size=60000000, p_range=[0, 24],
                                        input_format=model.input_format)
 

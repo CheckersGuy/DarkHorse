@@ -41,6 +41,7 @@ init_val_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, cha
 
 extern "C" void get_next_batch(float *results, int64_t *moves, float *inputs) {
     if (streamer.get() == nullptr) {
+		std::cerr<<"Streamer wasnt loaded"<<std::endl;
         std::exit(-1);
     }
     BatchProvider *provider = static_cast<BatchProvider*>(streamer.get());

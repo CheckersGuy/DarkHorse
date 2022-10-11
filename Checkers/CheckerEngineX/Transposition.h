@@ -13,18 +13,20 @@
 
 struct NodeInfo {
     Move tt_move;
+	uint8_t tt_index;
     Value score{0};
     uint8_t depth{0};
     uint8_t flag{Flag::None};
 };
 
 struct Entry {
+    Move bestMove;
     Value value{0};//4 bytes
-    Move bestMove;//12 bytes
     uint32_t key{0u};//4 bytes
-    uint32_t age{100000u};// 4 bytes
-    Flag flag{Flag::None};//1 byte
+    uint8_t age:6 = 0;// 1 bytes
+	uint8_t flag:2 = 0;//1 byte
     uint8_t depth{0};//1 byte
+    uint8_t move_index{0};
     //padding
     //total of 4+12+4+4+1+1 = 26 bytes !!!
 };
@@ -39,7 +41,7 @@ class Transposition {
 
 public:
     size_t hashHit{0u};
-    uint32_t age_counter{0};
+    uint8_t age_counter{0};
     size_t capacity{0};
     std::unique_ptr<Cluster[]> entries;
 
@@ -56,7 +58,7 @@ public:
 
     void resize(size_t capa);
 
-    void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
+    void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, uint8_t move_index);
 
     bool find_hash(uint64_t key, NodeInfo &info) const;
 };

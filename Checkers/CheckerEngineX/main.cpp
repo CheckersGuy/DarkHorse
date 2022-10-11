@@ -39,9 +39,8 @@ int main(int argl, const char **argc) {
 
     CmdParser parser(argl,argc);
     parser.parse_command_line();
-
+	Board board;
     initialize();
-    Board board;
     use_classical(false);
    
      int time,depth,hash_size;
@@ -59,8 +58,8 @@ int main(int argl, const char **argc) {
      network.addLayer(Layer{32, 1});
      network.load(net_file);
      network.init();
-
      if (parser.has_option("search"))
+    
      {
          if (parser.has_option("time"))
          {
@@ -102,24 +101,7 @@ int main(int argl, const char **argc) {
 
          TT.resize(hash_size);
          
-        //board = Position::pos_from_fen( "W:WK2,K32:BK4,K8,K21");  
-      /*   Statistics::mPicker.policy.compute_incre_forward_pass(board.get_position());
-
-        MoveListe liste;
-        get_moves(board.get_position(),liste);
-
-        for(auto move : liste){
-            auto from =move.get_from_index();
-            auto to = move.get_to_index();
-            auto enc = Statistics::mPicker.get_move_encoding(board.get_mover(),move);
-            std::cout<<"From: "<<from<<" To: "<<to<<" score: "<<Statistics::mPicker.policy[enc]<<std::endl;
-        }
-
-        for(auto i=0;i<100;++i){
-            std::cout<<Statistics::mPicker.policy[i]<<std::endl;
-        }
-
-        return 0; */
+      
 
           Move best;
          searchValue(board, best, depth, time, true, std::cout);
@@ -130,9 +112,9 @@ int main(int argl, const char **argc) {
          return 0; 
      }
 
-  
+  	
 
-    std::string current; 
+   std::string current; 
     while (std::cin >> current) {
         if (current == "init") {
             TT.age_counter = 0u;
@@ -191,7 +173,4 @@ int main(int argl, const char **argc) {
             break;
         }
     }
-
-
-    return 0;
 }
