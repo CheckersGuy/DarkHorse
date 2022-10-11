@@ -79,18 +79,6 @@ auto get_capture_distrib(std::ifstream& stream){
     return get_capture_distrib(stream);
 }
 
-size_t count_trainable_positions(std::string game_file, std::pair<size_t, size_t> range)
-{
-    std::ifstream stream(game_file, std::ios::binary);
-    std::istream_iterator<Game> begin(stream);
-    std::istream_iterator<Game> end;
-    size_t counter{0};
-    // temporary before I can speed this thing up
-    // way too slow
-    std::for_each(begin, end, [&](const Game &g)
-                  { counter += g.indices.size() + 1; });
-    return counter;
-}
 
 void merge_temporary_files(std::string directory, std::string out_directory)
 {

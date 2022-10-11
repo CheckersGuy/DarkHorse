@@ -36,7 +36,7 @@ private:
     int hash_size{21};
     uint64_t *random;
     pthread_mutex_t *pmutex;
-    std::string network{"basemodel.quant"};
+    std::string net_file{"basemodel.quant"};
 
 
     uint64_t get_shared_random_number();

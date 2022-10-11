@@ -233,7 +233,7 @@ namespace Search {
 
 
         if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
-            tt_move = info.tt_move;
+            tt_move = liste[info.tt_index];
             auto tt_score = valueFromTT(info.score, ply);
             if (info.depth >= depth && info.flag != Flag::None) {
                 if ((info.flag == TT_LOWER && tt_score >= local.beta)
@@ -289,7 +289,7 @@ namespace Search {
             start_index = 1;
         }
 
-        liste.sort(board.get_position(), local.depth, local.ply, info.tt_move, start_index);
+        liste.sort(board.get_position(), local.depth, local.ply, tt_move, start_index);
 
     
         //move-loop
@@ -309,7 +309,7 @@ namespace Search {
         } else {
             flag = TT_EXACT;
         }
-        TT.store_hash(tt_value, pos_key, flag, depth, local.move);
+        TT.store_hash(tt_value, pos_key, flag, depth, local.move_index);
 
         return local.best_score;
     }
@@ -378,11 +378,6 @@ namespace Search {
 
     Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev) {
 
-          
-     /*    if(std::abs(local.sing_score)<1000){
-            std::cout<<"Score: "<<local.sing_score<<std::endl;  
-        } */
-
         Depth reduction = Search::reduce(local, board, move, in_pv);
         Value new_alpha = std::max(local.alpha, local.best_score);
 
@@ -445,6 +440,7 @@ namespace Search {
             if (value > local.best_score)
             {
                 local.move = move;
+				local.move_index = local.i;
                 local.best_score = value;
                 pv.concat(move, local_pv);
             }
