@@ -41,7 +41,6 @@ struct Local {
     Ply ply;
     int i;
     Move tt_move;
-	uint8_t move_index{0};
     Move move;
 };
 

@@ -359,7 +359,6 @@ class NetBatchDataSet(BatchDataSet):
         res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
-        print(input_size)
         if not self.is_val_set:
             self.c_lib.get_next_batch(res_p, moves_p, inp_p)
         else:

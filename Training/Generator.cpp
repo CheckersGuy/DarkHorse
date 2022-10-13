@@ -16,16 +16,6 @@ void Generator::set_time(int time) {
     time_control = time;
 }
 
-uint64_t Generator::get_shared_random_number() {
-
-    //locking the acess to the generator
-    pthread_mutex_lock(pmutex);
-
-
-    pthread_mutex_unlock(pmutex);
-
-}
-
 void Generator::set_max_position(size_t max) {
     max_positions = max;
 }
@@ -99,7 +89,8 @@ void Generator::start() {
             network.addLayer(Layer{1024, 8});
             network.addLayer(Layer{8, 32});
             network.addLayer(Layer{32, 1});
-            network.load("basemodel.quant");
+            network.load(net_file);
+			std::cout<<net_file<<std::endl;
             network.init();
 
             TT.resize(hash_size);

@@ -5,6 +5,7 @@
 #include <complex>
 #include "Network.h"
 
+
     void Accumulator::refresh(){
         for(auto i=0;i<size;++i){
             white_acc[i]=net->biases[i];
@@ -181,7 +182,6 @@ void Network::init() {
         temp[i] = 0;
         input[i] = 0;
     }
-
     accumulator.init(this);
   
 }

@@ -19,6 +19,7 @@ namespace Statistics {
         std::array<int, 32 * 16> bfScore{0};
         
     public:
+		Network policy;
         std::array<std::array<Move,2>,MAX_PLY> killer_moves;
         int get_move_score(Position pos, Move move, Depth depth);
 

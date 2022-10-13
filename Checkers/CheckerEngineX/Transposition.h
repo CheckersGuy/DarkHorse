@@ -13,7 +13,6 @@
 
 struct NodeInfo {
     Move tt_move;
-	uint8_t tt_index;
     Value score{0};
     uint8_t depth{0};
     uint8_t flag{Flag::None};
@@ -26,7 +25,6 @@ struct Entry {
     uint8_t age:6 = 0;// 1 bytes
 	uint8_t flag:2 = 0;//1 byte
     uint8_t depth{0};//1 byte
-    uint8_t move_index{0};
     //padding
     //total of 4+12+4+4+1+1 = 26 bytes !!!
 };
@@ -58,7 +56,7 @@ public:
 
     void resize(size_t capa);
 
-    void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, uint8_t move_index);
+    void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move);
 
     bool find_hash(uint64_t key, NodeInfo &info) const;
 };

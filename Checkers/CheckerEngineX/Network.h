@@ -11,6 +11,7 @@
 #include <iostream>
 #include "Position.h"
 #include <cstring>
+#include <immintrin.h>
 
 
 class Network;
@@ -103,5 +104,5 @@ struct Network {
     friend class Accumulator;
 };
 
-
+void testing_simd_functions();
 #endif //READING_NETWORK_H
