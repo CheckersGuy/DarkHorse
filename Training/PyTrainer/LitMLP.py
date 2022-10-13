@@ -25,7 +25,6 @@ class Relu1(nn.Module):
         return torch.clamp(x, 0.0, 1.0)
 
 
-
 class Network(pl.LightningModule):
 
     def __init__(self, hidden, output="basemodel"):
@@ -41,9 +40,8 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*self.layers)
         self.criterion = torch.nn.MSELoss()
         self.init_weights()
-        self.input_format = InputFormat.V1
-        self.max_weight_hidden =127.0/64.0
-        self.min_weight_hidden = -127.0/64.0
+        self.max_weight_hidden = 127.0 / 64.0
+        self.min_weight_hidden = -127.0 / 64.0
         self.gamma = 0.992
         print(self.net)
 
@@ -51,13 +49,11 @@ class Network(pl.LightningModule):
         return self.net.forward(x)
 
     def optimizer_step(self, *args, **kwargs):
-         super().optimizer_step(*args, **kwargs)
-        # with torch.no_grad():
-        #     for layer in self.layers[1:]:
-        #         if isinstance(layer, torch.nn.Linear):
-        #             layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
-        #
-
+        super().optimizer_step(*args, **kwargs)
+        with torch.no_grad():
+            for layer in self.layers[1:]:
+                if isinstance(layer, torch.nn.Linear):
+                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
 
     def save_model_weights(self):
         self.save(self.output + ".pt")
@@ -67,7 +63,7 @@ class Network(pl.LightningModule):
         self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7,lr=1e-3)
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 
@@ -164,8 +160,8 @@ class PolicyNetwork(pl.LightningModule):
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
         self.init_weights()
         self.input_format = InputFormat.V1
-        self.max_weight_hidden =127.0/64.0
-        self.min_weight_hidden = -127.0/64.0
+        self.max_weight_hidden = 127.0 / 64.0
+        self.min_weight_hidden = -127.0 / 64.0
         print(self.net)
 
     def forward(self, x):
@@ -181,11 +177,11 @@ class PolicyNetwork(pl.LightningModule):
 
     def accuracy(self, logits, target):
         acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
-        return 100*acc
+        return 100 * acc
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
-        policy= self.forward(x)
+        policy = self.forward(x)
         loss_policy = self.criterion(policy, move.squeeze(dim=1))
         acc = self.accuracy(policy, move.squeeze())
         self.log('train_acc_step', acc, prog_bar=True)
@@ -193,7 +189,7 @@ class PolicyNetwork(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
-        policy= self.forward(x)
+        policy = self.forward(x)
         loss_policy = self.criterion(policy, move.squeeze(dim=1))
         self.log('val_loss', loss_policy)
         return loss_policy
