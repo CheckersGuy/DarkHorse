@@ -325,7 +325,7 @@ inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator
 std::pair<size_t, size_t> count_unique_positions(std::string game_file);
 
 
-inline size_t count_trainable_positions(std::string game_file, std::pair<size_t, size_t> range){
+inline size_t count_trainable_positions(std::string game_file){
     std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;

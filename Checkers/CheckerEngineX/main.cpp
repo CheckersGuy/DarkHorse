@@ -53,7 +53,7 @@ int main(int argl, const char **argc) {
     if(parser.has_option("network")) {
         net_file= parser.as<std::string>("network");
     } else {
-        net_file ="basemodel.quant";
+        net_file ="testing.quant";
     }
 
     network.addLayer(Layer{120, 1024});

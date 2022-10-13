@@ -13,26 +13,22 @@
 std::unique_ptr<BatchProvider> streamer;
 std::unique_ptr<BatchProvider> val_streamer;
 extern "C" int
-init_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, int format) {
-    InputFormat form =static_cast<InputFormat>(format);
+init_streamer(size_t buffer_size, size_t batch_size, char *file_path) {
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (streamer.get() == nullptr) {
-        streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size, a, b);
-        streamer->set_input_format(form);
+        streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size);
     }
     streamer->get_streamer().set_shuffle(true);
     std::cout<<"NumPositions in training set: "<<streamer->get_streamer().get_num_positions()<<std::endl;
     return streamer->get_streamer().get_num_positions();
 }
 extern "C" int
-init_val_streamer(size_t buffer_size, size_t batch_size, size_t a, size_t b, char *file_path, int format) {
-    InputFormat form =static_cast<InputFormat>(format);
+init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path) {
     std::string path(file_path);
     std::cout << "Path: " << file_path << std::endl;
     if (val_streamer.get() == nullptr) {
-        val_streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size, a, b);
-        val_streamer->set_input_format(form);
+        val_streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size);
     }
     streamer->get_streamer().set_shuffle(false);
     std::cout<<"NumPositions in validation set: "<<val_streamer->get_streamer().get_num_positions()<<std::endl;
