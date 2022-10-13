@@ -8,16 +8,8 @@ import struct
 import ctypes
 import pathlib
 import numpy as np
-import torch.nn.functional as F
-from adan_pytorch import Adan
-from enum import Enum
 from enum import IntEnum
 
-
-class InputFormat(IntEnum):
-    V1 = 0,
-    V2 = 1,
-    PATTERN = 2
 
 def init_weights(layer):
     if isinstance(layer, nn.Linear):
@@ -294,15 +286,10 @@ class PolicyNetwork(pl.LightningModule):
 
 class LitDataModule(pl.LightningDataModule):
 
-    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000, p_range=None,
-                 input_format=InputFormat.V1):
+    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
         super(LitDataModule, self).__init__()
-        if p_range is None:
-            p_range = [6, 24]
-
-        self.train_set = NetBatchDataSet(batch_size, buffer_size, p_range, train_data, False,
-                                         input_format)
-        self.val_set = NetBatchDataSet(batch_size, 1000000, p_range, val_data, True, input_format)
+        self.train_set = NetBatchDataSet(batch_size, buffer_size, train_data, False)
+        self.val_set = NetBatchDataSet(batch_size, 1000000, val_data, True)
         self.train_data = train_data
         self.batch_size = batch_size
 
@@ -315,27 +302,20 @@ class LitDataModule(pl.LightningDataModule):
 
 class BatchDataSet(torch.utils.data.IterableDataset):
 
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
-        if p_range is None:
-            p_range = [5, 24]
+    def __init__(self, batch_size, buffer_size, file_path, is_val_set=False):
         super(BatchDataSet, self).__init__()
-        self.input_format = input_format
         self.batch_size = batch_size
         self.is_val_set = is_val_set
         self.buffer_size = buffer_size
         self.file_path = file_path
         libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
-        self.c_lib = ctypes.CDLL(libname)
+        self.c_lib = ctypes.cdll.LoadLibrary(libname)
         if not is_val_set:
             temp = self.c_lib.init_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
-                                            ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
-                                            ctypes.c_char_p(self.file_path.encode('utf-8')),
-                                            ctypes.c_int32(input_format))
+                                            ctypes.c_char_p(self.file_path.encode('utf-8')))
         else:
             temp = self.c_lib.init_val_streamer(ctypes.c_uint64(self.buffer_size), ctypes.c_uint64(self.batch_size),
-                                                ctypes.c_uint64(p_range[0]), ctypes.c_uint64(p_range[1]),
-                                                ctypes.c_char_p(self.file_path.encode('utf-8')),
-                                                ctypes.c_int32(input_format))
+                                                ctypes.c_char_p(self.file_path.encode('utf-8')))
         self.file_size = temp
 
     def __iter__(self):
@@ -347,12 +327,11 @@ class BatchDataSet(torch.utils.data.IterableDataset):
 
 class NetBatchDataSet(BatchDataSet):
 
-    def __init__(self, batch_size, buffer_size, p_range, file_path, is_val_set=False, input_format=InputFormat.V1):
-        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, p_range, file_path, is_val_set,
-                                              input_format)
+    def __init__(self, batch_size, buffer_size, file_path, is_val_set=False):
+        super(NetBatchDataSet, self).__init__(batch_size, buffer_size, file_path, is_val_set)
 
     def __next__(self):
-        input_size = 120 if self.input_format == InputFormat.V1 else 128
+        input_size = 120
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
         moves = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
         inputs = np.zeros(shape=(self.batch_size, input_size), dtype=np.float32)
@@ -363,11 +342,5 @@ class NetBatchDataSet(BatchDataSet):
             self.c_lib.get_next_batch(res_p, moves_p, inp_p)
         else:
             self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
-
-        if self.input_format == InputFormat.V2:
-            inputs = torch.Tensor(inputs)
-            moves = torch.LongTensor(moves)
-            results = torch.tensor(results)
-            inputs = inputs.view(self.batch_size, 4, 8, 4)
 
         return results, moves, inputs

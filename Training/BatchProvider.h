@@ -17,16 +17,15 @@ class BatchProvider {
 private:
     PosStreamer streamer;
     size_t batch_size, buffer_size;
-    InputFormat in_format;
 public:
 
-    BatchProvider(std::string path, size_t buffer_size, size_t batch_size) : streamer(path, buffer_size,std::make_pair(0,24)) {
+    BatchProvider(std::string path, size_t buffer_size, size_t batch_size):streamer(path,buffer_size) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
     }
 
     BatchProvider(std::string path, size_t buffer_size, size_t batch_size, size_t a, size_t b) : streamer(path,
-                                                                                                          buffer_size,std::make_pair(a,b)) {
+                                                                                                          buffer_size) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
     }
@@ -39,7 +38,6 @@ public:
 
     PosStreamer &get_streamer();
 
-    void set_input_format(InputFormat format);
 
     void next(float *results, int64_t *moves, float *inputs);
 
