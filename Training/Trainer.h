@@ -50,7 +50,6 @@ public:
                                             pos_streamer(PosStreamer(data_path, 20000000)) {
         const size_t MAX_SIZE = SIZE + (2u + 16u * 7u + 4);
         momentums = std::make_unique<double[]>(MAX_SIZE);
-        pos_streamer.set_input_format(InputFormat::PATTERN);
         m = std::make_unique<double[]>(MAX_SIZE);
         v = std::make_unique<double[]>(MAX_SIZE);
         beta_one_t = std::make_unique<double[]>(MAX_SIZE);
