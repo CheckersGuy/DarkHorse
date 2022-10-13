@@ -12,7 +12,6 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int st
     if (moveCounter - start_index <= 1)
         return;
 
-   // Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
 
     for (auto i = start_index; i < moveCounter; ++i) {

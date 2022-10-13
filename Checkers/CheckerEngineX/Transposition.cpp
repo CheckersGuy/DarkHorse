@@ -33,7 +33,7 @@ void Transposition::clear() {
     std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 
-void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, uint8_t tt_index) {
+void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {
  const auto index = (key) & (get_capacity() - 1u);
     Cluster &cluster = this->entries[index];
     const uint32_t lock = (key >> 32u);
@@ -43,18 +43,17 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t dep
         if (cluster.ent[i].key == lock) {
             cluster.ent[i].depth = depth;
             cluster.ent[i].flag = flag;
-            cluster.ent[i].move_index = tt_index;
+            cluster.ent[i].bestMove = tt_move;
             cluster.ent[i].value = value;
             cluster.ent[i].age = age_counter;
             return;
         }
         const auto age_entry = age_counter - cluster.ent[i].age;
 
-
         if (cluster.ent[i].flag == Flag::None ||cluster.ent[i].depth < depth || (age_entry != 0)) {
             cluster.ent[i].depth = depth;
             cluster.ent[i].flag = flag;
-            cluster.ent[i].move_index = tt_index;
+            cluster.ent[i].bestMove = tt_move;
             cluster.ent[i].value = value;
             cluster.ent[i].key = lock;
             cluster.ent[i].age = age_counter;
@@ -63,7 +62,7 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t dep
     }
     cluster.ent[0].depth = depth;
     cluster.ent[0].flag = flag;
-    cluster.ent[0].move_index = tt_index;
+    cluster.ent[0].bestMove = tt_move;
     cluster.ent[0].value = value;
     cluster.ent[0].key = lock;
     cluster.ent[0].age = age_counter;

@@ -3,13 +3,12 @@
 //
 
 #include "MovePicker.h"
-
+#include <assert.h>
 namespace Statistics {
 
 MovePicker mPicker;
 
 void MovePicker::init() {
-  
 }
 
 
@@ -76,16 +75,13 @@ void MovePicker::clear_scores() {
 
 int MovePicker::get_move_score(Position pos, Move move, Depth depth)
 {
-       static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
-       const int index = get_history_index(pos, move);
-       int score = history[index];
-       const int bf_score = bfScore[index] + 1;
-       return std::clamp(score, -max_history, max_history); 
+    static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
+    const int index = get_history_index(pos, move);
+    int score = history[index];
+    const int bf_score = bfScore[index] + 1;
+    return std::clamp(score, -max_history, max_history);
 
-    //const int score = Statistics::mPicker.policy[get_move_encoding(pos.get_color(),move)];
-
-
-    return score;
+    return 0;
 }
 
 int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {

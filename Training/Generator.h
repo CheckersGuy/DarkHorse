@@ -39,7 +39,6 @@ private:
     std::string net_file{"basemodel.quant"};
 
 
-    uint64_t get_shared_random_number();
 
 public:
     Generator(std::string opening, std::string output)

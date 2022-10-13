@@ -255,7 +255,7 @@ void Match::start() {
     system("echo ' \\e[1;31m Engine Match \\e[0m' ");
     std::cout << "Engine1: " << first << std::endl;
     std::cout << "Engine2: " << second << std::endl;
-    
+
     Zobrist::init_zobrist_keys();
     const int numEngines = 2;
     const int num_matches = this->threads;
@@ -296,7 +296,15 @@ void Match::start() {
                 dup2(enginePipe[p][i][1], STDOUT_FILENO);
                 const std::string e = "../Training/Engines/" + engine_paths[i];
                 const std::string command = "./" + e;
-                execlp(command.c_str(), e.c_str(), NULL);
+                auto argument = (i==0)?arg1 : arg2;
+                if(argument.empty()) {
+
+                execlp(command.c_str(), e.c_str(),NULL);
+                } else {
+
+                    execlp(command.c_str(), e.c_str(),argument.c_str());
+                }
+
                 exit(EXIT_SUCCESS);
             }
         }
@@ -371,10 +379,10 @@ void Match::start() {
     std::cout << "Finished the match" << std::endl;
 }
 
-void Match::set_arg1(std::string arg){
+void Match::set_arg1(std::string arg) {
     arg1 = arg;
 }
 
-void Match::set_arg2(std::string arg){
+void Match::set_arg2(std::string arg) {
     arg2=arg;
 }

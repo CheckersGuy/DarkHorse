@@ -35,86 +35,89 @@ inline Position posFromString(const std::string &pos) {
 #include <types.h>
 #include "CmdParser.h"
 
+
+
 int main(int argl, const char **argc) {
+
+
 
     CmdParser parser(argl,argc);
     parser.parse_command_line();
-	Board board;
+    Board board;
     initialize();
     use_classical(false);
-   
-     int time,depth,hash_size;
-     std::string net_file;
 
-     if(parser.has_option("network")){
+    int time,depth,hash_size;
+    std::string net_file;
+
+    if(parser.has_option("network")) {
         net_file= parser.as<std::string>("network");
-     }else{
+    } else {
         net_file ="basemodel.quant";
-     }
+    }
 
-     network.addLayer(Layer{120, 1024});
-     network.addLayer(Layer{1024, 8});
-     network.addLayer(Layer{8, 32});
-     network.addLayer(Layer{32, 1});
-     network.load(net_file);
-     network.init();
-     if (parser.has_option("search"))
-    
-     {
-         if (parser.has_option("time"))
-         {
-             time = parser.as<int>("time");
-         }
-         else
-         {
-             time = 100000000;
-         }
+    network.addLayer(Layer{120, 1024});
+    network.addLayer(Layer{1024, 8});
+    network.addLayer(Layer{8, 32});
+    network.addLayer(Layer{32, 1});
+    network.load(net_file);
+    network.init();
+    if (parser.has_option("search"))
 
-         if (parser.has_option("depth"))
-         {
-             depth = parser.as<int>("depth");
-         }
-         else
-         {
-             depth = MAX_PLY;
-         }
-         if (parser.has_option("hash_size"))
-         {
-             hash_size = parser.as<int>("hash_size");
-         }
-         else
-         {
-             hash_size = 21;
-         }
+    {
+        if (parser.has_option("time"))
+        {
+            time = parser.as<int>("time");
+        }
+        else
+        {
+            time = 100000000;
+        }
 
-         if (parser.has_option("position"))
-         {
-	     auto pos_string = parser.as<std::string>("position");
-             board.get_position() = Position::pos_from_fen(pos_string);
-         }
-         else
-         {
-             board.get_position() = Position::get_start_position();
-         }
+        if (parser.has_option("depth"))
+        {
+            depth = parser.as<int>("depth");
+        }
+        else
+        {
+            depth = MAX_PLY;
+        }
+        if (parser.has_option("hash_size"))
+        {
+            hash_size = parser.as<int>("hash_size");
+        }
+        else
+        {
+            hash_size = 21;
+        }
 
-         
+        if (parser.has_option("position"))
+        {
+            auto pos_string = parser.as<std::string>("position");
+            board.get_position() = Position::pos_from_fen(pos_string);
+        }
+        else
+        {
+            board.get_position() = Position::get_start_position();
+        }
 
-         TT.resize(hash_size);
-         
-      
 
-          Move best;
-         searchValue(board, best, depth, time, true, std::cout);
-         board.play_move(best);
-         board.print_board();
-         MoveListe liste;
-         get_moves(board.get_position(), liste);
-         return 0; 
-     }
 
-  	
+        TT.resize(hash_size);
 
-   std::string current; 
+
+        Move best;
+        searchValue(board, best, depth, time, true, std::cout);
+        board.play_move(best);
+        board.print_board();
+        MoveListe liste;
+        get_moves(board.get_position(), liste);
+        return 0;
+    }
+
+
+
+    std::string current;
     while (std::cin >> current) {
         if (current == "init") {
             TT.age_counter = 0u;
@@ -167,7 +170,7 @@ int main(int argl, const char **argc) {
                 captures &= captures - 1u;
             }
             std::cout << "end_move" << "\n";
-             board.play_move(bestMove);
+            board.play_move(bestMove);
         } else if (current == "terminate") {
             //terminating the program
             break;
