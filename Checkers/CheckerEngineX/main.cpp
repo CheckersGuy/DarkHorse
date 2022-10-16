@@ -38,10 +38,28 @@ inline Position posFromString(const std::string &pos) {
 
 
 int main(int argl, const char **argc) {
+    /*
+	 *	Network policy;
+	policy.addLayer(Layer{120, 1024});
+    policy.addLayer(Layer{1024, 8});
+    policy.addLayer(Layer{8, 32});
+    policy.addLayer(Layer{32, 128});
+    policy.load("policy.quant");
+    policy.init();
+    Board test;
+	test = Position::get_start_position();
+	auto result =policy.compute_incre_forward_pass(test.get_position());
+	for(auto i=0;i<128;++i){
+			std::cout<<policy[i]<<std::endl;
+	}
+	return 0;
 
 
+	 *
+	 * */
 
-    CmdParser parser(argl,argc);
+
+	CmdParser parser(argl,argc);
     parser.parse_command_line();
     Board board;
     initialize();

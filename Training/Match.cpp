@@ -272,15 +272,15 @@ void Match::start() {
 
     for (int p = 0; p < num_matches; ++p) {
         Engine engine{first, Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
-        engine.setTime(time);
+        engine.setTime(times.first);
         engine.setHashSize(hash_size);
         Engine engine2{second, Engine::State::Idle, enginePipe[p][1][0], mainPipe[p][1][1]};
-        engine2.setTime(time);
+        engine2.setTime(times.second);
         engine2.setHashSize(hash_size);
         interfaces.emplace_back(Interface{engine, engine2});
     }
     auto& first = interfaces.front();
-    std::cout<<"Time: "<<first.engines[0].time_move<<" "<<first.engines[1].time_move<<std::endl;
+    std::cout<<"Time: "<<times.first<<" "<<times.second<<std::endl;
 
     pid_t pid;
     for (int p = 0; p < num_matches; ++p) {
@@ -299,7 +299,7 @@ void Match::start() {
                 auto argument = (i==0)?arg1 : arg2;
                 if(argument.empty()) {
 
-                execlp(command.c_str(), e.c_str(),NULL);
+                    execlp(command.c_str(), e.c_str(),NULL);
                 } else {
 
                     execlp(command.c_str(), e.c_str(),argument.c_str());
@@ -385,4 +385,10 @@ void Match::set_arg1(std::string arg) {
 
 void Match::set_arg2(std::string arg) {
     arg2=arg;
+}
+
+
+void Match::set_time(int time_one, int time_two) {
+    times.first=time_one;
+    times.second=time_two;
 }

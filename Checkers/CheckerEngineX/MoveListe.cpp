@@ -1,5 +1,4 @@
 #include "MoveListe.h"
-#include "Weights.h"
 
 void MoveListe::reset() {
     moveCounter = 0;

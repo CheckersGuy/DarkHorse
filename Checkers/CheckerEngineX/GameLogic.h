@@ -15,7 +15,6 @@
 #include "MGenerator.h"
 #include <chrono>
 #include "Transposition.h"
-#include "Weights.h"
 #include "Line.h"
 #include <algorithm>
 #include "Bits.h"

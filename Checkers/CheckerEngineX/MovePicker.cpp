@@ -9,6 +9,16 @@ namespace Statistics {
 MovePicker mPicker;
 
 void MovePicker::init() {
+
+	policy.addLayer(Layer{120, 1024});
+    policy.addLayer(Layer{1024, 8});
+    policy.addLayer(Layer{8, 32});
+    policy.addLayer(Layer{32, 128});
+    policy.load("policy.quant");
+    policy.init();
+ 
+
+
 }
 
 
@@ -81,7 +91,7 @@ int MovePicker::get_move_score(Position pos, Move move, Depth depth)
     const int bf_score = bfScore[index] + 1;
     return std::clamp(score, -max_history, max_history);
 
-    return 0;
+    return score;
 }
 
 int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove) {

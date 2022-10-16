@@ -105,6 +105,7 @@ private:
     const std::string &second;
     std::string arg1,arg2;
     int time{100};
+	std::pair<int,int> times;
     int hash_size{21};
     int maxGames{1000000};
     int wins_one{0}, wins_two{0}, draws{0};
@@ -153,7 +154,8 @@ public:
     void setOpeningBook(std::string book);
 
     Position get_start_pos();
-
+	
+	void set_time(int time_one, int time_two);
 
 };
 
