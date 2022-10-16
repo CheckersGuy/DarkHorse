@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "egdb.h"
+#include <thread>
 #include <vector>
 #include "MGenerator.h"
 #include "../../Training/Sample.h"
@@ -53,8 +54,8 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 Result get_game_result(Game& game) {
     Position end = game.get_last_position();
-/*     end.print_position();
-    std::cout<<std::endl; */
+    /*     end.print_position();
+        std::cout<<std::endl; */
     MoveListe liste;
     get_moves(end, liste);
     const size_t rep_count = std::count(game.begin(), game.end(),end);
@@ -122,12 +123,12 @@ std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_piece
             copy.make_move(move);
             if (copy != pos) {
                 std::cout<<"No move found"<<std::endl;
-                return std::vector<Sample>{};
+                return std::vector<Sample> {};
             }
 
 
             sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.get_color(),
-                                                                            move);
+                                      move);
             if (sample_data[k - 1].move >= 128) {
                 std::cerr << "Error move: " << sample_data[k - 1].move << std::endl;
                 std::exit(-1);
@@ -185,15 +186,64 @@ Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 }
 
 
-void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
-  
+
+
+void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle,int num_threads) {
+
+    //speeding things up with some more threads
     std::ifstream stream(games,std::ios::binary);
-    if(!stream.good()){
+    if(!stream.good()) {
         std::cerr<<"Could not open input stream"<<std::endl;
         std::exit(-1);
     }
     std::ofstream out_stream(output, std::ios::binary);
-    if(!out_stream.good()){
+    if(!out_stream.good()) {
+        std::cerr<<"Could not open output stream"<<std::endl;
+        std::exit(-1);
+    };
+
+//loaind the unrescored games
+//
+	std::vector<Game>unrescored;
+	std::istream_iterator<Game>begin(stream);
+	std::istream_iterator<Game>end;
+
+	std::copy(begin,end,std::back_inserter(unrescored));
+
+	const auto num_games = unrescored.size();
+	const auto num_chunks = num_threads;
+	const auto chunk_size = num_games/num_chunks;
+	const auto left_overs = num_games-chunk_size*num_chunks;
+
+	std::vector<std::thread>threads;
+	
+	for(auto i=0;i<num_chunks;++i){
+	
+	threads.emplace_back(std::thread([&](){
+	auto lower = i*chunk_size;
+	auto upper =lower+chunk_size;
+	upper = std::min(upper,num_games);
+	for(auto k=lower;k<upper;++k){
+		auto& game = unrescored[k];
+		if(game.result==UNKNOWN)
+			continue;
+		//rescoring the game
+	}
+
+							}));
+
+	}
+
+}
+void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
+
+    std::ifstream stream(games,std::ios::binary);
+    if(!stream.good()) {
+        std::cerr<<"Could not open input stream"<<std::endl;
+        std::exit(-1);
+    }
+    std::ofstream out_stream(output, std::ios::binary);
+    if(!out_stream.good()) {
         std::cerr<<"Could not open output stream"<<std::endl;
         std::exit(-1);
     }
@@ -201,14 +251,14 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     std::istream_iterator<Game>end;
     size_t counter{ 0 };
     std::for_each(begin, end, [&](Game game) {
-        if(game.result!=UNKNOWN){
+        if(game.result!=UNKNOWN) {
             out_stream << game;
             return;
         }
-            
+
         auto r = get_rescored_game(game, max_pieces, handle);
         out_stream << r;
-        });
+    });
 
 }
 
@@ -216,7 +266,7 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 int main(int argl, const char **argc) {
 
 
- int i, status, max_pieces, nerrors;
+    int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
     EGDB_DRIVER *handle;
 
@@ -231,7 +281,7 @@ int main(int argl, const char **argc) {
     printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
 
     /* Open database for probing. */
-    handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
+    handle = egdb_open(EGDB_NORMAL, max_pieces, 4000, DB_PATH, print_msgs);
     if (!handle) {
         printf("Error returned from egdb_open()\n");
         return (1);
