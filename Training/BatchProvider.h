@@ -9,7 +9,6 @@
 #include <memory>
 #include <PosStreamer.h>
 #include <deque>
-#include <Weights.h>
 
 //making things a little more readable
 

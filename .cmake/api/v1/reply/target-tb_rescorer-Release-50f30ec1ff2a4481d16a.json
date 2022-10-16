@@ -84,6 +84,7 @@
 			"sourceIndexes" : 
 			[
 				0,
+				18,
 				19,
 				20,
 				21,
@@ -96,8 +97,7 @@
 				28,
 				29,
 				30,
-				31,
-				33
+				32
 			]
 		}
 	],
@@ -136,6 +136,7 @@
 			"sourceIndexes" : 
 			[
 				0,
+				18,
 				19,
 				20,
 				21,
@@ -148,8 +149,7 @@
 				28,
 				29,
 				30,
-				31,
-				33
+				32
 			]
 		},
 		{
@@ -173,9 +173,8 @@
 				15,
 				16,
 				17,
-				18,
-				32,
-				34
+				31,
+				33
 			]
 		}
 	],
@@ -255,11 +254,6 @@
 		{
 			"backtrace" : 1,
 			"path" : "Checkers/CheckerEngineX/Transposition.h",
-			"sourceGroupIndex" : 1
-		},
-		{
-			"backtrace" : 1,
-			"path" : "Checkers/CheckerEngineX/Weights.h",
 			"sourceGroupIndex" : 1
 		},
 		{

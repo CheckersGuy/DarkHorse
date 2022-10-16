@@ -5,6 +5,7 @@
 #include "types.h"
 #include "MovePicker.h"
 #include <array>
+#include "Line.h"
 #include "Position.h"
 
 class MoveListe {

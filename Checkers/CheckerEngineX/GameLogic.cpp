@@ -7,7 +7,6 @@ uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
 Value max_value = INFINITE;
 
-Weights<int16_t> gameWeights;
 
 
 SearchGlobal glob;
@@ -222,7 +221,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 
 
     if (ply >= MAX_PLY) {
-        return board.get_mover() * gameWeights.evaluate(board.get_position(), ply);
+        return board.get_mover() * network.evaluate(board.get_position(),ply);
     }
 
 
