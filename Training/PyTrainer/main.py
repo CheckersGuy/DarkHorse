@@ -23,12 +23,12 @@ c_lib = ctypes.CDLL(libname)
 
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.Network([120, 1024, 8, 32, 1])
-    model.load_state_dict(torch.load("basemodel.pt"))
+    model = LitMLP.PolicyNetwork([120, 1024, 8, 32, 128])
+    #model.load_state_dict(torch.load("basemodel.pt"))
     #model = LitMLP.ResNet()
 
 
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted - Kopie.train",
                                        val_data="../TrainData/weird9formatted.train",
                                        batch_size=32000, buffer_size=60000000)
 

@@ -18,7 +18,6 @@ bool u_classical = true;
 
 void initialize() {
     initialize(321231231ull);
-    Statistics::mPicker.init();
 }
 
 

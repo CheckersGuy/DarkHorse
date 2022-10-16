@@ -35,35 +35,41 @@ inline Position posFromString(const std::string &pos) {
 #include <types.h>
 #include "CmdParser.h"
 
+void test_policy_output(Position pos,bool show_all){
+	pos.print_position();
+	auto& net = Statistics::mPicker.policy;
+	auto result =Statistics::mPicker.policy.compute_incre_forward_pass(pos);
+	MoveListe liste;
+	get_moves(pos,liste);
+	for(auto m : liste){
+			auto index = Statistics::mPicker.get_move_encoding(pos.get_color(),m);
+			std::cout<<"From: "<<m.get_from_index()<<" To: "<<m.get_to_index()<< "Score: "<<net[index];
+			std::cout<<std::endl;
+	}
+
+	if(show_all){
+			for(auto i=0;i<128;++i){
+					std::cout<<"Index: "<<i<<" Score: "<<net[i]<<std::endl;
+			}
+	}
+
+}
+
+
 
 
 int main(int argl, const char **argc) {
-    /*
-	 *	Network policy;
-	policy.addLayer(Layer{120, 1024});
-    policy.addLayer(Layer{1024, 8});
-    policy.addLayer(Layer{8, 32});
-    policy.addLayer(Layer{32, 128});
-    policy.load("policy.quant");
-    policy.init();
-    Board test;
-	test = Position::get_start_position();
-	auto result =policy.compute_incre_forward_pass(test.get_position());
-	for(auto i=0;i<128;++i){
-			std::cout<<policy[i]<<std::endl;
-	}
-	return 0;
-
-
-	 *
-	 * */
-
-
+    
 	CmdParser parser(argl,argc);
     parser.parse_command_line();
     Board board;
     initialize();
-    use_classical(false);
+	Statistics::mPicker.init();
+
+//	test_policy_output(Position::get_start_position(),true);
+
+//	return 0;
+
 
     int time,depth,hash_size;
     std::string net_file;
