@@ -13,17 +13,7 @@
 #include <algorithm>
 #include "Util/Book.h"
 #include "CmdParser.h"
-
-struct __attribute__((packed)) Encoding{
-		uint32_t move_index : 6 =40;
-		uint32_t result :2 =0;
-};
-
 int main(int argl, const char** argc) {
-
-	std::cout<<sizeof(Encoding)<<std::endl;
-	return 0;
-
 
     CmdParser parser(argl, argc);
     parser.parse_command_line();
@@ -50,11 +40,13 @@ int main(int argl, const char** argc) {
 //			std::cout<<(int)index<<std::endl;
 //			std::cout<<std::endl;
 //	}
-
-	for(auto pos : first){
-			pos.print_position();
-			std::cout<<std::endl;
+	
+	for(auto i=first.begin();i!=first.end();++i){
+		auto pos = *i;
+		pos.print_position();
+		std::cout<<std::endl;
 	}
+
 
 
     return 0;
