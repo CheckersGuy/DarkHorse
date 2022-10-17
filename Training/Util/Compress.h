@@ -36,9 +36,9 @@ struct GameIterator
     {
     }
 
-    bool operator==(GameIterator &other) const;
+    bool operator==(GameIterator other) const;
 
-    bool operator!=(GameIterator &other) const;
+    bool operator!=(GameIterator other) const;
 
     GameIterator &operator++()
     {
@@ -46,23 +46,11 @@ struct GameIterator
         return *this;
     }
 
-    GameIterator &operator--()
-    {
-        index--;
-        return *this;
-    }
 
     GameIterator operator++(int)
     {
         GameIterator copy(*this);
         index++;
-        return copy;
-    }
-
-    GameIterator operator--(int)
-    {
-        GameIterator copy(*this);
-        index--;
         return copy;
     }
 
@@ -164,13 +152,13 @@ struct Game
         return get_position(indices.size());
     }
 
-    bool operator==(Game &other) const
+    bool operator==(Game other) const
     {
         return (other.start_position == start_position &&
                 std::equal(indices.begin(), indices.end(), other.indices.begin()));
     }
 
-    bool operator!=(Game &other) const
+    bool operator!=(Game other) const
     {
         return !((*this) == other);
     }
@@ -263,14 +251,15 @@ inline Position GameIterator::operator*() const
     return current;
 }
 
-inline bool GameIterator::operator==(GameIterator &other) const
+inline bool GameIterator::operator==(GameIterator other) const
 {
-    return (other.index == index);
+    return (other.game == game &&  other.index == index);
 }
 
-inline bool GameIterator::operator!=(GameIterator &other) const
+inline bool GameIterator::operator!=(GameIterator other) const
 {
-    return (other.index != index);
+	
+    return !(other.game == game &&  other.index == index);
 }
 
 template <typename Iterator>
