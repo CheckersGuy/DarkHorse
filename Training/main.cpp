@@ -14,21 +14,15 @@
 #include "Util/Book.h"
 #include "CmdParser.h"
 
-struct __attribute__((packed)) Encoding{
-		uint32_t move_index : 6 =40;
-		uint32_t result :2 =0;
-};
 
 int main(int argl, const char** argc) {
 
-	std::cout<<sizeof(Encoding)<<std::endl;
-	return 0;
 
 
     CmdParser parser(argl, argc);
     parser.parse_command_line();
 
-    std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinfformatted.train");
+    std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
     if(!stream.good()) {
         std::exit(-1);
     };
@@ -37,9 +31,11 @@ int main(int argl, const char** argc) {
     std::istream_iterator<Game>end;
     std::vector<Game>games;
     std::copy(begin,end,std::back_inserter(games));
-    auto&first = games.front();
-    std::cout<<first.indices.size()<<std::endl;
-//   Position current =first.start_position;
+    auto&first = games[10];;
+	std::cout<<"NumGames: "<<games.size()<<std::endl;
+	return 0;
+
+	//   Position current =first.start_position;
 //	for(auto i=0;i<first.indices.size();++i){
 //			current.print_position();
 //			MoveListe liste;

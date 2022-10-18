@@ -19,48 +19,43 @@ struct Game;
 
 struct GameIterator
 {
-    const Game &game;
-    int index{0};
     using iterator_category = std::forward_iterator_tag;
     using difference_type = size_t;
     using value_type = Position;
     using pointer = Position *;   // or also value_type*
     using reference = Position &; // or also value_type&
-
-    GameIterator(const GameIterator &other) : game(other.game)
-    {
-        index = other.index;
-    }
-
-    GameIterator(const Game &game) : game(game)
-    {
-    }
-
+    const Game &game;
+    int index{0};
+    Position current;
+    GameIterator(const GameIterator &other);
+    GameIterator(const Game &game);
     bool operator==(GameIterator other) const;
 
     bool operator!=(GameIterator other) const;
 
-    GameIterator &operator++()
-    {
-        index++;
-        return *this;
-    }
-
-
-    GameIterator operator++(int)
-    {
-        GameIterator copy(*this);
-        index++;
-        return copy;
-    }
-
+    GameIterator &operator++();
+    GameIterator operator++(int);
     Position operator*() const;
+};
+
+
+struct __attribute__((packed)) Encoding {
+    uint32_t move_index :6 =50;
+    uint32_t result : 2 =0;
+
+    bool operator ==(Encoding other) {
+        return move_index ==other.move_index && result == other.result;
+    };
+
+    bool operator !=(Encoding other) {
+        return move_index !=other.move_index || result !=other.result;
+    };
 };
 
 struct Game
 {
     Position start_position;
-    std::vector<uint8_t> indices;
+    std::vector<Encoding> indices;
     Result result{Result::UNKNOWN};
 
     Game(const Position start_position) : start_position(start_position)
@@ -69,10 +64,9 @@ struct Game
 
     Game() = default;
 
-    void add_move(uint8_t move_index)
+    void add_move(uint32_t move_index)
     {
-        uint8_t encoding = 0;
-        Game::encode_move(encoding, move_index);
+
     }
 
     void set_result(Result res)
@@ -82,7 +76,7 @@ struct Game
 
     void set_result(Result res, int n)
     {
-        Game::encode_result(indices[n], res);
+        indices[n].result =static_cast<int>(res);
     }
 
     void add_position(Position pos)
@@ -102,8 +96,8 @@ struct Game
             t.make_move(liste[i]);
             if (t == pos)
             {
-                uint8_t encoding = 0;
-                Game::encode_move(encoding, i);
+                Encoding encoding;
+                encoding.move_index = i;
                 indices.emplace_back(encoding);
                 break;
             }
@@ -118,8 +112,8 @@ struct Game
         uint16_t num_indices;
         stream.read((char *)&num_indices, sizeof(uint16_t));
         stream.read((char *)&game.result, sizeof(Result));
-        game.indices = std::vector<uint8_t>(num_indices);
-        stream.read((char *)&game.indices[0], sizeof(uint8_t) * num_indices);
+        game.indices =std::vector<Encoding>(num_indices);
+        stream.read((char *)&game.indices[0], sizeof(Encoding) * num_indices);
         return stream;
     }
 
@@ -130,7 +124,7 @@ struct Game
         const uint16_t num_indices = game.indices.size();
         stream.write((char *)&num_indices, sizeof(uint16_t));
         stream.write((char *)&game.result, sizeof(Result));
-        stream.write((char *)&game.indices[0], sizeof(uint8_t) * num_indices);
+        stream.write((char *)&game.indices[0], sizeof(Encoding) * num_indices);
         return stream;
     }
 
@@ -142,7 +136,8 @@ struct Game
         {
             MoveListe liste;
             get_moves(current, liste);
-            current.make_move(liste[Game::get_move_index(indices[i])]);
+            auto move_index = indices[i].move_index;
+            current.make_move(liste[move_index]);
         }
         return current;
     }
@@ -160,12 +155,14 @@ struct Game
 
     bool operator!=(Game other) const
     {
-        return !((*this) == other);
+        return !(other.start_position == start_position &&
+                 std::equal(indices.begin(), indices.end(), other.indices.begin()));
     }
 
     GameIterator begin() const
     {
         GameIterator beg(*this);
+        beg.current = start_position;
         return beg;
     }
 
@@ -176,33 +173,33 @@ struct Game
         return beg;
     }
 
-    static void encode_move(uint8_t &bit_field, uint8_t move_index)
-    {
-        // clearing the move field
-        bit_field &= ~(63);
-        bit_field |= move_index;
-    }
-
-    static void encode_result(uint8_t &bit_field, Result result)
-    {
-        uint8_t temp = static_cast<uint8_t>(result);
-        const uint8_t clear_bits = 3ull << 6;
-        bit_field &= ~clear_bits;
-        bit_field |= temp << 6;
-    }
-
-    static uint8_t get_move_index(const uint8_t &bit_field)
-    {
-        const uint8_t clear_bits = 3ull << 6;
-        uint8_t copy = bit_field & (~clear_bits);
-        return copy;
-    }
-
-    static Result get_result(uint8_t &bit_field)
-    {
-        uint8_t copy = (bit_field >> 6) & 3ull;
-        return static_cast<Result>(copy);
-    }
+//    static void encode_move(uint8_t &bit_field, uint8_t move_index)
+//    {
+//        // clearing the move field
+//        bit_field &= ~(63);
+//        bit_field |= move_index;
+//    }
+//
+//    static void encode_result(uint8_t &bit_field, Result result)
+//    {
+//        uint8_t temp = static_cast<uint8_t>(result);
+//        const uint8_t clear_bits = 3ull << 6;
+//        bit_field &= ~clear_bits;
+//        bit_field |= temp << 6;
+//    }
+//
+//    static uint8_t get_move_index(const uint8_t &bit_field)
+//    {
+//        const uint8_t clear_bits = 3ull << 6;
+//        uint8_t copy = bit_field & (~clear_bits);
+//        return copy;
+//    }
+//
+//    static Result get_result(uint8_t &bit_field)
+//    {
+//        uint8_t copy = (bit_field >> 6) & 3ull;
+//        return static_cast<Result>(copy);
+//    }
 
     template <typename OutIter, typename Lambda>
     void extract_samples_test(OutIter iterator, Lambda lambda)
@@ -215,12 +212,14 @@ struct Game
 
         for (auto i = 0; i < indices.size(); ++i)
         {
+
+            auto encoding = indices[i];
             Sample sample;
             MoveListe liste;
             get_moves(current, liste);
             sample.position = current;
-            sample.result = Game::get_result(indices[i]);
-            Move m = liste[Game::get_move_index(indices[i])];
+            sample.result = static_cast<Result>(encoding.result);
+            Move m = liste[encoding.move_index];
             sample.move = lambda(current.get_color(), m);
 
             current.make_move(m);
@@ -245,9 +244,39 @@ struct Game
     }
 };
 
+
+inline GameIterator::GameIterator(const GameIterator &other) : game(other.game)
+    {
+        index = other.index;
+        current =other.current;
+    }
+
+inline GameIterator::GameIterator(const Game &game) : game(game)
+    {
+			current = game.start_position;
+    }
+
+    inline GameIterator & GameIterator::operator++()
+    {
+		MoveListe liste;
+		get_moves(current,liste);
+		auto move_index = game.indices[index].move_index;
+		current.make_move(liste[move_index]);
+        index++;
+        return *this;
+    }
+
+
+    inline GameIterator GameIterator::operator++(int)
+    {
+        GameIterator copy(*this);
+        index++;
+        return copy;
+    }
+
+
 inline Position GameIterator::operator*() const
 {
-    Position current = game.get_position(index);
     return current;
 }
 
@@ -258,7 +287,7 @@ inline bool GameIterator::operator==(GameIterator other) const
 
 inline bool GameIterator::operator!=(GameIterator other) const
 {
-	
+
     return !(other.game == game &&  other.index == index);
 }
 
@@ -299,22 +328,23 @@ inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator
     size_t unique_count = 0;
     size_t total_positions = 0;
     std::for_each(begin, end, [&](Game game)
-                  {
-         for (auto pos: game) {
+    {
+        for (auto pos: game) {
             if (!filter.has(pos)) {
                 unique_count++;
                 filter.insert(pos);
             }
             total_positions++;
         }
-        return; });
+        return;
+    });
     return std::make_pair(unique_count, total_positions);
 }
 
 std::pair<size_t, size_t> count_unique_positions(std::string game_file);
 
 
-inline size_t count_trainable_positions(std::string game_file){
+inline size_t count_trainable_positions(std::string game_file) {
     std::ifstream stream(game_file, std::ios::binary);
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game> end;
@@ -322,7 +352,9 @@ inline size_t count_trainable_positions(std::string game_file){
     // temporary before I can speed this thing up
     // way too slow
     std::for_each(begin, end, [&](const Game &g)
-                  { counter += g.indices.size() + 1; });
+    {
+        counter += g.indices.size() + 1;
+    });
     return counter;
 
 }
