@@ -131,7 +131,7 @@ std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_piece
                                       move);
             if (sample_data[k - 1].move >= 128) {
                 std::cerr << "Error move: " << sample_data[k - 1].move << std::endl;
-                std::exit(-1);
+//                std::exit(-1);
             }
         }
 
@@ -142,46 +142,44 @@ std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_piece
 
 }
 
-Game get_rescored_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
-    const Result result = get_game_result(game);
+void rescore_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
+    const Result result = UNKNOWN;
     game.result = result;
-    //result may still be unknown
+    //something wrong with get_game_result
 
     for (auto i = 0; i < game.indices.size(); ++i) {
-        Game::encode_result(game.indices[i], game.result);
+        game.indices[i].result = static_cast<uint32_t>(game.result);
     }
     //there may be an easier way to do this
-    std::vector<Position>positions;
-    for (auto p : game) {
-        positions.emplace_back(p);
-    }
+//    std::vector<Position>positions;
+//    for (auto p : game) {
+//        positions.emplace_back(p);
+//    }
 
-    auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
+//    auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
 
-    for (auto i = 0; i <game.indices.size(); ++i) {
-        Sample s = rescored_samples[i];
-        Game::encode_result(game.indices[i], s.result);
-    }
-    Sample last = rescored_samples[game.indices.size()];
-    game.result = last.result;
+//    for (auto i = 0; i <game.indices.size(); ++i) {
+//        Sample s = rescored_samples[i];
+//        game.indices[i].result  = static_cast<uint32_t>(s.result);
+//    }
+//    Sample last = rescored_samples.back();
+//    game.result = last.result;
 
-    std::vector<Sample> check_samples;
-    game.extract_samples_test(std::back_inserter(check_samples));
+//    std::vector<Sample> check_samples;
+//    game.extract_samples_test(std::back_inserter(check_samples));
 
-    for (auto i = 0; i < check_samples.size(); ++i) {
-        Sample s = rescored_samples[i];
-        if (check_samples[i].position != rescored_samples[i].position) {
-            std::cerr << "Error in rescoring the game" << std::endl;
-            std::exit(-1);
-        }
-        if (check_samples[i].result != rescored_samples[i].result) {
-            std::cerr << "Error in rescoring the game" << std::endl;
-            std::exit(-1);
-        }
-    }
+//    for (auto i = 0; i < check_samples.size(); ++i) {
+//        Sample s = rescored_samples[i];
+//        if (check_samples[i].position != rescored_samples[i].position) {
+//            std::cerr << "Error in rescoring the game wrong position" << std::endl;
+//            std::exit(-1);
+//        }
+//        if (check_samples[i].result != rescored_samples[i].result) {
+//            std::cerr << "Error in rescoring the gamei wrong result" << std::endl;
+//            std::exit(-1);
+//        }
+//    }
 
-
-    return game;
 
 }
 
@@ -204,42 +202,43 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
 
 //loaind the unrescored games
 //
-	std::vector<Game>unrescored;
-	std::istream_iterator<Game>begin(stream);
-	std::istream_iterator<Game>end;
+    std::vector<Game>unrescored;
+    std::istream_iterator<Game>begin(stream);
+    std::istream_iterator<Game>end;
 
-	std::copy(begin,end,std::back_inserter(unrescored));
+    std::copy(begin,end,std::back_inserter(unrescored));
 
-	const auto num_games = unrescored.size();
-	const auto num_chunks = num_threads;
-	const auto chunk_size = num_games/num_chunks;
-	const auto left_overs = num_games-chunk_size*num_chunks;
+    const auto num_games = unrescored.size();
+    const auto num_chunks = num_threads;
+    const auto chunk_size = num_games/num_chunks;
+    const auto left_overs = num_games-chunk_size*num_chunks;
 
-	std::vector<std::thread>threads;
-	
-	for(auto i=0;i<num_chunks;++i){
-	
-	threads.emplace_back(std::thread([&](){
-	auto lower = i*chunk_size;
-	auto upper =lower+chunk_size;
-	upper = std::min(upper,num_games);
-	for(auto k=lower;k<upper;++k){
-		auto& game = unrescored[k];
-		if(game.result==UNKNOWN)
-			continue;
-		//rescoring the game
-	}
+    std::vector<std::thread>threads;
 
-							}));
+    for(auto i=0; i<num_chunks; ++i) {
 
-	}
+        threads.emplace_back(std::thread([&]() {
+            auto lower = i*chunk_size;
+            auto upper =lower+chunk_size;
+            upper = std::min(upper,num_games);
+            for(auto k=lower; k<upper; ++k) {
+                auto& game = unrescored[k];
+                if(game.result==UNKNOWN)
+                    continue;
+                //rescoring the game
+            }
+
+        }));
+
+    }
 
 }
-void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle) {
+void create_samples_from_games(std::string input_file, std::string output, int max_pieces, EGDB_DRIVER *handle) {
 
-    std::ifstream stream(games,std::ios::binary);
+    std::ifstream stream(input_file,std::ios::binary);
     if(!stream.good()) {
         std::cerr<<"Could not open input stream"<<std::endl;
+        std::cerr<<input_file<<std::endl;
         std::exit(-1);
     }
     std::ofstream out_stream(output, std::ios::binary);
@@ -249,17 +248,25 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     }
     std::istream_iterator<Game> begin(stream);
     std::istream_iterator<Game>end;
-    size_t counter{ 0 };
-    std::for_each(begin, end, [&](Game game) {
-        if(game.result!=UNKNOWN) {
-            out_stream << game;
-            return;
+    std::vector<Game>games;
+    std::copy(begin,end,std::back_inserter(games));
+
+
+    std::cout<<"NumGames: "<<games.size()<<std::endl;
+
+    const auto num_games_perc = games.size()/20;
+    size_t counter=0;
+    std::for_each(games.begin(), games.end(), [&](Game& game) {
+        if(game.result==UNKNOWN) {
+            rescore_game(game, max_pieces, handle);
+            counter++;
+            std::cout<<counter<<std::endl;
         }
 
-        auto r = get_rescored_game(game, max_pieces, handle);
-        out_stream << r;
     });
-
+    //write back in bulk
+    std::cout<<"Writing the data"<<std::endl;
+    std::copy(games.begin(),games.end(),std::ostream_iterator<Game>(out_stream));
 }
 
 
@@ -281,18 +288,17 @@ int main(int argl, const char **argc) {
     printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
 
     /* Open database for probing. */
-    handle = egdb_open(EGDB_NORMAL, max_pieces, 4000, DB_PATH, print_msgs);
+    handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
     if (!handle) {
         printf("Error returned from egdb_open()\n");
         return (1);
     }
     std::cout<<"Starting Rescoring the training data"<<std::endl;
-    std::string in_file("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-    std::string out_file("/home/leagu/DarkHorse/Training/TrainData/reinfformatted.train");
-
+    std::string in_file("reinf.train");
+    std::string out_file("reinfformatted.train");
 
     create_samples_from_games(in_file, out_file, max_pieces, handle);
-
+    std::cout<<"Done rescoring"<<std::endl;
     handle->close(handle);
 
     return 0;
