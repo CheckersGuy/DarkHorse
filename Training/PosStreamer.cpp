@@ -10,22 +10,18 @@ size_t PosStreamer::get_num_positions() const {
 }
 
 Sample PosStreamer::get_next() {
-    auto lambda =[&](Color color, Move move)->int{
-        return Statistics::MovePicker::get_move_encoding(color,move);
-
-    };
-
     if (ptr >= buffer_size) {
         buffer.clear();
         ptr = 0;
         do {
             if (game_offset>=games.size()) {
                 game_offset =0;
-                //shuffling the games each epoch as well
                 std::shuffle(games.begin(),games.end(),generator);
             }
             auto game = games[game_offset++];
-            game.extract_samples_test(std::back_inserter(buffer),lambda);
+			std::cout<<"Before"<<std::endl;
+            game.extract_samples(std::back_inserter(buffer));
+			std::cout<<"After"<<std::endl;
 
         } while (buffer.size() < buffer_size);
         if (shuffle) {

@@ -305,7 +305,7 @@ std::string Position::get_pos_string()const{
 }
 
 void Position::make_move(Move move) {
-    assert(!move.is_empty());
+   assert(!move.is_empty());
     //setting the piece type
     if (color == BLACK) {
         if (move.is_capture()) {

@@ -62,7 +62,7 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
         do {
             current = get_streamer().get_next();
             piece_count = Bits::pop_count(current.position.WP|current.position.BP);
-        } while (current.result == UNKNOWN || current.position.has_jumps());
+        } while (current.move==-1 || current.result == UNKNOWN || current.position.has_jumps(current.position.get_color()));
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;

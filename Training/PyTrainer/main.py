@@ -23,14 +23,14 @@ c_lib = ctypes.CDLL(libname)
 
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.PolicyNetwork([120, 1024, 8, 32, 128])
+    model = LitMLP.Network([120, 1024, 8, 32, 1])
     #model.load_state_dict(torch.load("basemodel.pt"))
     #model = LitMLP.ResNet()
 
 
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted - Kopie.train",
-                                       val_data="../TrainData/weird9formatted.train",
-                                       batch_size=32000, buffer_size=60000000)
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",
+                                       val_data="../TrainData/val.train",
+                                       batch_size=32000, buffer_size=30000000)
 
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{policy}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=300, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="policy=0-v23.ckpt")
 
 
 

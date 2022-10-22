@@ -22,38 +22,6 @@ int main(int argl, const char** argc) {
     CmdParser parser(argl, argc);
     parser.parse_command_line();
 
-    std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-    if(!stream.good()) {
-        std::exit(-1);
-    };
-
-    std::istream_iterator<Game>begin(stream);
-    std::istream_iterator<Game>end;
-    std::vector<Game>games;
-    std::copy(begin,end,std::back_inserter(games));
-    auto&first = games[10];;
-	std::cout<<"NumGames: "<<games.size()<<std::endl;
-	return 0;
-
-	//   Position current =first.start_position;
-//	for(auto i=0;i<first.indices.size();++i){
-//			current.print_position();
-//			MoveListe liste;
-//			get_moves(current,liste);
-//
-//			auto index =Game::get_move_index( first.indices[i]);
-//			current.make_move(liste[index]);
-//			std::cout<<(int)index<<std::endl;
-//			std::cout<<std::endl;
-//	}
-
-	for(auto pos : first){
-			pos.print_position();
-			std::cout<<std::endl;
-	}
-
-
-    return 0;
     if (parser.has_option("match"))
     {
         if (parser.has_option("engines") && parser.has_option("time"))

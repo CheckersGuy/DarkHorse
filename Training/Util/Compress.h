@@ -4,7 +4,7 @@
 
 #ifndef READING_COMPRESS_H
 #define READING_COMPRESS_H
-
+#include <assert.h>
 #include <fstream>
 #include <Position.h>
 #include <MoveListe.h>
@@ -17,37 +17,17 @@
 
 struct Game;
 
-struct GameIterator
-{
-    using iterator_category = std::forward_iterator_tag;
-    using difference_type = size_t;
-    using value_type = Position;
-    using pointer = Position *;   // or also value_type*
-    using reference = Position &; // or also value_type&
-    const Game &game;
-    int index{0};
-    Position current;
-    GameIterator(const GameIterator &other);
-    GameIterator(const Game &game);
-    bool operator==(GameIterator other) const;
-
-    bool operator!=(GameIterator other) const;
-
-    GameIterator &operator++();
-    GameIterator operator++(int);
-    Position operator*() const;
-};
 
 
 struct __attribute__((packed)) Encoding {
     uint32_t move_index :6 =50;
     uint32_t result : 2 =0;
 
-    bool operator ==(Encoding other) {
+    bool operator ==(const Encoding& other)const {
         return move_index ==other.move_index && result == other.result;
     };
 
-    bool operator !=(Encoding other) {
+    bool operator !=(const Encoding& other)const {
         return move_index !=other.move_index || result !=other.result;
     };
 };
@@ -64,10 +44,6 @@ struct Game
 
     Game() = default;
 
-    void add_move(uint32_t move_index)
-    {
-
-    }
 
     void set_result(Result res)
     {
@@ -137,7 +113,10 @@ struct Game
             MoveListe liste;
             get_moves(current, liste);
             auto move_index = indices[i].move_index;
-            current.make_move(liste[move_index]);
+            assert(move_index<liste.length());
+           Move move = liste[move_index];
+		   assert(!move.is_empty());
+            current.make_move(move);
         }
         return current;
     }
@@ -147,68 +126,77 @@ struct Game
         return get_position(indices.size());
     }
 
-    bool operator==(Game other) const
+    auto get_game_result() {
+        Position last_position = get_last_position();
+        MoveListe liste;
+        get_moves(last_position,liste);
+        if(liste.length()==0 && last_position.get_color()==BLACK) {
+            return WHITE_WON;
+        } else if(liste.length()==0 && last_position.get_color()==WHITE) {
+            return BLACK_WON;
+        }
+        //questions: Should positions that are not valid for rescoring but
+        //end in 3 fold repetitions be ignored ?, sounds interesting to me and I will try it
+
+        return UNKNOWN;
+
+    }
+
+    template<typename Iterator> void extract_positions(Iterator iter) {
+        Position current =start_position;
+        *iter =start_position;
+        iter++;
+        for(auto i=0; i<indices.size(); ++i) {
+            MoveListe liste;
+            get_moves(current,liste);
+            Move move =liste[indices[i].move_index];
+            current.make_move(move);
+            *iter=current;
+            iter++;
+        }
+    }
+
+    template<typename Oracle> void rescore_game(Oracle func) {
+        //Oracle provides true-results for valid positions:
+        Position current = start_position;
+        auto end_result = get_game_result();
+        int last_stop=-1;
+        for(auto i=0; i<indices.size(); ++i) {
+            auto result = func(current);
+            if(result == UNKNOWN)
+                continue;
+            for(int k=i; k>last_stop; k--) {
+                indices[k].result = result;
+            }
+            last_stop = i;
+        }
+        for(auto& enc : indices) {
+            if(enc.result!=UNKNOWN)
+                continue;
+            enc.result = end_result;
+        }
+    }
+
+    bool operator==(const Game& other) const
     {
         return (other.start_position == start_position &&
                 std::equal(indices.begin(), indices.end(), other.indices.begin()));
     }
 
-    bool operator!=(Game other) const
+    bool operator!=(const Game& other) const
     {
         return !(other.start_position == start_position &&
                  std::equal(indices.begin(), indices.end(), other.indices.begin()));
     }
 
-    GameIterator begin() const
-    {
-        GameIterator beg(*this);
-        beg.current = start_position;
-        return beg;
-    }
 
-    GameIterator end() const
-    {
-        GameIterator beg(*this);
-        beg.index = indices.size() + 1;
-        return beg;
-    }
 
-//    static void encode_move(uint8_t &bit_field, uint8_t move_index)
-//    {
-//        // clearing the move field
-//        bit_field &= ~(63);
-//        bit_field |= move_index;
-//    }
-//
-//    static void encode_result(uint8_t &bit_field, Result result)
-//    {
-//        uint8_t temp = static_cast<uint8_t>(result);
-//        const uint8_t clear_bits = 3ull << 6;
-//        bit_field &= ~clear_bits;
-//        bit_field |= temp << 6;
-//    }
-//
-//    static uint8_t get_move_index(const uint8_t &bit_field)
-//    {
-//        const uint8_t clear_bits = 3ull << 6;
-//        uint8_t copy = bit_field & (~clear_bits);
-//        return copy;
-//    }
-//
-//    static Result get_result(uint8_t &bit_field)
-//    {
-//        uint8_t copy = (bit_field >> 6) & 3ull;
-//        return static_cast<Result>(copy);
-//    }
-
-    template <typename OutIter, typename Lambda>
-    void extract_samples_test(OutIter iterator, Lambda lambda)
+    template <typename OutIter>
+    void extract_samples(OutIter iterator)
     {
         // to be checked and continued
         Position current = start_position;
 
-        if (current.is_empty())
-            return;
 
         for (auto i = 0; i < indices.size(); ++i)
         {
@@ -220,7 +208,7 @@ struct Game
             sample.position = current;
             sample.result = static_cast<Result>(encoding.result);
             Move m = liste[encoding.move_index];
-            sample.move = lambda(current.get_color(), m);
+            sample.move = Statistics::mPicker.get_move_encoding(current.get_color(), m);
 
             current.make_move(m);
             *iterator = sample;
@@ -232,64 +220,9 @@ struct Game
         sample.move = -1;
         *iterator = sample;
     }
-
-    template <typename OutIter>
-    void extract_samples_test(OutIter iterator)
-    {
-        auto lambda = [](Color color, Move move)
-        {
-            return Statistics::mPicker.get_move_encoding(color, move);
-        };
-        return extract_samples_test(iterator, lambda);
-    }
 };
 
 
-inline GameIterator::GameIterator(const GameIterator &other) : game(other.game)
-    {
-        index = other.index;
-        current =other.current;
-    }
-
-inline GameIterator::GameIterator(const Game &game) : game(game)
-    {
-			current = game.start_position;
-    }
-
-    inline GameIterator & GameIterator::operator++()
-    {
-		MoveListe liste;
-		get_moves(current,liste);
-		auto move_index = game.indices[index].move_index;
-		current.make_move(liste[move_index]);
-        index++;
-        return *this;
-    }
-
-
-    inline GameIterator GameIterator::operator++(int)
-    {
-        GameIterator copy(*this);
-        index++;
-        return copy;
-    }
-
-
-inline Position GameIterator::operator*() const
-{
-    return current;
-}
-
-inline bool GameIterator::operator==(GameIterator other) const
-{
-    return (other.game == game &&  other.index == index);
-}
-
-inline bool GameIterator::operator!=(GameIterator other) const
-{
-
-    return !(other.game == game &&  other.index == index);
-}
 
 template <typename Iterator>
 inline void merge_training_data(Iterator begin, Iterator end, std::string output)
@@ -327,9 +260,12 @@ inline std::pair<size_t, size_t> count_unique_positions(Iterator begin, Iterator
     BloomFilter<Position> filter(9585058378, 3);
     size_t unique_count = 0;
     size_t total_positions = 0;
+    std::vector<Position>positions;
+    positions.reserve(600);
     std::for_each(begin, end, [&](Game game)
-    {
-        for (auto pos: game) {
+    {   positions.clear();
+        game.extract_positions(std::back_inserter(positions));
+        for (auto pos: positions) {
             if (!filter.has(pos)) {
                 unique_count++;
                 filter.insert(pos);

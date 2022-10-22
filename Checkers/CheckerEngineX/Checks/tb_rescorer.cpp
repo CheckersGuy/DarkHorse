@@ -1,6 +1,8 @@
 //
 // Created by leagu on 13.09.2021.
 //
+#include <chrono>
+#include <assert.h>
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,11 +56,11 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 Result get_game_result(Game& game) {
     Position end = game.get_last_position();
-    /*     end.print_position();
-        std::cout<<std::endl; */
     MoveListe liste;
     get_moves(end, liste);
-    const size_t rep_count = std::count(game.begin(), game.end(),end);
+	std::vector<Position>positions;
+	game.extract_positions(std::back_inserter(positions));
+    const size_t rep_count = std::count(positions.begin(), positions.end(),positions.back());
     if (liste.length() == 0) {
         return (end.color == BLACK) ? WHITE_WON : BLACK_WON;
     }
@@ -72,7 +74,6 @@ Result get_game_result(std::vector<Position> &game) {
     MoveListe liste;
     get_moves(game.back(), liste);
     const size_t rep_count = std::count(game.begin(), game.end(), game.back());
-
     if (liste.length() == 0) {
         return (game.back().color == BLACK) ? WHITE_WON : BLACK_WON;
     } else if (rep_count >= 3) {
@@ -84,12 +85,12 @@ Result get_game_result(std::vector<Position> &game) {
 std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_pieces, EGDB_DRIVER *handle) {
     std::vector<Sample> sample_data;
     const Result result = get_game_result(game);
-
-    for (auto p: game) {
-        Sample s;
-        s.position = p;
-        sample_data.emplace_back(s);
-    }
+	for(auto pos : game){
+			Sample s;
+			s.position = pos;
+			sample_data.emplace_back(s);
+	}
+   
     int last_stop = -1;
     for (auto i = 0; i < game.size(); ++i) {
         auto tb_result = get_tb_result(game[i], max_pieces, handle);
@@ -103,71 +104,39 @@ std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_piece
         }
         last_stop = i;
     }
-    for (auto s : sample_data) {
+    for (auto&s : sample_data) {
         if(s.result !=UNKNOWN)
             continue;
         s.result = result;
     }
 
-    //Getting the moves played
-    for (auto k = 1; k < sample_data.size(); ++k) {
-        Position pos = sample_data[k].position;
-        Position previous = sample_data[k - 1].position;
-        if (!previous.has_jumps(previous.get_color())) {
-
-            Move move;
-            move.from = (previous.BP & (~pos.BP)) | (previous.WP & (~pos.WP));
-            move.to = (pos.BP & (~previous.BP)) | (pos.WP & (~previous.WP));
-            Position copy;
-            copy = previous;
-            copy.make_move(move);
-            if (copy != pos) {
-                std::cout<<"No move found"<<std::endl;
-                return std::vector<Sample> {};
-            }
 
 
-            sample_data[k - 1].move = Statistics::mPicker.get_move_encoding(sample_data[k - 1].position.get_color(),
-                                      move);
-            if (sample_data[k - 1].move >= 128) {
-                std::cerr << "Error move: " << sample_data[k - 1].move << std::endl;
-//                std::exit(-1);
-            }
-        }
-
-
-    }
 
     return sample_data;
 
 }
 
 void rescore_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
-    const Result result = UNKNOWN;
+	const Result result = get_game_result(game);
     game.result = result;
-    //something wrong with get_game_result
 
     for (auto i = 0; i < game.indices.size(); ++i) {
         game.indices[i].result = static_cast<uint32_t>(game.result);
     }
     //there may be an easier way to do this
-//    std::vector<Position>positions;
-//    for (auto p : game) {
-//        positions.emplace_back(p);
-//    }
-
-//    auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
-
-//    for (auto i = 0; i <game.indices.size(); ++i) {
-//        Sample s = rescored_samples[i];
-//        game.indices[i].result  = static_cast<uint32_t>(s.result);
-//    }
-//    Sample last = rescored_samples.back();
-//    game.result = last.result;
+    std::vector<Position>positions;
+	game.extract_positions(std::back_inserter(positions));
+    auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
+    for (auto i = 0; i <game.indices.size(); ++i) {
+        Sample s = rescored_samples[i];
+        game.indices[i].result  = static_cast<uint32_t>(s.result);
+    }
+    Sample last = rescored_samples.back();
+    game.result = last.result;
 
 //    std::vector<Sample> check_samples;
 //    game.extract_samples_test(std::back_inserter(check_samples));
-
 //    for (auto i = 0; i < check_samples.size(); ++i) {
 //        Sample s = rescored_samples[i];
 //        if (check_samples[i].position != rescored_samples[i].position) {
@@ -182,9 +151,6 @@ void rescore_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
 
 
 }
-
-
-
 
 void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle,int num_threads) {
 
@@ -253,15 +219,22 @@ void create_samples_from_games(std::string input_file, std::string output, int m
 
 
     std::cout<<"NumGames: "<<games.size()<<std::endl;
+	
 
+	auto oracle = [&](Position pos){
+		return get_tb_result(pos,max_pieces,handle);
+	};
+	
     const auto num_games_perc = games.size()/20;
     size_t counter=0;
+	auto start = std::chrono::high_resolution_clock::now();
+	
     std::for_each(games.begin(), games.end(), [&](Game& game) {
-        if(game.result==UNKNOWN) {
-            rescore_game(game, max_pieces, handle);
+            game.rescore_game(oracle);
             counter++;
-            std::cout<<counter<<std::endl;
-        }
+			if(counter%1000 == 0){
+				std::cout<<"Counter: "<<counter<<std::endl;
+			}
 
     });
     //write back in bulk
@@ -271,7 +244,6 @@ void create_samples_from_games(std::string input_file, std::string output, int m
 
 
 int main(int argl, const char **argc) {
-
 
     int i, status, max_pieces, nerrors;
     EGDB_TYPE egdb_type;
@@ -288,7 +260,7 @@ int main(int argl, const char **argc) {
     printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
 
     /* Open database for probing. */
-    handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
+    handle = egdb_open(EGDB_NORMAL, max_pieces, 4000, DB_PATH, print_msgs);
     if (!handle) {
         printf("Error returned from egdb_open()\n");
         return (1);

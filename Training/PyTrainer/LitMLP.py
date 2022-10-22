@@ -165,8 +165,14 @@ class PolicyNetwork(pl.LightningModule):
     def forward(self, x):
         return self.net.forward(x)
 
+
+
     def optimizer_step(self, *args, **kwargs):
         super().optimizer_step(*args, **kwargs)
+        with torch.no_grad():
+            for layer in self.layers[1:]:
+                if isinstance(layer, torch.nn.Linear):
+                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
 
     def on_epoch_end(self) -> None:
         self.save_parameters(self.output)
