@@ -65,11 +65,8 @@ int main(int argl, const char **argc) {
     Board board;
     initialize();
 	Statistics::mPicker.init();
-
 //	test_policy_output(Position::get_start_position(),true);
-
 //	return 0;
-
 
     int time,depth,hash_size;
     std::string net_file;
@@ -77,7 +74,7 @@ int main(int argl, const char **argc) {
     if(parser.has_option("network")) {
         net_file= parser.as<std::string>("network");
     } else {
-        net_file ="testing.quant";
+        net_file ="bigagain4.quant";
     }
 
     network.addLayer(Layer{120, 1024});

@@ -20,9 +20,9 @@ struct NodeInfo {
 
 struct Entry {
     Move bestMove;
-    Value value{0};//4 bytes
-    uint32_t key{0u};//4 bytes
-    uint8_t age:6 = 0;// 1 bytes
+    uint32_t key{0u};//4 bytes 
+    int16_t value{0};//4 bytes
+	uint8_t age:6 = 0;// 1 bytes
 	uint8_t flag:2 = 0;//1 byte
     uint8_t depth{0};//1 byte
     //padding

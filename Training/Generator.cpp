@@ -84,7 +84,6 @@ void Generator::start() {
             std::ofstream out_stream("../Training/TrainData/" + local_file);
             //child takes a position and generates games
             std::vector<Game> game_buffer;
-            use_classical(false);
             network.addLayer(Layer{120, 1024});
             network.addLayer(Layer{1024, 8});
             network.addLayer(Layer{8, 32});
@@ -103,12 +102,11 @@ void Generator::start() {
                 std::uniform_int_distribution<size_t>distrib(0,openings.size());
                 const size_t rand_index = distrib(generator);
                 Position opening = openings[rand_index];
-                //std::cout<<"Opening counter: "<<rand_index<<std::endl;
                 Board board;
                 board = opening;
                 TT.clear();
                 Zobrist::init_zobrist_keys(seed);
-                
+                 
                 for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
@@ -123,7 +121,7 @@ void Generator::start() {
                     }
                     uint32_t count;
                     count = std::count(game.begin(), game.end(), game.get_last_position());
-                    if (liste.length() == 0) {
+					if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
                         (*num_won)++;

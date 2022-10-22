@@ -305,7 +305,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     } else {
         flag = TT_EXACT;
     }
-    TT.store_hash(tt_value, pos_key, flag, depth, local.move);
+	Move store_move =(local.move.is_capture())?Move{}:local.move; 
+    TT.store_hash(tt_value, pos_key, flag, depth, store_move);
 
     return local.best_score;
 }

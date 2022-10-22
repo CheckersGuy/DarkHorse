@@ -12,7 +12,7 @@
 #include <cassert>
 #include <thread>
 #include <array>
-
+#include <assert.h>
 //Utility functions and other stuff
 
 inline uint64_t getSystemTime() {
@@ -73,10 +73,10 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 //constant for extensions and reductions
 
 
-constexpr int prob_cut = 25;
-constexpr int asp_wind = 15;
-constexpr int MAX_ASP = 200;
-constexpr int sing_ext = 30;
+constexpr int prob_cut = 50;
+constexpr int asp_wind = 30;
+constexpr int MAX_ASP = 400;
+constexpr int sing_ext = 60;
 constexpr int MAX_KILLERS =2;
 constexpr std::array<int,19> LMR_TABLE = {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2};
 
@@ -90,11 +90,11 @@ enum SEARCH : int {
 };
 enum Score : int {
     INFINITE = 1500000,
-    EVAL_INFINITE = INFINITE - 100000,
-    MATE_IN_MAX_PLY = INFINITE-MAX_PLY,
-    MATED_IN_MAX_PLY =-INFINITE+MAX_PLY,
-    TB_WIN = 150000,
-    TB_LOSS = -150000
+    EVAL_INFINITE = 15000,
+    MATE_IN_MAX_PLY = 15000-MAX_PLY,
+    MATED_IN_MAX_PLY =-15000+MAX_PLY,
+    TB_WIN = 14000,
+    TB_LOSS = -14000
 };
 
 enum Color : char {
@@ -121,7 +121,7 @@ inline bool isMateVal(Value val) {
 
 
 inline Value loss(int ply) {
-    return -INFINITE + ply;
+    return -EVAL_INFINITE+ ply;
 }
 
 constexpr Color operator~(Color color) {
@@ -129,11 +129,11 @@ constexpr Color operator~(Color color) {
 }
 
 inline bool isLoss(Value val) {
-    return val <= -EVAL_INFINITE;
+    return val <= MATED_IN_MAX_PLY;
 }
 
 inline bool isWin(Value val) {
-    return val >= EVAL_INFINITE;
+    return val >= MATE_IN_MAX_PLY;
 }
 
 inline Value valueFromTT(Value val, int ply) {

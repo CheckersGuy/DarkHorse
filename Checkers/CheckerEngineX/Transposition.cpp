@@ -34,6 +34,8 @@ void Transposition::clear() {
 }
 
 void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t depth, Move tt_move) {
+ assert(std::abs(value)<=EVAL_INFINITE);
+ assert(!tt_move.is_capture());
  const auto index = (key) & (get_capacity() - 1u);
     Cluster &cluster = this->entries[index];
     const uint32_t lock = (key >> 32u);

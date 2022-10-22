@@ -10,18 +10,20 @@ MovePicker mPicker;
 
 void MovePicker::init() {
 
-	policy.addLayer(Layer{120, 1024});
-    policy.addLayer(Layer{1024, 8});
-    policy.addLayer(Layer{8, 32});
-    policy.addLayer(Layer{32, 128});
-    policy.load("policy.quant");
-    policy.init();
+//	policy.addLayer(Layer{120, 1024});
+//    policy.addLayer(Layer{1024, 8});
+//    policy.addLayer(Layer{8, 32});
+//    policy.addLayer(Layer{32, 128});
+//    policy.load("policy.quant");
+//    policy.init();
  
 }
 
 
 int MovePicker::get_move_encoding(Color color, Move move) {
-
+		if(move.is_capture()){
+			return -1;
+		}
     if (color == BLACK) {
         move.from = getMirrored(move.from);
         move.to = getMirrored(move.to);
@@ -40,9 +42,6 @@ int MovePicker::get_move_encoding(Color color, Move move) {
 }
 
 int MovePicker::get_history_index(Position pos, Move move) {
-    //32 source squares
-    // 4 piece types
-    // 4 directions
     int t;
 
     if ((move.from & (pos.BP & pos.K)) != 0) {
@@ -84,12 +83,13 @@ void MovePicker::clear_scores() {
 int MovePicker::get_move_score(Position pos, Move move, Depth depth)
 {
     static constexpr int max_history = std::numeric_limits<int16_t>::max() - 10;
-    const int index = get_move_encoding(pos.get_color(),move);
-    int score = history[index];
+   // const int index = get_move_encoding(pos.get_color(),move);
+    const int index = get_history_index(pos,move);
+	int score = history[index];
     const int bf_score = bfScore[index] + 1;
-	auto pol = policy[index];
-	return pol;
-//    return std::clamp(score, -max_history, max_history);
+//	auto pol = policy[index];
+//	return pol;
+    return std::clamp(score, -max_history, max_history);
 
 }
 
