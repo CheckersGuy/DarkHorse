@@ -159,11 +159,16 @@ struct Game
     template<typename Oracle> void rescore_game(Oracle func) {
         //Oracle provides true-results for valid positions:
         Position current = start_position;
-        auto end_result = get_game_result();
+        const auto end_result = get_game_result();
+		result = end_result;
         int last_stop=-1;
         for(auto i=0; i<indices.size(); ++i) {
-            auto result = func(current);
-            if(result == UNKNOWN)
+            auto result = func(current); 
+			MoveListe liste;
+			get_moves(current,liste);
+			current.make_move(liste[indices[i].move_index]);
+
+			if(result == UNKNOWN)
                 continue;
             for(int k=i; k>last_stop; k--) {
                 indices[k].result = result;
