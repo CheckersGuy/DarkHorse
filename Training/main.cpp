@@ -13,11 +13,9 @@
 #include <algorithm>
 #include "Util/Book.h"
 #include "CmdParser.h"
-
+#include <BatchProvider.h>
 
 int main(int argl, const char** argc) {
-
-
 
     CmdParser parser(argl, argc);
     parser.parse_command_line();

@@ -19,9 +19,7 @@ Sample PosStreamer::get_next() {
                 std::shuffle(games.begin(),games.end(),generator);
             }
             auto game = games[game_offset++];
-			std::cout<<"Before"<<std::endl;
             game.extract_samples(std::back_inserter(buffer));
-			std::cout<<"After"<<std::endl;
 
         } while (buffer.size() < buffer_size);
         if (shuffle) {
