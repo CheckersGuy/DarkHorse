@@ -53,105 +53,6 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
     return UNKNOWN;
 }
-
-Result get_game_result(Game& game) {
-    Position end = game.get_last_position();
-    MoveListe liste;
-    get_moves(end, liste);
-	std::vector<Position>positions;
-	game.extract_positions(std::back_inserter(positions));
-    const size_t rep_count = std::count(positions.begin(), positions.end(),positions.back());
-    if (liste.length() == 0) {
-        return (end.color == BLACK) ? WHITE_WON : BLACK_WON;
-    }
-    else if (rep_count >= 3) {
-        return DRAW;
-    }
-    return UNKNOWN;
-}
-
-Result get_game_result(std::vector<Position> &game) {
-    MoveListe liste;
-    get_moves(game.back(), liste);
-    const size_t rep_count = std::count(game.begin(), game.end(), game.back());
-    if (liste.length() == 0) {
-        return (game.back().color == BLACK) ? WHITE_WON : BLACK_WON;
-    } else if (rep_count >= 3) {
-        return DRAW;
-    }
-    return UNKNOWN;
-}
-
-std::vector<Sample> get_rescored_game(std::vector<Position> &game, int max_pieces, EGDB_DRIVER *handle) {
-    std::vector<Sample> sample_data;
-    const Result result = get_game_result(game);
-	for(auto pos : game){
-			Sample s;
-			s.position = pos;
-			sample_data.emplace_back(s);
-	}
-   
-    int last_stop = -1;
-    for (auto i = 0; i < game.size(); ++i) {
-        auto tb_result = get_tb_result(game[i], max_pieces, handle);
-        if (tb_result == UNKNOWN)
-            continue;
-        for (int k = i; k > last_stop; k--) {
-            Sample s;
-            s.position = game[k];
-            s.result = tb_result;
-            sample_data[k] = s;
-        }
-        last_stop = i;
-    }
-    for (auto&s : sample_data) {
-        if(s.result !=UNKNOWN)
-            continue;
-        s.result = result;
-    }
-
-
-
-
-    return sample_data;
-
-}
-
-void rescore_game(Game& game, int max_pieces, EGDB_DRIVER* handle) {
-	const Result result = get_game_result(game);
-    game.result = result;
-
-    for (auto i = 0; i < game.indices.size(); ++i) {
-        game.indices[i].result = static_cast<uint32_t>(game.result);
-    }
-    //there may be an easier way to do this
-    std::vector<Position>positions;
-	game.extract_positions(std::back_inserter(positions));
-    auto rescored_samples = get_rescored_game(positions, max_pieces, handle);
-    for (auto i = 0; i <game.indices.size(); ++i) {
-        Sample s = rescored_samples[i];
-        game.indices[i].result  = static_cast<uint32_t>(s.result);
-    }
-    Sample last = rescored_samples.back();
-    game.result = last.result;
-
-//    std::vector<Sample> check_samples;
-//    game.extract_samples_test(std::back_inserter(check_samples));
-//    for (auto i = 0; i < check_samples.size(); ++i) {
-//        Sample s = rescored_samples[i];
-//        if (check_samples[i].position != rescored_samples[i].position) {
-//            std::cerr << "Error in rescoring the game wrong position" << std::endl;
-//            std::exit(-1);
-//        }
-//        if (check_samples[i].result != rescored_samples[i].result) {
-//            std::cerr << "Error in rescoring the gamei wrong result" << std::endl;
-//            std::exit(-1);
-//        }
-//    }
-
-
-}
-
 void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle,int num_threads) {
 
     //speeding things up with some more threads
@@ -180,7 +81,9 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
     const auto left_overs = num_games-chunk_size*num_chunks;
 
     std::vector<std::thread>threads;
-
+	auto oracle =[&](Position pos){
+			return get_tb_result(pos,max_pieces,handle);
+	};
     for(auto i=0; i<num_chunks; ++i) {
 
         threads.emplace_back(std::thread([&]() {
@@ -191,10 +94,17 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
                 auto& game = unrescored[k];
                 if(game.result==UNKNOWN)
                     continue;
+
                 //rescoring the game
+				game.rescore_game(oracle);
             }
 
         }));
+		//rescoring the leftovers
+
+		for(auto i=num_chunks*chunk_size;i<unrescored.size();++i){
+				unrescored[i].rescore_game(oracle);
+		}
 
     }
 

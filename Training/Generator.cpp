@@ -120,7 +120,9 @@ void Generator::start() {
                         break;
                     }
                     uint32_t count;
-                    count = std::count(game.begin(), game.end(), game.get_last_position());
+					std::vector<Position>positions;
+					game.extract_positions(std::back_inserter(positions));
+                    count = std::count(positions.begin(), positions.end(), positions.back());
 					if (liste.length() == 0) {
                         //end of the game, a player won
                         pthread_mutex_lock(pmutex);
