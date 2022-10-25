@@ -74,7 +74,7 @@ int main(int argl, const char **argc) {
     if(parser.has_option("network")) {
         net_file= parser.as<std::string>("network");
     } else {
-        net_file ="bigagain5.quant";
+        net_file ="bigagain4.quant";
     }
 
     network.addLayer(Layer{120, 1024});
@@ -109,7 +109,7 @@ int main(int argl, const char **argc) {
         }
         else
         {
-            hash_size = 21;
+            hash_size = 22;
         }
 
         if (parser.has_option("position"))

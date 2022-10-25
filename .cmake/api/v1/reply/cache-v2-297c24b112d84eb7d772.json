@@ -159,7 +159,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/mnt/c/msys64/mingw64/bin/g++.exe"
+			"value" : "/usr/bin/g++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",

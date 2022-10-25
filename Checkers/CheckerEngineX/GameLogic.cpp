@@ -305,7 +305,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     } else {
         flag = TT_EXACT;
     }
-	Move store_move =(local.move.is_capture())?Move{}:local.move; 
+    Move store_move =(local.move.is_capture())?Move{}:
+                     local.move;
     TT.store_hash(tt_value, pos_key, flag, depth, store_move);
 
     return local.best_score;
@@ -367,6 +368,13 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
 
 
 Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev) {
+//
+//    if(!move.is_capture()) {
+//        MoveEncoding encoding(move);
+//        Move check = encoding.get_move();
+//		std::cout<<check.get_from_index()<<" | "<<move.get_from_index()<<std::endl;
+//		assert(check==move);
+//    }
 
 
     Depth reduction = Search::reduce(local, board, move, in_pv);
