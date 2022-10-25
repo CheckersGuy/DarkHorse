@@ -92,22 +92,20 @@ void create_samples_from_games(std::string games, std::string output, int max_pi
             upper = std::min(upper,num_games);
             for(auto k=lower; k<upper; ++k) {
                 auto& game = unrescored[k];
-                if(game.result==UNKNOWN)
-                    continue;
-
-                //rescoring the game
 				game.rescore_game(oracle);
             }
 
         }));
 		//rescoring the leftovers
-
-		for(auto i=num_chunks*chunk_size;i<unrescored.size();++i){
-				unrescored[i].rescore_game(oracle);
-		}
-
     }
 
+	for(auto i=num_chunks*chunk_size;i<unrescored.size();++i){
+				unrescored[i].rescore_game(oracle);
+	}
+
+	for(auto& th : threads){
+			th.join();
+	}
 }
 void create_samples_from_games(std::string input_file, std::string output, int max_pieces, EGDB_DRIVER *handle) {
 
@@ -179,7 +177,7 @@ int main(int argl, const char **argc) {
     std::string in_file("reinf.train");
     std::string out_file("reinfformatted.train");
 
-    create_samples_from_games(in_file, out_file, max_pieces, handle);
+    create_samples_from_games(in_file, out_file, max_pieces, handle,14);
     std::cout<<"Done rescoring"<<std::endl;
     handle->close(handle);
 
