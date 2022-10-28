@@ -11,11 +11,14 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int st
     if (moveCounter - start_index <= 1)
         return;
 
+
+	std::array<int,40> scores;
+
 //	Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] = (short) Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
+        scores[i] =Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
     }
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
@@ -27,7 +30,7 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int st
             scores[j] = scores[j - 1];
         }
         liste[j] = tmpMove;
-        scores[j] = (short) tmp;
+        scores[j] = tmp;
     }
 
 }

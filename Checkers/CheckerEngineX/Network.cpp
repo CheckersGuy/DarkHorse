@@ -275,11 +275,11 @@ int Network::operator[](size_t index) {
 int Network::evaluate(Position pos, int ply)
 {
 
-    if (pos.BP == 0)
+    if (pos.BP == 0 && pos.get_color()==BLACK)
     {
         return -loss(ply);
     }
-    if (pos.WP == 0)
+    if (pos.WP == 0 && pos.get_color()==WHITE)
     {
         return loss(ply);
     }

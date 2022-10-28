@@ -10,15 +10,7 @@ bool Interface::is_n_fold(int n) {
         return false;
 
     const Position other = history.back();
-    int count = 0;
-    for (int i = (int) history.size() - 2; i >= 0; --i) {
-        if (history[i] == other)
-            count++;
-        if (count >= n)
-            return true;
-    }
-
-    return false;
+    return std::count(history.begin(),history.end(),other)>=n;
 }
 
 
@@ -143,7 +135,7 @@ void Engine::initEngine() {
 }
 
 bool Interface::is_terminal_state() {
-    if (is_n_fold(3) || history.size() >= 400)
+    if (is_n_fold(3) || history.size() >= 600)
         return true;
 
     MoveListe liste;
