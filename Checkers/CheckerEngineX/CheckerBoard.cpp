@@ -75,7 +75,7 @@ extern"C" int getmove
 			  network.init();
 
 			  // debug<<"Initialized engine"<<std::endl;
-			  TT.resize(21);
+			  TT.resize(22);
 			  init_tablebase(2000, 6, debug);
 			  initialize();
 			  Statistics::mPicker.init();

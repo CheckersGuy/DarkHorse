@@ -23,7 +23,7 @@ c_lib = ctypes.CDLL(libname)
 
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.Network([120, 1024, 8, 32, 1])
+    model = LitMLP.Network([120, 256, 32, 32, 1])
     #model.load_state_dict(torch.load("basemodel.pt"))
     #model = LitMLP.ResNet()
 
@@ -35,10 +35,10 @@ if __name__ == "__main__":
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
 
-    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{policy}")
+    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{tiny}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=300, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader, ckpt_path="policy=0-v25.ckpt")
+    trainer.fit(model, data_loader,ckpt_path="tiny=0.ckpt")
 
 
 

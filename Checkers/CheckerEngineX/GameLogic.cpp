@@ -188,7 +188,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
         return 0;
     }
 
-    MoveListe liste;
 
 
     if (!board.get_position().has_any_move()) {
@@ -222,11 +221,14 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     if (ply >= MAX_PLY) {
         return board.get_mover() * network.evaluate(board.get_position(),ply);
     }
+	if(local.alpha>=-loss(ply)){
+			return local.alpha;
+	};
 
-
+    MoveListe liste;
 
     get_moves(board.get_position(), liste);
-
+	
 
     if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
         tt_move = info.tt_move;
@@ -332,17 +334,16 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
     Value bestValue = -INFINITE;
 
     if (moves.is_empty()) {
-        if (board.get_position().is_end()) {
+      if (board.get_position().is_end()) {
             return loss(ply);
         }
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
             return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev);
         }
         bestValue = network.evaluate(board.get_position(), ply);
-        if (bestValue >= beta) {
-            return bestValue;
-        }
-    }
+    	return bestValue;
+		
+	}
 
     if (in_pv && ply < mainPV.length()) {
         moves.put_front(mainPV[ply]);
@@ -390,7 +391,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
     board.make_move(move);
 
-    if (!in_pv && new_depth > 2 && isEval(local.beta) && local.ply >=3) {
+    if (!in_pv && new_depth > 2 && std::abs(local.beta)<TB_WIN && local.ply >=3) {
 
         Value newBeta = local.beta + prob_cut;
         Depth newDepth = std::max(new_depth - 4, 1);

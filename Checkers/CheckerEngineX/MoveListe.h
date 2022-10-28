@@ -12,7 +12,6 @@ class MoveListe {
 
 private:
     int moveCounter = 0;
-    std::array<int16_t, 40> scores;
 public:
     std::array<Move, 40> liste;
 
