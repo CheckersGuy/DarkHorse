@@ -8,6 +8,8 @@ namespace Statistics {
 
 MovePicker mPicker;
 
+
+
 void MovePicker::init() {
 
 //	policy.addLayer(Layer{120, 1024});
@@ -21,9 +23,6 @@ void MovePicker::init() {
 
 
 int MovePicker::get_move_encoding(Color color, Move move) {
-		if(move.is_capture()){
-			return -1;
-		}
     if (color == BLACK) {
         move.from = getMirrored(move.from);
         move.to = getMirrored(move.to);
@@ -73,11 +72,6 @@ int MovePicker::get_history_index(Position pos, Move move) {
 
 void MovePicker::clear_scores() {
     std::fill(history.begin(), history.end(), 0);
-    for(auto i=0; i<killer_moves.size(); ++i) {
-        for(auto k=0; k<MAX_KILLERS; ++k) {
-            killer_moves[i][k]=Move{};
-        }
-    }
 }
 
 int MovePicker::get_move_score(Position pos, Move move, Depth depth)
@@ -85,7 +79,6 @@ int MovePicker::get_move_score(Position pos, Move move, Depth depth)
    // const int index = get_move_encoding(pos.get_color(),move);
     const int index = get_history_index(pos,move);
 	int score = history[index];
-    const int bf_score = bfScore[index] + 1;
 //	auto pol = policy[index];
 //	return pol;
     return score;
@@ -105,17 +98,22 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
 
 }
 
+void update_history_score(int& score, int delta){
+		score+=delta;
+}
+
 
 void MovePicker::update_scores(Position pos, Move *liste, Move move, int depth) {
     const int index = get_history_index(pos, move);
-    history[index] +=  depth;
+	const int delta = depth;
+	update_history_score(history[index],delta);
     Move top = liste[0];
     while (top != move) {
         if (top == move)
             break;
         top = *liste;
-        top = *liste;
-        history[get_history_index(pos, top)] -=  depth;
+        int& score = history[get_history_index(pos, top)];
+		update_history_score(score,-delta);
         liste++;
     }
 }
