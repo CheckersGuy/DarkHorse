@@ -73,8 +73,8 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 //constant for extensions and reductions
 
 
-constexpr int prob_cut = 50;
-constexpr int asp_wind = 30;
+constexpr int prob_cut = 30;
+constexpr int asp_wind = 20;
 constexpr int MAX_ASP = 400;
 constexpr int sing_ext = 60;
 constexpr int MAX_KILLERS =2;
