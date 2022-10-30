@@ -174,7 +174,7 @@ Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
 }
 
 
-Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev) {
+Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev,Move previous) {
     pv.clear();
     nodeCounter++;
     //checking time-used
@@ -189,9 +189,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 
 
 
-    if (!board.get_position().has_any_move()) {
-        return loss(ply);
-    }
 
     if (depth <= 0) {
         return Search::qs(in_pv,board, pv, alpha, beta, ply, depth,last_rev);
@@ -205,6 +202,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     local.ply = ply;
     local.depth = depth;
     local.move = Move{};
+	local.previous = previous;
     //checking win condition
 
 
@@ -227,7 +225,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     MoveListe liste;
 
     get_moves(board.get_position(), liste);
-
+	if(liste.length()==0){
+			return loss(ply);
+	}
 
     if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
         tt_move = info.tt_move;
@@ -282,11 +282,11 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 
     int start_index = 0;
     if (in_pv && local.ply < mainPV.length()) {
-        liste.put_front(mainPV[local.ply]);
-        start_index = 1;
+		const Move mv = mainPV[local.ply];
+        bool sucess=liste.put_front(mv);
+        start_index +=sucess;
     }
-
-    liste.sort(board.get_position(), local.depth, local.ply, info.tt_move, start_index);
+	liste.sort(board.get_position(), local.depth, local.ply, info.tt_move,local.previous, start_index);
 
 
     //move-loop
@@ -329,11 +329,11 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
     Value bestValue = -INFINITE;
 
     if (moves.is_empty()) {
-        if (board.get_position().is_end()) {
-            return loss(ply);
-        }
+			if(board.get_position().is_end()){
+					return loss(ply);
+			}
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-            return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev);
+            return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
         }
         bestValue = network.evaluate(board.get_position(), ply);
         return bestValue;
@@ -394,7 +394,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
                               local.ply + 1, newDepth,last_rev);
         if (board_val >= newBeta) {
             Value value = -Search::search(in_pv, board, line, -(newBeta + 1), -newBeta, local.ply + 1,
-                                          newDepth,last_rev);
+                                          newDepth,last_rev,move);
             if (value >= newBeta) {
                 val = value-prob_cut;
             }
@@ -405,12 +405,12 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
     if (val == -INFINITE) {
         if ((in_pv && local.i != 0) || reduction != 0) {
             val = -Search::search(in_pv, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
-                                  new_depth - reduction,last_rev);
+                                  new_depth - reduction,last_rev,move);
             if (val > new_alpha) {
-                val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev);
+                val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
             }
         } else {
-            val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev);
+            val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
         }
 
     }
@@ -422,8 +422,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev) {
 
     const auto num_moves = liste.length();
-    const bool has_captures = board.get_position().has_jumps();
-    int extension =liste.length()==1;
+    int extension =(liste.length()==1);
     local.i = 0;
 
 
@@ -445,8 +444,14 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
 
 
     if (local.best_score >= local.beta && board.is_silent_position()) {
-        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move, local.depth);
-    }
+        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move,local.previous, local.depth);
+    	//updating killer moves
+		auto& killers = Statistics::mPicker.killer_moves;
+		for(auto i=1;i<MAX_KILLERS;++i){
+			killers[local.ply][i]=killers[local.ply][i-1];
+		}
+		killers[local.ply][0]=local.move;
+	}
 
 }
 
@@ -464,6 +469,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     local.ply = 0;
     local.depth = depth;
     local.move = Move{};
+	local.previous =Move{};
     MoveListe liste;
     get_moves(board.get_position(), liste);
 
@@ -478,7 +484,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     liste.put_front(mainPV[0]);
     int start_index = 1;
 
-    liste.sort(board.get_position(), local.depth, local.ply, Move{}, start_index);
+    liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{}, start_index);
 
 
     move_loop(true, local, board, line, liste,board.last_non_rev);

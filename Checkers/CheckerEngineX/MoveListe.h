@@ -19,7 +19,7 @@ public:
 
     void add_move(Move next);
 
-    void sort(Position current, Depth depth, int ply, Move ttMove, int start_index);
+    void sort(Position current, Depth depth, int ply, Move ttMove,Move previous, int start_index);
 
     bool is_empty() const;
 
@@ -27,15 +27,14 @@ public:
 
     Move &operator[](int index);
 
-    void put_front(Move other);
+    bool put_front(Move other);
 
-    void put_front(int start_index,int move_index);
+	bool put_front(int start_index, Move other);
 
     void remove(Move move);
 
     void reset();
 
-    void reset_counters();
 
     auto begin() {
         return liste.begin();
