@@ -260,9 +260,6 @@ bool Position::has_threat() const {
     return has_jumps(~get_color());
 }
 
-bool Position::is_wipe() const {
-    return ((get_color() == BLACK && get_movers<BLACK>() == 0u) || (get_color() == WHITE && get_movers<WHITE>() == 0u));
-}
 
 bool Position::is_end() const {
     return (color == BLACK && get_movers<BLACK>() == 0u) || (color == WHITE && get_movers<WHITE>() == 0u);

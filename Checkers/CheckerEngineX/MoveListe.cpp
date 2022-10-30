@@ -6,19 +6,19 @@ void MoveListe::reset() {
 
 extern Line mainPV;
 
-void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove, int start_index) {
+void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove,Move previous, int start_index) {
 
     if (moveCounter - start_index <= 1)
         return;
 
 
-	std::array<int,40> scores;
+    std::array<int,40> scores;
 
 //	Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
-        scores[i] =Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
+        scores[i] =Statistics::mPicker.get_move_score(current, depth, ply, m,previous, ttMove);
     }
 
     for (int i = start_index + 1; i < moveCounter; ++i) {
@@ -51,21 +51,25 @@ void MoveListe::remove(Move move) {
 
 }
 
-void MoveListe::put_front(Move other) {
-
-    if (moveCounter <= 1)
-        return;
-
-    auto it = std::find(begin(), end(), other);
-    if (it != end()) {
-        std::swap(*begin(), *it);
-    }
+bool MoveListe::put_front(Move other) {
+	return put_front(0,other);
 }
 
-void MoveListe::put_front(int start_index,int move_index){
-    const Move temp = liste[start_index];
-    liste[start_index]=liste[move_index];
-    liste[move_index]=temp;
+bool MoveListe::put_front(int start_index, Move other) {
+    if (moveCounter<= 1)
+			return false;
+
+        auto tmp = liste[start_index];
+        for(auto i=start_index; i<moveCounter; ++i)
+        {
+            if(liste[i]==other) {
+                liste[start_index]=other;
+                liste[i]=tmp;
+                return true;
+            }
+        }
+    return false;
+
 }
 
 MoveListe &MoveListe::operator=(const MoveListe &other) {

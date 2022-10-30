@@ -39,8 +39,7 @@ struct Local {
     Depth depth;
     Ply ply;
     int i;
-    Move tt_move;
-    Move move;
+    Move move,previous;
 };
 
 void use_classical(bool flag);
@@ -63,7 +62,7 @@ namespace Search {
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
-    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev);
+    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev,Move previous);
 
     void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev);
 

@@ -35,27 +35,27 @@ inline Position posFromString(const std::string &pos) {
 #include <types.h>
 #include "CmdParser.h"
 
-void test_policy_output(Position pos,bool show_all){
-	pos.print_position();
-	auto& net = Statistics::mPicker.policy;
-	auto result =Statistics::mPicker.policy.compute_incre_forward_pass(pos);
-	MoveListe liste;
-	get_moves(pos,liste);
-	for(auto m : liste){
-			auto index = Statistics::mPicker.get_move_encoding(pos.get_color(),m);
-			std::cout<<"From: "<<m.get_from_index()<<" To: "<<m.get_to_index()<< "Score: "<<net[index];
-			std::cout<<std::endl;
-	}
-
-	if(show_all){
-			for(auto i=0;i<128;++i){
-					std::cout<<"Index: "<<i<<" Score: "<<net[i]<<std::endl;
-			}
-	}
-
-}
-
-
+//void test_policy_output(Position pos,bool show_all){
+//	pos.print_position();
+//	auto& net = Statistics::mPicker.policy;
+//	auto result =Statistics::mPicker.policy.compute_incre_forward_pass(pos);
+//	MoveListe liste;
+//	get_moves(pos,liste);
+//	for(auto m : liste){
+//			auto index = Statistics::mPicker.get_move_encoding(pos.get_color(),m);
+//			std::cout<<"From: "<<m.get_from_index()<<" To: "<<m.get_to_index()<< "Score: "<<net[index];
+//			std::cout<<std::endl;
+//	}
+//
+//	if(show_all){
+//			for(auto i=0;i<128;++i){
+//					std::cout<<"Index: "<<i<<" Score: "<<net[i]<<std::endl;
+//			}
+//	}
+//
+//}
+//
+//
 
 
 int main(int argl, const char **argc) {

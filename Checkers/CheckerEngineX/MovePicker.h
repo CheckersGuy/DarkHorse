@@ -16,18 +16,20 @@ namespace Statistics {
     private:
         std::array<int, 32 * 16> history{0};
     public:
+		std::array<std::array<Move,MAX_KILLERS>,MAX_PLY> killer_moves;
+		std::array<std::array<int,32*4>,32*16> counter_history;
 		Network policy;
-        int get_move_score(Position pos, Move move, Depth depth);
+        int get_move_score(Position pos, Move move,Move previous, Depth depth);
 
         int get_history_index(Position pos, Move move);
 
-        int get_move_score(Position current, Depth depth, int ply, Move move, Move ttMove);
+        int get_move_score(Position current, Depth depth, int ply, Move move,Move previous, Move ttMove);
 
         void clear_scores();
 
-        void update_scores(Position pos, Move *list, Move move, int depth);
+        void update_scores(Position pos, Move *list, Move move,Move previous, int depth);
         
-        static int get_move_encoding(Color color, Move move);
+        static int get_move_encoding(Move move);
 
         void init();
 
