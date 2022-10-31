@@ -35,10 +35,10 @@ if __name__ == "__main__":
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
 
-    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{tiny}")
+    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{newtiny}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=300, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader,ckpt_path="tiny=0.ckpt")
+    trainer.fit(model, data_loader)
 
 
 

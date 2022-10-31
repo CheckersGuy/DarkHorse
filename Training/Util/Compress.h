@@ -213,7 +213,7 @@ struct Game
             sample.position = current;
             sample.result = static_cast<Result>(encoding.result);
             Move m = liste[encoding.move_index];
-            sample.move = Statistics::mPicker.get_move_encoding(current.get_color(), m);
+            sample.move = Statistics::mPicker.get_move_encoding(m);
 
             current.make_move(m);
             *iterator = sample;

@@ -98,7 +98,7 @@ void use_classical(bool flag) {
     u_classical = flag;
 }
 
-
+////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, std::ostream& stream) {
     Statistics::mPicker.clear_scores();
     glob.sel_depth = 0u;
@@ -352,10 +352,10 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
         board.undo_move();
         if (value > bestValue) {
             bestValue = value;
-            if (value >= beta)
+			if (value >= beta)
                 break;
+			
             pv.concat(move, localPV);
-
         }
     }
 
@@ -403,7 +403,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
 
     if (val == -INFINITE) {
-        if ((in_pv && local.i != 0) || reduction != 0) {
+        if ((in_pv && local.i != 0) || reduction!=0) {
             val = -Search::search(in_pv, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
                                   new_depth - reduction,last_rev,move);
             if (val > new_alpha) {
@@ -424,7 +424,6 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
     const auto num_moves = liste.length();
     int extension =(liste.length()==1);
     local.i = 0;
-
 
     while (local.best_score < local.beta && local.i < num_moves) {
         Move move = liste[local.i];
@@ -481,9 +480,10 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     }
 
 
-    liste.put_front(mainPV[0]);
-    int start_index = 1;
+	//why am I not using the hash_move ?
 
+    auto sucess = liste.put_front(mainPV[0]);
+	int start_index = sucess;
     liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{}, start_index);
 
 

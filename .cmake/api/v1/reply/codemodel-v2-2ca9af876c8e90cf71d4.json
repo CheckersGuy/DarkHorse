@@ -49,7 +49,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "Dark::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-Dark-Release-91566025bf1fbc5a17ed.json",
+					"jsonFile" : "target-Dark-Release-279f99d31fd579125f51.json",
 					"name" : "Dark",
 					"projectIndex" : 0
 				},
@@ -84,7 +84,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "tb_rescorer::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-tb_rescorer-Release-21ed607f6bd8692a7297.json",
+					"jsonFile" : "target-tb_rescorer-Release-70f2335d7984b5b7f42d.json",
 					"name" : "tb_rescorer",
 					"projectIndex" : 0
 				}
