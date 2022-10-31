@@ -79,12 +79,21 @@ void MovePicker::clear_scores() {
             killer_moves[i][k]=Move{};
         }
     }
+    for(auto i=0; i<counter_history.size(); ++i) {
+        for(auto k=0; k<counter_history[0].size(); ++k) {
+            counter_history[i][k]=0;
+        }
+    }
 }
 int MovePicker::get_move_score(Position pos, Move move, Move previous, Depth depth)
 {
     // const int index = get_move_encoding(pos.get_color(),move);
     const int index = get_history_index(pos,move);
     int score = history[index];
+    if(!previous.is_capture()) {
+        auto counter=counter_history[get_history_index(pos,previous)][get_move_encoding(move)];
+       score+=counter;
+    }
 //	auto pol = policy[index];
 //	return pol;
     return score;
@@ -96,9 +105,9 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
         return std::numeric_limits<int32_t>::max();
     }
 
-	if(move == killer_moves[ply][1] ||move == killer_moves[ply][0]){
+    if(move == killer_moves[ply][1] ||move == killer_moves[ply][0]) {
         return std::numeric_limits<int32_t>::max()-1000;
-	}
+    }
 
     if (move.is_capture()) {
         return (int) Bits::pop_count(move.captures);
@@ -115,13 +124,14 @@ void update_history_score(int& score, int delta) {
 
 void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previous, int depth) {
     const int index = get_history_index(pos, move);
-    const int delta = depth;
+    const int delta = std::min(depth*depth,14*14);;
     update_history_score(history[index],delta);
     Move top = liste[0];
 
-	if(!previous.is_capture() && !move.is_capture()){
-		counter_history[get_history_index(pos,previous)][get_move_encoding(move)]+=delta;
-	}
+	
+        if(!previous.is_capture()) {
+            counter_history[get_history_index(pos,previous)][get_move_encoding(move)]+=delta;
+        }
 
     while (top != move) {
         if (top == move)
@@ -129,6 +139,12 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previou
         top = *liste;
         int& score = history[get_history_index(pos, top)];
         update_history_score(score,-delta);
+
+
+        if(!previous.is_capture()) {
+            counter_history[get_history_index(pos,previous)][get_move_encoding(top)]-=delta;
+        }
+
         liste++;
     }
 }
