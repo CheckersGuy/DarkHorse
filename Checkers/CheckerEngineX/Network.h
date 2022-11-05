@@ -73,6 +73,8 @@ template<typename T> void display_network_data(std::string network_file){
 
 struct Network {
     std::vector<Layer> layers;
+    std::unique_ptr<int16_t[]> ft_biases;
+    std::unique_ptr<int16_t[]> ft_weights;
     std::unique_ptr<int16_t[]> biases;
     std::unique_ptr<int16_t[]> weights;
     std::unique_ptr<int16_t[]> input;
@@ -81,9 +83,9 @@ struct Network {
     Accumulator accumulator;
 
 
-    int16_t get_max_weight() const;
+    int32_t get_max_weight() const;
 
-    int16_t get_max_bias() const;
+    int32_t get_max_bias() const;
 
     void addLayer(Layer layer);
 

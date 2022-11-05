@@ -114,8 +114,8 @@ struct Game
             get_moves(current, liste);
             auto move_index = indices[i].move_index;
             assert(move_index<liste.length());
-           Move move = liste[move_index];
-		   assert(!move.is_empty());
+            Move move = liste[move_index];
+            assert(!move.is_empty());
             current.make_move(move);
         }
         return current;
@@ -135,8 +135,13 @@ struct Game
         } else if(liste.length()==0 && last_position.get_color()==WHITE) {
             return BLACK_WON;
         }
-        //questions: Should positions that are not valid for rescoring but
-        //end in 3 fold repetitions be ignored ?, sounds interesting to me and I will try it
+
+        std::vector<Position>positions;
+        extract_positions(std::back_inserter(positions));
+        auto count = std::count(positions.begin(),positions.end(),last_position);
+        if(count>=3) {
+            return DRAW;
+        }
 
         return UNKNOWN;
 
@@ -160,18 +165,18 @@ struct Game
         //Oracle provides true-results for valid positions:
         Position current = start_position;
         const auto end_result = get_game_result();
-		result = end_result;
+        result = end_result;
         int last_stop=-1;
         for(auto i=0; i<indices.size(); ++i) {
-            auto result = func(current); 
-			MoveListe liste;
-			get_moves(current,liste);
-			current.make_move(liste[indices[i].move_index]);
+            auto o_result = func(current);
+            MoveListe liste;
+            get_moves(current,liste);
+            current.make_move(liste[indices[i].move_index]);
 
-			if(result == UNKNOWN)
+            if(o_result == UNKNOWN)
                 continue;
             for(int k=i; k>last_stop; k--) {
-                indices[k].result = result;
+                indices[k].result = o_result;
             }
             last_stop = i;
         }
@@ -214,7 +219,6 @@ struct Game
             sample.result = static_cast<Result>(encoding.result);
             Move m = liste[encoding.move_index];
             sample.move = Statistics::mPicker.get_move_encoding(m);
-
             current.make_move(m);
             *iterator = sample;
             iterator++;
