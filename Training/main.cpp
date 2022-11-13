@@ -17,6 +17,22 @@
 
 int main(int argl, const char** argc) {
 
+ 
+/*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+    std::istream_iterator<Game>begin(stream);
+    std::istream_iterator<Game>end;
+    std::for_each(begin,end,[](Game g){
+        std::vector<Position>positions;
+        g.extract_positions(std::back_inserter(positions));
+        for(auto pos : positions){
+            pos.print_position();
+        }   
+        std::cout<<"\n\n\n";
+
+    });
+
+    return 0;  */
+
     CmdParser parser(argl, argc);
     parser.parse_command_line();
 

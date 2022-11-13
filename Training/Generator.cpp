@@ -100,8 +100,10 @@ void Generator::start() {
             while (!stop) {
                 Game game;
                 std::uniform_int_distribution<size_t>distrib(0,openings.size());
+                Position opening;
                 const size_t rand_index = distrib(generator);
-                Position opening = openings[rand_index];
+                opening = openings[rand_index];
+               
                 Board board;
                 board = opening;
                 TT.clear();
@@ -113,7 +115,6 @@ void Generator::start() {
                     game.add_position(board.get_position());
                     const Position p = board.get_position();
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
-                        game_buffer.emplace_back(game);
                          pthread_mutex_lock(pmutex);
                          (*num_games)++;
                           pthread_mutex_unlock(pmutex);
@@ -128,13 +129,11 @@ void Generator::start() {
                         pthread_mutex_lock(pmutex);
                         (*num_won)++;
                         (*num_games)++;
-                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
                         break;
                     } else if (count >= 3) {
                         pthread_mutex_lock(pmutex);
                         (*num_games)++;
-                        game_buffer.emplace_back(game);
                         pthread_mutex_unlock(pmutex);
                         break;
                     }
@@ -145,8 +144,9 @@ void Generator::start() {
                         auto value = searchValue(board, best, MAX_PLY, time_control, false,std::cout);
                         board.play_move(best);
                     }
-                
-
+                }
+                if(game.indices.size()>0){
+                    game_buffer.emplace_back(game);
                 }
                  
                 if (game_buffer.size() >= buffer_clear_count) {

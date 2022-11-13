@@ -19,9 +19,9 @@ struct Game;
 
 
 
-struct __attribute__((packed)) Encoding {
-    uint32_t move_index :6 =50;
-    uint32_t result : 2 =0;
+struct Encoding {
+    uint8_t move_index :6 =50;
+    uint8_t result : 2 =0;
 
     bool operator ==(const Encoding& other)const {
         return move_index ==other.move_index && result == other.result;
@@ -113,9 +113,7 @@ struct Game
             MoveListe liste;
             get_moves(current, liste);
             auto move_index = indices[i].move_index;
-            assert(move_index<liste.length());
             Move move = liste[move_index];
-            assert(!move.is_empty());
             current.make_move(move);
         }
         return current;
