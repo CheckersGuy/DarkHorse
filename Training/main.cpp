@@ -127,7 +127,7 @@ int main(int argl, const char** argc) {
         }
         else
         {
-            generator.set_piece_limit(5);
+            generator.set_piece_limit(6);
         }
 
         generator.set_time(time);
