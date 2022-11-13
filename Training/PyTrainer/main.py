@@ -20,20 +20,14 @@ import pathlib
 libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
 c_lib = ctypes.CDLL(libname)
 
-model = LitMLP.Network([120, 1024, 8, 32, 1])
-model.load_state_dict(torch.load("basemodel.pt"))
-model.save_quantized("basemodel.quant")
-
-if __name__ == "__main__d":
+if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.Network([120, 1024, 8, 32, 1])
-    model.load_state_dict(torch.load("basemodel.pt"))
-    model.save_quantized("basemodel.quant")
+    model = LitMLP.Network(output="bigagain7",hidden=[120, 1024, 8, 32, 1])
     #model = LitMLP.ResNet()
 
     data_loader = LitMLP.LitDataModule(train_data="../TrainData/largedataset.train",
                                        val_data="../TrainData/val.train",
-                                       batch_size=16000, buffer_size=60000000)
+                                       batch_size=32000, buffer_size=30000000)
 
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
@@ -41,7 +35,7 @@ if __name__ == "__main__d":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{newtiny}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=3000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader,ckpt_path="newtiny=0-v1.ckpt")
+    trainer.fit(model, data_loader)
 
 
 

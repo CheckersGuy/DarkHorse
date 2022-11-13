@@ -21,12 +21,14 @@ public:
     BatchProvider(std::string path, size_t buffer_size, size_t batch_size):streamer(path,buffer_size) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
+        Zobrist::init_zobrist_keys(getSystemTime());
     }
 
     BatchProvider(std::string path, size_t buffer_size, size_t batch_size, size_t a, size_t b) : streamer(path,
                                                                                                           buffer_size) {
         this->batch_size = batch_size;
         this->buffer_size = buffer_size;
+        Zobrist::init_zobrist_keys(getSystemTime());
     }
 
     size_t get_batch_size() const;
@@ -40,7 +42,6 @@ public:
 
     void next(float *results, int64_t *moves, float *inputs);
 
-    void next_pattern(float*results,float* mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input);
 };
 
 

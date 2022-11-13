@@ -2,7 +2,6 @@
 // Created by root on 18.04.21.
 //
 
-#include <complex>
 #include "Network.h"
 
 
@@ -149,8 +148,9 @@ void Network::load(std::string file) {
 
     const auto num_ft_weights =layers[0].in_features*layers[0].out_features;
     const auto num_ft_bias = layers[0].out_features;
+ 
     ft_weights = std::make_unique<int16_t[]>(num_ft_weights);
-    biases = std::make_unique<int16_t[]>(num_ft_bias);
+    ft_biases = std::make_unique<int16_t[]>(num_ft_bias);
 
 
 
@@ -160,10 +160,11 @@ void Network::load(std::string file) {
     stream.read((char *)ft_weights.get(), sizeof(int16_t) * (num_ft_weights));
     stream.read((char *)weights.get(), sizeof(int16_t) * (num_weights-num_ft_weights));
     stream.read((char *)&num_bias, sizeof(int));
-    biases = std::make_unique<int16_t[]>(num_bias-num_ft_bias);
-    stream.read((char *)biases.get(), sizeof(int16_t) * (num_ft_bias));
-    stream.read((char *)biases.get(), sizeof(int16_t) * (num_bias-num_ft_bias));
+    biases = std::make_unique<int32_t[]>(num_bias-num_ft_bias);
+    stream.read((char *)ft_biases.get(), sizeof(int16_t) * (num_ft_bias));
+    stream.read((char *)biases.get(), sizeof(int32_t) * (num_bias-num_ft_bias));
     stream.close();
+  
 }
 
 void Network::addLayer(Layer layer) {
@@ -219,7 +220,7 @@ int32_t Network::get_max_bias() const {
 
 }
 
-int16_t Network::compute_incre_forward_pass(Position next) {
+int Network::compute_incre_forward_pass(Position next) {
     int16_t *z_previous;
 
     if (next.color == BLACK) {
@@ -285,7 +286,7 @@ int Network::evaluate(Position pos, int ply)
         return loss(ply);
     }
 
-    int16_t val = compute_incre_forward_pass(pos);
+    int32_t val = compute_incre_forward_pass(pos);
     return val;
 }
 

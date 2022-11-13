@@ -317,7 +317,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
     }
 
     if (ply >= MAX_PLY) {
-        return board.get_mover()*network.evaluate(board.get_position(),ply);
+        return  board.get_mover()*network.evaluate(board.get_position(),ply);;
     }
 
     if (ply > glob.sel_depth)
@@ -335,7 +335,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
             return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
         }
-        bestValue = network.evaluate(board.get_position(), ply);
+        bestValue = network.evaluate(board.get_position(),ply);
         return bestValue;
 
     }

@@ -57,72 +57,13 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
 
     const size_t INPUT_SIZE = 120;
     for (auto i = 0; i < get_batch_size(); ++i) {
-        Sample current;
-        int piece_count;
-        do {
-            current = get_streamer().get_next();
-            piece_count = Bits::pop_count(current.position.WP|current.position.BP);
-        } while (current.move==-1 || current.result == UNKNOWN || current.position.has_jumps(current.position.get_color()));
+        Sample current = get_streamer().get_next();
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
         moves[i] = current.move;
     }
 
-
-}
-void BatchProvider::next_pattern(float*results,float* mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input) {
-
-    auto create_pattern_input =[&](Sample s, float*mover,int64_t* op_pawn_index,int64_t* end_pawn_index,int64_t* op_king_index,int64_t* end_king_index,float* wk_input,float*bk_input,float* wp_input,float*bp_input, size_t off,size_t pawn_off,size_t king_off) {
-
-        float result = 0.5f;
-        if (s.result == BLACK_WON) {
-            result = 0.0f;
-        } else if (s.result == WHITE_WON) {
-            result = 1.0f;
-        }
-
-        Position copy = s.position.get_color_flip();;
-        size_t counter_op =0;
-        size_t counter_end =0;
-
-
-
-        Bits::big_index([&](size_t index) {
-            op_pawn_index[counter_op++ +pawn_off]=index;
-            end_pawn_index[counter_end++ +pawn_off]=index+1;
-        },copy.WP,copy.BP,copy.K);
-        counter_op =0;
-        counter_end =0;
-        Bits::small_index([&](size_t index) {
-            op_king_index[counter_op++ +king_off]=index;
-            end_king_index[counter_end++ +king_off]=index+1;
-        },copy.WP,copy.BP,copy.K);
-
-
-        auto wk = Bits::pop_count(s.position.get_pieces<WHITE,KING>());
-        auto bk =  Bits::pop_count(s.position.get_pieces<BLACK,KING>());
-        auto wp = Bits::pop_count(s.position.get_pieces<WHITE,PAWN>());
-        auto bp =  Bits::pop_count(s.position.get_pieces<BLACK,PAWN>());
-        wk_input[off]=wk;
-        bk_input[off]=bk;
-        wp_input[off]=wp;
-        bp_input[off]=bp;
-        mover[off] = s.position.get_color();
-        return result;
-    };
-    size_t pawn_off =6;
-    size_t king_off = 9;
-    for (auto i = 0; i < get_batch_size(); ++i) {
-        Sample current;
-
-        do {
-            current = get_streamer().get_next();
-        } while (current.result == UNKNOWN || (current.position.has_jumps()));
-
-        auto result = create_pattern_input(current,mover, op_pawn_index,end_pawn_index,op_king_index,end_king_index,wk_input,bk_input,wp_input,bp_input,i,pawn_off*i,king_off*i);
-        results[i] = result;
-    }
 
 }
 

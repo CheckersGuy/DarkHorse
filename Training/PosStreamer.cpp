@@ -9,7 +9,7 @@ size_t PosStreamer::get_num_positions() const {
     return num_samples;
 }
 
-Sample PosStreamer::get_next() {
+ Sample PosStreamer::get_next() {
     if (ptr >= buffer_size) {
         buffer.clear();
         ptr = 0;
@@ -30,7 +30,8 @@ Sample PosStreamer::get_next() {
         }
     }
     return buffer[ptr++];
-}
+} 
+
 
 
 size_t PosStreamer::get_buffer_size() const {

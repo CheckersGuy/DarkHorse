@@ -31,6 +31,7 @@ private:
     size_t num_samples; // number of samples
     std::vector<Game> games;
     size_t game_offset{0};
+    size_t random_skip{5};
 
 public:
 
@@ -40,7 +41,7 @@ public:
         gen_seed=seed;
         ptr = buffer_size + 1;
         stream = std::ifstream(file_path, std::ios::binary);
-        generator = std::mt19937_64(seed);
+        generator = std::mt19937_64(getSystemTime());
         if (file_path.empty()) {
             std::cerr << "An empty path was given" << std::endl;
             std::exit(-1);

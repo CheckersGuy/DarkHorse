@@ -210,7 +210,6 @@ struct Game
 
         for (auto i = 0; i < indices.size(); ++i)
         {
-
             auto encoding = indices[i];
             Sample sample;
             MoveListe liste;
@@ -218,8 +217,10 @@ struct Game
             sample.position = current;
             sample.result = static_cast<Result>(encoding.result);
             Move m = liste[encoding.move_index];
-            sample.move = Statistics::mPicker.get_move_encoding(m);
             current.make_move(m);
+
+            if(sample.position.has_jumps() || sample.result==UNKNOWN)
+                continue;
             *iterator = sample;
             iterator++;
         }
