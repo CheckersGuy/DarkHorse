@@ -75,7 +75,7 @@ struct Network {
     std::vector<Layer> layers;
     std::unique_ptr<int16_t[]> ft_biases;
     std::unique_ptr<int16_t[]> ft_weights;
-    std::unique_ptr<int16_t[]> biases;
+    std::unique_ptr<int32_t[]> biases;
     std::unique_ptr<int16_t[]> weights;
     std::unique_ptr<int16_t[]> input;
     std::unique_ptr<int16_t[]> temp;
@@ -93,7 +93,7 @@ struct Network {
 
     void init();
 
-    int16_t compute_incre_forward_pass(Position next);
+    int compute_incre_forward_pass(Position next);
 
     float get_win_p(Position pos);
 

@@ -57,16 +57,14 @@ inline Position posFromString(const std::string &pos) {
 //
 //
 
-
 int main(int argl, const char **argc) {
     
+
 	CmdParser parser(argl,argc);
     parser.parse_command_line();
     Board board;
     initialize();
 	Statistics::mPicker.init();
-//	test_policy_output(Position::get_start_position(),true);
-//	return 0;
 
     int time,depth,hash_size;
     std::string net_file;
@@ -74,7 +72,7 @@ int main(int argl, const char **argc) {
     if(parser.has_option("network")) {
         net_file= parser.as<std::string>("network");
     } else {
-        net_file ="bigagain4.quant";
+        net_file ="bigagain7.quant";
     }
 
     network.addLayer(Layer{120, 1024});
@@ -83,6 +81,7 @@ int main(int argl, const char **argc) {
     network.addLayer(Layer{32, 1});
     network.load(net_file);
     network.init();
+
     if (parser.has_option("search"))
 
     {
