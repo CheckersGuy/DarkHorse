@@ -103,16 +103,21 @@ void Generator::start() {
                 Position opening;
                 const size_t rand_index = distrib(generator);
                 opening = openings[rand_index];
-               
                 Board board;
                 board = opening;
                 TT.clear();
                 Zobrist::init_zobrist_keys(seed);
-                 
+                bool sucess;
                 for (int move_count = 0; move_count < 600; ++move_count) {
                     MoveListe liste;
                     get_moves(board.get_position(), liste);
-                    game.add_position(board.get_position());
+                    sucess =game.add_position(board.get_position());
+
+                    if(!sucess){
+                        break;
+                    }
+
+
                     const Position p = board.get_position();
                     if (Bits::pop_count(p.BP | p.WP) <= piece_lim && (!p.has_jumps())) {
                          pthread_mutex_lock(pmutex);
@@ -145,7 +150,7 @@ void Generator::start() {
                         board.play_move(best);
                     }
                 }
-                if(game.indices.size()>0){
+                if(game.indices.size()>0&& sucess){
                     game_buffer.emplace_back(game);
                 }
                  

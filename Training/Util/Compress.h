@@ -20,16 +20,40 @@ struct Game;
 
 
 struct Encoding {
-    uint8_t move_index :6 =50;
-    uint8_t result : 2 =0;
+    uint8_t encoding{0};
 
-    bool operator ==(const Encoding& other)const {
-        return move_index ==other.move_index && result == other.result;
-    };
+    Encoding(){
+        set_move_index(50);
+    }
 
-    bool operator !=(const Encoding& other)const {
-        return move_index !=other.move_index || result !=other.result;
-    };
+    void set_move_index(int move_index){
+        //clearing the bits
+        encoding&=~63;
+        encoding |= static_cast<uint8_t>(move_index);
+    }
+
+    void set_result(Result res){
+        encoding&=~192;
+        const uint8_t value =static_cast<uint8_t>(res);
+        encoding|=value<<6;
+    }
+
+    Result get_result()const{
+        return static_cast<Result>(encoding>>6);
+    }
+
+    int get_move_index()const{
+        return static_cast<uint8_t>(encoding&63);
+    }
+
+    bool operator==(const Encoding& other)const{
+        return other.encoding == encoding;
+    }
+
+     bool operator!=(const Encoding& other)const{
+        return other.encoding != encoding;
+    }
+
 };
 
 struct Game
@@ -52,15 +76,16 @@ struct Game
 
     void set_result(Result res, int n)
     {
-        indices[n].result =static_cast<int>(res);
+        indices[n].set_result(res);
     }
 
-    void add_position(Position pos)
+    bool add_position(Position pos)
     {
+        //returns false if the operation failed
         if (start_position.is_empty())
         {
             start_position = pos;
-            return;
+            return true;
         }
 
         MoveListe liste;
@@ -73,11 +98,12 @@ struct Game
             if (t == pos)
             {
                 Encoding encoding;
-                encoding.move_index = i;
+                encoding.set_move_index(i);
                 indices.emplace_back(encoding);
-                break;
+                return true;
             }
         }
+        return false;
     }
 
     // overloading read write operators
@@ -112,7 +138,7 @@ struct Game
         {
             MoveListe liste;
             get_moves(current, liste);
-            auto move_index = indices[i].move_index;
+            auto move_index = indices[i].get_move_index();
             Move move = liste[move_index];
             current.make_move(move);
         }
@@ -152,7 +178,7 @@ struct Game
         for(auto i=0; i<indices.size(); ++i) {
             MoveListe liste;
             get_moves(current,liste);
-            Move move =liste[indices[i].move_index];
+            Move move =liste[indices[i].get_move_index()];
             current.make_move(move);
             *iter=current;
             iter++;
@@ -169,19 +195,19 @@ struct Game
             auto o_result = func(current);
             MoveListe liste;
             get_moves(current,liste);
-            current.make_move(liste[indices[i].move_index]);
+            current.make_move(liste[indices[i].get_move_index()]);
 
             if(o_result == UNKNOWN)
                 continue;
             for(int k=i; k>last_stop; k--) {
-                indices[k].result = o_result;
+                indices[k].set_result(o_result);
             }
             last_stop = i;
         }
         for(auto& enc : indices) {
-            if(enc.result!=UNKNOWN)
+            if(enc.get_result()!=UNKNOWN)
                 continue;
-            enc.result = end_result;
+            enc.set_result(end_result);
         }
     }
 
@@ -204,8 +230,6 @@ struct Game
     {
         // to be checked and continued
         Position current = start_position;
-
-
         for (auto i = 0; i < indices.size(); ++i)
         {
             auto encoding = indices[i];
@@ -213,8 +237,8 @@ struct Game
             MoveListe liste;
             get_moves(current, liste);
             sample.position = current;
-            sample.result = static_cast<Result>(encoding.result);
-            Move m = liste[encoding.move_index];
+            sample.result = static_cast<Result>(encoding.get_result());
+            Move m = liste[encoding.get_move_index()];
             current.make_move(m);
 
             if(sample.position.has_jumps() || sample.result==UNKNOWN)
@@ -226,6 +250,8 @@ struct Game
         sample.position = current;
         sample.result = result;
         sample.move = -1;
+        if(sample.position.has_jumps() || sample.result==UNKNOWN)
+                return;
         *iterator = sample;
     }
 };

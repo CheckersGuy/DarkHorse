@@ -70,7 +70,7 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
         out = self.forward(x)
-        loss = torch.pow(torch.abs(result-out), 2.5).mean()
+        loss = torch.pow(torch.abs(out - result), 2.5).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
@@ -78,7 +78,7 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
         out = self.forward(x)
-        loss = torch.pow(torch.abs(result-out), 2.5).mean()
+        loss = torch.pow(torch.abs(out-result), 2.5).mean()
         self.log('val_loss', loss.detach())
         return {"val_loss": loss.detach()}
 
