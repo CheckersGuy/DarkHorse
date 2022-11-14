@@ -22,7 +22,7 @@ c_lib = ctypes.CDLL(libname)
 
 if __name__ == "__main__":
     #model = LitMLP.PatternModel()
-    model = LitMLP.Network(output="bigagain8",hidden=[120, 1024, 8, 32, 1])
+    model = LitMLP.Network(output="bigagain9",hidden=[120, 1024, 8, 32, 1])
     #model = LitMLP.ResNet()
 
     data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",

@@ -32,6 +32,15 @@ int main(int argl, const char** argc) {
     });
 
     return 0;  */
+/*     for(auto i=0;i<50;++i){
+    Encoding test;
+    auto val = i%4;
+    test.set_result(static_cast<Result>(val));
+    std::cout<<val<<std::endl;
+    std::cout<<(int)test.get_result()<<std::endl;
+
+    }
+    return 0; */
 
     CmdParser parser(argl, argc);
     parser.parse_command_line();

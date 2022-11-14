@@ -8,7 +8,7 @@
 #include "Position.h"
 #include <random>
 #include <fstream>
-enum Result : int {
+enum Result : uint8_t {
     BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0
 };
 
