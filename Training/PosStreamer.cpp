@@ -17,10 +17,11 @@ size_t PosStreamer::get_num_positions() const {
             if (game_offset>=games.size()) {
                 game_offset =0;
                 std::shuffle(games.begin(),games.end(),generator);
+                filter.clear();
             }
             auto game = games[game_offset++];
+            //adding filter so we can duplicate endgame positions
             game.extract_samples(std::back_inserter(buffer));
-
         } while (buffer.size() < buffer_size);
         if (shuffle) {
             auto t1 = std::chrono::high_resolution_clock::now();
