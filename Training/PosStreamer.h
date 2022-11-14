@@ -35,7 +35,7 @@ private:
 
 public:
 
-    PosStreamer(std::string file_path, size_t buff_size, size_t seed = 12312312) : filter(BloomFilter<Position>(9585058378, 3)){
+    PosStreamer(std::string file_path, size_t buff_size, size_t seed = 12312312){
                 
         this->file_path = file_path;
         gen_seed=seed;
