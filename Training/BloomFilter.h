@@ -24,6 +24,13 @@ public:
     }
 
 
+    void clear(){
+        for(auto i=size_t{0};i<bit_set.size();++i){
+            bit_set[i]=false;
+        }
+        num_insertions=0;
+    }
+
     size_t get_num_insertions() {
         return num_insertions;
     }
@@ -41,11 +48,13 @@ public:
         num_bits = filter.num_bits;
         num_hashes = filter.num_hashes;
         std::copy(filter.bit_set.begin(), filter.bit_set.end(), std::back_inserter(bit_set));
+        num_insertions = filter.insertions;
     }
 
     BloomFilter &operator=(BloomFilter &filter) {
         num_bits = filter.num_bits;
         num_hashes = filter.num_hashes;
+        num_insertions = filter.insertions;
         std::copy(filter.bit_set.begin(), filter.bit_set.end(), std::back_inserter(bit_set));
         return *this;
     }

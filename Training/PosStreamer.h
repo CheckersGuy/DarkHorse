@@ -14,7 +14,7 @@
 #include <filesystem>
 #include "Util/Compress.h"
 #include <chrono>
-
+#include "BloomFilter.h"
 
 
 class PosStreamer {
@@ -31,11 +31,11 @@ private:
     size_t num_samples; // number of samples
     std::vector<Game> games;
     size_t game_offset{0};
-    size_t random_skip{5};
+   
 
 public:
 
-    PosStreamer(std::string file_path, size_t buff_size, size_t seed = 12312312){
+    PosStreamer(std::string file_path, size_t buff_size, size_t seed = 12312312) : filter(BloomFilter<Position>(9585058378, 3)){
                 
         this->file_path = file_path;
         gen_seed=seed;

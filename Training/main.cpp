@@ -17,6 +17,16 @@
 
 int main(int argl, const char** argc) {
 
+/*       std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+    std::istream_iterator<Game>begin(stream);
+    std::istream_iterator<Game>end;
+
+    auto count = count_unique_positions(begin,end);
+
+    std::cout<<"Count: "<<count.first<<" | "<<count.second<<std::endl;
+
+    return 0;
+  */
  
 /*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
     std::istream_iterator<Game>begin(stream);
