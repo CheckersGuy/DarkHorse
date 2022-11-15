@@ -17,16 +17,10 @@
 
 int main(int argl, const char** argc) {
 
-/*       std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-    std::istream_iterator<Game>begin(stream);
-    std::istream_iterator<Game>end;
+    //void create_train_file(std::string base_book, std::string output, int depth);
 
-    auto count = count_unique_positions(begin,end);
+    //Book::create_train_file("/home/leagu/DarkHorse/Training/Positions/11manballots.pos","/home/leagu/DarkHorse/Training/Positions/train7.pos",7);
 
-    std::cout<<"Count: "<<count.first<<" | "<<count.second<<std::endl;
-
-    return 0;
-  */
  
 /*     std::ifstream stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
     std::istream_iterator<Game>begin(stream);
@@ -118,7 +112,7 @@ int main(int argl, const char** argc) {
         }
         else
         {
-            generator.set_book("train6.pos");
+            generator.set_book("train7.pos");
         }
 
         if (parser.has_option("output"))
