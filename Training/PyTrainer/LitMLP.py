@@ -42,7 +42,7 @@ class Network(pl.LightningModule):
         self.init_weights()
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.952
+        self.gamma = 0.972
         print(self.net)
 
     def forward(self, x):
@@ -63,14 +63,14 @@ class Network(pl.LightningModule):
         self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, lr=1e-3, gc_loc=False, use_gc=False)
-        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        return optimizer
+        optimizer = Ranger(self.parameters())
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        return [optimizer], [scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
         out = self.forward(x)
-        loss = torch.pow(torch.abs(out - result), 2.5).mean()
+        loss =torch.pow(torch.abs(out-result),2.5).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
@@ -78,7 +78,7 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
         out = self.forward(x)
-        loss = torch.pow(torch.abs(out-result), 2.5).mean()
+        loss = torch.pow(torch.abs(out - result), 2.5).mean()
         self.log('val_loss', loss.detach())
         return {"val_loss": loss.detach()}
 
@@ -94,8 +94,6 @@ class Network(pl.LightningModule):
 
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
-        min8 = np.iinfo(np.int8).min
-        max8 = np.iinfo(np.int8).max
 
         device = torch.device("cpu")
         device_gpu = torch.device("cuda")

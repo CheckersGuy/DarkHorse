@@ -25,7 +25,7 @@ if __name__ == "__main__":
     model = LitMLP.Network(output="bigagain9",hidden=[120, 1024, 8, 32, 1])
     #model = LitMLP.ResNet()
 
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/anotherfail.train",
                                        val_data="../TrainData/val.train",
                                        batch_size=32000, buffer_size=30000000)
 
