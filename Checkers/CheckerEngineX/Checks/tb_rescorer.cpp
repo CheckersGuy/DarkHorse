@@ -53,60 +53,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
     return UNKNOWN;
 }
-void create_samples_from_games(std::string games, std::string output, int max_pieces, EGDB_DRIVER *handle,int num_threads) {
 
-    //speeding things up with some more threads
-    std::ifstream stream(games,std::ios::binary);
-    if(!stream.good()) {
-        std::cerr<<"Could not open input stream"<<std::endl;
-        std::exit(-1);
-    }
-    std::ofstream out_stream(output, std::ios::binary);
-    if(!out_stream.good()) {
-        std::cerr<<"Could not open output stream"<<std::endl;
-        std::exit(-1);
-    };
-
-//loaind the unrescored games
-//
-    std::vector<Game>unrescored;
-    std::istream_iterator<Game>begin(stream);
-    std::istream_iterator<Game>end;
-
-    std::copy(begin,end,std::back_inserter(unrescored));
-
-    const auto num_games = unrescored.size();
-    const auto num_chunks = num_threads;
-    const auto chunk_size = num_games/num_chunks;
-    const auto left_overs = num_games-chunk_size*num_chunks;
-
-    std::vector<std::thread>threads;
-	auto oracle =[&](Position pos){
-			return get_tb_result(pos,max_pieces,handle);
-	};
-    for(auto i=0; i<num_chunks; ++i) {
-
-        threads.emplace_back(std::thread([&]() {
-            auto lower = i*chunk_size;
-            auto upper =lower+chunk_size;
-            upper = std::min(upper,num_games);
-            for(auto k=lower; k<upper; ++k) {
-                auto& game = unrescored[k];
-				game.rescore_game(oracle);
-            }
-
-        }));
-		//rescoring the leftovers
-    }
-
-	for(auto i=num_chunks*chunk_size;i<unrescored.size();++i){
-				unrescored[i].rescore_game(oracle);
-	}
-
-	for(auto& th : threads){
-			th.join();
-	}
-}
 void create_samples_from_games(std::string input_file, std::string output, int max_pieces, EGDB_DRIVER *handle) {
 
     std::ifstream stream(input_file,std::ios::binary);

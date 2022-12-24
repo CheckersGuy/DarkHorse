@@ -33,7 +33,7 @@ public:
 
     Position &get_position();
 
-    Position previous();
+    Position previous() const;
 
     uint64_t get_current_key() const;
 
@@ -47,7 +47,7 @@ public:
 
     size_t history_length()const;
 
-    Position history_at(size_t idx);
+    Position history_at(size_t idx) const;
     //difference between make-move and play move is that
     //play move is not being used for the tree search
     void play_move(Move move);

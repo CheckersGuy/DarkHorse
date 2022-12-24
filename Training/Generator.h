@@ -28,7 +28,7 @@ private:
     size_t buffer_clear_count{100000};
     size_t max_positions{0};
     size_t piece_lim{0};
-    size_t max_games{1000000};
+    size_t max_games{100000000};
     std::string output;
     size_t parallelism{1};
     std::vector<Position> openings;

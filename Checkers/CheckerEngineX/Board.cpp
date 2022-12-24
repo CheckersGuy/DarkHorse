@@ -88,14 +88,14 @@ bool Board::is_repetition() const {
 }
 
 
-Position Board::previous() {
+Position Board::previous()const {
     if (pCounter > 0) {
         return pStack[pCounter - 1];
     }
     return Position{};
 }
 
-Position Board::history_at(size_t idx){
+Position Board::history_at(size_t idx) const{
     return pStack[idx];
 }
 

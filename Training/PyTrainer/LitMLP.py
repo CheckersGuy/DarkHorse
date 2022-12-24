@@ -11,10 +11,9 @@ import numpy as np
 from enum import IntEnum
 
 
-def init_weights(layer):
-    if isinstance(layer, nn.Linear):
-        torch.nn.init.xavier_uniform_(layer.weight)
-        layer.bias.data.fill_(0.01)
+
+
+
 
 
 class Relu1(nn.Module):
@@ -38,11 +37,9 @@ class Network(pl.LightningModule):
         self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
         self.layers.append(nn.Sigmoid())
         self.net = nn.Sequential(*self.layers)
-        self.criterion = torch.nn.MSELoss()
-        self.init_weights()
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.972
+        self.gamma = 0.982
         print(self.net)
 
     def forward(self, x):

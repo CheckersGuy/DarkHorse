@@ -6,6 +6,17 @@
 #include "Line.h"
 
 
+Line::Line(const Line& other){
+
+    for (auto i = 0; i < other.counter; ++i) {
+        myArray[i] = other.myArray[i];
+    }
+    counter = other.counter;
+
+
+}
+
+
 int Line::length() const {
     return counter;
 }

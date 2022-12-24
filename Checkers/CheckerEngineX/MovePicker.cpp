@@ -129,7 +129,7 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previou
     Move top = liste[0];
 
 	
-        if(!previous.is_capture()) {
+        if(!previous.is_capture() && !move.is_capture()) {
             counter_history[get_history_index(pos,previous)][get_move_encoding(move)]+=delta;
         }
 
@@ -141,7 +141,7 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previou
         update_history_score(score,-delta);
 
 
-        if(!previous.is_capture()) {
+        if(!previous.is_capture() && !top.is_capture()) {
             counter_history[get_history_index(pos,previous)][get_move_encoding(top)]-=delta;
         }
 
