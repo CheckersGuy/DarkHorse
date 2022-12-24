@@ -29,13 +29,11 @@ struct MoveEncoding{
 
 struct Entry {
     uint32_t key{0u};//4 bytes 
-    int16_t value{0};//4 bytes
+    int16_t value{0};//2 bytes
 	MoveEncoding best_move;
 	uint8_t age:6 = 0;// 1 bytes
 	uint8_t flag:2 = 0;//1 byte
     uint8_t depth{0};//1 byte
-    //padding
-    //total of 4+12+4+4+1+1 = 26 bytes !!!
 };
 constexpr size_t bucket_size = 4;
 

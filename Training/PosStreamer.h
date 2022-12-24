@@ -39,7 +39,6 @@ public:
                 
         this->file_path = file_path;
         gen_seed=seed;
-        ptr = buffer_size + 1;
         stream = std::ifstream(file_path, std::ios::binary);
         generator = std::mt19937_64(getSystemTime());
         if (file_path.empty()) {
@@ -62,9 +61,10 @@ public:
         num_samples = count_trainable_positions(file_path);
                 std::cout<<"loading"<<std::endl;
         this->buffer_size = std::min(num_samples, buff_size);
+        ptr = this->buffer_size + 1;
         std::cout<<"BufferSize: "<<buffer_size<<std::endl;
-        buffer.reserve(buffer_size);
-        std::cout<<buffer_size<<std::endl;
+        buffer.reserve(this->buffer_size);
+        std::cout<<this->buffer_size<<std::endl;
 
     }
 

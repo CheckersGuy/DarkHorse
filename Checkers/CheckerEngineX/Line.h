@@ -19,6 +19,11 @@ private:
 
 public:
 
+
+	Line()=default;
+
+	Line(const Line& other);
+
     int length() const;
 
     void addMove(const Move &move);
