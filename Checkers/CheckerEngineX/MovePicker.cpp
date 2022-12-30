@@ -90,7 +90,7 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous, Depth dep
     // const int index = get_move_encoding(pos.get_color(),move);
     const int index = get_history_index(pos,move);
     int score = history[index];
-    if(!previous.is_capture()) {
+    if(!previous.is_capture() && !move.is_capture()) {
         auto counter=counter_history[get_history_index(pos,previous)][get_move_encoding(move)];
        score+=counter;
     }

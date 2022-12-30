@@ -39,7 +39,7 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.982
+        self.gamma = 0.99
         print(self.net)
 
     def forward(self, x):
@@ -60,7 +60,7 @@ class Network(pl.LightningModule):
         self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
+        optimizer = torch.optim.Adam(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 
