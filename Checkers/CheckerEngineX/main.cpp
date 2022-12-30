@@ -74,7 +74,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "bigagain7.quant";
+    net_file = "bigagain9.quant";
   }
 
   network.addLayer(Layer{120, 1024});

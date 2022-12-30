@@ -21,9 +21,9 @@ libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
 c_lib = ctypes.CDLL(libname)
 
 if __name__ == "__main__":
-    model = LitMLP.Network(output="bigagain9",hidden=[120, 1024, 16, 32, 1])
+    model = LitMLP.Network(output="bigagain9",hidden=[120, 1024, 8, 32, 1])
 
-    data_loader = LitMLP.LitDataModule(train_data="../TrainData/anotherfail.train",
+    data_loader = LitMLP.LitDataModule(train_data="../TrainData/reinfformatted.train",
                                        val_data="../TrainData/val.train",
                                        batch_size=8000, buffer_size=50000000)
 
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{medium}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=3000, callbacks=[check_point_callback])
-    trainer.fit(model, data_loader,ckpt_path="medium=0-v2.ckpt")
+    trainer.fit(model, data_loader)
     #model = LitMLP.PatternModel()
 
 
