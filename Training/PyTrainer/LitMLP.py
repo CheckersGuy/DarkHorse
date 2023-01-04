@@ -32,6 +32,7 @@ class Network(pl.LightningModule):
         self.output = output
         for i in range(len(hidden) - 2):
             self.layers.append(nn.Linear(hidden[i], hidden[i + 1]))
+            self.layers.append(nn.Dropout(0.1)) 
             self.layers.append(Relu1())
 
         self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
@@ -60,7 +61,7 @@ class Network(pl.LightningModule):
         self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters())
+        optimizer = Ranger(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 

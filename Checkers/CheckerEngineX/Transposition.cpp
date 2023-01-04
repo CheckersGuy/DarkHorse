@@ -88,18 +88,27 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t dep
     const uint32_t lock = (key >> 32u);
 
 
+    int max_entry =0;
+    int max_value = -100000;
     for (auto i = 1; i < bucket_size; ++i) {
         if (cluster.ent[i].key == lock) {
+            
+          if(cluster.ent[i].depth<=depth){
             cluster.ent[i].depth = depth;
             cluster.ent[i].flag = flag;
             cluster.ent[i].best_move = MoveEncoding(tt_move);
             cluster.ent[i].value = value;
             cluster.ent[i].age = age_counter;
-            return;
+          }else{
+            cluster.ent[i].age = age_counter;
+          }
+        
+          return;
+                       
         }
         const auto age_entry = age_counter - cluster.ent[i].age;
 
-        if (cluster.ent[i].flag == Flag::None ||cluster.ent[i].depth < depth || (age_entry != 0)) {
+        if(cluster.ent[i].flag == Flag::None || cluster.ent[i].depth<depth || age_entry!=0){
             cluster.ent[i].depth = depth;
             cluster.ent[i].flag = flag;
             cluster.ent[i].best_move = MoveEncoding(tt_move);
@@ -108,14 +117,16 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag, uint8_t dep
             cluster.ent[i].age = age_counter;
             return;
         }
-    }
-    cluster.ent[0].depth = depth;
-    cluster.ent[0].flag = flag;
-    cluster.ent[0].best_move = MoveEncoding(tt_move);
-    cluster.ent[0].value = value;
-    cluster.ent[0].key = lock;
-    cluster.ent[0].age = age_counter;
-}
+            
+      }
+
+            cluster.ent[0].depth = depth;
+            cluster.ent[0].flag = flag;
+            cluster.ent[0].best_move = MoveEncoding(tt_move);
+            cluster.ent[0].value = value;
+            cluster.ent[0].key = lock;
+            cluster.ent[0].age = age_counter;
+   }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
     const auto index = key & (get_capacity() - 1u);
