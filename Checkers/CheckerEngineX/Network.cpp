@@ -138,6 +138,15 @@ void Accumulator::remove_feature(int16_t* input,size_t index) {
     }
 }
 
+
+void Network::print_output_layer(){
+  auto outputs = layers.back().out_features;
+
+  for(int i=0;i<outputs;++i){
+    std::cout<<"Index: "<<i<<" "<<input[i]<<std::endl;
+  }
+}
+
 void Network::load(std::string file) {
     std::ifstream stream(file, std::ios::binary);
     if (!stream.good())
@@ -254,7 +263,7 @@ int Network::compute_incre_forward_pass(Position next) {
             if (k < layers.size() - 1) {
                 temp[i] = std::clamp(sum/64,  0, 127);
             } else {
-                return sum/64;
+                temp[i]= sum/64;
             }
         }
 
@@ -292,7 +301,7 @@ int Network::evaluate(Position pos, int ply)
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
     auto num_pieces = Bits::pop_count(pos.BP | pos.WP);
-    if (num_pieces>12) {
+    if (num_pieces>10) {
         return net1.evaluate(pos, ply);
     } else {
         return net2.evaluate(pos, ply);

@@ -1,4 +1,6 @@
 #include <vector>
+#include "MGenerator.h"
+#include "MovePicker.h"
 #include "Transposition.h"
 #include "GameLogic.h"
 #include "Perft.h"
@@ -74,15 +76,25 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "bigagain9.quant";
+    net_file = "bigagain10.quant";
   }
 
   network.addLayer(Layer{120, 1024});
   network.addLayer(Layer{1024, 8});
   network.addLayer(Layer{8, 32});
   network.addLayer(Layer{32, 1});
-  network.load(net_file);
+  network.load("opening.net");
   network.init();
+
+  network2.addLayer(Layer{120, 1024});
+  network2.addLayer(Layer{1024, 8});
+  network2.addLayer(Layer{8, 32});
+  network2.addLayer(Layer{32, 1});
+  network2.load(net_file);
+  network2.init();
+
+  //init policy network
+ 
 
   if (parser.has_option("search"))
 
@@ -117,6 +129,10 @@ int main(int argl, const char **argc) {
     board.play_move(best);
     board.print_board();
     MoveListe liste;
+    for(auto move : liste){
+      auto encoding = Statistics::MovePicker::get_move_encoding(move);
+      std::cout<<encoding<<std::endl;
+    } 
     get_moves(board.get_position(), liste);
     return 0;
   }

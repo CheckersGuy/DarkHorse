@@ -1,4 +1,5 @@
 #include "MoveListe.h"
+#include "MovePicker.h"
 
 void MoveListe::reset() {
     moveCounter = 0;
@@ -13,9 +14,6 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove,Move pr
 
 
     std::array<int,40> scores;
-
-//	Statistics::mPicker.policy.compute_incre_forward_pass(current);
-
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
         scores[i] =Statistics::mPicker.get_move_score(current, depth, ply, m,previous, ttMove);
