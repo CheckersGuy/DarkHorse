@@ -12,6 +12,7 @@
 #include <regex>
 #include <filesystem>
 #include "../BloomFilter.h"
+#include "MovePicker.h"
 #include <map>
 #include <vector>
 
@@ -196,7 +197,7 @@ struct Game
             MoveListe liste;
             get_moves(current,liste);
             current.make_move(liste[indices[i].get_move_index()]);
-
+            indices[i].set_result(result);
             if(o_result == UNKNOWN)
                 continue;
             for(int k=i; k>last_stop; k--) {
@@ -204,12 +205,7 @@ struct Game
             }
             last_stop = i;
         }
-        for(auto& enc : indices) {
-            if(enc.get_result()!=UNKNOWN)
-                continue;
-            enc.set_result(end_result);
-        }
-    }
+         }
 
     bool operator==(const Game& other) const
     {
@@ -239,9 +235,18 @@ struct Game
             sample.position = current;
             sample.result = static_cast<Result>(encoding.get_result());
             Move m = liste[encoding.get_move_index()];
+            int move_encoding;
+            if(sample.position.get_color() == BLACK){
+              Move temp;
+              temp.from = getMirrored(m.from);
+              temp.to = getMirrored(m.to);
+              move_encoding = Statistics::MovePicker::get_move_encoding(temp);
+            }else{
+              move_encoding = Statistics::MovePicker::get_move_encoding(m);
+            }
             current.make_move(m);
-
-            if(sample.position.has_jumps() || sample.result==UNKNOWN)
+            sample.move = move_encoding;
+            if(sample.position.has_jumps() || sample.result==UNKNOWN || sample.position.piece_count()<=10)
                 continue;
             *iterator = sample;
             iterator++;

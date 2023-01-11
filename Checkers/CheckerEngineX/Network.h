@@ -93,6 +93,8 @@ struct Network {
 
     void init();
 
+    void print_output_layer();
+
     int compute_incre_forward_pass(Position next);
 
     float get_win_p(Position pos);

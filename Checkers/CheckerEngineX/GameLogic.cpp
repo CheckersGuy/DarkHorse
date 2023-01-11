@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "MovePicker.h"
 
 
 
@@ -10,7 +11,7 @@ Value max_value = INFINITE;
 
 
 SearchGlobal glob;
-Network network;
+Network network,network2;
 bool u_classical = true;
 
 
@@ -104,6 +105,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     glob.sel_depth = 0u;
     TT.age_counter=(TT.age_counter+1)&63ull;
     network.accumulator.refresh();
+    network2.accumulator.refresh();
     nodeCounter = 0;
     mainPV.clear();
 
@@ -335,7 +337,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
             return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
         }
-        bestValue = network.evaluate(board.get_position(),ply);
+        bestValue = Network::evaluate(board.get_position(),ply,network,network2);
         return bestValue;
 
     }
@@ -442,7 +444,7 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
     }
 
 
-    if (local.best_score >= local.beta && board.is_silent_position()) {
+    if (local.best_score >= local.beta && !board.get_position().has_jumps()) {
         Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move,local.previous, local.depth);
     	//updating killer moves
 		auto& killers = Statistics::mPicker.killer_moves;

@@ -32,7 +32,6 @@ class Network(pl.LightningModule):
         self.output = output
         for i in range(len(hidden) - 2):
             self.layers.append(nn.Linear(hidden[i], hidden[i + 1]))
-            self.layers.append(nn.Dropout(0.1)) 
             self.layers.append(Relu1())
 
         self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
@@ -40,7 +39,7 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.99
+        self.gamma = 0.98
         print(self.net)
 
     def forward(self, x):
@@ -61,9 +60,9 @@ class Network(pl.LightningModule):
         self.save_model_weights()
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters())
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        return [optimizer], [scheduler]
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
+        # scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        return optimizer
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
@@ -154,7 +153,6 @@ class PolicyNetwork(pl.LightningModule):
         self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
         self.net = nn.Sequential(*self.layers)
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
-        self.init_weights()
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
         print(self.net)
@@ -196,9 +194,6 @@ class PolicyNetwork(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
         return optimizer
-
-    def init_weights(self):
-        self.net.apply(init_weights)
 
     def save_quantized(self, output):
 
