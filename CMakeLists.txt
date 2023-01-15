@@ -4,9 +4,14 @@ SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_BUILD_TYPE "Release")
 if(WIN32)
 add_compile_options("-march=native -flto=auto -ffat-lto-objects -fuse-linker-plugin")
-add_compile_options("-O3")
 else()
-SET(CMAKE_CXX_FLAGS "-Ofast -mtune=native -lstdc++fs -march=native -pthread -flto=auto -ffat-lto-objects -fuse-linker-plugin")
+  add_compile_options("-mtune=native")
+  add_compile_options("-lstdc++fs")
+  add_compile_options("-march=native")
+  add_compile_options("-pthread")
+  add_compile_options("-ffat-lto-objects")
+  add_compile_options("-fuse-linker-plugin")
+  add_compile_options("-O3")
 endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 
@@ -32,10 +37,7 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
-#foreach(var in ${CHeaders})
-#message("${var} \n")
-#endforeach()
-   
+
 
 
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})

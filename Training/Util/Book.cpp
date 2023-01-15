@@ -59,7 +59,7 @@ void recursive_collect(Board& board,int depth,std::unordered_set<Position>&set,s
             std::cout<<"Count: "<<pos_counter++<<std::endl;
             current.print_position();
             std::cout<<"\n\n";
-            out_stream<<current;
+            out_stream<<current.get_fen_string()<<"\n";
          }
         }
       
