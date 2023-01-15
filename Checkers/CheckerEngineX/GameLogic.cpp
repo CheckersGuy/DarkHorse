@@ -337,7 +337,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
             return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
         }
-        bestValue = Network::evaluate(board.get_position(),ply,network,network2);
+        bestValue = network.evaluate(board.get_position(),ply);
         return bestValue;
 
     }

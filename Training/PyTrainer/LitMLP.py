@@ -56,7 +56,7 @@ class Network(pl.LightningModule):
         self.save(self.output + ".pt")
         self.save_quantized(self.output + ".quant")
 
-    def on_epoch_end(self) -> None:
+    def on_train_epoch_end(self) -> None:
         self.save_model_weights()
 
     def configure_optimizers(self):

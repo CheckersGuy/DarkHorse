@@ -17,7 +17,7 @@ int main(int argl, const char** argc) {
     };
 
     Zobrist::init_zobrist_keys();
-    Perft::table.set_capacity("8000mb");
+    Perft::table.set_capacity("4000mb");
     Board board;
     board = Position::get_start_position();
     board.print_board();

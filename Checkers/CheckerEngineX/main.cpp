@@ -4,7 +4,7 @@
 #include "Transposition.h"
 #include "GameLogic.h"
 #include "Perft.h"
-
+#include "Selfplay.h"
 inline Position posFromString(const std::string &pos) {
     Position result;
     for (uint32_t i = 0; i < 32u; ++i) {
@@ -31,37 +31,12 @@ inline Position posFromString(const std::string &pos) {
 }
 
 
+
 //game-generation
 
-#include <Network.h>
-#include <types.h>
+#include "Network.h"
+#include "types.h"
 #include "CmdParser.h"
-
-// void test_policy_output(Position pos,bool show_all){
-//	pos.print_position();
-//	auto& net = Statistics::mPicker.policy;
-//	auto result =Statistics::mPicker.policy.compute_incre_forward_pass(pos);
-//	MoveListe liste;
-//	get_moves(pos,liste);
-//	for(auto m : liste){
-//			auto index =
-// Statistics::mPicker.get_move_encoding(pos.get_color(),m);
-// std::cout<<"From:
-//"<<m.get_from_index()<<" To: "<<m.get_to_index()<< "Score: "<<net[index];
-//			std::cout<<std::endl;
-//	}
-//
-//	if(show_all){
-//			for(auto i=0;i<128;++i){
-//					std::cout<<"Index: "<<i<<" Score:
-//"<<net[i]<<std::endl;
-//			}
-//	}
-//
-// }
-//
-//
-
 int main(int argl, const char **argc) {
 
   CmdParser parser(argl, argc);
@@ -83,15 +58,10 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{1024, 8});
   network.addLayer(Layer{8, 32});
   network.addLayer(Layer{32, 1});
-  network.load("opening.net");
+  network.load(net_file);
   network.init();
 
-  network2.addLayer(Layer{120, 1024});
-  network2.addLayer(Layer{1024, 8});
-  network2.addLayer(Layer{8, 32});
-  network2.addLayer(Layer{32, 1});
-  network2.load(net_file);
-  network2.init();
+ 
 
   //init policy network
  
@@ -136,6 +106,32 @@ int main(int argl, const char **argc) {
     get_moves(board.get_position(), liste);
     return 0;
   }
+
+
+  if(parser.has_option("selfplay")  ){
+    Selfplay selfplay;
+    int hash_size;
+   if (parser.has_option("hash_size")) {
+      hash_size = parser.as<int>("hash_size");
+    } else {
+      hash_size = 22;
+    }
+   TT.resize(hash_size);
+
+    int time;
+    if(parser.has_option("time")){
+      time = parser.as<int>("time");
+    }else{
+      time =100;
+    }
+
+
+  selfplay.start_loop();
+
+    return 0;
+
+  }
+
 
   std::string current;
   while (std::cin >> current) {
