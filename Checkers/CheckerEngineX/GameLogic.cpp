@@ -292,7 +292,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 
 
     //move-loop
-    Search::move_loop(in_pv, local, board, pv, liste,last_rev);
+    Search::move_loop(in_pv, local, board, pv, liste,last_rev,previous);
 
 
     //storing tb-entries
@@ -387,18 +387,18 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
     }
 
     board.make_move(move);
-
-    if (!in_pv && local.depth>2  && std::abs(local.beta)<TB_WIN) {
+    //Needs an update, do not prune if we are in terriroty of tablebases
+    if (!in_pv && local.depth>1 && std::abs(local.beta)<TB_WIN) {
 
         Value newBeta = local.beta + prob_cut;
-        Depth newDepth = std::max(new_depth - 4, 1);
+        Depth newDepth = std::max(local.depth - 4, 1);
         Value board_val = -qs(in_pv, board, line, -(newBeta + 1), -newBeta,
                               local.ply + 1, newDepth,last_rev);
         if (board_val >= newBeta) {
-            Value value = -Search::search(in_pv, board, line, -(newBeta + 1), -newBeta, local.ply + 1,
+            Value value = -Search::search(false, board, line, -(newBeta + 1), -newBeta, local.ply + 1,
                                           newDepth,last_rev,move);
             if (value >= newBeta) {
-                val = value-prob_cut;
+                val = value;
             }
         }
     }
@@ -421,10 +421,15 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
 }
 
-void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev) {
+void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev,Move previous) {
 
     const auto num_moves = liste.length();
-    int extension =(liste.length()==1);
+    int extension=0;
+    if(liste.length()==1){
+      extension=1;
+    } else if((in_pv || previous.is_capture()) && liste[0].is_capture()){
+      extension =1;
+    }
     local.i = 0;
 
     while (local.best_score < local.beta && local.i < num_moves) {
@@ -489,7 +494,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{}, start_index);
 
 
-    move_loop(true, local, board, line, liste,board.last_non_rev);
+    move_loop(true, local, board, line, liste,board.last_non_rev,Move{});
 
 
 }
