@@ -1,5 +1,6 @@
 #include "Selfplay.h"
 #include "MovePicker.h"
+#include <algorithm>
 
 
 void Selfplay::start_loop(){
@@ -70,12 +71,14 @@ SelfGame Selfplay::play_game(std::string fen_string){
   TT.clear();
   Statistics::mPicker.clear_scores();
   SelfGame game;
-
+  
   Position current;
   current = Position::pos_from_fen(fen_string);
   Board board;
   board = current;
   game.first = fen_string;
+  std::vector<Position>history;
+  history.emplace_back(current);
   for(auto i=0;i<600;++i){
     Move best;
     searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
@@ -96,6 +99,13 @@ SelfGame Selfplay::play_game(std::string fen_string){
     get_moves(board.get_position(),endlist);
     if(endlist.length()==0)
       break;
+  
+    history.emplace_back(board.get_position());
+    //checking for 3 fold repetition
+    auto count = std::count(history.begin(), history.end(),history.back());
+    if(count>=3)
+      break;
+  
   }
 
   return game;
