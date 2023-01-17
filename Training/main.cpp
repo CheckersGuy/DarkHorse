@@ -19,11 +19,11 @@ int main(int argl, const char **argc) {
 
   // void create_train_file(std::string base_book, std::string output, int
   // depth);
-
+/*
   Book::create_train_file(
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
       "/home/leagu/DarkHorse/Training/Positions/train9.book", 5);
-      
+ */     
 
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");

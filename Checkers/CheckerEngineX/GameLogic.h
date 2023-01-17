@@ -64,7 +64,7 @@ namespace Search {
 
     Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev,Move previous);
 
-    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev);
+    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev,Move previous);
 
     Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev);
 
