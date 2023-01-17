@@ -3,9 +3,12 @@ import multiprocessing
 from enum import Enum,unique
 from random import randrange
 import time
-
+import tabulate
+import os
 
 #Needs to be reworked using a multiprocessing pool
+
+
 @unique
 class States(Enum):
     DEFAULT = 0 # nothing happening
@@ -30,6 +33,8 @@ class EngineState:
 
 
 counter = multiprocessing.Value("i",0)
+print_lock = multiprocessing.Lock()
+
 class Interface:
     
     def __init__(self):
@@ -51,6 +56,13 @@ class Interface:
     def parallelism(self,value):
         self._parallelism =value
         self.engines =[EngineState() for i in range(self._parallelism)]
+
+    def print_table(self):
+        if counter.value % 100 ==0:
+            print_lock.acquire()
+            print("\033[H\033[2J",end="")    
+            print(counter.value)
+            print_lock.release()
 
  
     def process_stream(self,index):
@@ -76,7 +88,7 @@ class Interface:
                 self.engines[index].state = States.INIT
                 with counter.get_lock():
                     counter.value+=1
-                print(counter.value)
+                self.print_table()
             #print(line)
         process.wait()
 

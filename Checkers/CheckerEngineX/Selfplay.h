@@ -3,7 +3,7 @@
 #include "Position.h"
 #include "types.h"
 #include <regex>
-
+#include <algorithm>
 
 using SelfGame = std::pair<std::string,std::vector<uint8_t>>;
 
