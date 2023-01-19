@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+service Generator{
+  rpc upload_game(Game)returns(Response){}
+  rpc upload_batch(Batch)returns(Response){}
+}
+
+message Game{
+  string start_position = 1;
+  repeated int32 move_indices = 2;
+}
+message Response{
+  string message =1;
+}
+message Batch{
+  repeated Game games = 1;
+}

@@ -1,5 +1,6 @@
 import subprocess
 import multiprocessing
+import threading
 from enum import Enum,unique
 from random import randrange
 from rich.live import Live
@@ -10,6 +11,9 @@ import tabulate
 import os
 
 #Needs to be reworked using a multiprocessing pool
+
+
+#grpc service probably goes here
 
 
 @unique
@@ -91,6 +95,8 @@ class Interface:
             while counter.value<self.max_games:
                 time.sleep(0.1)
                 live.update(self.get_table())
+
+        
  
     def process_stream(self,index):
         process = subprocess.Popen(["./MainEngine","--selfplay","--network ../cmake-build-debug/bigagain10.quant"],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
@@ -99,6 +105,11 @@ class Interface:
             if self.engine.state == States.INIT:
                 self.send_play_command(self.pick_opening(),process)
                 self.engine.state = States.PLAYING_GAME
+
+            if counter.value>=self.max_games:
+                print("Terminated")
+                self.send_termination_command(process)
+                break
 
             if self.engine.state == States.DEFAULT:
                 self.send_settings_command(process)
@@ -139,6 +150,11 @@ class Interface:
         stream.stdin.writelines([cmd.encode()])
         stream.stdin.flush()
 
+    def send_termination_command(self,stream):
+        cmd="terminate\n"
+        stream.stdin.writelines([cmd.encode()])
+        stream.stdin.flush()
+
     def send_settings_command(self,stream):
         cmd="settings!"+str(self.time_per_move)+"!"+str(self.hash_size)+"!"+str(self.adjudication)+"\n"
         stream.stdin.writelines([cmd.encode()])
@@ -147,8 +163,12 @@ class Interface:
     def start(self):
         p = multiprocessing.Pool(self.parallelism)
         results = p.map_async(self.process_stream,range(self.parallelism))
+        #Only executing in main process from here on
         self.start_time =time.time()
-        self.print_table()
+        #self.print_table()
+        thread = threading.Thread(target=self.print_table())
+        thread.start()
+        thread.join()
         results.get()
 
   
@@ -158,7 +178,7 @@ interface = Interface()
 interface.time_per_move = 10
 interface.parallelism = 14
 interface.hash_size =21
-interface.max_games =100000
+interface.max_games =500
 interface.read_openings("Positions/train9.book")
 interface.start()
 
