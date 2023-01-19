@@ -8,10 +8,10 @@ void Selfplay::start_loop(){
   while(!stop){
     std::string line;
     std::getline(std::cin,line);
-    std::cout<<line<<std::endl;
     parse_command(line);
   }
 }
+
 
 void Selfplay::set_time_per_move(int time){
   time_per_move = time;
@@ -30,6 +30,8 @@ void Selfplay::parse_command(std::string command){
   if(command =="terminate"){
     stop =true;
   }
+
+
   auto split =split_string(command,'!');
   if(split.size()>1){ 
   if(split[0]=="playgame"){
