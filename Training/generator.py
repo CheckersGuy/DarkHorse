@@ -9,6 +9,10 @@ from rich.align import Align
 import time
 import tabulate
 import os
+import random
+import grpc
+import generator_pb2
+import generator_pb2_grpc
 
 #Needs to be reworked using a multiprocessing pool
 
@@ -41,11 +45,13 @@ class EngineState:
 
 counter = multiprocessing.Value("i",0)
 print_lock = multiprocessing.Lock()
-
+write_lock = multiprocessing.Lock()
+games = multiprocessing.Manager().list()
 
 class Interface:
     
     def __init__(self):
+        #grpc-stuff
         self.current_game = []
         self.process = None
         self.openings=[]
@@ -56,7 +62,8 @@ class Interface:
         self.time_per_move =100
         self.adjudication=10
         self._parallelism = 1
-        self.network = None
+        self.network_file = None
+
 
     @property
     def parallelism(self):
@@ -79,6 +86,7 @@ class Interface:
         table =Table(title="Generating Games")
         time_lapsed = time.time()-self.start_time
         table.add_column("NumGames")
+ 
         table.add_column("Parallelism")
         table.add_column("MaxGames")
         table.add_column("HashSize")
@@ -96,24 +104,27 @@ class Interface:
                 time.sleep(0.1)
                 live.update(self.get_table())
 
-        
+    
+    
+
  
     def process_stream(self,index):
-        process = subprocess.Popen(["./MainEngine","--selfplay","--network ../cmake-build-debug/bigagain10.quant"],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
+        process = subprocess.Popen(["./MainEngine","--selfplay","--network ../cmake-build-debug/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
+        random.seed((os.getpid()*int(time.time()))%123456789)
+        #channel = grpc.insecure_channel("localhost:50051")
         global counter
         while True:
-            if self.engine.state == States.INIT:
-                self.send_play_command(self.pick_opening(),process)
-                self.engine.state = States.PLAYING_GAME
-
             if counter.value>=self.max_games:
-                print("Terminated")
                 self.send_termination_command(process)
                 break
 
             if self.engine.state == States.DEFAULT:
                 self.send_settings_command(process)
                 self.engine.state = States.INIT
+            
+            if self.engine.state == States.INIT:
+                self.send_play_command(self.pick_opening(),process)
+                self.engine.state = States.PLAYING_GAME
 
             line  = process.stdout.readline()
             if not line:
@@ -124,6 +135,11 @@ class Interface:
                 self.engine.state = States.RECV_GAME
 
             if line =="game_end":
+                if len(self.current_game)>1:
+                    write_lock.acquire()
+                    games.append(self.current_game)
+                    write_lock.release()
+                self.current_game.clear()
                 self.engine.state = States.INIT
                 with counter.get_lock():
                     counter.value+=1
@@ -165,22 +181,45 @@ class Interface:
         results = p.map_async(self.process_stream,range(self.parallelism))
         #Only executing in main process from here on
         self.start_time =time.time()
-        #self.print_table()
-        thread = threading.Thread(target=self.print_table())
+        self.print_table()
+        thread = threading.Thread(target=self.print_table)
         thread.start()
+        self.start_grpc_client()
         thread.join()
         results.get()
+
+    def start_grpc_client(self):
+        print("STARTED")
+        channel = grpc.insecure_channel("localhost:50051")
+        stub = generator_pb2_grpc.GeneratorStub(channel)
+        while True:
+            time.sleep(0.1)
+            write_lock.acquire()
+            if len(games)<100:
+                write_lock.release()
+                continue
+
+            batch =generator_pb2.Batch()
+            for g in games:
+                game =generator_pb2.Game()
+                game.start_position =g[0]
+                game.move_indices.extend([int(value) for value in g[1:]])
+                batch.games.append(game)
+            response = stub.upload_batch(batch)
+            games[:]=[]
+            write_lock.release()
+            #print("Response: {}".format(response.message))
+            
 
   
 
 
 interface = Interface()
 interface.time_per_move = 10
-interface.parallelism = 14
+interface.parallelism = 7
 interface.hash_size =21
-interface.max_games =500
+interface.max_games =5000
+interface.network_file="bigagain10.quant"
 interface.read_openings("Positions/train9.book")
 interface.start()
-
-
 
