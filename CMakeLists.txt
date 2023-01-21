@@ -14,7 +14,7 @@ else()
   add_compile_options("-O3")
 endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
-
+find_package(Protobuf QUIET)
 if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)
     file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.h  )

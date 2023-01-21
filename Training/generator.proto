@@ -3,6 +3,12 @@ syntax = "proto3";
 service Generator{
   rpc upload_game(Game)returns(Response){}
   rpc upload_batch(Batch)returns(Response){}
+  rpc get_last_update(Empty) returns(LastUpdate){}
+  rpc get_new_network(Empty)returns(Network){}
+}
+
+message Network{
+  bytes data =1;
 }
 
 message Game{
@@ -14,4 +20,12 @@ message Response{
 }
 message Batch{
   repeated Game games = 1;
+}
+
+message LastUpdate{
+  int32 timestamp =1;
+}
+
+message Empty{
+
 }
