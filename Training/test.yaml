@@ -1,0 +1,6 @@
+name: "Test"
+window-size: 10000
+num_epochs: 30
+num_networks: 200
+time_per_move: 100
+

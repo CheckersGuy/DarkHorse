@@ -181,17 +181,28 @@ class Interface:
         results = p.map_async(self.process_stream,range(self.parallelism))
         #Only executing in main process from here on
         self.start_time =time.time()
-        self.print_table()
         thread = threading.Thread(target=self.print_table)
-        thread.start()
+        #thread.start()
         self.start_grpc_client()
-        thread.join()
+        #thread.join()
         results.get()
 
     def start_grpc_client(self):
         print("STARTED")
-        channel = grpc.insecure_channel("localhost:50051")
+        channel = grpc.insecure_channel("localhost:50052")
         stub = generator_pb2_grpc.GeneratorStub(channel)
+        response = stub.get_last_update(generator_pb2.Empty())
+        time = response.timestamp
+        if time ==0:
+            #getting a new network
+            print("TEst")
+            net_data = stub.get_new_network(generator_pb2.Empty())
+            out_file = open("Networks/client.quant","wb")
+            out_file.write(net_data.data)
+            out_file.close()
+            print("Downloaded the new network")
+        #print("TimeStamp: {}".format(response.timestamp))
+        return
         while True:
             time.sleep(0.1)
             write_lock.acquire()
