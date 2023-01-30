@@ -15,22 +15,22 @@ class GeneratorStub(object):
             channel: A grpc.Channel.
         """
         self.upload_game = channel.unary_unary(
-                '/Generator/upload_game',
+                '/Proto.Generator/upload_game',
                 request_serializer=generator__pb2.Game.SerializeToString,
                 response_deserializer=generator__pb2.Response.FromString,
                 )
         self.upload_batch = channel.unary_unary(
-                '/Generator/upload_batch',
+                '/Proto.Generator/upload_batch',
                 request_serializer=generator__pb2.Batch.SerializeToString,
                 response_deserializer=generator__pb2.Response.FromString,
                 )
         self.get_last_update = channel.unary_unary(
-                '/Generator/get_last_update',
+                '/Proto.Generator/get_last_update',
                 request_serializer=generator__pb2.Empty.SerializeToString,
                 response_deserializer=generator__pb2.LastUpdate.FromString,
                 )
         self.get_new_network = channel.unary_unary(
-                '/Generator/get_new_network',
+                '/Proto.Generator/get_new_network',
                 request_serializer=generator__pb2.Empty.SerializeToString,
                 response_deserializer=generator__pb2.Network.FromString,
                 )
@@ -88,7 +88,7 @@ def add_GeneratorServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'Generator', rpc_method_handlers)
+            'Proto.Generator', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
@@ -107,7 +107,7 @@ class Generator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Generator/upload_game',
+        return grpc.experimental.unary_unary(request, target, '/Proto.Generator/upload_game',
             generator__pb2.Game.SerializeToString,
             generator__pb2.Response.FromString,
             options, channel_credentials,
@@ -124,7 +124,7 @@ class Generator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Generator/upload_batch',
+        return grpc.experimental.unary_unary(request, target, '/Proto.Generator/upload_batch',
             generator__pb2.Batch.SerializeToString,
             generator__pb2.Response.FromString,
             options, channel_credentials,
@@ -141,7 +141,7 @@ class Generator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Generator/get_last_update',
+        return grpc.experimental.unary_unary(request, target, '/Proto.Generator/get_last_update',
             generator__pb2.Empty.SerializeToString,
             generator__pb2.LastUpdate.FromString,
             options, channel_credentials,
@@ -158,7 +158,7 @@ class Generator(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/Generator/get_new_network',
+        return grpc.experimental.unary_unary(request, target, '/Proto.Generator/get_new_network',
             generator__pb2.Empty.SerializeToString,
             generator__pb2.Network.FromString,
             options, channel_credentials,

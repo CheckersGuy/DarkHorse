@@ -8,6 +8,8 @@ from rich.table import Table
 import threading
 import os
 import yaml
+import LitMLP
+
 def remove_prefix(text,prefix):
     if text.startswith(prefix):
         return text[len(prefix):]
@@ -26,9 +28,11 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
         self.counter =0
         self.thread = None
         self.stop = False
-        self.last_update = None
+        self.last_update = -1
         with open(config_file,"r") as f:
             self.config = yaml.safe_load(f)
+        self.window_games =generator_pb2.Batch()
+
 
 
     def __del__(self):
@@ -36,28 +40,36 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
         if self.thread is not None:
             self.thread.join()
 
+    def create_random_network(self,name):
+        print("Creating random network")
+        network = LitMLP.Network(self.config["network"])
+        network.save_quantized("Networks/"+name+".quant")
+
+    #below method not working properly
     def get_window_count(self):
         directory = os.fsencode("TrainData")
-        max_index = -1000
+        max_index = -1
         for file in os.listdir(directory):
             file_name = os.fsdecode(file)
-            if not file_name.startswith(file_name,self.config["name"]+".window"):
-                continue
             if not file_name.endswith(".train"):
+                continue
+            if not file_name.startswith(self.config["name"]+".window"):
                 continue
             file_name = remove_prefix(file_name,self.config["name"]+".window")
             file_name = remove_postfix(file_name,".train")
             index = int(file_name)
-            if index> max_index:
+            if index > max_index:
                 max_index = index
+            print("FileName: ",file_name) 
         return max_index
 
     def get_latest_network(self):
         directory = os.fsencode("Networks")
         net_file = None
-        max_index = -1000
+        max_index = -1
         for file in os.listdir(directory):
             file_name = os.fsdecode(file)
+            orig_name = file_name
             if not file_name.startswith(self.config["name"]):
                 continue
             if not file_name.endswith(".quant"):
@@ -67,7 +79,7 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
             index = int(file_name)
             if index>max_index:
                 max_index =index
-                net_file = os.fsdecode(file)
+                net_file = orig_name
 
         return net_file
 
@@ -77,7 +89,21 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
         #print("Got a batch of data")
         #print(request.games[0])
         self.counter+=len(request.games)
-        print(self.counter)
+        self.window_games.games.extend(request.games)
+        length = len(self.window_games.games)
+        print("WindowSize: ",self.config["window_size"])
+        if length >= self.config["window_size"]:
+            data = self.window_games.SerializeToString()
+            window_counter = self.get_window_count()+1
+            file = open("TrainData/"+self.config["name"]+".window"+str(window_counter)+".train","wb")
+            file.write(data)
+            file.close()
+            print("Filled up the window")
+            self.window_games.ClearField("games")
+            #starting training of a new network
+            train_thread =threading.Thread(target = self.train_network)
+            train_thread.start()
+
         return generator_pb2.Response(message="Got the batch")
 
     def get_last_update(self, request, context):
@@ -89,9 +115,11 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
         #data = file.read()
         #file.close()
         file_name =self.get_latest_network()
+        print("Found network: ", file_name)
         if file_name is None:
-            #do something here
-            return
+            #creating a random network
+            file_name = self.config["name"]+"0"
+            self.create_random_network(file_name)
 
 
         print("Name:",file_name)
@@ -117,6 +145,15 @@ class Generator(generator_pb2_grpc.GeneratorServicer):
     def start_ui_thread(self):
         self.thread = threading.Thread(target=self.print_table)
         self.thread.start();
+
+
+    #dummy function for now
+    def train_network(self):
+        print("Start training a network")
+        time.sleep(10)
+        print("Finished training a network")
+        self.last_update = time.time()
+
         
 
 
@@ -134,7 +171,4 @@ def server():
 if __name__=="__main__":
     server()
 
-text="test123.quant"
-text = remove_postfix(text,".quant")
-text = remove_prefix(text,"test")
-print(text)
+

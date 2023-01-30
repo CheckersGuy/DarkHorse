@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 import subprocess
 import multiprocessing
 import threading
@@ -13,7 +14,7 @@ import random
 import grpc
 import generator_pb2
 import generator_pb2_grpc
-
+import math
 #Needs to be reworked using a multiprocessing pool
 
 
@@ -47,6 +48,7 @@ counter = multiprocessing.Value("i",0)
 print_lock = multiprocessing.Lock()
 write_lock = multiprocessing.Lock()
 games = multiprocessing.Manager().list()
+net_update_event =[]
 
 class Interface:
     
@@ -62,17 +64,10 @@ class Interface:
         self.time_per_move =100
         self.adjudication=10
         self._parallelism = 1
-        self.network_file = None
+        self.network_file = ""
+        self.last_net_update=-math.inf
 
 
-    @property
-    def parallelism(self):
-        return self._parallelism
-
-
-    @parallelism.setter
-    def parallelism(self,value):
-        self._parallelism =value
        
     def time_convert(self,time_seconds):
          mins =time_seconds//60
@@ -182,54 +177,68 @@ class Interface:
         #Only executing in main process from here on
         self.start_time =time.time()
         thread = threading.Thread(target=self.print_table)
-        #thread.start()
+        thread.start()
         self.start_grpc_client()
-        #thread.join()
+        thread.join()
         results.get()
+    
+    def check_for_new_network(self,stub):
+        response = stub.get_last_update(generator_pb2.Empty())
+        if response.timestamp>self.last_net_update:
+            #need to download the new network
+            net_data = stub.get_new_network(generator_pb2.Empty())
+            out_file = open("Networks/client.quant","wb")
+            out_file.write(net_data.data)
+            out_file.close()
+            self.last_net_update = response.timestamp
+            print("Downloaded a new network")
+
+
+
+    def upload_batch(self,stub):
+        write_lock.acquire()
+        if len(games)<100:
+            write_lock.release()
+            return
+        #Here we have a full batch
+        batch = generator_pb2.Batch()
+        for g in games:
+            game = generator_pb2.Game()
+            game.start_position=g[0]
+            game.move_indices.extend([int(value) for value in g[1:]])
+            batch.games.append(game)
+        response = stub.upload_batch(batch)
+        games[:]=[]
+        write_lock.release()
 
     def start_grpc_client(self):
         print("STARTED")
         channel = grpc.insecure_channel("localhost:50052")
         stub = generator_pb2_grpc.GeneratorStub(channel)
-        response = stub.get_last_update(generator_pb2.Empty())
-        time = response.timestamp
-        if time ==0:
-            #getting a new network
-            print("TEst")
-            net_data = stub.get_new_network(generator_pb2.Empty())
-            out_file = open("Networks/client.quant","wb")
-            out_file.write(net_data.data)
-            out_file.close()
-            print("Downloaded the new network")
-        #print("TimeStamp: {}".format(response.timestamp))
-        return
+        self.check_for_new_network(stub)
         while True:
             time.sleep(0.1)
-            write_lock.acquire()
-            if len(games)<100:
-                write_lock.release()
-                continue
+            self.upload_batch(stub) 
 
-            batch =generator_pb2.Batch()
-            for g in games:
-                game =generator_pb2.Game()
-                game.start_position =g[0]
-                game.move_indices.extend([int(value) for value in g[1:]])
-                batch.games.append(game)
-            response = stub.upload_batch(batch)
-            games[:]=[]
-            write_lock.release()
-            #print("Response: {}".format(response.message))
-            
+    @property
+    def parallelism(self):
+        return self._parallelism
+
+    #settter
+    @parallelism.setter
+    def parallelism(self,value):
+        self._parallelism = value
+        #setting the events
+        net_update_event=[multiprocessing.Event() for i in range(self._parallelism)]
 
   
 
 
 interface = Interface()
 interface.time_per_move = 10
-interface.parallelism = 7
+interface.parallelism = 14
 interface.hash_size =21
-interface.max_games =5000
+interface.max_games =500000
 interface.network_file="bigagain10.quant"
 interface.read_openings("Positions/train9.book")
 interface.start()

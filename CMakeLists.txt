@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
+SET(CMAKE_SYSTEN_NAME Generic)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_BUILD_TYPE "Release")
@@ -14,11 +15,16 @@ else()
   add_compile_options("-O3")
 endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
-find_package(Protobuf QUIET)
+find_package(Protobuf REQUIRED)
+include_directories(${Protobuf_INCLUDE_DIRS})
+#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/Training/generator.proto)
+#protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/DESCRIPTORS Training/generator.proto)
+
+
 if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)
     file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.h  )
-    file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.cpp)
+    file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.cpp)
     file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
     file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.h)
     list(REMOVE_ITEM TSources  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp)
@@ -44,12 +50,14 @@ add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/C
 add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
 add_executable(tb_rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/tb_rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BloomFilter.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h )
 
+add_executable(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/Rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/SampleUtil.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/SampleUtil.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/Rescorer.cpp)
+
 add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/Compress.h)
 set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training/PyTrainer")
 
 
 if (UNIX)
-    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} Training/Generator.cpp Training/Generator.h Training/BloomFilter.h Training/Sample.cpp Training/Sample.h Training/PosStreamer.cpp Training/PosStreamer.h Training/BatchProvider.cpp Training/BatchProvider.h)
+    add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} ${PROTO_SRCS} ${PROTO_HDRS})
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
@@ -62,5 +70,7 @@ target_compile_options(tb_rescorer PRIVATE -O3 -mno-ms-bitfields)
 #target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
 target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
 target_link_libraries(tb_rescorer  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
-
+target_link_libraries(Rescorer  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
+target_link_libraries(Train ${Protobuf_LIBRARIES})
+target_link_libraries(Rescorer ${Protobuf_LIBRARIES})
 

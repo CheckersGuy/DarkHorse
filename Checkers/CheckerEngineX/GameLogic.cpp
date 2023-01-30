@@ -204,7 +204,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     local.ply = ply;
     local.depth = depth;
     local.move = Move{};
-	local.previous = previous;
+  	local.previous = previous;
     //checking win condition
 
 
@@ -230,8 +230,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 	if(liste.length()==0){
 			return loss(ply);
 	}
-
-    if (TT.find_hash(pos_key, info)&& info.flag != Flag::None) {
+    bool found_hash = TT.find_hash(pos_key,info);
+    if (found_hash && info.flag != Flag::None) {
         tt_move = info.tt_move;
         auto tt_score = valueFromTT(info.score, ply);
         if (info.depth >= depth && info.flag != Flag::None) {
@@ -284,7 +284,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
 
     int start_index = 0;
     if (in_pv && local.ply < mainPV.length()) {
-		const Move mv = mainPV[local.ply];
+		    const Move mv = mainPV[local.ply];
         bool sucess=liste.put_front(mv);
         start_index +=sucess;
     }
