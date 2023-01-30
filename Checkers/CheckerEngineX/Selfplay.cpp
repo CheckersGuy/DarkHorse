@@ -39,6 +39,12 @@ void Selfplay::parse_command(std::string command){
     auto game = play_game(fen_string);
     send_game(game);
   }
+  //loading a new network file
+  if(split[0] == "loadnetwork"){
+    auto net_file = split[1];
+    network.load("Networks/"+net_file);
+  }
+
   if(split[0]=="settings"){
     auto time =std::stoi(split[1]);
     auto hash_size = std::stoi(split[2]);

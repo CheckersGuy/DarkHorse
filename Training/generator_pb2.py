@@ -13,25 +13,33 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fgenerator.proto\"\x17\n\x07Network\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\"4\n\x04Game\x12\x16\n\x0estart_position\x18\x01 \x01(\t\x12\x14\n\x0cmove_indices\x18\x02 \x03(\x05\"\x1b\n\x08Response\x12\x0f\n\x07message\x18\x01 \x01(\t\"\x1d\n\x05\x42\x61tch\x12\x14\n\x05games\x18\x01 \x03(\x0b\x32\x05.Game\"\x1f\n\nLastUpdate\x12\x11\n\ttimestamp\x18\x01 \x01(\x05\"\x07\n\x05\x45mpty2\xa4\x01\n\tGenerator\x12!\n\x0bupload_game\x12\x05.Game\x1a\t.Response\"\x00\x12#\n\x0cupload_batch\x12\x06.Batch\x1a\t.Response\"\x00\x12(\n\x0fget_last_update\x12\x06.Empty\x1a\x0b.LastUpdate\"\x00\x12%\n\x0fget_new_network\x12\x06.Empty\x1a\x08.Network\"\x00\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0fgenerator.proto\x12\x05Proto\"g\n\x06Sample\x12\n\n\x02WP\x18\x01 \x01(\r\x12\n\n\x02\x42P\x18\x02 \x01(\r\x12\t\n\x01K\x18\x03 \x01(\r\x12\x1b\n\x05mover\x18\x04 \x01(\x0e\x32\x0c.Proto.Color\x12\x1d\n\x06result\x18\x05 \x01(\x0e\x32\r.Proto.Result\"+\n\tTrainData\x12\x1e\n\x07samples\x18\x01 \x03(\x0b\x32\r.Proto.Sample\"\x17\n\x07Network\x12\x0c\n\x04\x64\x61ta\x18\x01 \x01(\x0c\"4\n\x04Game\x12\x16\n\x0estart_position\x18\x01 \x01(\t\x12\x14\n\x0cmove_indices\x18\x02 \x03(\x05\"\x1b\n\x08Response\x12\x0f\n\x07message\x18\x01 \x01(\t\"#\n\x05\x42\x61tch\x12\x1a\n\x05games\x18\x01 \x03(\x0b\x32\x0b.Proto.Game\"\x1f\n\nLastUpdate\x12\x11\n\ttimestamp\x18\x01 \x01(\x05\"\x07\n\x05\x45mpty*?\n\x06Result\x12\r\n\tUNDEFINED\x10\x00\x12\r\n\tWHITE_WIN\x10\x01\x12\r\n\tBLACK_WIN\x10\x02\x12\x08\n\x04\x44RAW\x10\x03*+\n\x05\x43olor\x12\x0c\n\x08NO_COLOR\x10\x00\x12\t\n\x05WHITE\x10\x01\x12\t\n\x05\x42LACK\x10\x02\x32\xd4\x01\n\tGenerator\x12-\n\x0bupload_game\x12\x0b.Proto.Game\x1a\x0f.Proto.Response\"\x00\x12/\n\x0cupload_batch\x12\x0c.Proto.Batch\x1a\x0f.Proto.Response\"\x00\x12\x34\n\x0fget_last_update\x12\x0c.Proto.Empty\x1a\x11.Proto.LastUpdate\"\x00\x12\x31\n\x0fget_new_network\x12\x0c.Proto.Empty\x1a\x0e.Proto.Network\"\x00\x62\x06proto3')
 
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, globals())
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'generator_pb2', globals())
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
-  _NETWORK._serialized_start=19
-  _NETWORK._serialized_end=42
-  _GAME._serialized_start=44
-  _GAME._serialized_end=96
-  _RESPONSE._serialized_start=98
-  _RESPONSE._serialized_end=125
-  _BATCH._serialized_start=127
-  _BATCH._serialized_end=156
-  _LASTUPDATE._serialized_start=158
-  _LASTUPDATE._serialized_end=189
-  _EMPTY._serialized_start=191
-  _EMPTY._serialized_end=198
-  _GENERATOR._serialized_start=201
-  _GENERATOR._serialized_end=365
+  _RESULT._serialized_start=363
+  _RESULT._serialized_end=426
+  _COLOR._serialized_start=428
+  _COLOR._serialized_end=471
+  _SAMPLE._serialized_start=26
+  _SAMPLE._serialized_end=129
+  _TRAINDATA._serialized_start=131
+  _TRAINDATA._serialized_end=174
+  _NETWORK._serialized_start=176
+  _NETWORK._serialized_end=199
+  _GAME._serialized_start=201
+  _GAME._serialized_end=253
+  _RESPONSE._serialized_start=255
+  _RESPONSE._serialized_end=282
+  _BATCH._serialized_start=284
+  _BATCH._serialized_end=319
+  _LASTUPDATE._serialized_start=321
+  _LASTUPDATE._serialized_end=352
+  _EMPTY._serialized_start=354
+  _EMPTY._serialized_end=361
+  _GENERATOR._serialized_start=474
+  _GENERATOR._serialized_end=686
 # @@protoc_insertion_point(module_scope)

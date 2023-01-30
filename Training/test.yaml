@@ -1,6 +1,6 @@
-name: "Test"
-window-size: 10000
+name: "test"
+window_size: 1000
 num_epochs: 30
 num_networks: 200
 time_per_move: 100
-
+network: [120, 1024, 8, 32, 1]
