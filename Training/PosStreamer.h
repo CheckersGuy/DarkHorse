@@ -14,22 +14,20 @@
 #include <filesystem>
 #include "Util/Compress.h"
 #include <chrono>
-#include "BloomFilter.h"
-
-
+#include "generator.pb.h"
+#include "Util/SampleUtil.h"
 class PosStreamer {
 
 private:
     size_t gen_seed;
     std::string file_path;
     size_t buffer_size;
-    std::vector<Sample> buffer;
+    std::vector<Proto::Sample> buffer;
     size_t ptr;
     std::ifstream stream;
     std::mt19937_64 generator;
     bool shuffle{true};
     size_t num_samples; // number of samples
-    std::vector<Game> games;
     size_t game_offset{0};
    
 
@@ -51,24 +49,15 @@ public:
             std::exit(-1);
         }
         //loading the game
-        std::istream_iterator<Game> begin(stream);
-        std::istream_iterator<Game>end;
-        std::cout<<"Loading games"<<std::endl;
-        std::copy(begin,end,std::back_inserter(games));
-        std::cout<<"Done loading games"<<std::endl;
-        std::shuffle(games.begin(),games.end(),generator);
-        std::cout<<"Done shuffling"<<std::endl;
-        num_samples = count_trainable_positions(file_path);
-                std::cout<<"loading"<<std::endl;
-        this->buffer_size = std::min(num_samples, buff_size);
-        ptr = this->buffer_size + 1;
-        std::cout<<"BufferSize: "<<buffer_size<<std::endl;
-        buffer.reserve(this->buffer_size);
-        std::cout<<this->buffer_size<<std::endl;
-
+        Proto::Batch batch;
+        batch.ParseFromIstream(&stream);
+        for(auto& game : batch.games() ){
+          auto positions = extract_sample(game);
+          std::copy(positions.begin(),positions.end(),std::back_inserter(buffer));
+        }
     }
 
-    Sample get_next();
+    Proto::Sample get_next();
 
     void set_shuffle(bool shuff);
 

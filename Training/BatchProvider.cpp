@@ -3,28 +3,37 @@
 //
 
 #include "BatchProvider.h"
+#include "generator.pb.h"
 
 
 
 void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
     //needs some refactoring at some point
-    auto create_input = [&](Sample s, float *input, size_t off) {
-        if (s.position.color == BLACK) {
-            s.position = s.position.get_color_flip();
-            s.result = ~s.result;
+    auto create_input = [&](Proto::Sample s, float *input, size_t off) {
+        if (s.mover() == Proto::BLACK) {
+            Position temp;
+            temp.WP = s.wp();
+            temp.BP =s.bp();
+            temp.K =s.k();
+            temp = temp.get_color_flip();
+
+            s.set_wp(temp.WP);
+            s.set_bp(temp.BP);
+            s.set_k(temp.K);
+            s.set_mover(Proto::WHITE);
         }
         float result = 0.5f;
-        if (s.result == BLACK_WON) {
+        if (s.result()== Proto::BLACK_WIN) {
             result = 0.0f;
-        } else if (s.result == WHITE_WON) {
+        } else if (s.result() == Proto::WHITE_WIN) {
             result = 1.0f;
         }
 
 
-        uint32_t white_men = s.position.WP & (~s.position.K);
-        uint32_t black_men = s.position.BP & (~s.position.K);
-        uint32_t white_kings = s.position.K & s.position.WP;
-        uint32_t black_kings = s.position.K & s.position.BP;
+        uint32_t white_men = s.wp() & (~s.k());
+        uint32_t black_men = s.bp() & (~s.k());
+        uint32_t white_kings = s.k() & s.wp();
+        uint32_t black_kings = s.k() & s.bp();
         size_t offset = 0u + off;
 
         while (white_men != 0u) {
@@ -57,11 +66,10 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
 
     const size_t INPUT_SIZE = 120;
     for (auto i = 0; i < get_batch_size(); ++i) {
-        Sample current = get_streamer().get_next();
+        Proto::Sample current = get_streamer().get_next();
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
-        moves[i] = current.move;
     }
 
 

@@ -104,7 +104,7 @@ class Interface:
 
  
     def process_stream(self,index):
-        process = subprocess.Popen(["./MainEngine","--selfplay","--network ../cmake-build-debug/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
+        process = subprocess.Popen(["../cmake-build-debug/MainEngine","--selfplay","--network ../cmake-build-debug/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
         random.seed((os.getpid()*int(time.time()))%123456789)
         #channel = grpc.insecure_channel("localhost:50051")
         global counter
