@@ -7,6 +7,11 @@
 #include "Board.h"
 #include <cstdint>
 #include "Position.h"
+#include <PosStreamer.h>
+#include <BatchProvider.h>
+
+
+
 extern "C" void get_next_val_batch(float *results,int64_t *moves, float *inputs);
 extern "C" void get_next_batch(float *results,int64_t *moves,float *inputs);
 

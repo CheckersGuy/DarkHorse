@@ -33,6 +33,7 @@ file(GLOB CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.h)
 file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp")
+list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 
 
@@ -45,8 +46,8 @@ add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/C
 add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
 
 
-add_library(pyhelper SHARED ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/Compress.h)
-set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training/PyTrainer")
+add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${THeaders} ${TSources})
+set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training")
 
 
 if (UNIX)
@@ -59,6 +60,7 @@ set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_C
 #target_compile_definitions(MainEngine PUBLIC "USE_DB")
 target_compile_definitions(Dark PUBLIC "USE_DB")
 #target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
-target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
+#target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
 target_link_libraries(Train ${Protobuf_LIBRARIES})
+target_link_libraries(pyhelper ${Protobuf_LIBRARIES})
 

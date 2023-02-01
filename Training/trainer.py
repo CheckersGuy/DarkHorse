@@ -15,7 +15,7 @@ c_lib = ctypes.CDLL(libname)
 if __name__ == "__main__":
     model = LitMLP.Network(output="bigagain",hidden=[120, 1024, 8, 32, 1])
 
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/reinfformatted.train",
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/test.train",
                                        val_data="TrainData/val.train",
                                        batch_size=8192, buffer_size=50000000)
 
