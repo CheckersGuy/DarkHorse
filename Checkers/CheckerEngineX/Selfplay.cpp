@@ -100,8 +100,8 @@ SelfGame Selfplay::play_game(std::string fen_string){
     }
     game.second.emplace_back(k);
     board.make_move(best);
-    if(board.get_position().piece_count()<=adjud  && !board.get_position().has_jumps())
-      break;
+    //if(board.get_position().piece_count()<=adjud  && !board.get_position().has_jumps())
+    //  break;
 
     MoveListe endlist;
     get_moves(board.get_position(),endlist);

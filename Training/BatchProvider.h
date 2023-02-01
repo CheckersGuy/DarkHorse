@@ -11,6 +11,7 @@
 #include <PosStreamer.h>
 #include <deque>
 
+
 //making things a little more readable
 
 class BatchProvider {
