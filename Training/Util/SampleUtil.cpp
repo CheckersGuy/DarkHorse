@@ -5,11 +5,9 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include "egdb.h"
 #include <thread>
 #include <vector>
 #include "../../Checkers/CheckerEngineX/MGenerator.h"
-#define DB_PATH "D:\kr_english_wld"
 #include "SampleUtil.h"
 
 std::vector<Proto::Sample> extract_sample(const Proto::Game& game){
