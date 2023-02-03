@@ -52,12 +52,7 @@ class Network(pl.LightningModule):
                 if isinstance(layer, torch.nn.Linear):
                     layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
 
-    def save_model_weights(self):
-        self.save(self.output + ".pt")
-        self.save_quantized(self.output + ".quant")
 
-    def on_train_epoch_end(self) -> None:
-        self.save_model_weights()
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
@@ -136,8 +131,6 @@ class Network(pl.LightningModule):
         self.to(device_gpu)
         return
 
-    def save(self, output):
-        torch.save(self.state_dict(), output)
 
 
 class PolicyNetwork(pl.LightningModule):

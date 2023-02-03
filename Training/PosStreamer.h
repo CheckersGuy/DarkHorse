@@ -55,6 +55,7 @@ public:
           auto positions = extract_sample(game);
           std::copy(positions.begin(),positions.end(),std::back_inserter(buffer));
         }
+        ptr = buffer.size()+1;
     }
 
     Proto::Sample get_next();

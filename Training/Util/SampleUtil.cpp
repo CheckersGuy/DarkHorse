@@ -20,6 +20,7 @@ std::vector<Proto::Sample> extract_sample(const Proto::Game& game){
   first.set_wp(current.WP);
   first.set_bp(current.BP);
   first.set_k(current.K);
+  samples.emplace_back(first);
 
   for(const auto& index : game.move_indices()){
     MoveListe liste;
@@ -40,9 +41,18 @@ std::vector<Proto::Sample> extract_sample(const Proto::Game& game){
   if(endlist.length() ==0){
     end_result =(current.get_color() == BLACK)?Proto::WHITE_WIN : Proto::BLACK_WIN;
   }
+  std::string result_string;
+  if(end_result ==Proto::DRAW)
+    result_string="DRAW";
+  else if(end_result ==Proto::BLACK_WIN)
+    result_string="BLACK_WIN";
+  else if(end_result ==Proto::WHITE_WIN)
+    result_string="WHITE_WIN";
+  //std::cout<<result_string<<std::endl;
   for(Proto::Sample& sample : samples){
     sample.set_result(end_result);
   }
+  return samples;
 
 
 }

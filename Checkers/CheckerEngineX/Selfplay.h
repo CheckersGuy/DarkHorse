@@ -49,6 +49,8 @@ class Selfplay{
   void set_adjudication(int adj);
 
   void parse_command(std::string command);
+
+  void set_resign_threshhold(float value);
   
 
 
