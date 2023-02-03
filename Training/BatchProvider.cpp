@@ -21,6 +21,7 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
             s.set_bp(temp.BP);
             s.set_k(temp.K);
             s.set_mover(Proto::WHITE);
+            s.set_result((s.result()==Proto::WHITE_WIN)?Proto::BLACK_WIN : Proto::WHITE_WIN);
         }
         float result = 0.5f;
         if (s.result()== Proto::BLACK_WIN) {

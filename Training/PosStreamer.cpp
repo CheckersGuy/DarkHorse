@@ -6,12 +6,13 @@
 #include "PosStreamer.h"
 
 size_t PosStreamer::get_num_positions() const {
-    return num_samples;
+    return buffer.size();
 }
 
 Proto::Sample PosStreamer::get_next() {
     if (ptr >= buffer.size()) {
              if (shuffle) {
+            std::cout<<"Shuffled"<<std::endl;
             auto t1 = std::chrono::high_resolution_clock::now();
             std::shuffle(buffer.begin(), buffer.end(), generator);
             auto t2 = std::chrono::high_resolution_clock::now();

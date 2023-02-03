@@ -1,7 +1,9 @@
 #include "Selfplay.h"
 #include "MovePicker.h"
+#include "Zobrist.h"
+#include "types.h"
 #include <algorithm>
-
+#include <unistd.h>
 
 void Selfplay::start_loop(){
   //to be adde
@@ -42,7 +44,7 @@ void Selfplay::parse_command(std::string command){
   //loading a new network file
   if(split[0] == "loadnetwork"){
     auto net_file = split[1];
-    network.load("Networks/"+net_file);
+    network.load(net_file);
   }
 
   if(split[0]=="settings"){
@@ -74,10 +76,18 @@ void Selfplay::terminate(){
   stop =true;
 }
 
+void Selfplay::set_resign_threshhold(float value){
+  
+}
+
 SelfGame Selfplay::play_game(std::string fen_string){
 //to be added
+//testing resign threshholds next
+  network.load("Networks/client.quant");
   TT.clear();
   Statistics::mPicker.clear_scores();
+  int pid = getpid();
+  Zobrist::init_zobrist_keys(pid^getSystemTime());
   SelfGame game;
   
   Position current;
@@ -100,9 +110,6 @@ SelfGame Selfplay::play_game(std::string fen_string){
     }
     game.second.emplace_back(k);
     board.make_move(best);
-    //if(board.get_position().piece_count()<=adjud  && !board.get_position().has_jumps())
-    //  break;
-
     MoveListe endlist;
     get_moves(board.get_position(),endlist);
     if(endlist.length()==0)

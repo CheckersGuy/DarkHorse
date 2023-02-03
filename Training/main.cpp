@@ -17,40 +17,10 @@
 #include "generator.pb.h"
 #include <fstream>
 #include "Position.h"
-void print_game(const Proto::Game&game){
-  auto fen_string = game.start_position();
 
-  Position pos;
-  pos = Position::pos_from_fen(fen_string);
-  std::cout<<pos<<std::endl;
-  for(auto i=0;i<game.move_indices_size();++i){
-    auto move = game.move_indices(i);
-    MoveListe liste;
-    get_moves(pos, liste);
-    pos.make_move(liste[move]);
-    pos.print_position();
-  }
-  
-}
 
 int main(int argl, const char **argc) {
 
-  std::ifstream stream("../Training/TrainData/test.window0.train",std::ios::binary);
-  if(!stream.good()){
-    std::cerr<<"Error"<<std::endl;
-    std::exit(-1);
-  }
-  Proto::Batch batch;
-  batch.ParseFromIstream(&stream);
-
-  for(auto& game : batch.games()){
-    print_game(game);
-    std::cout<<std::endl;
-  }
-
-  std::cout<<batch.games_size()<<std::endl;
-  return 0;
-  
   // void create_train_file(std::string base_book, std::string output, int
   // depth);
 /*

@@ -1,6 +1,6 @@
 name: "test"
-window_size: 10000
+window_size: 50000
 num_epochs: 30
 num_networks: 200
-time_per_move: 100
+time_per_move: 10
 network: [120, 1024, 8, 32, 1]

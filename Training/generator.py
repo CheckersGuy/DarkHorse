@@ -48,7 +48,7 @@ counter = multiprocessing.Value("i",0)
 print_lock = multiprocessing.Lock()
 write_lock = multiprocessing.Lock()
 games = multiprocessing.Manager().list()
-net_update_event =[]
+start_event = multiprocessing.Event()
 
 class Interface:
     
@@ -65,7 +65,7 @@ class Interface:
         self.adjudication=10
         self._parallelism = 1
         self.network_file = ""
-        self.last_net_update=-math.inf
+        self.last_net_update=-10000
 
 
        
@@ -104,7 +104,9 @@ class Interface:
 
  
     def process_stream(self,index):
-        process = subprocess.Popen(["../cmake-build-debug/MainEngine","--selfplay","--network ../cmake-build-debug/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
+
+        start_event.wait()
+        process = subprocess.Popen(["../cmake-build-debug/MainEngine","--selfplay","--network Networks/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
         random.seed((os.getpid()*int(time.time()))%123456789)
         #channel = grpc.insecure_channel("localhost:50051")
         global counter
@@ -118,6 +120,8 @@ class Interface:
                 self.engine.state = States.INIT
             
             if self.engine.state == States.INIT:
+                self.load_network_command("Networks/client.quant",process)
+                #print("Refreshed network")
                 self.send_play_command(self.pick_opening(),process)
                 self.engine.state = States.PLAYING_GAME
 
@@ -160,6 +164,10 @@ class Interface:
         cmd = "playgame!"+fen_string+"\n"
         stream.stdin.writelines([cmd.encode()])
         stream.stdin.flush()
+    def load_network_command(self,file,stream):
+        cmd="loadnetwork!"+file+"\n"
+        stream.stdin.writelines([cmd.encode()])
+        stream.stdin.flush()
 
     def send_termination_command(self,stream):
         cmd="terminate\n"
@@ -192,6 +200,7 @@ class Interface:
             out_file.close()
             self.last_net_update = response.timestamp
             print("Downloaded a new network")
+            start_event.set()
 
 
 
@@ -209,6 +218,7 @@ class Interface:
             batch.games.append(game)
         response = stub.upload_batch(batch)
         games[:]=[]
+        #response should be blocking
         write_lock.release()
 
     def start_grpc_client(self):
@@ -218,7 +228,8 @@ class Interface:
         self.check_for_new_network(stub)
         while True:
             time.sleep(0.1)
-            self.upload_batch(stub) 
+            self.upload_batch(stub)
+            self.check_for_new_network(stub)
 
     @property
     def parallelism(self):
@@ -229,7 +240,6 @@ class Interface:
     def parallelism(self,value):
         self._parallelism = value
         #setting the events
-        net_update_event=[multiprocessing.Event() for i in range(self._parallelism)]
 
   
 
@@ -239,7 +249,7 @@ interface.time_per_move = 10
 interface.parallelism = 14
 interface.hash_size =21
 interface.max_games =500000
-interface.network_file="bigagain10.quant"
+interface.network_file="client.quant"
 interface.read_openings("Positions/train9.book")
 interface.start()
 
