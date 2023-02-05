@@ -159,7 +159,7 @@ def server():
     generator.start_ui_thread()
     print("Test")
     generator_pb2_grpc.add_GeneratorServicer_to_server(generator,server)
-    server.add_insecure_port("[::]:50052")
+    server.add_insecure_port("0.0.0.0:8000")
     print("Server starting")
     server.start()
     server.wait_for_termination()

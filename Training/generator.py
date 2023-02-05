@@ -223,7 +223,7 @@ class Interface:
 
     def start_grpc_client(self):
         print("STARTED")
-        channel = grpc.insecure_channel("localhost:50052")
+        channel = grpc.insecure_channel("localhost:8000")
         stub = generator_pb2_grpc.GeneratorStub(channel)
         self.check_for_new_network(stub)
         while True:
@@ -245,7 +245,7 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 10
+interface.time_per_move = 50
 interface.parallelism = 14
 interface.hash_size =21
 interface.max_games =500000
