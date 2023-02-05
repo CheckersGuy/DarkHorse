@@ -83,7 +83,7 @@ void Selfplay::set_resign_threshhold(float value){
 SelfGame Selfplay::play_game(std::string fen_string){
 //to be added
 //testing resign threshholds next
-  network.load("Networks/client.quant");
+  //network.load("Networks/client.quant");
   TT.clear();
   Statistics::mPicker.clear_scores();
   int pid = getpid();
