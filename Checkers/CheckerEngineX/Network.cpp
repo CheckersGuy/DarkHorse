@@ -3,6 +3,7 @@
 //
 
 #include "Network.h"
+#include "GameLogic.h"
 
 
 void Accumulator::refresh() {
@@ -14,6 +15,28 @@ void Accumulator::refresh() {
     previous_white =Position{};
 }
 
+
+Wdl Network::get_wdl(){
+ Wdl values;
+ values.win = (*this)[0];
+ values.loss = (*this)[1];
+ values.draw =(*this)[2];
+ return values;
+}
+
+
+float quant_to_float(int quant){
+  float temp = static_cast<float>(quant);
+  float temp2 = 128.0;
+  return temp/temp2;
+}
+
+bool is_uncertain_eval(Wdl wdl){
+  //some experiments
+  float sum = std::exp(quant_to_float(wdl.win))+std::exp(quant_to_float(wdl.loss))+std::exp(quant_to_float(wdl.draw));
+  float draw_perc =std::exp(quant_to_float(wdl.draw))/sum;
+  return (draw_perc<0.1f && (wdl.win-wdl.loss)<=10);
+}
 void Accumulator::apply(Color perp, Position before, Position after)
 {
     int16_t* input =((perp == BLACK)?black_acc.get(): white_acc.get());
@@ -297,6 +320,22 @@ int Network::evaluate(Position pos, int ply)
 
     int32_t val = compute_incre_forward_pass(pos);
     return val;
+    auto wdl =network.get_wdl();
+    float val_win =std::exp(quant_to_float(wdl.win));
+    float val_loss = std::exp(quant_to_float(wdl.loss));
+    float val_draw = std::exp(quant_to_float(wdl.draw));
+    float sum = val_win+val_loss+val_draw;
+
+    float score = (val_win-val_loss)/sum;
+    float draw_perc = val_draw/sum;
+
+    float test = (1.0-draw_perc);
+    score*=test;
+    score*=600;
+    score = std::round(score);
+
+
+    return static_cast<int>(score);
 }
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {

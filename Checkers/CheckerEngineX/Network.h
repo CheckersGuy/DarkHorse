@@ -21,6 +21,13 @@ struct Layer {
     int out_features;
 };
 
+//named triple
+struct Wdl{
+  int win,loss,draw;
+};
+
+bool is_uncertain_eval(Wdl wdl);
+
 struct Accumulator {
     std::unique_ptr<int16_t[]> black_acc;
     std::unique_ptr<int16_t[]> white_acc;
@@ -93,11 +100,13 @@ struct Network {
 
     void init();
 
+    Wdl get_wdl();
+
     void print_output_layer();
 
     int compute_incre_forward_pass(Position next);
-
-    float get_win_p(Position pos);
+    
+    
 
     int evaluate(Position pos, int ply);
 
