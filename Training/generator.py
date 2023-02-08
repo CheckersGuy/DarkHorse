@@ -245,7 +245,7 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 50
+interface.time_per_move = 10
 interface.parallelism = 14
 interface.hash_size =21
 interface.max_games =500000
