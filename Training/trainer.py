@@ -49,18 +49,18 @@ def train_network(run_name,counter,train_file):
 
 
 if __name__ == "__main__":
-    model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
+    model = LitMLP.WDLNetwork(output="nonwdl",hidden=[120, 1024, 8, 32, 3])
 
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/test.train",
+    data_loader = LitMLP.WDLDataModule(train_data="TrainData/test.train",
                                        val_data="TrainData/val.train",
-                                       batch_size=8192, buffer_size=50000000)
+                                       batch_size=8192, buffer_size=2000000)
 
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=90, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=30, callbacks=[check_point_callback])
     trainer.fit(model, data_loader)
     model.save_quantized("Networks/{}.quant".format("nonwdlnext"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))

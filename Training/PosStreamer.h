@@ -23,6 +23,7 @@ private:
     std::string file_path;
     size_t buffer_size;
     std::vector<Proto::Sample> buffer;
+    Proto::Batch data;
     size_t ptr;
     std::ifstream stream;
     std::mt19937_64 generator;
@@ -33,10 +34,12 @@ private:
 
 public:
 
-    PosStreamer(std::string file_path, size_t buff_size, size_t seed = 12312312){
+    PosStreamer(std::string file_path, size_t buff_size=200000, size_t seed = 12312312){
+      
                 
         this->file_path = file_path;
         gen_seed=seed;
+        buffer_size = buff_size;
         stream = std::ifstream(file_path, std::ios::binary);
         generator = std::mt19937_64(getSystemTime());
         if (file_path.empty()) {
@@ -49,13 +52,16 @@ public:
             std::exit(-1);
         }
         //loading the game
-        Proto::Batch batch;
-        batch.ParseFromIstream(&stream);
-        for(auto& game : batch.games() ){
-          auto positions = extract_sample(game);
-          std::copy(positions.begin(),positions.end(),std::back_inserter(buffer));
+        data.ParseFromIstream(&stream);
+        std::cout<<"Counting number of positions"<<std::endl; 
+        ptr = buffer.size()+1000;
+        size_t size =0;
+        for(Proto::Game game : data.games()){
+          size+=game.move_indices_size()+1;
         }
-        ptr = buffer.size()+1;
+        std::cout<<"Counted: "<<size<<" positions"<<std::endl;
+        num_samples=size;
+
     }
 
     Proto::Sample get_next();
