@@ -27,7 +27,7 @@ Wdl Network::get_wdl(){
 
 float quant_to_float(int quant){
   float temp = static_cast<float>(quant);
-  float temp2 = 128.0;
+  float temp2 = 127.0;
   return temp/temp2;
 }
 
@@ -319,7 +319,6 @@ int Network::evaluate(Position pos, int ply)
     }
 
     int32_t val = compute_incre_forward_pass(pos);
-    return val;
     auto wdl =network.get_wdl();
     float val_win =std::exp(quant_to_float(wdl.win));
     float val_loss = std::exp(quant_to_float(wdl.loss));

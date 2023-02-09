@@ -6,11 +6,24 @@
 #include "PosStreamer.h"
 
 size_t PosStreamer::get_num_positions() const {
-    return buffer.size();
+    return num_samples;
 }
 
 Proto::Sample PosStreamer::get_next() {
-    if (ptr >= buffer.size()) {
+      if (ptr >= buffer.size()) {
+            buffer.clear();
+            //Need to fill the buffer again;
+            std::cout<<"Filling up the buffer"<<std::endl;
+            std::cout<<"Buffersize: "<<buffer_size<<std::endl;
+            while(buffer.size()<buffer_size){
+              auto game = data.games(game_offset++);
+              game_offset=game_offset%data.games_size();
+              auto positions = extract_sample(game);
+              for(auto pos : positions){
+                buffer.emplace_back(pos);
+              }
+            }
+
              if (shuffle) {
             std::cout<<"Shuffled"<<std::endl;
             auto t1 = std::chrono::high_resolution_clock::now();
