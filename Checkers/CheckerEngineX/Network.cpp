@@ -319,18 +319,20 @@ int Network::evaluate(Position pos, int ply)
     }
 
     int32_t val = compute_incre_forward_pass(pos);
+    return val;
     auto wdl =network.get_wdl();
-    float val_win =std::exp(quant_to_float(wdl.win));
-    float val_loss = std::exp(quant_to_float(wdl.loss));
-    float val_draw = std::exp(quant_to_float(wdl.draw));
+    float val_win =expf(quant_to_float(wdl.win));
+    float val_loss = expf(quant_to_float(wdl.loss));
+    float val_draw = expf(quant_to_float(wdl.draw));
     float sum = val_win+val_loss+val_draw;
 
     float score = (val_win-val_loss)/sum;
     float draw_perc = val_draw/sum;
 
-    float test = (1.0-draw_perc);
+    float test = (1.0f-draw_perc);
     score*=test;
     score*=600;
+    //test
     score = std::round(score);
 
 

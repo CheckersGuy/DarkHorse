@@ -12,7 +12,7 @@
 #include "Position.h"
 #include <cstring>
 #include <immintrin.h>
-
+#include <cmath>
 
 class Network;
 
