@@ -4,7 +4,7 @@
 
 #include "BatchProvider.h"
 #include "generator.pb.h"
-
+#include "../Checkers/CheckerEngineX/Position.h"
 
 
 void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
@@ -67,7 +67,15 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
 
     const size_t INPUT_SIZE = 120;
     for (auto i = 0; i < get_batch_size(); ++i) {
-        Proto::Sample current = get_streamer().get_next();
+        Proto::Sample current;
+        Position temp;
+        do{
+          current =get_streamer().get_next();
+          temp.WP = current.wp();
+          temp.BP = current.bp();
+          temp.K = current.k();
+          temp.color = (current.mover()  == Proto::BLACK)?BLACK : WHITE;
+        }while(temp.has_jumps(temp.get_color()));
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;

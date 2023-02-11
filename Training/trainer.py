@@ -17,6 +17,7 @@ logging.basicConfig(filename="trainer.log",encoding="utf-8",level = logging.DEBU
 
 libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
 c_lib = ctypes.CDLL(libname)
+import generator_pb2
 
 
 def train_network(run_name,counter,train_file):
@@ -46,6 +47,20 @@ def train_network(run_name,counter,train_file):
     #model = LitMLP.PatternModel()
 
 
+def merge_data(files,output):
+    out_batch = generator_pb2.Batch()
+    for file in files:
+        with open(file,"rb") as f:
+            data = f.read()
+            batch = generator_pb2.Batch()
+            batch.ParseFromString(data)
+            out_batch.games.extend(batch.games)
+    
+    with open(output,"wb") as f:
+        data = out_batch.SerializeToString()
+        f.write(data)
+
+
 
 
 if __name__ == "__main__":
@@ -61,6 +76,7 @@ if __name__ == "__main__":
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=300, callbacks=[check_point_callback])
+
     trainer.fit(model, data_loader)
     model.save_quantized("Networks/{}.quant".format("nonwdlnext"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
@@ -68,6 +84,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-
+#merge_data(["TrainData/testx0.train","TrainData/testx2.train","TrainData/testx3.train"],"TrainData/test.train")
 
 

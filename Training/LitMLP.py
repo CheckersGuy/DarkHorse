@@ -42,7 +42,7 @@ class WDLNetwork(pl.LightningModule):
         self.net =nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.90
+        self.gamma = 0.92
         print(self.net)
 
     def forward(self, x):
@@ -62,7 +62,7 @@ class WDLNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters())
+        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 

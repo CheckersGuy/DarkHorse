@@ -11,12 +11,11 @@ void create_train_file(std::string base_book, std::string output,int depth){
     op_index =0;
     initialize();
     TT.resize(20);
-    use_classical(false);
     network.addLayer(Layer{120, 1024});
     network.addLayer(Layer{1024, 8});
     network.addLayer(Layer{8, 32});
-    network.addLayer(Layer{32, 1});
-    network.load("bigagain7.quant");
+    network.addLayer(Layer{32, 3});
+    network.load("wdlnext.quant");
     network.init();   
 
     std::unordered_set<Position> positions;

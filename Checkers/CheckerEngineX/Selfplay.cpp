@@ -1,10 +1,7 @@
 #include "Selfplay.h"
-#include "MovePicker.h"
 #include "Zobrist.h"
 #include "types.h"
-#include <algorithm>
 #include <unistd.h>
-
 void Selfplay::start_loop(){
   //to be adde
   while(!stop){
@@ -12,6 +9,11 @@ void Selfplay::start_loop(){
     std::getline(std::cin,line);
     parse_command(line);
   }
+}
+
+Selfplay::Selfplay(){
+  int pid = getpid();
+  Zobrist::init_zobrist_keys(pid^getSystemTime());
 }
 
 
@@ -86,9 +88,7 @@ SelfGame Selfplay::play_game(std::string fen_string){
   //network.load("Networks/client.quant");
   TT.clear();
   Statistics::mPicker.clear_scores();
-  int pid = getpid();
-  Zobrist::init_zobrist_keys(pid^getSystemTime());
-  SelfGame game;
+ SelfGame game;
   
   Position current;
   current = Position::pos_from_fen(fen_string);
@@ -99,9 +99,14 @@ SelfGame Selfplay::play_game(std::string fen_string){
   history.emplace_back(current);
   for(auto i=0;i<600;++i){
     Move best;
-    searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
     MoveListe liste;
-    get_moves(board.get_position(), liste);
+    get_moves(board.get_position(),liste);
+    if(liste.length()==1){
+      //only have single move
+      best = liste[0];
+    }else{
+    searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
+    }
     int k;
     for( k=0;k<liste.length();++k){
       if(liste[k] == best){

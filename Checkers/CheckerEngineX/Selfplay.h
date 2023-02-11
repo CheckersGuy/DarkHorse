@@ -4,6 +4,11 @@
 #include "types.h"
 #include <regex>
 #include <algorithm>
+#include "MovePicker.h"
+#include "Zobrist.h"
+#include "types.h"
+#include <algorithm>
+#include <unistd.h>
 
 using SelfGame = std::pair<std::string,std::vector<uint8_t>>;
 
@@ -27,12 +32,14 @@ inline std::vector<std::string>split_string(std::string input, char delim){
 
 class Selfplay{
   private:
-  int time_per_move{100};
+  int time_per_move{15};
   int hash_size{21};
-  int adjud{10};
+  int adjud{0};
   bool stop{false};
   
   public:
+
+  Selfplay();
 
   void start_loop();
 
