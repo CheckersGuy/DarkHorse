@@ -248,8 +248,8 @@ interface = Interface()
 interface.time_per_move = 10
 interface.parallelism = 14
 interface.hash_size =21
-interface.max_games =500000
+interface.max_games =50000000
 interface.network_file="client.quant"
-interface.read_openings("Positions/train9.book")
+interface.read_openings("Positions/train10.book")
 interface.start()
 

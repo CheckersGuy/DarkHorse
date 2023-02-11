@@ -26,7 +26,7 @@ init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path) {
     if (val_streamer.get() == nullptr) {
         val_streamer = std::make_unique<BatchProvider>(path, buffer_size, batch_size);
     }
-    streamer->get_streamer().set_shuffle(false);
+    val_streamer->get_streamer().set_shuffle(false);
     std::cout<<"NumPositions in validation set: "<<val_streamer->get_streamer().get_num_positions()<<std::endl;
     return val_streamer->get_streamer().get_num_positions();
 }
