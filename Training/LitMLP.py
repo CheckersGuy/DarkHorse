@@ -42,7 +42,7 @@ class WDLNetwork(pl.LightningModule):
         self.net =nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.92
+        self.gamma = 0.98
         print(self.net)
 
     def forward(self, x):
