@@ -26,7 +26,8 @@ int main(int argl, const char **argc) {
 
   Book::create_train_file(
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-      "/home/leagu/DarkHorse/Training/Positions/train10.book", 6);    
+      "/home/leagu/DarkHorse/Training/Positions/train10.book", 7);    
+      
 
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");

@@ -66,16 +66,16 @@ def merge_data(files,output):
 if __name__ == "__main__":
     model = LitMLP.WDLNetwork(output="nonwdl",hidden=[120, 1024, 8, 32, 3])
 
-    data_loader = LitMLP.WDLDataModule(train_data="TrainData/test.train",
+    data_loader = LitMLP.WDLDataModule(train_data="TrainData/testx.train",
                                        val_data="TrainData/val.train",
-                                       batch_size=8192, buffer_size=10000000)
+                                       batch_size=8192, buffer_size=15000000)
 
     # val_loader =  data_loader.val_dataloader()
     # batch = next(iter(val_loader))
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=300, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=100, callbacks=[check_point_callback])
 
     trainer.fit(model, data_loader)
     model.save_quantized("Networks/{}.quant".format("nonwdlnext"))
@@ -84,6 +84,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-#merge_data(["TrainData/testx0.train","TrainData/testx2.train","TrainData/testx3.train"],"TrainData/test.train")
+#merge_data(["TrainData/test.train","TrainData/testme.train"],"TrainData/testx.train")
 
 
