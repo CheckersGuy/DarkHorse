@@ -51,7 +51,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "wdlnext6.quant";
+    net_file = "test.quant";
   }
 
   network.addLayer(Layer{120, 1024});
@@ -60,6 +60,7 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{32, 3});
   network.load(net_file);
   network.init();
+
 /*
   //Position test =Position::pos_from_fen("B:WK29:BK4");
   Position test;

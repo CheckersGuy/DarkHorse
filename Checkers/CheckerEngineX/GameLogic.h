@@ -42,7 +42,6 @@ struct Local {
     Move move,previous;
 };
 
-void use_classical(bool flag);
 #ifdef USE_DB
 void init_tablebase(int db_cache,int max_pieces,std::ostream& stream);
 #endif

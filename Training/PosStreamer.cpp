@@ -4,20 +4,24 @@
 
 #include <sys/stat.h>
 #include "PosStreamer.h"
+#include "Sample.h"
 
 size_t PosStreamer::get_num_positions() const {
     return num_samples;
 }
 
-Proto::Sample PosStreamer::get_next() {
+Sample PosStreamer::get_next() {
       if (ptr >= buffer.size()) {
             buffer.clear();
             //Need to fill the buffer again;
             std::cout<<"Filling up the buffer"<<std::endl;
             std::cout<<"Buffersize: "<<buffer_size<<std::endl;
             while(buffer.size()<buffer_size){
-              auto game = data.games(game_offset++);
-              game_offset=game_offset%data.games_size();
+              auto game = data[game_offset++];
+              if(game_offset>=data.size()){
+                game_offset =0;
+                std::shuffle(data.begin(),data.end(),generator);
+              }
               auto positions = extract_sample(game);
               for(auto pos : positions){
                 buffer.emplace_back(pos);
@@ -33,7 +37,20 @@ Proto::Sample PosStreamer::get_next() {
         }
         ptr =0;
     }
-    return buffer[ptr++];
+    Sample next = buffer[ptr++];
+    std::string result_string;
+    /*
+    if(next.result ==DRAW){
+      result_string="DRAW";
+    }else if(next.result == WHITE_WON)
+      result_string ="WHITE_WON";
+    else if(next.result ==BLACK_WON)
+      result_string="BLACK_WON";
+    else
+      result_string ="UNDEFINED";
+    std::cout<<result_string<<std::endl;
+    */
+    return next;
 } 
 
 

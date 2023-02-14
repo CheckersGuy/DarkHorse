@@ -54,7 +54,7 @@ namespace std {
     struct hash<Sample> {
         std::hash<int> hasher;
         std::array<std::array<uint64_t, 4>, 32> keys;
-        uint64_t color_black;
+        uint64_t color_hash,draw_hash,win_hash,loss_hash;
         //should not use the existing zobrist keys
 
         hash() {
@@ -66,7 +66,11 @@ namespace std {
                     keys[i][j] = value;
                 }
             }
-            color_black = distrib(generator);
+            color_hash = distrib(generator);
+            loss_hash = distrib(generator);
+            draw_hash = distrib(generator);
+            win_hash = distrib(generator);
+
         }
 
         uint64_t operator()(const Sample &s) const {
@@ -90,9 +94,16 @@ namespace std {
                 allPieces &= allPieces - 1u;
             }
             if (s.position.color == BLACK) {
-                nextKey ^= color_black;
+                nextKey ^= color_hash;
             }
-            return nextKey ^ hasher(s.result);
+            if(s.result == DRAW)
+              nextKey=nextKey^draw_hash;
+            if(s.result == WHITE_WON)
+              nextKey=nextKey^win_hash;
+            if(s.result == BLACK_WON)
+              nextKey = nextKey^loss_hash;
+
+            return nextKey;
         }
     };
 

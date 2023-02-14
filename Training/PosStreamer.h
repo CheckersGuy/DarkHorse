@@ -22,8 +22,8 @@ private:
     size_t gen_seed;
     std::string file_path;
     size_t buffer_size;
-    std::vector<Proto::Sample> buffer;
-    Proto::Batch data;
+    std::vector<Sample> buffer;
+    std::vector<Proto::Game> data;
     size_t ptr;
     std::ifstream stream;
     std::mt19937_64 generator;
@@ -52,11 +52,15 @@ public:
             std::exit(-1);
         }
         //loading the game
-        data.ParseFromIstream(&stream);
+        Proto::Batch batch;
+        batch.ParseFromIstream(&stream);
         std::cout<<"Counting number of positions"<<std::endl; 
         ptr = buffer.size()+1000;
         size_t size =0;
-        for(Proto::Game game : data.games()){
+        for(auto game : batch.games()){
+          data.emplace_back(game);
+        }
+        for(Proto::Game game : data){
           size+=game.move_indices_size()+1;
         }
         std::cout<<"Counted: "<<size<<" positions"<<std::endl;
@@ -64,7 +68,7 @@ public:
 
     }
 
-    Proto::Sample get_next();
+    Sample get_next();
 
     void set_shuffle(bool shuff);
 

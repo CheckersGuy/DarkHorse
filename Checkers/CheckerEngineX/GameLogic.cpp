@@ -13,7 +13,6 @@ Value max_value = INFINITE;
 
 SearchGlobal glob;
 Network network,network2;
-bool u_classical = true;
 
 
 
@@ -96,10 +95,6 @@ void initialize(uint64_t seed) {
 }
 
 
-void use_classical(bool flag) {
-    u_classical = flag;
-}
-
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, std::ostream& stream) {
     Statistics::mPicker.clear_scores();
@@ -129,6 +124,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     auto test_time = getSystemTime();
     for (int i = 1; i <= depth; i += 2) {
         network.accumulator.refresh();
+        network2.accumulator.refresh();
         auto start_time = getSystemTime();
         std::stringstream ss;
         nodeCounter = 0;
@@ -339,7 +335,6 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
             return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
         } 
         bestValue = network.evaluate(board.get_position(),ply);
-             
         return bestValue;
 
     }
