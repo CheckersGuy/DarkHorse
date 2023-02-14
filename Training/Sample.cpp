@@ -23,21 +23,11 @@ bool Sample::operator!=(const Sample &other) const {
 }
 
 std::ofstream &operator<<(std::ofstream &stream, const Sample s) {
-    stream.write((char *) &s.position, sizeof(Position));
-    stream.write((char *) &s.result, sizeof(Result));
-    stream.write((char *) &s.move, sizeof(int));
+    stream.write((char*)&s,sizeof(Sample));
     return stream;
 }
 
 std::ifstream &operator>>(std::ifstream &stream, Sample &s) {
-    Position pos;
-    stream.read((char *) &pos, sizeof(Position));
-    Result result;
-    stream.read((char *) &result, sizeof(Result));
-    int move;
-    stream.read((char *) &move, sizeof(int));
-    s.result = result;
-    s.position = pos;
-    s.move = move;
+    stream.read((char*)&s,sizeof(Sample));
     return stream;
 }

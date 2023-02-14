@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+from torch.optim import optimizer
 import torchmetrics
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
@@ -42,7 +43,7 @@ class WDLNetwork(pl.LightningModule):
         self.net =nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.93
         print(self.net)
 
     def forward(self, x):
@@ -52,8 +53,8 @@ class WDLNetwork(pl.LightningModule):
         acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
         return 100 * acc
 
-    def optimizer_step(self, *args, **kwargs):
-        super().optimizer_step(*args, **kwargs)
+  
+    def step(self):
         with torch.no_grad():
             for layer in self.layers[1:]:
                 if isinstance(layer, torch.nn.Linear):
@@ -61,12 +62,18 @@ class WDLNetwork(pl.LightningModule):
 
 
 
+
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7, gc_loc=False, use_gc=False)
+        #optimizer = Ranger(self.parameters())
+        optimizer = torch.optim.AdamW(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        return [optimizer], [scheduler]
+        return [optimizer],[scheduler]
+
+    def on_train_epoch_end(self):
+        self.save_quantized("epoch.quant")
 
     def training_step(self, train_batch, batch_idx):
+        self.step()
         wdl_values, move, x = train_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
@@ -75,6 +82,7 @@ class WDLNetwork(pl.LightningModule):
         return loss
 
     def validation_step(self, val_batch, batch_idx):
+        self.step()
         wdl_values, move, x = val_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
@@ -83,7 +91,7 @@ class WDLNetwork(pl.LightningModule):
         return loss
 
     def save_quantized(self, output):
-
+        self.step()
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
 
@@ -104,8 +112,8 @@ class WDLNetwork(pl.LightningModule):
         bias = bias * 127.0
         np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
-        buffer_weights += weights.tobytes()
-        buffer_bias += bias.tobytes()
+        buffer_weights.extend(weights.tobytes())
+        buffer_bias.extend(bias.tobytes())
         num_weights += len(weights)
         num_bias += len(bias)
 
@@ -116,10 +124,10 @@ class WDLNetwork(pl.LightningModule):
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten()
-                bias = bias * (127 * 64)
+                bias = bias * (127.0 * 64.0)
                 bias = bias.astype(np.int32)
-                buffer_weights += weights.tobytes()
-                buffer_bias += bias.tobytes()
+                buffer_weights.extend(weights.tobytes())
+                buffer_bias.extend(bias.tobytes())
                 num_weights += len(weights)
                 num_bias += len(bias)
 

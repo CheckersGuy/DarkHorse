@@ -7,50 +7,45 @@
 #include <stdlib.h>
 #include <thread>
 #include <vector>
+#include "../Sample.h"
 #include "../../Checkers/CheckerEngineX/MGenerator.h"
 #include "SampleUtil.h"
 
-std::vector<Proto::Sample> extract_sample(const Proto::Game& game){
+std::vector<Sample> extract_sample(const Proto::Game& game){
   //extracting samples;
-  std::vector<Proto::Sample> samples;
+  std::vector<Sample> samples;
   Position current;
   current = Position::pos_from_fen(game.start_position());
-  Proto::Sample first;
-  first.set_mover((current.get_color() == BLACK) ? Proto::BLACK : Proto::WHITE);
-  first.set_wp(current.WP);
-  first.set_bp(current.BP);
-  first.set_k(current.K);
-  samples.emplace_back(first);
+  
+  Sample first;
+  first.position = current;
+  samples.emplace_back(current);
 
   for(const auto& index : game.move_indices()){
     MoveListe liste;
     get_moves(current, liste);
     current.make_move(liste[index]);
-    Proto::Sample sample;
-    sample.set_bp(current.BP);
-    sample.set_wp(current.WP);
-    sample.set_k(current.K);
-    sample.set_mover((current.get_color() == BLACK)? Proto::BLACK : Proto::WHITE);
-    samples.emplace_back(sample);
+    Sample s;
+    s.position = current;
+    samples.emplace_back(s);
+
   }
 
   //getting the game result
   MoveListe endlist;
   get_moves(current, endlist);
-  auto end_result =Proto::DRAW;
+  Result end_result =UNKNOWN;
   if(endlist.length() ==0){
-    end_result =(current.get_color() == BLACK)?Proto::WHITE_WIN : Proto::BLACK_WIN;
+    end_result =((current.get_color() == BLACK)?WHITE_WON : BLACK_WON);
   }
-  std::string result_string;
-  if(end_result ==Proto::DRAW)
-    result_string="DRAW";
-  else if(end_result ==Proto::BLACK_WIN)
-    result_string="BLACK_WIN";
-  else if(end_result ==Proto::WHITE_WIN)
-    result_string="WHITE_WIN";
-  //std::cout<<result_string<<std::endl;
-  for(Proto::Sample& sample : samples){
-    sample.set_result(end_result);
+  Sample last = samples.back();
+  auto count = std::count(samples.begin(),samples.end(),last);
+  if(count>=3){
+    end_result = DRAW;
+  }
+
+  for(Sample& sample : samples){
+    sample.result = (end_result);
   }
   return samples;
 
@@ -58,3 +53,45 @@ std::vector<Proto::Sample> extract_sample(const Proto::Game& game){
 }
 
 
+void write_raw_data(std::string input_proto){
+  auto output_name = input_proto+".raw";
+  std::ifstream stream(input_proto);
+  if(!stream.good()){
+    std::cerr<<"Could not load the file"<<std::endl;
+    std::cerr<<"File: "<<input_proto<<std::endl;
+    std::exit(-1);
+  }
+  std::ofstream out_stream(output_name);
+  Proto::Batch batch;
+  batch.ParseFromIstream(&stream);
+  for(auto game : batch.games()){
+    auto samples = extract_sample(game);
+    for(auto s : samples){
+      out_stream<<s;
+    }
+  }
+
+}
+
+
+void sort_raw_data(std::string raw_data){
+  int fd; // file-descriptor
+  struct stat s;
+  int status;
+  Sample * mapped;
+  fd = open(raw_data.c_str(),O_RDONLY);
+  status = fstat(fd,&s);
+  std::cout<<"size: "<<s.st_size/sizeof(Sample)<<std::endl;
+  
+  mapped = (Sample*)mmap(0,s.st_size,PROT_READ,MAP_SHARED,fd,0);
+
+  for(auto i=0;i<10;++i){
+    Sample current = mapped[i];
+    current.position.print_position();
+    std::cout<<std::endl;
+  }
+
+
+  close(fd);
+
+}
