@@ -53,9 +53,10 @@ int main(int argl, const char **argc) {
 
       }
       return 0; */
- // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
-  // sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
-  //return 0;
+  //write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
+   sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
+  return 0;
+  
 
   CmdParser parser(argl, argc);
   parser.parse_command_line();

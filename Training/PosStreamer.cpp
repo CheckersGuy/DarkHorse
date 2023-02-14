@@ -17,15 +17,20 @@ Sample PosStreamer::get_next() {
             std::cout<<"Filling up the buffer"<<std::endl;
             std::cout<<"Buffersize: "<<buffer_size<<std::endl;
             while(buffer.size()<buffer_size){
-              auto game = data[game_offset++];
-              if(game_offset>=data.size()){
-                game_offset =0;
+              if(!is_raw_data){
+              auto game = data[offset++];
+              if(offset>=data.size()){
+                offset =0;
                 std::shuffle(data.begin(),data.end(),generator);
               }
               auto positions = extract_sample(game);
               for(auto pos : positions){
                 buffer.emplace_back(pos);
               }
+            }
+            else{
+              buffer.emplace_back(mapped[offset++]);
+              offset=offset%num_samples;
             }
 
              if (shuffle) {
@@ -37,6 +42,7 @@ Sample PosStreamer::get_next() {
         }
         ptr =0;
     }
+  }
     Sample next = buffer[ptr++];
     std::string result_string;
     /*

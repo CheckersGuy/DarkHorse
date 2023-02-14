@@ -6,6 +6,7 @@
 #define READING_POSSTREAMER_H
 
 #include <string>
+#include <fcntl.h>
 #include <memory>
 #include <../CheckerEngineX/Position.h>
 #include <fstream>
@@ -16,6 +17,11 @@
 #include <chrono>
 #include "generator.pb.h"
 #include "Util/SampleUtil.h"
+#include <string>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mman.h>
+
 class PosStreamer {
 
 private:
@@ -28,8 +34,13 @@ private:
     std::ifstream stream;
     std::mt19937_64 generator;
     bool shuffle{true};
+    bool is_raw_data{false};
     size_t num_samples; // number of samples
-    size_t game_offset{0};
+    size_t offset{0};
+    //in case we have a 'raw'file
+    Sample * mapped;
+    size_t file_size;
+    int fd;
    
 
 public:
@@ -51,7 +62,11 @@ public:
             std::cerr << "FileName: " << file_path << std::endl;
             std::exit(-1);
         }
+        if(file_path.ends_with(".raw")){
+          is_raw_data = true;
+        }
         //loading the game
+        if(!is_raw_data){
         Proto::Batch batch;
         batch.ParseFromIstream(&stream);
         std::cout<<"Counting number of positions"<<std::endl; 
@@ -65,7 +80,21 @@ public:
         }
         std::cout<<"Counted: "<<size<<" positions"<<std::endl;
         num_samples=size;
+        }else{
+          //we memory map the entire data !!!
+          struct stat s;
+          fd = open(file_path.c_str(),O_RDWR);
+          auto r =fstat(fd,&s);
+          file_size = s.st_size;
+          num_samples = file_size/sizeof(Sample);
+          mapped = (Sample*)mmap(0,file_size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
+        }
 
+    }
+    ~PosStreamer(){
+      if(is_raw_data){
+        munmap(mapped,file_size);
+      }
     }
 
     Sample get_next();
