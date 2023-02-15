@@ -23,11 +23,11 @@ int main(int argl, const char **argc) {
 
   // void create_train_file(std::string base_book, std::string output, int
   // depth);
-/*
+
   Book::create_train_file(
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-      "/home/leagu/DarkHorse/Training/Positions/train12.book", 5);        
-*/
+      "/home/leagu/DarkHorse/Training/Positions/train12.book", 6);        
+
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
       std::istream_iterator<Game>begin(stream);
@@ -52,8 +52,8 @@ int main(int argl, const char **argc) {
 
       }
       return 0; */
- /// write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
-   //sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
+ // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/ueber.train");
+   //sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/ueber.train.raw");
    //return 0;
   
 
