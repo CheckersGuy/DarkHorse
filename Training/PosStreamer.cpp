@@ -32,8 +32,11 @@ Sample PosStreamer::get_next() {
               buffer.emplace_back(mapped[offset++]);
               offset=offset%num_samples;
             }
-
+            }
              if (shuffle) {
+               if(is_raw_data){
+                 std::cout<<"Using raw data"<<std::endl;
+               }
             std::cout<<"Shuffled"<<std::endl;
             auto t1 = std::chrono::high_resolution_clock::now();
             std::shuffle(buffer.begin(), buffer.end(), generator);
@@ -41,7 +44,7 @@ Sample PosStreamer::get_next() {
             auto dur = t2-t1;
         }
         ptr =0;
-    }
+    
   }
     Sample next = buffer[ptr++];
     std::string result_string;

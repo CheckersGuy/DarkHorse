@@ -98,11 +98,11 @@ void sort_raw_data(std::string raw_data){
   std::hash<Sample> hasher;
   std::mt19937_64 generator;
   std::uniform_int_distribution<size_t> distrib;
-  /*
+  
   std::sort(mapped,mapped+num_samples,[&](const Sample& one,const  Sample& two){
         return distrib(generator)> distrib(generator);
       });
-      */
+      
   munmap(mapped, size);
 
   close(fd);

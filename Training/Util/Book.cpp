@@ -15,7 +15,7 @@ void create_train_file(std::string base_book, std::string output,int depth){
     network.addLayer(Layer{1024, 8});
     network.addLayer(Layer{8, 32});
     network.addLayer(Layer{32, 3});
-    network.load("wdlnext.quant");
+    network.load("ueber.quant");
     network.init();   
 
     std::unordered_set<Position> positions;
@@ -49,7 +49,7 @@ void recursive_collect(Board& board,int depth,std::unordered_set<Position>&set,s
         Move best;
         Board copy;
         copy = board.get_position();
-         auto value = searchValue(copy, best, 0, 10, false,std::cout);
+         auto value = searchValue(copy, best, 3, 10, false,std::cout);
        
          if(std::abs(value)<=100 && !copy.get_position().has_jumps() && copy.get_position().piece_count()>=20){
             std::cout<<board.get_mover()*value<<std::endl;
