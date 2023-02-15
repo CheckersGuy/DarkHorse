@@ -51,26 +51,26 @@ public:
         this->file_path = file_path;
         gen_seed=seed;
         buffer_size = buff_size;
-        stream = std::ifstream(file_path, std::ios::binary);
         generator = std::mt19937_64(getSystemTime());
         if (file_path.empty()) {
             std::cerr << "An empty path was given" << std::endl;
             std::exit(-1);
         }
+            if(file_path.ends_with(".raw")){
+          is_raw_data = true;
+        }
+        //loading the game
+        if(!is_raw_data){
+        stream = std::ifstream(file_path, std::ios::binary);
         if (!stream.good()) {
             std::cerr << "Could not open the stream" << std::endl;
             std::cerr << "FileName: " << file_path << std::endl;
             std::exit(-1);
         }
-        if(file_path.ends_with(".raw")){
-          is_raw_data = true;
-        }
-        //loading the game
-        if(!is_raw_data){
+
         Proto::Batch batch;
         batch.ParseFromIstream(&stream);
         std::cout<<"Counting number of positions"<<std::endl; 
-        ptr = buffer.size()+1000;
         size_t size =0;
         for(auto game : batch.games()){
           data.emplace_back(game);
@@ -89,6 +89,7 @@ public:
           num_samples = file_size/sizeof(Sample);
           mapped = (Sample*)mmap(0,file_size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
         }
+        ptr = buffer.size()+1000;
 
     }
     ~PosStreamer(){

@@ -26,9 +26,8 @@ int main(int argl, const char **argc) {
 /*
   Book::create_train_file(
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-      "/home/leagu/DarkHorse/Training/Positions/train10.book", 7);    
-  */    
-
+      "/home/leagu/DarkHorse/Training/Positions/train12.book", 5);        
+*/
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
       std::istream_iterator<Game>begin(stream);
@@ -53,9 +52,9 @@ int main(int argl, const char **argc) {
 
       }
       return 0; */
-  //write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
-   sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
-  return 0;
+ /// write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
+   //sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
+   //return 0;
   
 
   CmdParser parser(argl, argc);
