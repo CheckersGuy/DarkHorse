@@ -64,7 +64,7 @@ class WDLNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = Ranger(self.parameters())
+       # optimizer = Ranger(self.parameters(),use_gc= False)
         optimizer = torch.optim.AdamW(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]

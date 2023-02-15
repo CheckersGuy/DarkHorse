@@ -38,7 +38,6 @@ inline Position posFromString(const std::string &pos) {
 #include "types.h"
 #include "CmdParser.h"
 int main(int argl, const char **argc) {
-
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -107,14 +106,6 @@ int main(int argl, const char **argc) {
     TT.resize(hash_size);
     Move best;
     searchValue(board, best, depth, time, true, std::cout);
-    board.play_move(best);
-    board.print_board();
-    MoveListe liste;
-    for(auto move : liste){
-      auto encoding = Statistics::MovePicker::get_move_encoding(move);
-      std::cout<<encoding<<std::endl;
-    } 
-    get_moves(board.get_position(), liste);
     return 0;
   }
 
