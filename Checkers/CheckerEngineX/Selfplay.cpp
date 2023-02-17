@@ -101,12 +101,7 @@ SelfGame Selfplay::play_game(std::string fen_string){
     Move best;
     MoveListe liste;
     get_moves(board.get_position(),liste);
-    if(liste.length()==1){
-      //only have single move
-      best = liste[0];
-    }else{
     searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
-    }
     int k;
     for( k=0;k<liste.length();++k){
       if(liste[k] == best){

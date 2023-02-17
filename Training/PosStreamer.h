@@ -89,6 +89,7 @@ public:
           num_samples = file_size/sizeof(Sample);
           mapped = (Sample*)mmap(0,file_size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
         }
+        buffer_size = std::min(num_samples,buffer_size);
         ptr = buffer.size()+1000;
 
     }
