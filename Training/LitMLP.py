@@ -10,9 +10,9 @@ import ctypes
 import pathlib
 import numpy as np
 from enum import IntEnum
-
-
-
+import Lamb 
+import Focal
+from lion_pytorch import Lion
 
 
 
@@ -33,7 +33,8 @@ class WDLNetwork(pl.LightningModule):
         super(WDLNetwork, self).__init__()
         self.layers = []
         self.output = output
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
+        self.criterion = torch.nn.CrossEntropyLoss()
+        #self.criterion = Focal.FocalLoss(gamma=2)
  
         for i in range(len(hidden) - 2):
             self.layers.append(nn.Linear(hidden[i], hidden[i + 1]))
@@ -43,7 +44,8 @@ class WDLNetwork(pl.LightningModule):
         self.net =nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.93
+        self.gamma = 0.90
+        #self.gamma = 0.98
         print(self.net)
 
     def forward(self, x):
@@ -53,6 +55,13 @@ class WDLNetwork(pl.LightningModule):
         acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
         return 100 * acc
 
+
+    def optimizer_step(self, *args, **kwargs):
+        super().optimizer_step(*args, **kwargs)
+        with torch.no_grad():
+            for layer in self.layers[1:]:
+                if isinstance(layer, torch.nn.Linear):
+                    layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
   
     def step(self):
         with torch.no_grad():
@@ -64,8 +73,11 @@ class WDLNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-       # optimizer = Ranger(self.parameters(),use_gc= False)
+        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False)
         optimizer = torch.optim.AdamW(self.parameters())
+        #optimizer = Lion(self.parameters(),lr =1e-3)
+        #optimizer = torch.optim.SGD(self.parameters(),momentum=0.9,lr=1e-2)
+        #optimizer = Lamb.Lamb(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -73,7 +85,7 @@ class WDLNetwork(pl.LightningModule):
         self.save_quantized("epoch.quant")
 
     def training_step(self, train_batch, batch_idx):
-        self.step()
+        #self.step()
         wdl_values, move, x = train_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
@@ -82,7 +94,7 @@ class WDLNetwork(pl.LightningModule):
         return loss
 
     def validation_step(self, val_batch, batch_idx):
-        self.step()
+        #self.step()
         wdl_values, move, x = val_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
@@ -91,7 +103,7 @@ class WDLNetwork(pl.LightningModule):
         return loss
 
     def save_quantized(self, output):
-        self.step()
+        #self.step()
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
 
