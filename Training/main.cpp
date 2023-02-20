@@ -17,7 +17,7 @@
 #include "generator.pb.h"
 #include <fstream>
 #include "Position.h"
-
+#include <string>
 
 int main(int argl, const char **argc) {
 
@@ -28,6 +28,7 @@ int main(int argl, const char **argc) {
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
       "/home/leagu/DarkHorse/Training/Positions/train13.book", 5);        
 */
+  view_game("/home/leagu/DarkHorse/Training/TrainData/testing2.train", 2222);
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
       std::istream_iterator<Game>begin(stream);
@@ -59,6 +60,13 @@ int main(int argl, const char **argc) {
 
   CmdParser parser(argl, argc);
   parser.parse_command_line();
+  
+
+  if(parser.has_option("create_raw")){
+    auto input_file = parser.as<std::string>("create_raw");
+    auto path = "/home/leagu/DarkHorse/Training/TrainData/"+input_file;
+    create_shuffled_raw(path);
+  }
 
   if (parser.has_option("match")) {
     if (parser.has_option("engines") && parser.has_option("time")) {
