@@ -319,6 +319,7 @@ int Network::evaluate(Position pos, int ply)
     }
 
     int32_t val = compute_incre_forward_pass(pos);
+    return val;
     auto wdl =get_wdl();
     float val_win =expf(quant_to_float(wdl.win));
     float val_loss = expf(quant_to_float(wdl.loss));

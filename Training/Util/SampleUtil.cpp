@@ -36,7 +36,7 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
   //getting the game result
   MoveListe endlist;
   get_moves(current, endlist);
-  Result end_result =UNKNOWN;
+  Result end_result =DRAW;
   if(endlist.length() ==0){
     end_result =((current.get_color() == BLACK)?WHITE_WON : BLACK_WON);
   }
@@ -108,3 +108,37 @@ void sort_raw_data(std::string raw_data){
   close(fd);
 
 }
+
+
+void create_shuffled_raw(std::string input_prot){
+ write_raw_data(input_prot);
+ sort_raw_data(input_prot+".raw");
+}
+
+
+
+void view_game(std::string input_proto,int index){
+  Proto::Batch batch;
+  std::ifstream stream(input_proto);
+  if(!stream.good()){
+    std::cerr<<"Could not open stream"<<std::endl;
+    std::exit(-1);
+  }
+  batch.ParseFromIstream(&stream);
+  auto game = batch.games(index);
+  std::vector<Sample>samples =  extract_sample(game);
+  for(auto sample : samples){
+    sample.position.print_position();
+  }
+}
+
+Result get_game_result(Proto::Game game){
+  MoveListe liste;
+  auto samples = extract_sample(game);
+  Position last = samples.back().position;
+  //to be continued
+}
+void get_game_stats(int input_proto, GameStat &stats){
+
+}
+
