@@ -50,7 +50,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "nonwdltest.quant";
+    net_file = "nonwdltest3.quant";
   }
 
   network.addLayer(Layer{120, 1024});
@@ -150,6 +150,7 @@ int main(int argl, const char **argc) {
       TT.clear();
       TT.age_counter = 0u;
       network.init();
+      Statistics::mPicker.policy.init();
       board = Board{};
       std::string position;
       std::cin >> position;

@@ -61,10 +61,11 @@ void BatchProvider::next(float *results, int64_t *moves, float *inputs) {
         Sample current;
         do{
           current =get_streamer().get_next();
-        }while(current.position.has_jumps(current.position.get_color()) || current.result ==UNKNOWN);
+        }while(current.position.has_jumps(current.position.get_color()) || current.result ==UNKNOWN || current.move ==-1);
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;
+        moves[i] = current.move;
     }
 
 

@@ -30,7 +30,7 @@ namespace Statistics {
         void update_scores(Position pos, Move *list, Move move,Move previous, int depth);
         
         static int get_move_encoding(Move move);
-
+        static int get_policy_encoding(Color color, Move move);
         void init();
 
     };

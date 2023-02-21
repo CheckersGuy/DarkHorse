@@ -64,11 +64,11 @@ def merge_data(files,output):
 
 
 if __name__ == "__main__":
-    model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
+    model = LitMLP.PolicyNetwork(output="nonwdl",hidden=[120, 256, 32, 32, 128])
 
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/testing2.train",
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/large.train",
                                        val_data="TrainData/val.train",
-                                       batch_size=4*8192, buffer_size=20000000)
+                                       batch_size=4*8192, buffer_size=15000000)
 
 
     # val_loader =  data_loader.val_dataloader()
@@ -76,15 +76,15 @@ if __name__ == "__main__":
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=700, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=140, callbacks=[check_point_callback])
 
     trainer.fit(model, data_loader)
-    model.save_quantized("Networks/{}.quant".format("nonwdlnext"))
+    model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
     
     #model = LitMLP.PatternModel()
 
 
-merge_data(["TrainData/testing.train","TrainData/testing2.train"],"TrainData/testmerged.train")
+#merge_data(["TrainData/testing.train","TrainData/testing2.train"],"TrainData/testmerged.train")
 
 

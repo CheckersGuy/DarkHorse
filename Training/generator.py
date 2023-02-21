@@ -245,9 +245,9 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 10
+interface.time_per_move = 50
 interface.parallelism = 14
-interface.hash_size =21
+interface.hash_size =22
 interface.max_games =50000000
 interface.network_file="client.quant"
 interface.read_openings("Positions/train13.book")
