@@ -203,7 +203,10 @@ void Network::addLayer(Layer layer) {
     layers.emplace_back(layer);
 }
 
-void Network::init() {
+void Network::init(){
+    if(layers.size()==0){
+      return;
+    }
     for (Layer l : layers)
     {
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);

@@ -13,6 +13,12 @@ MovePicker mPicker;
 
 void MovePicker::init() {
 
+  policy.addLayer(Layer{120, 256});
+  policy.addLayer(Layer{256, 32});
+  policy.addLayer(Layer{32, 32});
+  policy.addLayer(Layer{32, 128});
+  policy.load("policy.quant");
+  policy.init();
 
 }
 
@@ -29,6 +35,17 @@ int MovePicker::get_move_encoding(Move move) {
         dir = 3;
     }
     return 4*move.get_from_index()+dir;
+}
+
+int MovePicker::get_policy_encoding(Color mover,Move move){
+  if(mover == BLACK){
+    Move temp;
+    temp.from = getMirrored(move.from);
+    temp.to = getMirrored(move.to);
+    temp.captures = getMirrored(move.captures);
+    return get_move_encoding(temp);
+  }
+  return get_move_encoding(move);
 }
 
 int MovePicker::get_history_index(Position pos, Move move) {
@@ -95,15 +112,17 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
         return std::numeric_limits<int32_t>::max();
     }
     
-    if(move == killer_moves[ply][1] ||move == killer_moves[ply][0]) {
+   /* if(move == killer_moves[ply][1] ||move == killer_moves[ply][0]) {
         return std::numeric_limits<int32_t>::max()-1000;
     }
     
-
+*/
     if (move.is_capture()) {
         return (int) Bits::pop_count(move.captures);
     }
-
+    
+    return 0;
+    return policy[get_policy_encoding(current.get_color(), move)];
 
     return get_move_score(current, move,previous, depth);
 

@@ -13,24 +13,24 @@
 #include "../../Checkers/CheckerEngineX/MGenerator.h"
 #include "SampleUtil.h"
 
+
+
 std::vector<Sample> extract_sample(const Proto::Game& game){
   //extracting samples;
   std::vector<Sample> samples;
   Position current;
   current = Position::pos_from_fen(game.start_position());
-  
-  Sample first;
-  first.position = current;
-  samples.emplace_back(current);
 
   for(const auto& index : game.move_indices()){
     MoveListe liste;
     get_moves(current, liste);
-    current.make_move(liste[index]);
     Sample s;
     s.position = current;
+    if(!liste[index].is_capture()){
+      s.move = Statistics::MovePicker::get_policy_encoding(s.position.get_color(), liste[index]);
+    }
     samples.emplace_back(s);
-
+    current.make_move(liste[index]);
   }
 
   //getting the game result
@@ -39,11 +39,6 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
   Result end_result =DRAW;
   if(endlist.length() ==0){
     end_result =((current.get_color() == BLACK)?WHITE_WON : BLACK_WON);
-  }
-  Sample last = samples.back();
-  auto count = std::count(samples.begin(),samples.end(),last);
-  if(count>=3){
-    end_result = DRAW;
   }
 
   for(Sample& sample : samples){
@@ -135,10 +130,34 @@ void view_game(std::string input_proto,int index){
 Result get_game_result(Proto::Game game){
   MoveListe liste;
   auto samples = extract_sample(game);
-  Position last = samples.back().position;
-  //to be continued
+  auto last = samples.back();
+  Result result = last.result;
+  return result;
 }
-void get_game_stats(int input_proto, GameStat &stats){
+void get_game_stats(std::string input_proto, GameStat &stats){
+  Zobrist::init_zobrist_keys();
+  BloomFilter<Position> filter(9585058378,7);
+  Proto::Batch batch;
+  std::ifstream stream(input_proto);
+  if(!stream.good()){
+    std::cerr<<"Could not open stream"<<std::endl;
+    std::exit(-1);
+  }
+  batch.ParseFromIstream(&stream);
+ for(auto game : batch.games()){
+   auto samples = extract_sample(game);
+   for(auto sample : samples){
+     if(!filter.has(sample.position)){
+        stats.num_unqiue++;
+        filter.insert(sample.position);
+     }
+   }
+   stats.num_positions+=samples.size();
+   auto result = get_game_result(game);
+   stats.num_wins+=(result !=DRAW);
+   stats.num_draws+=(result == DRAW);
+ }
+
 
 }
 

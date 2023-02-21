@@ -169,7 +169,7 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.90
+        self.gamma = 0.93
         print(self.net)
 
     def forward(self, x):
@@ -189,8 +189,8 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False)
-        #optimizer = torch.optim.AdamW(self.parameters())
-        optimizer = Lion(self.parameters(),lr=1e-3)
+        optimizer = torch.optim.AdamW(self.parameters())
+        #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
 
@@ -217,6 +217,7 @@ class Network(pl.LightningModule):
     def init_weights(self):
         self.net.apply(init_weights)
 
+
     def save_quantized(self, output):
 
         min16 = np.iinfo(np.int16).min
@@ -233,10 +234,12 @@ class Network(pl.LightningModule):
         layer = self.layers[0]
         weights = layer.weight.detach().numpy().flatten("F")
         weights = weights * 127.0
+        np.round(weights)
         np.clip(weights, min16, max16)
         weights = weights.astype(np.int16)
         bias = layer.bias.detach().numpy().flatten("F")
         bias = bias * 127.0
+        np.round(bias)
         np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
         buffer_weights += weights.tobytes()
@@ -248,10 +251,12 @@ class Network(pl.LightningModule):
             if isinstance(layer, torch.nn.Linear):
                 weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
+                np.round(weights)
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten()
-                bias = bias * (127 * 64)
+                bias = bias * (127.0 * 64.0)
+                np.round(bias)
                 bias = bias.astype(np.int32)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()
@@ -295,9 +300,7 @@ class PolicyNetwork(pl.LightningModule):
                 if isinstance(layer, torch.nn.Linear):
                     layer.weight.clamp_(self.min_weight_hidden, self.max_weight_hidden)
 
-    def on_epoch_end(self) -> None:
-        self.save_parameters(self.output)
-        self.save("policy.pt")
+    def on_train_epoch_end(self) -> None:
         self.save_quantized("policy.quant")
 
     def accuracy(self, logits, target):
@@ -339,10 +342,12 @@ class PolicyNetwork(pl.LightningModule):
         layer = self.layers[0]
         weights = layer.weight.detach().numpy().flatten("F")
         weights = weights * 127.0
+        np.round(weights)
         np.clip(weights, min16, max16)
         weights = weights.astype(np.int16)
         bias = layer.bias.detach().numpy().flatten("F")
         bias = bias * 127.0
+        np.round(bias)
         np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
         buffer_weights += weights.tobytes()
@@ -354,12 +359,13 @@ class PolicyNetwork(pl.LightningModule):
             if isinstance(layer, torch.nn.Linear):
                 weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
+                np.round(weights)
                 np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten()
-                bias = bias * (127 * 64)
-                np.clip(bias, min16, max16)
-                bias = bias.astype(np.int16)
+                bias = bias * (127.0 * 64.0)
+                np.round(bias)
+                bias = bias.astype(np.int32)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()
                 num_weights += len(weights)
@@ -372,36 +378,7 @@ class PolicyNetwork(pl.LightningModule):
         file.close()
         self.to(device_gpu)
         return
-
-    def save_parameters(self, output):
-        device = torch.device("cpu")
-        device_gpu = torch.device("cuda")
-        self.to(device)
-        buffer_weights = bytearray()
-        buffer_bias = bytearray()
-        num_weights = 0
-        num_bias = 0
-        file = open(output, "wb")
-        for layer in self.net:
-            if isinstance(layer, torch.nn.Linear):
-                weights = layer.weight.detach().numpy().flatten("F")
-                bias = layer.bias.detach().numpy().flatten("F")
-                buffer_weights += weights.tobytes()
-                buffer_bias += bias.tobytes()
-                num_weights += len(weights)
-                num_bias += len(bias)
-
-        file.write(struct.pack("I", num_weights))
-        file.write(buffer_weights)
-        file.write(struct.pack("I", num_bias))
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
-
-    def save(self, output):
-        torch.save(self.state_dict(), output)
-
-
+  
 class LitDataModule(pl.LightningDataModule):
 
     def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
