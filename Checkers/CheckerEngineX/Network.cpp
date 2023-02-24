@@ -333,7 +333,7 @@ int Network::evaluate(Position pos, int ply)
     float draw_perc = val_draw/sum;
 
     float test = (1.0f-draw_perc);
-    score*=test;
+    score*=1.0;
     score*=600;
     //test
     score = std::round(score);

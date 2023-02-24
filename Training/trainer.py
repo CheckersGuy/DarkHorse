@@ -64,9 +64,9 @@ def merge_data(files,output):
 
 
 if __name__ == "__main__":
-    model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
+    model = LitMLP.WDLNetwork(output="nonwdl",hidden=[120, 1024, 8, 32, 3])
 
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/large.train",
+    data_loader = LitMLP.WDLDataModule(train_data="TrainData/large.train",
                                        val_data="TrainData/val.train",
                                        batch_size=4*8192, buffer_size=35000000)
 
