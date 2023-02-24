@@ -64,11 +64,11 @@ def merge_data(files,output):
 
 
 if __name__ == "__main__":
-    model = LitMLP.PolicyNetwork(output="nonwdl",hidden=[120, 256, 32, 32, 128])
+    model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
 
     data_loader = LitMLP.LitDataModule(train_data="TrainData/large.train",
                                        val_data="TrainData/val.train",
-                                       batch_size=4*8192, buffer_size=15000000)
+                                       batch_size=4*8192, buffer_size=35000000)
 
 
     # val_loader =  data_loader.val_dataloader()
