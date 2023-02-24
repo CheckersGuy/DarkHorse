@@ -47,10 +47,10 @@ int main(int argl, const char **argc) {
   int time, depth, hash_size;
   std::string net_file;
 
-  if (parser.has_option("network")) {
+  if (parser.has_option("bigagain10")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "nonwdltest3.quant";
+    net_file = "bigagain10.quant";
   }
 
   network.addLayer(Layer{120, 1024});
