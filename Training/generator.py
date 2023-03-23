@@ -62,10 +62,9 @@ class Interface:
         self.max_games =100000
         self.start_time =None
         self.time_per_move =100
-        self.adjudication=10
+        self.adjudication=0
         self._parallelism = 1
         self.network_file = ""
-        self.last_net_update=-10000
 
 
        
@@ -164,6 +163,7 @@ class Interface:
         cmd = "playgame!"+fen_string+"\n"
         stream.stdin.writelines([cmd.encode()])
         stream.stdin.flush()
+
     def load_network_command(self,file,stream):
         cmd="loadnetwork!"+file+"\n"
         stream.stdin.writelines([cmd.encode()])
@@ -186,25 +186,11 @@ class Interface:
         self.start_time =time.time()
         thread = threading.Thread(target=self.print_table)
         thread.start()
-        self.start_grpc_client()
         thread.join()
         results.get()
     
-    def check_for_new_network(self,stub):
-        response = stub.get_last_update(generator_pb2.Empty())
-        if response.timestamp>self.last_net_update:
-            #need to download the new network
-            net_data = stub.get_new_network(generator_pb2.Empty())
-            out_file = open("Networks/client.quant","wb")
-            out_file.write(net_data.data)
-            out_file.close()
-            self.last_net_update = response.timestamp
-            print("Downloaded a new network")
-            start_event.set()
 
-
-
-    def upload_batch(self,stub):
+    def upload_games(self):
         write_lock.acquire()
         if len(games)<100:
             write_lock.release()
@@ -216,20 +202,25 @@ class Interface:
             game.start_position=g[0]
             game.move_indices.extend([int(value) for value in g[1:]])
             batch.games.append(game)
-        response = stub.upload_batch(batch)
-        games[:]=[]
         #response should be blocking
         write_lock.release()
 
-    def start_grpc_client(self):
-        print("STARTED")
-        channel = grpc.insecure_channel("localhost:8000")
-        stub = generator_pb2_grpc.GeneratorStub(channel)
-        self.check_for_new_network(stub)
+    def generate(self):
         while True:
             time.sleep(0.1)
-            self.upload_batch(stub)
-            self.check_for_new_network(stub)
+            write_lock.aquire()
+            if len(games)<self.max_games:
+                write_lock.release()
+                continue
+            batch = generator_pb2.Batch()
+            for g in games:
+                game = generator_pb2.Game()
+                game.start_position = g[0]
+                game.move_indices.extend([int(value) for value in g[1:]])
+            write_lock.release()
+
+
+                
 
     @property
     def parallelism(self):
@@ -248,7 +239,7 @@ interface = Interface()
 interface.time_per_move = 50
 interface.parallelism = 14
 interface.hash_size =22
-interface.max_games =50000000
+interface.max_games =40000
 interface.network_file="client.quant"
 interface.read_openings("Positions/train13.book")
 interface.start()

@@ -20,6 +20,9 @@ Sample PosStreamer::get_next() {
               if(!is_raw_data){
               auto game = data[offset++];
               if(offset>=data.size()){
+                if(shuffle){
+                  std::cout<<"Reached end of training games"<<std::endl;
+                }
                 offset =0;
                 std::shuffle(data.begin(),data.end(),generator);
               }
@@ -38,6 +41,8 @@ Sample PosStreamer::get_next() {
                  std::cout<<"Using raw data"<<std::endl;
                }
             std::cout<<"Shuffled"<<std::endl;
+            std::cout<<"Offset: "<<offset<<std::endl;
+            std::cout<<"BufferSize after fill: "<<buffer.size()<<std::endl;
             auto t1 = std::chrono::high_resolution_clock::now();
             std::shuffle(buffer.begin(), buffer.end(), generator);
             auto t2 = std::chrono::high_resolution_clock::now();
