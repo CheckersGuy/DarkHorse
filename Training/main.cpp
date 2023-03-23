@@ -28,10 +28,10 @@ int main(int argl, const char **argc) {
       "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
       "/home/leagu/DarkHorse/Training/Positions/train13.book", 5);        
 */
- // GameStat stats;
- // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/large.train", stats);
- // std::cout<<stats<<std::endl;
- // return 0;
+  //GameStat stats;
+  //get_game_stats("/home/leagu/DarkHorse/Training/TrainData/largecombined.train", stats);
+  //std::cout<<stats<<std::endl;
+  //return 0;
   //view_game("/home/leagu/DarkHorse/Training/TrainData/testing2.train", 2222);
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
