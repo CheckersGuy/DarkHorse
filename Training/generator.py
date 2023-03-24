@@ -187,23 +187,9 @@ class Interface:
         thread = threading.Thread(target=self.print_table)
         thread.start()
         thread.join()
+        self.generate()
         results.get()
     
-
-    def upload_games(self):
-        write_lock.acquire()
-        if len(games)<100:
-            write_lock.release()
-            return
-        #Here we have a full batch
-        batch = generator_pb2.Batch()
-        for g in games:
-            game = generator_pb2.Game()
-            game.start_position=g[0]
-            game.move_indices.extend([int(value) for value in g[1:]])
-            batch.games.append(game)
-        #response should be blocking
-        write_lock.release()
 
     def generate(self):
         while True:
@@ -217,7 +203,13 @@ class Interface:
                 game = generator_pb2.Game()
                 game.start_position = g[0]
                 game.move_indices.extend([int(value) for value in g[1:]])
+                batch.games.append(game)
+            data = batch.SerializeToString()
+            with open("testwindow.train","wb") as file:
+                file.write(data)
+ 
             write_lock.release()
+            break;
 
 
                 
