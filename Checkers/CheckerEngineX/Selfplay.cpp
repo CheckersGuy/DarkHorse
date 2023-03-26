@@ -102,6 +102,9 @@ SelfGame Selfplay::play_game(std::string fen_string){
     Move best;
     MoveListe liste;
     get_moves(board.get_position(),liste);
+    if(liste.length()==0){
+      return game;
+    }
     int k;
     if(liste.length() ==1){
       best = liste[0];
@@ -115,10 +118,6 @@ SelfGame Selfplay::play_game(std::string fen_string){
     }
     game.second.emplace_back(k);
     board.make_move(best);
-    MoveListe endlist;
-    get_moves(board.get_position(),endlist);
-    if(endlist.length()==0)
-      break;
   
     history.emplace_back(board.get_position());
     //checking for 3 fold repetition
