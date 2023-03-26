@@ -47,10 +47,10 @@ int main(int argl, const char **argc) {
   int time, depth, hash_size;
   std::string net_file;
 
-  if (parser.has_option("bigagain10")) {
+  if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "bigagain10.quant";
+    net_file = "square2.quant";
   }
 
   network.addLayer(Layer{120, 1024});
@@ -60,21 +60,7 @@ int main(int argl, const char **argc) {
   network.load(net_file);
   network.init();
 
-/*
-  //Position test =Position::pos_from_fen("B:WK29:BK4");
-  Position test;
-  test.BP = 1+2+4+8;
-  test.WP = 1<<27;
-  test.print_position();
-  network.compute_incre_forward_pass(test);
-  auto wdl = network.get_wdl();
-  test.print_position();
-  network.print_output_layer(); 
-  return 0;
- 
-*/
-  //init policy network
- 
+
 
   if (parser.has_option("search"))
 

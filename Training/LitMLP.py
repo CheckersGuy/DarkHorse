@@ -190,6 +190,7 @@ class Network(pl.LightningModule):
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
+        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False)
         #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
@@ -323,7 +324,7 @@ class PolicyNetwork(pl.LightningModule):
         return loss_policy
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(), betas=(.9, 0.999), eps=1.0e-7)
+        optimizer = torch.optim.AdamW(self.parameters())
         return optimizer
 
     def save_quantized(self, output):

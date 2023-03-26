@@ -265,7 +265,10 @@ int Network::compute_incre_forward_pass(Position next) {
     }
     accumulator.update(next.color,next);
     for (auto i = 0; i < layers[0].out_features; i++) {
-        temp[i] = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
+        
+        auto value = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
+        temp[i]=value*value;
+        temp[i]=temp[i]/127;
     }
 
     for (auto i = 0; i < layers[0].out_features; ++i)
@@ -275,8 +278,7 @@ int Network::compute_incre_forward_pass(Position next) {
     }
     auto weight_index_offset =0;
     auto bias_index_offset = 0;
-    //computation for the remaining layers
-    for (auto k = 1; k < layers.size(); ++k) {
+       for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
 
         for (auto i = 0; i < l.out_features; i++)
@@ -287,7 +289,10 @@ int Network::compute_incre_forward_pass(Position next) {
                 sum+= weights[weight_index_offset + i * l.in_features + j] * input[j];
             }
             if (k < layers.size() - 1) {
-                temp[i] = std::clamp(sum/64,  0, 127);
+                auto value= std::clamp(sum/64,  0, 127);
+               temp[i]=value*value;
+               temp[i]=temp[i]/127;
+                //temp[i]=value;
             } else {
                 temp[i]= sum/64;
             }

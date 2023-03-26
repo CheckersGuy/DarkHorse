@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import subprocess
 import multiprocessing
 import threading
@@ -8,13 +7,9 @@ from rich.live import Live
 from rich.table import Table
 from rich.align import Align
 import time
-import tabulate
 import os
 import random
-import grpc
 import generator_pb2
-import generator_pb2_grpc
-import math
 #Needs to be reworked using a multiprocessing pool
 
 
@@ -103,8 +98,9 @@ class Interface:
 
  
     def process_stream(self,index):
-
+        print("Waiting for the event")
         start_event.wait()
+        print("Finished waiting for the event")
         process = subprocess.Popen(["../cmake-build-debug/MainEngine","--selfplay","--network Networks/{}".format(self.network_file)],stdout = subprocess.PIPE,stdin=subprocess.PIPE,stderr = subprocess.PIPE)
         random.seed((os.getpid()*int(time.time()))%123456789)
         #channel = grpc.insecure_channel("localhost:50051")
@@ -119,7 +115,7 @@ class Interface:
                 self.engine.state = States.INIT
             
             if self.engine.state == States.INIT:
-                self.load_network_command("Networks/client.quant",process)
+                self.load_network_command("Networks/{}".format(self.network_file),process)
                 #print("Refreshed network")
                 self.send_play_command(self.pick_opening(),process)
                 self.engine.state = States.PLAYING_GAME
@@ -186,15 +182,16 @@ class Interface:
         self.start_time =time.time()
         thread = threading.Thread(target=self.print_table)
         thread.start()
-        thread.join()
         self.generate()
+        thread.join()
         results.get()
     
 
     def generate(self):
+        start_event.set()
         while True:
             time.sleep(0.1)
-            write_lock.aquire()
+            write_lock.acquire()
             if len(games)<self.max_games:
                 write_lock.release()
                 continue
@@ -228,11 +225,11 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 50
-interface.parallelism = 14
+interface.time_per_move = 65
+interface.parallelism = 6
 interface.hash_size =22
-interface.max_games =40000
-interface.network_file="client.quant"
+interface.max_games =100
+interface.network_file="bigagain10.quant"
 interface.read_openings("Positions/train13.book")
 interface.start()
 
