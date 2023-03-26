@@ -104,14 +104,14 @@ SelfGame Selfplay::play_game(std::string fen_string){
     get_moves(board.get_position(),liste);
     int k;
     if(liste.length() ==1){
-      k =0;
+      best = liste[0];
     }else{
     searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
+    }
     for( k=0;k<liste.length();++k){
       if(liste[k] == best){
         break;
       }
-    }
     }
     game.second.emplace_back(k);
     board.make_move(best);
