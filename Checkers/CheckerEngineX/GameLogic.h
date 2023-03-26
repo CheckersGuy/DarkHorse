@@ -81,7 +81,7 @@ void initialize();
 
 void initialize(uint64_t seed);
 
-extern Network network,network2;
+extern Network network;
 
 
 #endif //CHECKERSTEST_GAMELOGIC_H

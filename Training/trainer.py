@@ -38,7 +38,7 @@ def merge_data(files,output):
 if __name__ == "__main__":
     model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
 
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/testing.train",
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/merged.train",
                                        val_data="TrainData/val.train",
                                        batch_size=4*8192, buffer_size=35000000)
 
@@ -58,6 +58,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-#merge_data(["TrainData/testing.train","TrainData/testing2.train"],"TrainData/testmerged.train")
+merge_data(["TrainData/testwindow.train","TrainData/testwindow2.train"],"TrainData/merged.train")
 
 
