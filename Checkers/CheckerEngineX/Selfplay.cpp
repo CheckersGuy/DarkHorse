@@ -87,6 +87,7 @@ SelfGame Selfplay::play_game(std::string fen_string){
 //testing resign threshholds next
   //network.load("Networks/client.quant");
   TT.clear();
+  network.accumulator.refresh();
   Statistics::mPicker.clear_scores();
  SelfGame game;
   
@@ -101,12 +102,16 @@ SelfGame Selfplay::play_game(std::string fen_string){
     Move best;
     MoveListe liste;
     get_moves(board.get_position(),liste);
-    searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
     int k;
+    if(liste.length() ==1){
+      k =0;
+    }else{
+    searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
     for( k=0;k<liste.length();++k){
       if(liste[k] == best){
         break;
       }
+    }
     }
     game.second.emplace_back(k);
     board.make_move(best);
