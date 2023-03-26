@@ -111,11 +111,11 @@ class Interface:
                 break
 
             if self.engine.state == States.DEFAULT:
+                self.load_network_command("Networks/{}".format(self.network_file),process)
                 self.send_settings_command(process)
                 self.engine.state = States.INIT
             
             if self.engine.state == States.INIT:
-                self.load_network_command("Networks/{}".format(self.network_file),process)
                 #print("Refreshed network")
                 self.send_play_command(self.pick_opening(),process)
                 self.engine.state = States.PLAYING_GAME
