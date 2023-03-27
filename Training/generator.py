@@ -226,10 +226,10 @@ class Interface:
 
 interface = Interface()
 interface.time_per_move = 65
-interface.parallelism = 6
+interface.parallelism = 218
 interface.hash_size =22
-interface.max_games =100
+interface.max_games =160000
 interface.network_file="bigagain10.quant"
-interface.read_openings("Positions/train13.book")
+interface.read_openings("Positions/train12.book")
 interface.start()
 
