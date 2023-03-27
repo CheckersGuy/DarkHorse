@@ -13,8 +13,8 @@ from enum import IntEnum
 import Lamb 
 import Focal
 from lion_pytorch import Lion
-
-
+import torch.functional as F
+import ranger21
 
 
 class Relu1(nn.Module):
@@ -169,6 +169,9 @@ class Network(pl.LightningModule):
         self.net = nn.Sequential(*self.layers)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
+        self.number_of_steps =1000
+        self.batch_size =4*8192
+        self.num_epochs=120
         self.gamma = 0.93
         print(self.net)
 
@@ -190,15 +193,26 @@ class Network(pl.LightningModule):
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
-        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False)
+        #optimizer = ranger21.Ranger21(self.parameters(),lr=1e-3, eps=1.0e-7,
+          #                            use_warmup=False,warmdown_active=False,
+           #                           weight_decay=0.0,
+            #                          num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
         #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        return [optimizer], [scheduler]
+        return [optimizer],[scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
         out = self.forward(x)
-        loss =torch.pow(torch.abs(out-result),2.5).mean()
+        loss = torch.nn.functional.mse_loss(out,result)
+        tensorboard_logs = {"avg_val_loss": loss}
+        self.log('train_loss', loss)
+        return {"loss": loss, "log": tensorboard_logs}
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move, x = val_batch
+        out = self.forward(x)
+        loss = torch.nn.functional.mse_loss(out,result)
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}

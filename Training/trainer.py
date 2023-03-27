@@ -36,11 +36,15 @@ def merge_data(files,output):
 
 
 if __name__ == "__main__":
+    batch_size = 4*8192
+    epochs = 30
     model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
-
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/testwindow2.train",
+    model.batch_size=batch_size
+    model.number_of_steps=23208612
+    model.num_epochs=epochs
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/merged.train",
                                        val_data="TrainData/val.train",
-                                       batch_size=4*8192, buffer_size=35000000)
+                                       batch_size=batch_size, buffer_size=35000000)
 
 
     # val_loader =  data_loader.val_dataloader()
@@ -48,7 +52,7 @@ if __name__ == "__main__":
 
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=30, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
 
     trainer.fit(model, data_loader)
@@ -58,6 +62,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-merge_data(["TrainData/testwindow.train","TrainData/testwindow2.train"],"TrainData/merged.train")
+merge_data(["TrainData/testwindow.train","TrainData/merged.train"],"TrainData/merged.train")
 
 
