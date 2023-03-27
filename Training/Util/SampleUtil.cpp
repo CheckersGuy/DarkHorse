@@ -36,9 +36,16 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
   //getting the game result
   MoveListe endlist;
   get_moves(current, endlist);
-  Result end_result =DRAW;
+  Result end_result =UNKNOWN;
   if(endlist.length() ==0){
     end_result =((current.get_color() == BLACK)?WHITE_WON : BLACK_WON);
+  }
+  const auto last = samples.back();
+  auto count = std::count_if(samples.begin(),samples.end(),[&](Sample s){
+        return (s.position == last.position);
+      });
+  if(count>=3){
+    end_result = DRAW;
   }
 
   for(Sample& sample : samples){
