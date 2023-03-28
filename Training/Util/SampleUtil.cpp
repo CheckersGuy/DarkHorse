@@ -17,40 +17,43 @@
 
 std::vector<Sample> extract_sample(const Proto::Game& game){
   //extracting samples;
+  MoveListe liste;
   std::vector<Sample> samples;
-  Position current;
-  current = Position::pos_from_fen(game.start_position());
-
+  Board board;
+  board = Position::pos_from_fen(game.start_position());
   for(const auto& index : game.move_indices()){
-    MoveListe liste;
-    get_moves(current, liste);
+    liste.reset();
+    get_moves(board.get_position(), liste);
+    Move move = liste[index];
     Sample s;
-    s.position = current;
-    if(!liste[index].is_capture()){
+    s.position = board.get_position();
+    if(!move.is_capture()){
       s.move = Statistics::MovePicker::get_policy_encoding(s.position.get_color(), liste[index]);
-    }
+    } 
     samples.emplace_back(s);
-    current.make_move(liste[index]);
+    board.make_move(move);
   }
-
   //getting the game result
-  MoveListe endlist;
-  get_moves(current, endlist);
-  Result end_result =UNKNOWN;
-  if(endlist.length() ==0){
-    end_result =((current.get_color() == BLACK)?WHITE_WON : BLACK_WON);
+  
+  Sample last_sample;
+  last_sample.position = board.get_position();
+  samples.emplace_back(last_sample);
+
+  liste.reset();
+  get_moves(board.get_position(), liste);
+  Result end_result =DRAW;
+  if(liste.length() ==0){
+    end_result =((board.get_mover() == BLACK)?WHITE_WON : BLACK_WON);
   }
-  const auto last = samples.back();
-  auto count = std::count_if(samples.begin(),samples.end(),[&](Sample s){
-        return (s.position == last.position);
-      });
-  if(count>=3){
-    end_result = DRAW;
+  
+  if(game.move_indices_size()>=500){
+    end_result = UNKNOWN;
   }
 
   for(Sample& sample : samples){
     sample.result = (end_result);
   }
+
   return samples;
 
 

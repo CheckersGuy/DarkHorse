@@ -87,16 +87,12 @@ SelfGame Selfplay::play_game(std::string fen_string){
 //testing resign threshholds next
   //network.load("Networks/client.quant");
   TT.clear();
-  network.accumulator.refresh();
+  network.init();
   Statistics::mPicker.clear_scores();
- SelfGame game;
-  
-  Position current;
-  current = Position::pos_from_fen(fen_string);
+  SelfGame game;
   Board board;
-  board = current;
+  board = Position::pos_from_fen(fen_string);
   game.first = fen_string;
-  std::vector<Position>history;
   history.emplace_back(current);
   for(auto i=0;i<600;++i){
     Move best;
@@ -111,7 +107,7 @@ SelfGame Selfplay::play_game(std::string fen_string){
     }else{
     searchValue(board,best,MAX_PLY,time_per_move,false,std::cout);
     }
-    for( k=0;k<liste.length();++k){
+    for( k=0;k<liste.length();k++){
       if(liste[k] == best){
         break;
       }
@@ -119,10 +115,8 @@ SelfGame Selfplay::play_game(std::string fen_string){
     game.second.emplace_back(k);
     board.make_move(best);
   
-    history.emplace_back(board.get_position());
-    //checking for 3 fold repetition
-    auto count = std::count(history.begin(), history.end(),history.back());
-    if(count>=3)
+    bool is_rep = board.is_repetition2(0);
+    if(is_rep)
       break;
   
   }
