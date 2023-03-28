@@ -93,7 +93,6 @@ SelfGame Selfplay::play_game(std::string fen_string){
   Board board;
   board = Position::pos_from_fen(fen_string);
   game.first = fen_string;
-  history.emplace_back(current);
   for(auto i=0;i<600;++i){
     Move best;
     MoveListe liste;
