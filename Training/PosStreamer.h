@@ -51,7 +51,7 @@ public:
         this->file_path = file_path;
         gen_seed=seed;
         buffer_size = buff_size;
-        generator = std::mt19937_64(getSystemTime());
+        generator = std::mt19937_64(seed);
         if (file_path.empty()) {
             std::cerr << "An empty path was given" << std::endl;
             std::exit(-1);

@@ -53,17 +53,8 @@ Sample PosStreamer::get_next() {
   }
     Sample next = buffer[ptr++];
     std::string result_string;
-    /*
-    if(next.result ==DRAW){
-      result_string="DRAW";
-    }else if(next.result == WHITE_WON)
-      result_string ="WHITE_WON";
-    else if(next.result ==BLACK_WON)
-      result_string="BLACK_WON";
-    else
-      result_string ="UNDEFINED";
-    std::cout<<result_string<<std::endl;
-    */
+  
+    
     return next;
 } 
 

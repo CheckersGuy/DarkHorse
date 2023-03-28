@@ -36,9 +36,17 @@ struct Sample {
 
     friend std::ostream& operator<<(std::ostream&stream, const Sample&s){
         s.position.print_position();
-        std::cout<<"Color: "<<((s.position.color == BLACK)?"BLACK" : "WHITE")<<std::endl;
-        std::cout<<"Move: "<<s.move<<std::endl;
-         std::cout<<"Result: "<<s.result<<std::endl;
+        stream<<"Color: "<<((s.position.color == BLACK)?"BLACK" : "WHITE")<<std::endl;
+        stream<<"Move: "<<s.move<<std::endl;
+        std::cout<<"Result: "<<s.result<<std::endl;
+        if(s.result == DRAW){
+          stream<<"DRAW";
+        }else if(s.result == BLACK_WON)
+          stream<<"BLACK_WON";
+        else if(s.result == WHITE_WON)
+          stream<<"WHITE_WON";
+        stream<<std::endl;
+
          return stream;
     }
 

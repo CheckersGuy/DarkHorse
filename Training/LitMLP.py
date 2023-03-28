@@ -194,9 +194,9 @@ class Network(pl.LightningModule):
         #optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
         #optimizer = ranger21.Ranger21(self.parameters(),lr=1e-3, eps=1.0e-7,
-          #                            use_warmup=False,warmdown_active=False,
-           #                           weight_decay=0.0,
-            #                          num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
+         #                             use_warmup=False,warmdown_active=False,
+          #                            weight_decay=0.0,
+           #                           num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
         #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
@@ -217,17 +217,6 @@ class Network(pl.LightningModule):
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
 
-    def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
-        out = self.forward(x)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
-        self.log('val_loss', loss.detach())
-        return {"val_loss": loss.detach()}
-
-    def validation_epoch_end(self, outputs):
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
-        tensorboard_logs = {"avg_val_loss": avg_loss}
-        return {"loss": avg_loss, "log": tensorboard_logs}
 
     def init_weights(self):
         self.net.apply(init_weights)
@@ -249,12 +238,12 @@ class Network(pl.LightningModule):
         layer = self.layers[0]
         weights = layer.weight.detach().numpy().flatten("F")
         weights = weights * 127.0
-        np.round(weights)
-        np.clip(weights, min16, max16)
+        #np.round(weights)
+        #np.clip(weights, min16, max16)
         weights = weights.astype(np.int16)
         bias = layer.bias.detach().numpy().flatten("F")
         bias = bias * 127.0
-        np.round(bias)
+        #np.round(bias)
         np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
         buffer_weights += weights.tobytes()
@@ -266,12 +255,12 @@ class Network(pl.LightningModule):
             if isinstance(layer, torch.nn.Linear):
                 weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
-                np.round(weights)
-                np.clip(weights, min16, max16)
+                #np.round(weights)
+                #np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten()
                 bias = bias * (127.0 * 64.0)
-                np.round(bias)
+                #np.round(bias)
                 bias = bias.astype(np.int32)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()

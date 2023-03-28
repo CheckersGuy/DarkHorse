@@ -50,12 +50,12 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "square3.quant";
+    net_file = "bigagain10.quant";
   }
 
   network.addLayer(Layer{120, 1024});
-  network.addLayer(Layer{1024, 16});
-  network.addLayer(Layer{16, 32});
+  network.addLayer(Layer{1024, 8});
+  network.addLayer(Layer{8, 32});
   network.addLayer(Layer{32, 1});
   network.load(net_file);
   network.init();
@@ -110,7 +110,7 @@ int main(int argl, const char **argc) {
     if(parser.has_option("time")){
       time = parser.as<int>("time");
     }else{
-      time =100;
+      time =65;
     }
 
 
