@@ -31,21 +31,21 @@ init_val_streamer(size_t buffer_size, size_t batch_size, char *file_path) {
     return val_streamer->get_streamer().get_num_positions();
 }
 
-extern "C" void get_next_batch(float *results, int64_t *moves, float *inputs) {
+extern "C" void get_next_batch(float *results, int64_t *moves,int64_t* buckets, float *inputs) {
     if (streamer.get() == nullptr) {
         std::cerr<<"Streamer wasnt loaded"<<std::endl;
         std::exit(-1);
     }
     BatchProvider *provider = static_cast<BatchProvider*>(streamer.get());
-    provider->next(results, moves, inputs);
+    provider->next(results, moves,buckets, inputs);
 }
 
-extern "C" void get_next_val_batch(float *results, int64_t *moves, float *inputs) {
+extern "C" void get_next_val_batch(float *results, int64_t *moves,int64_t* buckets, float *inputs) {
     if (val_streamer.get() == nullptr) {
         std::exit(-1);
     }
     BatchProvider *provider = static_cast<BatchProvider *>(val_streamer.get());
-    provider->next(results, moves, inputs);
+    provider->next(results, moves,buckets, inputs);
 }
 
 extern "C" void print_fen(const char* fen_string) {
@@ -115,22 +115,4 @@ extern "C" void get_input_from_fen(float* inputs,const char* fen_string) {
 
 }
 
-
-extern "C" int get_bucket_index(uint32_t bp,uint32_t wp,uint32_t k){
-    auto piece_count = Bits::pop_count(bp|wp);
-    if(piece_count<=8)
-        return 0;
-    
-    if(piece_count<=12){
-        return 1;
-    }
-    if(piece_count<=16)
-        return 2;
-    if(piece_count<=20)
-        return 3;
-
-    if(piece_count<=24)
-        return 4;
-
-}
 

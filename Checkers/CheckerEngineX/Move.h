@@ -25,7 +25,6 @@ struct Move {
 
     bool is_promotion(const uint32_t kings);
 
-    //current is the position before making the move
     bool is_pawn_move(const uint32_t kings);
 
 };

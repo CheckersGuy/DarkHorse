@@ -15,7 +15,7 @@ void create_train_file(std::string base_book, std::string output,int depth){
     network.addLayer(Layer{1024, 8});
     network.addLayer(Layer{8, 32});
     network.addLayer(Layer{32, 1});
-    network.load("bigagain10.quant");
+    network.load("square5.quant");
     network.init();   
 
     std::unordered_set<Position> positions;

@@ -35,10 +35,6 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
   }
   //getting the game result
   
-  Sample last_sample;
-  last_sample.position = board.get_position();
-  samples.emplace_back(last_sample);
-
   liste.reset();
   get_moves(board.get_position(), liste);
   Result end_result =DRAW;

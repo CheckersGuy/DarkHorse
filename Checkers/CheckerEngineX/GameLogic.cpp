@@ -1,6 +1,7 @@
 #include "GameLogic.h"
 #include "MovePicker.h"
 #include "Network.h"
+#include "types.h"
 
 
 
@@ -101,7 +102,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     glob.sel_depth = 0u;
     TT.age_counter=(TT.age_counter+1)&63ull;
     network.accumulator.refresh();
-    network2.accumulator.refresh();
     nodeCounter = 0;
     mainPV.clear();
 
@@ -123,8 +123,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,bool print, 
     size_t total_time = 0;
     auto test_time = getSystemTime();
     for (int i = 1; i <= depth; i += 2) {
-        network.accumulator.refresh();
-        network2.accumulator.refresh();
         auto start_time = getSystemTime();
         std::stringstream ss;
         nodeCounter = 0;
@@ -164,9 +162,9 @@ namespace Search {
 
 Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
     Depth red = 0;
-    if (!in_pv && !move.is_capture()&& local.i >=2) {
+    if (!in_pv && !move.is_capture() && local.i >=2) {
         const auto index = std::min(local.ply,(int)LMR_TABLE.size()-1);
-        red=1;
+        red=1;//previous value 1
 
     }
     return red;
@@ -437,7 +435,7 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
 
         if (value > local.best_score)
         {
-			local.move = move;
+			      local.move = move;
             local.best_score = value;
             pv.concat(move, local_pv);
         }
@@ -472,7 +470,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     local.ply = 0;
     local.depth = depth;
     local.move = Move{};
-	local.previous =Move{};
+	  local.previous =Move{};
     MoveListe liste;
     get_moves(board.get_position(), liste);
 
@@ -486,8 +484,10 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
 
 	//why am I not using the hash_move ?
 
+
     auto sucess = liste.put_front(mainPV[0]);
-	int start_index = sucess;
+	  int start_index = sucess;
+
     liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{}, start_index);
 
 

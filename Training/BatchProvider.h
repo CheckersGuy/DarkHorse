@@ -39,7 +39,7 @@ public:
 
     PosStreamer &get_streamer();
 
-    void next(float *results, int64_t *moves, float *inputs);
+    void next(float *results, int64_t *moves,int64_t* buckets, float *inputs);
 
 };
 

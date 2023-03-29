@@ -14,7 +14,7 @@ import os
 import sys
 import logging
 logging.basicConfig(filename="trainer.log",encoding="utf-8",level = logging.DEBUG)
-
+import Experimental
 libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
 c_lib = ctypes.CDLL(libname)
 import generator_pb2
@@ -37,10 +37,10 @@ def merge_data(files,output):
 
 if __name__ == "__main__":
     batch_size = 4*8192
-    epochs = 30
-    model = LitMLP.Network(output="nonwdl",hidden=[120, 1024, 8, 32, 1])
+    epochs = 120
+    model = LitMLP.PolicyNetwork(output="basemodel",hidden=[120,256,32,32,128])
     model.batch_size=batch_size
-    model.number_of_steps=23208612
+    model.number_of_steps=5529925
     model.num_epochs=epochs
     data_loader = LitMLP.LitDataModule(train_data="TrainData/merged.train",
                                        val_data="TrainData/val.train",
@@ -62,6 +62,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-merge_data(["TrainData/testwindow.train","TrainData/merged.train"],"TrainData/merged.train")
+merge_data(["TrainData/testwindow2.train","TrainData/testwindow4.train"],"TrainData/merged.train")
 
 
