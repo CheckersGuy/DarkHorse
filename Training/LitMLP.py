@@ -172,7 +172,7 @@ class Network(pl.LightningModule):
         self.number_of_steps =1000
         self.batch_size =4*8192
         self.num_epochs=120
-        self.gamma = 0.93
+        self.gamma = 0.96
         print(self.net)
 
     def forward(self, x):
@@ -194,9 +194,9 @@ class Network(pl.LightningModule):
         #optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
         #optimizer = ranger21.Ranger21(self.parameters(),lr=1e-3, eps=1.0e-7,
-         #                             use_warmup=False,warmdown_active=False,
-          #                            weight_decay=0.0,
-           #                           num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
+        #                              use_warmup=False,warmdown_active=False,
+        #                              weight_decay=0.0,
+        #                              num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
         #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
@@ -204,7 +204,7 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         result, move, x = train_batch
         out = self.forward(x)
-        loss = torch.nn.functional.mse_loss(out,result)
+        loss =torch.pow(torch.abs(out-result),2.0).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
@@ -212,10 +212,14 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move, x = val_batch
         out = self.forward(x)
-        loss = torch.nn.functional.mse_loss(out,result)
-        tensorboard_logs = {"avg_val_loss": loss}
-        self.log('train_loss', loss)
-        return {"loss": loss, "log": tensorboard_logs}
+        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        self.log('val_loss', loss.detach())
+        return {"val_loss": loss.detach()}
+
+    def validation_epoch_end(self, outputs):
+        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        tensorboard_logs = {"avg_val_loss": avg_loss}
+        return {"loss": avg_loss, "log": tensorboard_logs}
 
 
     def init_weights(self):
@@ -238,12 +242,12 @@ class Network(pl.LightningModule):
         layer = self.layers[0]
         weights = layer.weight.detach().numpy().flatten("F")
         weights = weights * 127.0
-        #np.round(weights)
-        #np.clip(weights, min16, max16)
+        np.round(weights)
+        np.clip(weights, min16, max16)
         weights = weights.astype(np.int16)
         bias = layer.bias.detach().numpy().flatten("F")
         bias = bias * 127.0
-        #np.round(bias)
+        np.round(bias)
         np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
         buffer_weights += weights.tobytes()
@@ -255,12 +259,12 @@ class Network(pl.LightningModule):
             if isinstance(layer, torch.nn.Linear):
                 weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
-                #np.round(weights)
-                #np.clip(weights, min16, max16)
+                np.round(weights)
+                np.clip(weights, min16, max16)
                 weights = weights.astype(np.int16)
                 bias = layer.bias.detach().numpy().flatten()
                 bias = bias * (127.0 * 64.0)
-                #np.round(bias)
+                np.round(bias)
                 bias = bias.astype(np.int32)
                 buffer_weights += weights.tobytes()
                 buffer_bias += bias.tobytes()
@@ -292,6 +296,7 @@ class PolicyNetwork(pl.LightningModule):
         self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
+        self.gamma = 0.96
         print(self.net)
 
     def forward(self, x):
@@ -328,7 +333,8 @@ class PolicyNetwork(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters())
-        return optimizer
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        return [optimizer],[scheduler]
 
     def save_quantized(self, output):
 
@@ -449,15 +455,19 @@ class NetBatchDataSet(BatchDataSet):
     def __next__(self):
         input_size = 120
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
+        #to be continued adding buckets
         moves = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
+        buckets = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
         inputs = np.zeros(shape=(self.batch_size, input_size), dtype=np.float32)
         res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
+        buckets_p = buckets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
+
         if not self.is_val_set:
-            self.c_lib.get_next_batch(res_p, moves_p, inp_p)
+            self.c_lib.get_next_batch(res_p, moves_p, buckets_p, inp_p)
         else:
-            self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
+            self.c_lib.get_next_val_batch(res_p, moves_p, buckets_p, inp_p)
 
         return results, moves, inputs
 
@@ -470,17 +480,20 @@ class WDLDataSet(BatchDataSet):
     def __next__(self):
         input_size = 120
         results = np.zeros(shape=(self.batch_size, 1), dtype=np.float32)
+        #to be continued adding buckets
         moves = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
+        buckets = np.zeros(shape=(self.batch_size, 1), dtype=np.int64)
         inputs = np.zeros(shape=(self.batch_size, input_size), dtype=np.float32)
         res_p = results.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         inp_p = inputs.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
         moves_p = moves.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
+        buckets_p = buckets.ctypes.data_as(ctypes.POINTER(ctypes.c_int64))
+
+
         if not self.is_val_set:
-            self.c_lib.get_next_batch(res_p, moves_p, inp_p)
+            self.c_lib.get_next_batch(res_p, moves_p, buckets_p, inp_p)
         else:
-            self.c_lib.get_next_val_batch(res_p, moves_p, inp_p)
-
-
+            self.c_lib.get_next_val_batch(res_p, moves_p, buckets_p, inp_p)
 
         #wdl-transform
         result = torch.Tensor(results)

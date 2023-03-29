@@ -202,7 +202,7 @@ class Interface:
                 game.move_indices.extend([int(value) for value in g[1:]])
                 batch.games.append(game)
             data = batch.SerializeToString()
-            with open("testwindow.train","wb") as file:
+            with open("window.train","wb") as file:
                 file.write(data)
  
             write_lock.release()
@@ -225,11 +225,11 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 65
+interface.time_per_move = 75
 interface.parallelism = 218
 interface.hash_size =22
-interface.max_games =160000
-interface.network_file="bigagain10.quant"
+interface.max_games =1000000
+interface.network_file="square5.quant"
 interface.read_openings("Positions/train12.book")
 interface.start()
 

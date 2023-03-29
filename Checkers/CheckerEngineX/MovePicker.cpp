@@ -15,8 +15,8 @@ void MovePicker::init() {
 /*
   policy.addLayer(Layer{120, 256});
   policy.addLayer(Layer{256, 32});
-  policy.addLayer(Layer{32, 32});
-  policy.addLayer(Layer{32, 128});
+  policy.addLayer(Layer{32, 64});
+  policy.addLayer(Layer{64, 128});
   policy.load("policy.quant");
   policy.init();
 */
@@ -98,6 +98,8 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous, Depth dep
     // const int index = get_move_encoding(pos.get_color(),move);
     const int index = get_history_index(pos,move);
     int score = history[index];
+
+
     if(!previous.is_capture() && !move.is_capture()) {
         auto counter=counter_history[get_history_index(pos,previous)][get_move_encoding(move)];
        score+=counter;
@@ -122,7 +124,7 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
     }
     
     //return 0;
-    //return policy[get_policy_encoding(current.get_color(), move)];
+ //   return policy[get_policy_encoding(current.get_color(), move)];
 
     return get_move_score(current, move,previous, depth);
 
