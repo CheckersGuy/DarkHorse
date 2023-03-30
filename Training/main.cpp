@@ -24,9 +24,9 @@ int main(int argl, const char **argc) {
   // void create_train_file(std::string base_book, std::string output, int
   // depth);
 
-  Book::create_train_file(
-      "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-      "/home/leagu/DarkHorse/Training/Positions/train12.book", 6);        
+ // Book::create_train_file(
+   //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
+    //  "/home/leagu/DarkHorse/Training/Positions/train12.book", 6);        
 
  // GameStat stats;
   //get_game_stats("/home/leagu/DarkHorse/Training/TrainData/merged.train", stats);
