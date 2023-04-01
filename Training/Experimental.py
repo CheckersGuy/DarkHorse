@@ -20,7 +20,9 @@ import ctypes
 import pathlib
 import numpy as np
 
-
+L1 = 1024
+L2 = 8
+L3 = 32
 
 
 
@@ -37,27 +39,41 @@ class Network(pl.LightningModule):
         self.num_epochs=120
         self.gamma = 0.96
 
-        self.layer_one =nn.Linear(120,1024)
-        self.layer_sec = nn.Linear(512,8);
-        self.layer_third = nn.Linear(8,32);
-        self.layer_last = nn.Linear(32,1)
-        self.layers = [self.layer_one,self.layer_sec,self.layer_third,self.layer_last]
 
-    def forward(self, x):
-        accu = self.layer_one.forward(x)
-        accu = torch.clamp(accu,0.0,1.0)**2
-        #output of the accumulator + activation
-        x,y, = torch.split(accu,512,dim=1)
-        out = torch.mul(x,y)
-        out = self.layer_sec.forward(out)
-        out = torch.clamp(out,0.0,1.0)**2
-        out = self.layer_third.forward(out)
-        out = torch.clamp(out,0.0,1.0)**2
-        out = self.layer_last.forward(out)
-        out = torch.sigmoid(out)
+        self.num_buckets =3
+        self.accu = nn.Linear(120,L1)
+
+        self.layer_one =nn.Linear(L1,L2*self.num_buckets)
+        self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
+        self.output = nn.Linear(L3,1*self.num_buckets)
+        self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
+
+    def forward(self, x,buckets):
+        offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
+        indices = buckets.flatten()+offset
+
+        #output of the accumulator
+        ac = self.accu.forward(x)
+        ac_out = torch.clamp(ac,0.0,1.0)**2
+
+        l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
+        l1c = l1s.view(-1,L2)[indices]
+        l1c = torch.clamp(l1c,0.0,1.0)**2
+        
+        l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,L3))
+        l2c = l2s.view(-1,L3)[indices]
+        l2c = torch.clamp(l2c,0.0,1.0)**2
+
+        l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
+        l3c = l3s.view(-1,1)[indices]
+        out = torch.sigmoid(l3c)
+
         return out
 
 
+    def init_layers():
+        #needs to be implemented
+        pass
 
     def step(self):
         with torch.no_grad():
@@ -78,16 +94,16 @@ class Network(pl.LightningModule):
         return [optimizer],[scheduler]
 
     def training_step(self, train_batch, batch_idx):
-        result, move, x = train_batch
-        out = self.forward(x)
+        result, move,buckets, x = train_batch
+        out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-result),2.0).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
-        out = self.forward(x)
+        result, move,buckets, x = val_batch
+        out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
         return {"val_loss": loss.detach()}

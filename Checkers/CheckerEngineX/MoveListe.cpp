@@ -11,7 +11,7 @@ void MoveListe::sort(Position current, Depth depth, int ply, Move ttMove,Move pr
 
     if (moveCounter - start_index <= 1)
         return;
-  //Statistics::mPicker.policy.compute_incre_forward_pass(current);
+  Statistics::mPicker.policy.compute_incre_forward_pass(current);
 
 
     std::array<int,40> scores;

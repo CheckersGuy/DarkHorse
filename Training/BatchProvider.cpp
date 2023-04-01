@@ -12,10 +12,12 @@
 
  int get_bucket_index(uint32_t bp,uint32_t wp,uint32_t k){
     auto piece_count = Bits::pop_count(bp|wp);
-    if(piece_count<=10)
+    if(piece_count<=6)
         return 0;
+    if(piece_count<=14)
+      return 1;
     
-    return 1;
+    return 2;
 
 }
 
@@ -26,6 +28,7 @@ void BatchProvider::next(float *results, int64_t *moves,int64_t* buckets, float 
     auto create_input = [&](Sample s, float *input, size_t off) {
         if (s.position.get_color() == BLACK) {
             s.position = s.position.get_color_flip();
+              
             if(s.result!=DRAW){
             s.result =(s.result ==BLACK_WON)?WHITE_WON : BLACK_WON;
             }
@@ -75,8 +78,10 @@ void BatchProvider::next(float *results, int64_t *moves,int64_t* buckets, float 
     const size_t INPUT_SIZE = 120;
     for (auto i = 0; i < get_batch_size(); ++i) {
         Sample current;
+        size_t num_pieces;
         do{
           current =get_streamer().get_next();
+          num_pieces = Bits::pop_count(current.position.BP|current.position.WP);
         }while(current.position.has_jumps(current.position.get_color()) || current.result ==UNKNOWN || current.move ==-1);
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);

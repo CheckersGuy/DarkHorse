@@ -86,7 +86,7 @@ class WDLNetwork(pl.LightningModule):
         self.save_quantized("epoch.quant")
 
     def training_step(self, train_batch, batch_idx):
-        wdl_values, move, x = train_batch
+        wdl_values, move, buckets, x = train_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
         acc = self.accuracy(output, wdl_values.squeeze())
@@ -95,7 +95,7 @@ class WDLNetwork(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         #self.step()
-        wdl_values, move, x = val_batch
+        wdl_values, move, buckets, x = val_batch
         output = self.forward(x)
         loss = self.criterion(output, wdl_values.squeeze(dim=1))
         acc = self.accuracy(output, wdl_values.squeeze())
@@ -202,7 +202,7 @@ class Network(pl.LightningModule):
         return [optimizer],[scheduler]
 
     def training_step(self, train_batch, batch_idx):
-        result, move, x = train_batch
+        result, move,buckets, x = train_batch
         out = self.forward(x)
         loss =torch.pow(torch.abs(out-result),2.0).mean()
         tensorboard_logs = {"avg_val_loss": loss}
@@ -210,7 +210,7 @@ class Network(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
+        result, move,buckets, x = val_batch
         out = self.forward(x)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
@@ -317,7 +317,7 @@ class PolicyNetwork(pl.LightningModule):
         return 100 * acc
 
     def training_step(self, train_batch, batch_idx):
-        result, move, x = train_batch
+        result, move, buckets, x = train_batch
         policy = self.forward(x)
         loss_policy = self.criterion(policy, move.squeeze(dim=1))
         acc = self.accuracy(policy, move.squeeze())
@@ -325,7 +325,7 @@ class PolicyNetwork(pl.LightningModule):
         return loss_policy
 
     def validation_step(self, val_batch, batch_idx):
-        result, move, x = val_batch
+        result, move, buckets, x = val_batch
         policy = self.forward(x)
         loss_policy = self.criterion(policy, move.squeeze(dim=1))
         self.log('val_loss', loss_policy)
@@ -469,7 +469,7 @@ class NetBatchDataSet(BatchDataSet):
         else:
             self.c_lib.get_next_val_batch(res_p, moves_p, buckets_p, inp_p)
 
-        return results, moves, inputs
+        return results, moves,buckets, inputs
 
 
 class WDLDataSet(BatchDataSet):
@@ -505,4 +505,4 @@ class WDLDataSet(BatchDataSet):
         is_draw =torch.eq(result,draw).to(torch.int64)
         is_lost = torch.eq(result,lost).to(torch.int64)
         wdl_values = is_won*0+is_lost*1+is_draw*2
-        return wdl_values, torch.Tensor(moves), torch.Tensor(inputs)
+        return wdl_values, torch.Tensor(moves), torch.Tensor(buckets), torch.Tensor(inputs)

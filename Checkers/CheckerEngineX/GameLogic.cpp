@@ -162,10 +162,9 @@ namespace Search {
 
 Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
     Depth red = 0;
-    if (!in_pv && !move.is_capture() && local.i >=2) {
-        const auto index = std::min(local.ply,(int)LMR_TABLE.size()-1);
+    if (!in_pv && !move.is_capture() &&  local.i >=2) {
+        const auto index = std::min(local.depth,(int)LMR_TABLE.size()-1);
         red=1;//previous value 1
-
     }
     return red;
 }
@@ -401,7 +400,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
     if (val == -INFINITE) {
         if ((in_pv && local.i != 0) || reduction!=0) {
-            val = -Search::search(in_pv, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
+            val = -Search::search(false, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
                                   new_depth - reduction,last_rev,move);
             if (val > new_alpha) {
                 val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
