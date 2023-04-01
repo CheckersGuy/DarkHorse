@@ -90,11 +90,6 @@ void sort_raw_data(std::string raw_data){
   
   mapped = (Sample*)mmap(0,size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
   auto num_samples = size/sizeof(Sample);
-  for(auto i=0;i<500;++i){
-    Sample current = mapped[i];
-    current.position.print_position();
-    std::cout<<std::endl;
-  }
   Zobrist::init_zobrist_keys();
   std::hash<Sample> hasher;
   std::mt19937_64 generator;
@@ -103,7 +98,14 @@ void sort_raw_data(std::string raw_data){
   std::sort(mapped,mapped+num_samples,[&](const Sample& one,const  Sample& two){
         return distrib(generator)> distrib(generator);
       });
-      
+     
+
+  for(auto i=0;i<500;++i){
+    Sample current = mapped[i];
+    current.position.print_position();
+    std::cout<<std::endl;
+  }
+
   munmap(mapped, size);
 
   close(fd);

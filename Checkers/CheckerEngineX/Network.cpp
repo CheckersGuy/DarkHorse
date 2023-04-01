@@ -340,12 +340,12 @@ int Network::evaluate(Position pos, int ply)
 
     float test = (1.0f-draw_perc);
     score*=1.0;
-    score*=600;
+    score*=500;
     //test
     score = std::round(score);
 
 
-    return static_cast<int>(score);
+    return score;
 }
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {

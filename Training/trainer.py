@@ -38,11 +38,9 @@ def merge_data(files,output):
 if __name__ == "__main__":
     batch_size = 4*8192
     epochs = 120
-    model = LitMLP.PolicyNetwork(output="basemodel",hidden=[120,256,32,32,128])
-    model.batch_size=batch_size
-    model.number_of_steps=5529925
-    model.num_epochs=epochs
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/merged.train",
+    model = LitMLP.PolicyNetwork(output="endgame",hidden=[120,256,32,32,128])
+  #  model = Experimental.Network()
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
                                        val_data="TrainData/val.train",
                                        batch_size=batch_size, buffer_size=95000000)
 
@@ -62,6 +60,6 @@ if __name__ == "__main__":
     #model = LitMLP.PatternModel()
 
 
-merge_data(["TrainData/testwindow2.train","TrainData/testwindow4.train"],"TrainData/merged.train")
+merge_data(["TrainData/window2.train","TrainData/window1.train","TrainData/window3.train","TrainData/window0.train"],"TrainData/giga.train")
 
 
