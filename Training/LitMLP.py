@@ -197,14 +197,14 @@ class Network(pl.LightningModule):
         #                              use_warmup=False,warmdown_active=False,
         #                              weight_decay=0.0,
         #                              num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
-        #optimizer = Lion(self.parameters(),lr=1e-3)
+        #optimizer = Lion(self.parameters(),lr=3e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
     def training_step(self, train_batch, batch_idx):
         result, move,buckets, x = train_batch
         out = self.forward(x)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.5).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}

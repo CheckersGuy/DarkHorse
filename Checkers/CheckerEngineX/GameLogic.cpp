@@ -199,6 +199,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     local.depth = depth;
     local.move = Move{};
   	local.previous = previous;
+    local.previous_own = Move{};
     //checking win condition
 
 
@@ -402,7 +403,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
         if ((in_pv && local.i != 0) || reduction!=0) {
             val = -Search::search(false, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
                                   new_depth - reduction,last_rev,move);
-            if (val > new_alpha) {
+            if (val > new_alpha && (val < local.beta || reduction!=0) ) {
                 val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
             }
         } else {
