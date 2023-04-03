@@ -38,7 +38,7 @@ def merge_data(files,output):
 if __name__ == "__main__":
     batch_size = 4*8192
     epochs = 120
-    model = LitMLP.PolicyNetwork(output="endgame",hidden=[120,256,32,32,128])
+    model = LitMLP.Network(output="endgame",hidden=[120,1024,8,32,1])
   #  model = Experimental.Network()
     data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
                                        val_data="TrainData/val.train",

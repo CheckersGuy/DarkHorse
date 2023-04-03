@@ -39,7 +39,7 @@ struct Local {
     Depth depth;
     Ply ply;
     int i;
-    Move move,previous;
+    Move move,previous,previous_own;
 };
 
 #ifdef USE_DB

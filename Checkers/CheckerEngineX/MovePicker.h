@@ -17,7 +17,8 @@ namespace Statistics {
         std::array<int, 32 * 16> history{0};
     public:
 		std::array<std::array<Move,MAX_KILLERS>,MAX_PLY> killer_moves;
-		std::array<std::array<int,32*4>,32*16> counter_history;
+	  std::array<std::array<int,32*16>,32*16> counter_history;
+	  std::array<std::array<int,32*16>,32*16> follow_history;
 		Network policy;
         int get_move_score(Position pos, Move move,Move previous, Depth depth);
 
