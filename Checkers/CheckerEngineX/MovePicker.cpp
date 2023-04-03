@@ -93,7 +93,7 @@ void MovePicker::clear_scores() {
         }
     }
 }
-int MovePicker::get_move_score(Position pos, Move move, Move previous, Depth depth)
+int MovePicker::get_move_score(Position pos, Move move, Move previous,Move previous_own, Depth depth)
 {
     // const int index = get_move_encoding(pos.get_color(),move);
     const int index = get_history_index(pos,move);
@@ -104,12 +104,18 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous, Depth dep
         auto counter=counter_history[get_history_index(pos,previous)][get_history_index(pos,move)];
        score+=counter;
     }
+	
+        if(!previous_own.is_empty() && !previous_own.is_capture() && !move.is_capture()) {
+            auto follow= follow_history[get_history_index(pos,previous_own)][get_history_index(pos,move)];
+            score+=follow;
+       }
+
   
     return score;
 
 }
 
-int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move,Move previous, Move ttMove) {
+int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move,Move previous,Move previous_own, Move ttMove) {
     if (move == ttMove) {
         return std::numeric_limits<int32_t>::max();
     }
@@ -123,7 +129,7 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
     }
     
 
-    return get_move_score(current, move,previous, depth);
+    return get_move_score(current, move,previous,previous_own, depth);
 
 }
 
@@ -132,7 +138,7 @@ void update_history_score(int& score, int delta) {
 }
 
 
-void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previous, int depth) {
+void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previous,Move previous_own, int depth) {
     const int index = get_history_index(pos, move);
     //const int delta = std::min(depth*depth,16*16);;
     const int delta = depth;
@@ -144,6 +150,12 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previou
             counter_history[get_history_index(pos,previous)][get_history_index(pos,move)]+=delta;
         }
 
+	
+        if(!previous_own.is_empty() && !previous_own.is_capture() && !move.is_capture()) {
+            follow_history[get_history_index(pos,previous_own)][get_history_index(pos,move)]+=delta;
+        }
+
+
     while (top != move) {
         top = *liste;
         int& score = history[get_history_index(pos, top)];
@@ -153,6 +165,10 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,Move previou
         if(!previous.is_capture() && !top.is_capture()) {
             counter_history[get_history_index(pos,previous)][get_history_index(pos,top)]-=delta;
         }
+       if(!previous_own.is_empty() &&!previous_own.is_capture() && !move.is_capture()) {
+            follow_history[get_history_index(pos,previous_own)][get_history_index(pos,move)]-=delta;
+        }
+
 
         liste++;
     }

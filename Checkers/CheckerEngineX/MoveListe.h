@@ -19,7 +19,7 @@ public:
 
     void add_move(Move next);
 
-    void sort(Position current, Depth depth, int ply, Move ttMove,Move previous, int start_index);
+    void sort(Position current, Depth depth, int ply, Move ttMove,Move previous,Move previous_own, int start_index);
 
     bool is_empty() const;
 

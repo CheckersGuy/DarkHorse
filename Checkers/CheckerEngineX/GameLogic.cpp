@@ -284,11 +284,11 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
         bool sucess=liste.put_front(mv);
         start_index +=sucess;
     }
-	liste.sort(board.get_position(), local.depth, local.ply, info.tt_move,local.previous, start_index);
+	liste.sort(board.get_position(), local.depth, local.ply, info.tt_move,local.previous,local.previous_own, start_index);
 
 
     //move-loop
-    Search::move_loop(in_pv, local, board, pv, liste,last_rev,previous);
+    Search::move_loop(in_pv, local, board, pv, liste,last_rev);
 
 
     //storing tb-entries
@@ -331,7 +331,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, D
 					return loss(ply);
 			}
         if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-            return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{});
+            return Search::search(in_pv, board, pv, alpha, beta, ply, 1,last_rev,Move{},Move{});
         } 
         bestValue = network.evaluate(board.get_position(),ply);
         return bestValue;
@@ -392,7 +392,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
                               local.ply + 1, newDepth,last_rev);
         if (board_val >= newBeta) {
             Value value = -Search::search(false, board, line, -(newBeta + 1), -newBeta, local.ply + 1,
-                                          newDepth,last_rev,move);
+                                          newDepth,last_rev,move,local.previous);
             if (value >= newBeta) {
                 val = value;
             }
@@ -403,12 +403,12 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
     if (val == -INFINITE) {
         if ((in_pv && local.i != 0) || reduction!=0) {
             val = -Search::search(false, board, line, -new_alpha - 1, -new_alpha, local.ply + 1,
-                                  new_depth - reduction,last_rev,move);
+                                  new_depth - reduction,last_rev,move,local.previous_own);
             if (val > new_alpha && (val < local.beta || reduction!=0) ) {
-                val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
+                val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move,local.previous);
             }
         } else {
-            val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move);
+            val = -Search::search(in_pv, board, line, -local.beta, -new_alpha, local.ply + 1, new_depth,last_rev,move,local.previous);
         }
 
     }
@@ -446,7 +446,7 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
 
 
     if (local.best_score >= local.beta && !board.get_position().has_jumps()) {
-        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move,local.previous, local.depth);
+        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0], local.move,local.previous,local.previous_own, local.depth);
     	//updating killer moves
 		auto& killers = Statistics::mPicker.killer_moves;
 		for(auto i=1;i<MAX_KILLERS;++i){
@@ -472,6 +472,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     local.depth = depth;
     local.move = Move{};
 	  local.previous =Move{};
+    local.previous_own = Move{};
     MoveListe liste;
     get_moves(board.get_position(), liste);
 
@@ -489,10 +490,10 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     auto sucess = liste.put_front(mainPV[0]);
 	  int start_index = sucess;
 
-    liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{}, start_index);
+    liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{},Move{}, start_index);
 
 
-    move_loop(true, local, board, line, liste,board.last_non_rev,Move{});
+    move_loop(true, local, board, line, liste,board.last_non_rev);
 
 
 }
