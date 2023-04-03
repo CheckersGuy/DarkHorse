@@ -170,7 +170,8 @@ Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
 }
 
 
-Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev,Move previous) {
+Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev,Move previous,Move previous_own) {
+  
     pv.clear();
     nodeCounter++;
     //checking time-used
@@ -199,7 +200,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     local.depth = depth;
     local.move = Move{};
   	local.previous = previous;
-    local.previous_own = Move{};
+    local.previous_own = previous_own;
     //checking win condition
 
 
@@ -416,13 +417,13 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
 }
 
-void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev,Move previous) {
+void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev) {
 
     const auto num_moves = liste.length();
     int extension=0;
     if(liste.length()==1){
       extension=1;
-    } else if((in_pv || previous.is_capture()) && liste[0].is_capture()){
+    } else if((in_pv || local.previous.is_capture()) && liste[0].is_capture()){
       extension =1;
     }
     local.i = 0;
