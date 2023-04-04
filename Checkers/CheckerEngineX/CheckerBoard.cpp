@@ -66,17 +66,15 @@ extern"C" int getmove
 	
 
 		if(!engine_initialized){
-			  use_classical(false);
 			  network.addLayer(Layer{120, 1024});
 			  network.addLayer(Layer{1024, 8});
 			  network.addLayer(Layer{8, 32});
 			  network.addLayer(Layer{32, 1});
-			  network.load("bigagain10.quant");
+			  network.load("loss.quant");
 			  network.init();
 
 			  // debug<<"Initialized engine"<<std::endl;
 			  TT.resize(22);
-			  init_tablebase(2000, 6, debug);
 			  initialize();
 			  Statistics::mPicker.init();
 			  engine_initialized = true;
