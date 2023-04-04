@@ -92,6 +92,13 @@ void MovePicker::clear_scores() {
             counter_history[i][k]=0;
         }
     }
+
+  for(auto i=0; i<follow_history.size(); ++i) {
+        for(auto k=0; k<follow_history[0].size(); ++k) {
+            follow_history[i][k]=0;
+        }
+    }
+
 }
 int MovePicker::get_move_score(Position pos, Move move, Move previous,Move previous_own, Depth depth)
 {
@@ -101,15 +108,13 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous,Move previ
 
 
     if(!previous.is_capture() && !move.is_capture()) {
-        auto counter=counter_history[get_history_index(pos,previous)][get_history_index(pos,move)];
+        auto counter=counter_history[get_history_index(pos,previous)][index];
        score+=counter;
     }
-	
         if(!previous_own.is_empty() && !previous_own.is_capture() && !move.is_capture()) {
-            auto follow= follow_history[get_history_index(pos,previous_own)][get_history_index(pos,move)];
+            auto follow= follow_history[get_history_index(pos,previous_own)][index];
             score+=follow;
        }
-
   
     return score;
 
