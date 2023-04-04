@@ -95,6 +95,8 @@ enum Score : int {
     TB_LOSS = -14000
 };
 
+
+
 enum Color : char {
     BLACK = -1, WHITE = 1
 };

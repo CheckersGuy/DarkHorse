@@ -244,13 +244,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
         }
     }
 
-  if(!found_hash && depth>4-in_pv){
-    Line line_loc;
-    search(in_pv,board, line_loc, alpha, beta, ply, std::max(depth-4,1), last_rev, previous, previous_own);
-    info.tt_move = line_loc[0];
-  }
-
-
 #ifdef USE_DB
     if(ply>0 && depth>=3) {
         auto tb_value = get_tb_result(board.get_position(),max_db_pieces,handle);
@@ -292,7 +285,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
         bool sucess=liste.put_front(mv);
         start_index +=sucess;
     }
-	liste.sort(board.get_position(), local.depth, local.ply, info.tt_move,local.previous,local.previous_own, start_index);
+	liste.sort(board.get_position(), local, info.tt_move, start_index);
 
 
     //move-loop
@@ -309,7 +302,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     } else {
         flag = TT_EXACT;
     }
-    Move store_move  =(local.move.is_capture())?Move{}:local.move;					
+    Move store_move = (local.move.is_capture())? Move{} : local.move;
     TT.store_hash(tt_value, pos_key, flag, depth, store_move);
 
     return local.best_score;
@@ -498,7 +491,7 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
     auto sucess = liste.put_front(mainPV[0]);
 	  int start_index = sucess;
 
-    liste.sort(board.get_position(), local.depth, local.ply, Move{},Move{},Move{}, start_index);
+    liste.sort(board.get_position(), local,Move{}, start_index);
 
 
     move_loop(true, local, board, line, liste,board.last_non_rev);

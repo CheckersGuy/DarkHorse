@@ -20,7 +20,6 @@
 #include "Bits.h"
 #include <Network.h>
 #include <types.h>
-
 struct SearchGlobal {
     uint32_t sel_depth;
 
@@ -33,14 +32,7 @@ struct SearchGlobal {
 
 extern SearchGlobal glob;
 
-struct Local {
-    Value alpha, beta;
-    Value best_score{-INFINITE};
-    Depth depth;
-    Ply ply;
-    int i;
-    Move move,previous,previous_own;
-};
+
 
 #ifdef USE_DB
 void init_tablebase(int db_cache,int max_pieces,std::ostream& stream);

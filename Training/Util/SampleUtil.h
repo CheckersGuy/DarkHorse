@@ -17,6 +17,10 @@ struct GameStat{
   }
 };
 
+
+
+void count_real_duplicates(std::string raw_data,std::string output);
+
 std::vector<Sample> extract_sample(const Proto::Game& game);
 
 void write_raw_data(std::string input_proto);

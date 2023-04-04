@@ -21,8 +21,10 @@
 
 int main(int argl, const char **argc) {
 
-  // void create_train_file(std::string base_book, std::string output, int
-  // depth);
+
+
+  count_real_duplicates("/home/leagu/DarkHorse/Training/TrainData/giga.train.raw", "/home/leagu/DarkHorse/Training/TrainData/gigaremoved.train.raw");
+  return 0;
 
  // Book::create_train_file(
    //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
