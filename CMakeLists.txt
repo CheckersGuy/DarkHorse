@@ -10,6 +10,7 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-fuse-linker-plugin")
   add_compile_options("-flto")
   add_compile_options("-Ofast")
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIRS})

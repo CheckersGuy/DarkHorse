@@ -8,6 +8,15 @@
 #include "Line.h"
 #include "Position.h"
 
+struct Local {
+    Value alpha, beta;
+    Value best_score{-INFINITE};
+    Depth depth;
+    Ply ply;
+    int i;
+    Move move,previous,previous_own;
+};
+
 class MoveListe {
 
 private:
@@ -19,7 +28,7 @@ public:
 
     void add_move(Move next);
 
-    void sort(Position current, Depth depth, int ply, Move ttMove,Move previous,Move previous_own, int start_index);
+    void sort(Position current, Local& local, Move ttMove, int start_index);
 
     bool is_empty() const;
 
@@ -29,7 +38,7 @@ public:
 
     bool put_front(Move other);
 
-	bool put_front(int start_index, Move other);
+	  bool put_front(int start_index, Move other);
 
     void remove(Move move);
 

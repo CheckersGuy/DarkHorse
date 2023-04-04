@@ -112,6 +112,56 @@ void sort_raw_data(std::string raw_data){
 
 }
 
+void count_real_duplicates(std::string raw_data,std::string output){
+  std::ofstream stream(output,std::ios::binary);
+  if(!stream.good()){
+    std::exit(-1);
+  }
+  int fd; // file-descriptor
+  size_t size;
+  struct stat s;
+  int status;
+  Sample * mapped;
+  fd = open(raw_data.c_str(),O_RDWR);
+  status = fstat(fd,&s);
+  size = s.st_size;
+  std::cout<<"size: "<<s.st_size/sizeof(Sample)<<std::endl;
+  
+  mapped = (Sample*)mmap(0,size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
+  auto num_samples = size/sizeof(Sample);
+
+
+ 
+  std::sort(mapped,mapped+num_samples,[&](const Sample& one,const  Sample& two){
+        auto key1 = Zobrist::generate_key(one.position) ;
+        auto key2 = Zobrist::generate_key(two.position);
+        return key1>key2;
+      });
+size_t counter =0;
+  for(auto i=0;i<num_samples;++i){
+    auto key = Zobrist::generate_key(mapped[i].position);
+    auto result = mapped[i].result;
+    while(Zobrist::generate_key(mapped[i].position) == key && mapped[i].result==result){
+      ++i;
+    }
+    counter++;
+    stream<<mapped[i];
+    
+  }
+  std::cout<<"New size : "<<counter<<" vs old_size : "<<num_samples<<std::endl;
+
+
+
+
+
+
+  munmap(mapped, size);
+
+  close(fd);
+
+}
+
+
 
 void create_shuffled_raw(std::string input_prot){
  write_raw_data(input_prot);
