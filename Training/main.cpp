@@ -22,7 +22,6 @@
 int main(int argl, const char **argc) {
 
 
-
   count_real_duplicates("/home/leagu/DarkHorse/Training/TrainData/giga.train.raw", "/home/leagu/DarkHorse/Training/TrainData/gigaremoved.train.raw");
   return 0;
 

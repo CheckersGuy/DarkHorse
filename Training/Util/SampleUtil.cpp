@@ -138,14 +138,18 @@ void count_real_duplicates(std::string raw_data,std::string output){
         return key1>key2;
       });
 size_t counter =0;
-  for(auto i=0;i<num_samples;++i){
+  for(auto i=0;i<num_samples;){
+    auto sample = mapped[i];
     auto key = Zobrist::generate_key(mapped[i].position);
     auto result = mapped[i].result;
     while(Zobrist::generate_key(mapped[i].position) == key && mapped[i].result==result){
       ++i;
     }
     counter++;
-    stream<<mapped[i];
+    if((counter%1000)==0){
+      std::cout<<"Counter: "<<counter<<std::endl;
+    }
+    stream<<sample;
     
   }
   std::cout<<"New size : "<<counter<<" vs old_size : "<<num_samples<<std::endl;

@@ -172,7 +172,7 @@ class Network(pl.LightningModule):
         self.number_of_steps =1000
         self.batch_size =4*8192
         self.num_epochs=120
-        self.gamma = 0.96
+        self.gamma = 0.985
         print(self.net)
 
     def forward(self, x):
