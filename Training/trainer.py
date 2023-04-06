@@ -38,9 +38,9 @@ def merge_data(files,output):
 if __name__ == "__main__":
     batch_size = 4*8192
     epochs = 120
-    model = LitMLP.Network(output="endgame",hidden=[120,1024,8,32,1])
+    model = LitMLP.PolicyNetwork(output="endgame",hidden=[120,256,32,32,128])
   #  model = Experimental.Network()
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/gigaremoved.train.raw",
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
                                        val_data="TrainData/val.train",
                                        batch_size=batch_size, buffer_size=95000000)
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
 
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="Networks/policy.ckpt")
     model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
     

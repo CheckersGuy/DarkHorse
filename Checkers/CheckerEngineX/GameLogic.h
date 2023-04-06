@@ -53,13 +53,13 @@ namespace Search {
 
     void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
-    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev,Move previous,Move previous_own);
+    Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta, Ply ply, Depth depth,int last_rev,Move previous,Move previous_own,Move excluded);
 
-    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev);
+    void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &liste, int last_rev,Move excluded);
 
-    Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev);
+    Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth, int last_rev,Move skip_move);
 
-    Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev);
+    Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, int extension, int last_rev,Move skip_move);
 
     Depth reduce(Local &local, Board &board, Move, bool in_pv);
 

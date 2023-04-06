@@ -15,6 +15,8 @@ struct Local {
     Ply ply;
     int i;
     Move move,previous,previous_own;
+    Move sing_move;
+    Value sing_score;
 };
 
 class MoveListe {

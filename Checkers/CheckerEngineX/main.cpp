@@ -51,7 +51,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     //net_file = "square6.quant";
-    net_file = "loss2.quant";
+    net_file = "loss.quant";
   }
 
   network.addLayer(Layer{120, 1024});
