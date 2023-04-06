@@ -4,6 +4,7 @@
 
 
 #include "Transposition.h"
+#include "types.h"
 
 Transposition TT;
 

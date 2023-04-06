@@ -12,6 +12,8 @@ void MoveListe::sort(Position current, Local& local, Move ttMove, int start_inde
     if (moveCounter - start_index <= 1)
         return;
       std::array<int,40> scores;
+
+    Statistics::mPicker.policy.compute_incre_forward_pass(current);
     for (auto i = start_index; i < moveCounter; ++i) {
         Move m = liste[i];
         scores[i] =Statistics::mPicker.get_move_score(current, local.depth, local.ply, m,local.previous, local.previous_own, ttMove);
