@@ -16,6 +16,7 @@ struct Local {
     int i;
     Move move,previous,previous_own;
     Move sing_move;
+    Move skip_move;
     Value sing_score;
 };
 
