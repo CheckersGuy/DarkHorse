@@ -22,7 +22,7 @@ class Relu1(nn.Module):
         super(Relu1, self).__init__()
 
     def forward(self, x):
-        return torch.clamp(x,0.0,1.0)**2
+        return torch.clamp(x,0.0,1.0)
 
 
 
