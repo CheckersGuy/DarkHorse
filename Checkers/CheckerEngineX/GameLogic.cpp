@@ -204,6 +204,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
   	local.previous = previous;
     local.previous_own = previous_own;
     local.skip_move = excluded;
+    local.sing_move =Move{};
     //checking win condition
 
 
@@ -245,7 +246,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
                 (info.flag == TT_UPPER && isLoss(tt_score) && tt_score <= local.alpha)) {
             return tt_score;
         }
-        if(info.flag == TT_LOWER && info.depth>=depth-4 && std::abs(info.score)<TB_WIN){
+        if(info.flag == TT_LOWER && info.depth>=depth-4){
           //checking if move is in list
           auto found =(std::find(liste.begin(),liste.end(),info.tt_move)!=liste.end());
           if(found){
@@ -254,7 +255,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
           }
         }
     }
-    //stuff for singular search extension needs to be added
 
 #ifdef USE_DB
     if(ply>0 && depth>=3) {
@@ -297,7 +297,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
         bool sucess=liste.put_front(mv);
         start_index +=sucess;
     }
-	liste.sort(board.get_position(), local, info.tt_move, start_index);
+	liste.sort(board.get_position(), local, tt_move, start_index);
 
 
     //move-loop
@@ -385,11 +385,18 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
     //
     //
 
-    if(extension ==0 && in_pv && local.skip_move.is_empty() && local.depth>=8000 && move == local.sing_move){
+    Depth reduction = Search::reduce(local, board, move, in_pv);
+
+    /*
+    if(in_pv
+        && local.depth>=8
+        && move == local.sing_move 
+        && local.skip_move.is_empty()
+        && extension ==0){
       Value margin = 50;
       Value new_alpha = local.sing_score-margin;
       Line new_pv;
-      auto value = search(in_pv, board, new_pv, new_alpha, new_alpha+1, local.ply, local.depth-4, last_rev, local.previous, local.previous_own, move);
+      auto value = search(in_pv, board, new_pv, new_alpha-1, new_alpha, local.ply, local.depth-4, last_rev, local.previous, local.previous_own, move);
       if(value<=new_alpha){
         std::cout<<"Extended"<<std::endl;
         extension=1;
@@ -397,13 +404,12 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
       std::cout<<"Value: "<<value << "alpha:" <<new_alpha<<std::endl;
 
     }
-
+*/
 
     if(move.is_capture() || move.is_pawn_move(board.get_position().K)) {
         last_rev = board.pCounter;
     }
 
-    Depth reduction = Search::reduce(local, board, move, in_pv);
     Value new_alpha = std::max(local.best_score,local.alpha);
     if(local.best_score>local.alpha){
       local.move = move;
@@ -523,12 +529,17 @@ void search_root(Local &local, Line &line, Board &board, Value alpha, Value beta
 
 
 	//why am I not using the hash_move ?
-
+    NodeInfo info;
+    bool found_hash = TT.find_hash(board.get_current_key(),info);
+    Move tt_move;
+    if(found_hash){
+      tt_move = info.tt_move;
+    }
 
     auto sucess = liste.put_front(mainPV[0]);
 	  int start_index = sucess;
 
-    liste.sort(board.get_position(), local,Move{}, start_index);
+    liste.sort(board.get_position(), local,info.tt_move, start_index);
 
 
     move_loop(true, local, board, line, liste,board.last_non_rev);
