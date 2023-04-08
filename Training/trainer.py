@@ -42,7 +42,7 @@ if __name__ == "__main__":
   #  model = Experimental.Network()
     data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
                                        val_data="TrainData/val.train",
-                                       batch_size=batch_size, buffer_size=95000000)
+                                       batch_size=batch_size, buffer_size=35000000)
 
 
     # val_loader =  data_loader.val_dataloader()
