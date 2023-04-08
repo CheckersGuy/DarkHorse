@@ -405,6 +405,9 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line, 
 
     Depth reduction = Search::reduce(local, board, move, in_pv);
     Value new_alpha = std::max(local.best_score,local.alpha);
+    if(local.best_score>local.alpha){
+      local.move = move;
+    }
 
 
 

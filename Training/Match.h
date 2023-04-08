@@ -9,6 +9,7 @@
 #include <deque>
 #include <iterator>
 #include <fstream>
+#include <string>
 #include  <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -82,6 +83,7 @@ struct Interface {
     bool first_game = true;
     int first_mover = 0;
     std::vector<Position> history;
+    size_t pos_counter{0};
 
     void process();
 
@@ -110,24 +112,22 @@ private:
     int maxGames{1000000};
     int wins_one{0}, wins_two{0}, draws{0};
     int threads{1};
-    std::vector<Position> positions;
-    std::string openingBook{"../Training/Positions/11manballots.pos"};
+    std::vector<std::string> positions;
+    std::string openingBook{"../Training/Positions/drawbook.book"};
 
 public:
     explicit Match(const std::string &first, const std::string &second) : first(
             first), second(second) {
-        std::ifstream stream(openingBook, std::ios::binary);
+        std::ifstream stream(openingBook);
 
         if(!stream.good()){
             std::cerr<<"Could not load the openings"<<std::endl;
             std::exit(-1);
         }
-
-        std::istream_iterator<Position> begin(stream);
-
-
-        std::istream_iterator<Position> end;
-        std::copy(begin, end, std::back_inserter(positions));
+        std::string line;
+        while(std::getline(stream,line)){
+          positions.emplace_back(line);
+        }
         std::mt19937_64 generator(getSystemTime());
     };
 
@@ -153,7 +153,7 @@ public:
 
     void setOpeningBook(std::string book);
 
-    Position get_start_pos();
+    std::string get_start_pos(size_t& pos_counter);
 	
 	void set_time(int time_one, int time_two);
 

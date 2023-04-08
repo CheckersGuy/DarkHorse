@@ -70,8 +70,10 @@ struct Scanner {
         int num_square = std::stoi(token);
         if (1 <= num_square && num_square <= 32)
             return true;
-        else
+        else{
+          std::cout<<"INPUT: "<<msg<<std::endl;
             throw std::domain_error("Invalid input for fen");
+        }
     }
 
 };

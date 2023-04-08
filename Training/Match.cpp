@@ -234,11 +234,11 @@ void Interface::terminate_engines() {
     }
 }
 
-Position Match::get_start_pos() {
-    if (opening_counter >= positions.size() - 1)
-        opening_counter = 0u;
+std::string Match::get_start_pos(size_t& pos_counter) {
+    if (pos_counter >= positions.size() - 1)
+        pos_counter = 0u;
 
-    return positions[opening_counter++];
+    return positions[pos_counter++];
 }
 
 
@@ -251,6 +251,8 @@ void Match::start() {
     Zobrist::init_zobrist_keys();
     const int numEngines = 2;
     const int num_matches = this->threads;
+    
+  
 
     std::vector<Interface> interfaces;
     std::cout << "OpeningBook: " << openingBook << std::endl;
@@ -262,6 +264,9 @@ void Match::start() {
     int enginePipe[num_matches][numEngines][2];
     int game_count = -num_matches;
 
+    
+
+    const size_t num_local = positions.size()/num_matches;
     for (int p = 0; p < num_matches; ++p) {
         Engine engine{first, Engine::State::Idle, enginePipe[p][0][0], mainPipe[p][0][1]};
         engine.setTime(times.first);
@@ -270,6 +275,7 @@ void Match::start() {
         engine2.setTime(times.second);
         engine2.setHashSize(hash_size);
         interfaces.emplace_back(Interface{engine, engine2});
+        interfaces[p].pos_counter=num_local*p;
     }
     auto& first = interfaces.front();
     std::cout<<"Time: "<<times.first<<" "<<times.second<<std::endl;
@@ -313,13 +319,15 @@ void Match::start() {
         printf("\r");
         printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
         printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws);
-
         while (game_count < maxGames) {
-            for (auto &inter : interfaces) {
+            for (int k=0;k<interfaces.size();++k) {
+              Interface & inter = interfaces[k];
                 if (inter.pos.is_empty()) {
                     if (inter.first_game) {
                         inter.first_mover = 0;
-                        inter.start_pos = get_start_pos();
+                        std::string fen_string =get_start_pos(inter.pos_counter);
+                        //std::cout<<fen_string<<std::endl;
+                        inter.start_pos = Position::pos_from_fen(fen_string);
                         inter.first_game = false;
                     } else {
                         inter.first_mover = 1;
