@@ -51,12 +51,12 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     //net_file = "square6.quant";
-    net_file = "test.quant";
+    net_file = "test3.quant";
   }
 
   network.addLayer(Layer{120, 1024});
-  network.addLayer(Layer{1024, 8});
-  network.addLayer(Layer{8, 32});
+  network.addLayer(Layer{1024, 16});
+  network.addLayer(Layer{16, 32});
   network.addLayer(Layer{32, 1});
   network.load(net_file);
   network.init();
