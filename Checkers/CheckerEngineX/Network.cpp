@@ -268,7 +268,7 @@ int Network::compute_incre_forward_pass(Position next) {
         
         auto value = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
         temp[i]=value*value;
-        temp[i]=temp[i]/127;
+        temp[i]=temp[i]/128;
         //temp[i]=value;
     }
 
@@ -292,7 +292,7 @@ int Network::compute_incre_forward_pass(Position next) {
             if (k < layers.size() - 1) {
                 auto value= std::clamp(sum/64,  0, 127);
                temp[i]=value*value;
-               temp[i]=temp[i]/127;
+               temp[i]=temp[i]/128;
                //temp[i]=value;
             } else {
                 temp[i]= sum/64;
