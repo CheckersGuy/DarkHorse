@@ -459,7 +459,7 @@ void move_loop(bool in_pv, Local &local, Board &board, Line &pv, MoveListe &list
 
     const auto num_moves = liste.length();
     int extension=0;
-    if(board.get_position().has_jumps()){
+    if(liste.length()==1){
       extension=1;
     } else if((in_pv || local.previous.is_capture()) && liste[0].is_capture()){
       extension =1;

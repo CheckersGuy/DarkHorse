@@ -21,8 +21,15 @@ import pathlib
 import numpy as np
 
 L1 = 1024
-L2 = 8
+L2 = 16
 L3 = 32
+
+class Relu1(nn.Module):
+    def __init__(self):
+        super(Relu1, self).__init__()
+
+    def forward(self, x):
+        return (127.0/128.0)*torch.clamp(x,0.0,1.0)**2
 
 
 
@@ -37,7 +44,7 @@ class Network(pl.LightningModule):
         self.number_of_steps =1000
         self.batch_size =4*8192
         self.num_epochs=120
-        self.gamma = 0.96
+        self.gamma = 0.985
 
 
         self.num_buckets =3
@@ -54,15 +61,15 @@ class Network(pl.LightningModule):
 
         #output of the accumulator
         ac = self.accu.forward(x)
-        ac_out = torch.clamp(ac,0.0,1.0)**2
+        ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
 
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
-        l1c = torch.clamp(l1c,0.0,1.0)**2
+        l1c = (127.0/128.0)*torch.clamp(l1c,0.0,1.0)**2
         
         l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,L3))
         l2c = l2s.view(-1,L3)[indices]
-        l2c = torch.clamp(l2c,0.0,1.0)**2
+        l2c = (127.0/128.0)*torch.clamp(l2c,0.0,1.0)**2
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
@@ -73,6 +80,10 @@ class Network(pl.LightningModule):
 
     def init_layers():
         #needs to be implemented
+        pass
+
+
+    def write_header(self):
         pass
 
     def step(self):
@@ -96,7 +107,7 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.5).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss)
         return {"loss": loss, "log": tensorboard_logs}
