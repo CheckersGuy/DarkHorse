@@ -42,7 +42,6 @@ class Network(pl.LightningModule):
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
         self.number_of_steps =1000
-        self.batch_size =4*8192
         self.num_epochs=120
         self.gamma = 0.985
 
@@ -79,12 +78,17 @@ class Network(pl.LightningModule):
 
 
     def init_layers():
-        #needs to be implemented
+        #needs to be implement
         pass
 
 
-    def write_header(self):
-        pass
+    def write_header(self,file_out):
+        num_hidden = 3;
+        file_out.write(struct.pack("I", num_hidden))
+        file_out.write(struct.pack("I", self.num_buckets))
+        file_out.write(struct.pack("I", L1))
+        file_out.write(struct.pack("I", L2))
+        file_out.write(struct.pack("I", L3))
 
     def step(self):
         with torch.no_grad():
@@ -120,6 +124,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
+        self.save_quantized_bucket("bucket.quant")
+        torch.save(self.state_dict(),"bucket.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
@@ -154,6 +160,7 @@ class Network(pl.LightningModule):
 
         for layer in self.layers[1:]:
             if isinstance(layer, torch.nn.Linear):
+                print(layer.weight.size())
                 weights = layer.weight.detach().numpy().flatten()
                 weights = weights * 64.0
                 np.clip(weights, min16, max16)
@@ -173,6 +180,94 @@ class Network(pl.LightningModule):
         file.close()
         self.to(device_gpu)
         return
+
+
+    def save_quantized_bucket(self, output):
+        self.step()
+        min16 = np.iinfo(np.int16).min
+        max16 = np.iinfo(np.int16).max
+
+        #write the header file
+
+        device = torch.device("cpu")
+        device_gpu = torch.device("cuda")
+        self.to(device)
+        buffer_weights = bytearray()
+        buffer_bias = bytearray()
+        num_weights = 0
+        num_bias = 0
+        file = open(output, "wb")
+
+        #saving the header file
+        self.write_header(file)
+
+        layer = self.layers[0]
+        weights = layer.weight.detach().numpy().flatten("F")
+        weights = weights * 127.0
+        np.clip(weights, min16, max16)
+        weights = weights.astype(np.int16)
+        bias = layer.bias.detach().numpy().flatten("F")
+        bias = bias * 127.0
+        np.clip(bias, min16, max16)
+        bias = bias.astype(np.int16)
+        buffer_weights.extend(weights.tobytes())
+        buffer_bias.extend(bias.tobytes())
+        num_weights += len(weights)
+        num_bias += len(bias)
+
+
+        for i in range(self.num_buckets):
+            for layer in self.layers[1:]:
+                weights = layer.weight
+                size = layer.weight.size()
+                #print(size)
+                rows = size[0]//self.num_buckets
+                bucket_weights = torch.split(weights,rows)
+                bucket_bias =torch.split(layer.bias,len(layer.bias)//self.num_buckets)
+                #print(buckets[i].size())
+                #quantization
+                weights = bucket_weights[i].detach().numpy().flatten()
+                weights = weights*64.0
+                np.clip(weights,min16,max16)
+                weights = weights.astype(np.int16)
+                print(bucket_bias[i].size())
+                bias = bucket_bias[i].detach().numpy().flatten()
+                bias = bias*(127.0 * 64.0)
+                bias = bias.astype(np.int32)
+                buffer_weights.extend(weights.tobytes())
+                buffer_bias.extend(bias.tobytes())
+        
+        file.write(buffer_weights)
+        file.write(buffer_bias)
+        file.close()
+        self.to(device_gpu)
+
+                
+        return
+        for layer in self.layers[1:]:
+            print(layer.weight.size())
+            if isinstance(layer, torch.nn.Linear):
+                weights = layer.weight.detach().numpy().flatten()
+                weights = weights * 64.0
+                np.clip(weights, min16, max16)
+                weights = weights.astype(np.int16)
+                bias = layer.bias.detach().numpy().flatten()
+                bias = bias * (127.0 * 64.0)
+                bias = bias.astype(np.int32)
+                buffer_weights.extend(weights.tobytes())
+                buffer_bias.extend(bias.tobytes())
+                num_weights += len(weights)
+                num_bias += len(bias)
+
+        file.write(buffer_weights)
+        file.write(buffer_bias)
+        file.close()
+        self.to(device_gpu)
+        return
+
+
+
+
 
 
 

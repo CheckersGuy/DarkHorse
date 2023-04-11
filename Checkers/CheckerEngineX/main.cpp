@@ -59,7 +59,12 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{16, 32});
   network.addLayer(Layer{32, 1});
   network.load(net_file);
+ // network.load_bucket("bucket.quant");
   network.init();
+  std::cout<<"Printing the network"<<std::endl;
+  std::cout<<network<<std::endl;
+
+
 
 
 
