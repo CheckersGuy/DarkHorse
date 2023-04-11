@@ -17,8 +17,8 @@
 class Network;
 
 struct Layer {
-    int in_features;
-    int out_features;
+    uint32_t in_features;
+    uint32_t out_features;
 };
 
 //named triple
@@ -86,7 +86,8 @@ struct Network {
     std::unique_ptr<int16_t[]> weights;
     std::unique_ptr<int16_t[]> input;
     std::unique_ptr<int16_t[]> temp;
-    int max_units{0};
+    uint32_t max_units{0};
+    size_t num_buckets{0};
     Accumulator accumulator;
 
 
@@ -97,6 +98,8 @@ struct Network {
     void addLayer(Layer layer);
 
     void load(std::string file);
+
+    void load_bucket(std::string file);
 
     void init();
 
@@ -115,6 +118,15 @@ struct Network {
     int operator[](size_t index);
 
     friend class Accumulator;
+
+    friend std::ostream& operator<<(std::ostream& stream,const Network& other){
+      stream<<"Num_Layers: "<<other.layers.size()<<std::endl;
+      for(auto& layer : other.layers){
+        stream<<"Layer: "<<"InFeatures: "<<layer.in_features<<" OutFeatures: "<<layer.out_features<<std::endl;;
+      }
+
+      return stream;
+    }
 };
 
 void testing_simd_functions();

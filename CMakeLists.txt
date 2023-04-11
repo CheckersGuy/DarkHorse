@@ -65,4 +65,3 @@ target_compile_definitions(Dark PUBLIC "USE_DB")
 #target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
 target_link_libraries(Train ${Protobuf_LIBRARIES})
 target_link_libraries(pyhelper ${Protobuf_LIBRARIES})
-

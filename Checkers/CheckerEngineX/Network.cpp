@@ -4,6 +4,7 @@
 
 #include "Network.h"
 #include "GameLogic.h"
+#include <cstdint>
 
 
 void Accumulator::refresh() {
@@ -25,18 +26,7 @@ Wdl Network::get_wdl(){
 }
 
 
-float quant_to_float(int quant){
-  float temp = static_cast<float>(quant);
-  float temp2 = 127.0;
-  return temp/temp2;
-}
 
-bool is_uncertain_eval(Wdl wdl){
-  //some experiments
-  float sum = std::exp(quant_to_float(wdl.win))+std::exp(quant_to_float(wdl.loss))+std::exp(quant_to_float(wdl.draw));
-  float draw_perc =std::exp(quant_to_float(wdl.draw))/sum;
-  return (draw_perc<0.1f && (wdl.win-wdl.loss)<=10);
-}
 void Accumulator::apply(Color perp, Position before, Position after)
 {
     int16_t* input =((perp == BLACK)?black_acc.get(): white_acc.get());
@@ -199,6 +189,71 @@ void Network::load(std::string file) {
   
 }
 
+void Network::load_bucket(std::string file){
+  //loading the buckets
+    std::ifstream stream(file, std::ios::binary);
+    if (!stream.good())
+    {
+        std::cerr << "Could not load network file, path " << file<< std::endl;
+        std::exit(-1);
+    }
+    uint32_t num_hidden,num_buckets;
+    stream.read((char*)&num_hidden,sizeof(uint32_t));
+    stream.read((char*)&num_buckets,sizeof(uint32_t));
+    std::cout<<"NumHidden: "<<num_hidden<<std::endl;
+    std::cout<<"NumBuckets: "<<num_buckets<<std::endl;
+    std::vector<uint32_t> layer_dims;
+    for(auto k=0;k<num_hidden;++k){
+      uint32_t hidden;
+      stream.read((char*)&hidden,sizeof(uint32_t));
+      std::cout<<"hidden: "<<hidden<<std::endl;
+      layer_dims.emplace_back(hidden);
+    }
+    //adding the accumulator
+    layers.emplace_back(Layer{120,layer_dims[0]});
+    //adding the remaining layers
+    for(auto k=0;k<layer_dims.size()-1;++k){
+      layers.emplace_back(Layer{layer_dims[k],layer_dims[k+1]});
+    }
+    layers.emplace_back(Layer{layer_dims[num_hidden-1],1});
+    
+    //number of weights and biases for the feature transformer
+    size_t num_ft_weights,num_hidden_weights;
+    size_t num_ft_bias,num_hidden_bias;
+
+    num_ft_weights = layers.front().in_features*layers.front().out_features;
+    num_ft_bias = layers.front().out_features;
+    std::cout<<"NumFTBias: "<<num_ft_bias<<std::endl;
+    //number of weights and biases for the remaining layers
+    
+    //computing the number of weights
+    num_hidden_weights = 0;
+    num_hidden_bias = 0;
+    for(auto k=1;k<layers.size();++k){
+      num_hidden_weights+=layers[k].in_features*layers[k].out_features;
+      num_hidden_bias+=layers[k].out_features;
+    }
+    size_t total_weights = num_ft_weights+num_buckets*num_hidden_weights;
+    size_t total_bias = num_ft_bias+num_buckets*num_hidden_bias;
+    
+    
+    weights = std::make_unique<int16_t[]>(total_weights-num_ft_weights);
+    biases = std::make_unique<int32_t[]>(total_bias-num_ft_bias);
+
+    ft_weights = std::make_unique<int16_t[]>(num_ft_weights);
+    ft_biases = std::make_unique<int16_t[]>(num_ft_bias);
+
+    stream.read((char *)ft_weights.get(), sizeof(int16_t) * (num_ft_weights));
+    stream.read((char *)weights.get(), sizeof(int16_t) * (total_weights-num_ft_weights));
+    
+    stream.read((char *)ft_biases.get(), sizeof(int16_t) * (num_ft_bias));
+    stream.read((char *)biases.get(), sizeof(int32_t) * (total_bias-num_ft_bias));
+  
+    init();
+
+    //initialization goes here
+
+}
 void Network::addLayer(Layer layer) {
     layers.emplace_back(layer);
 }
@@ -211,7 +266,6 @@ void Network::init(){
     {
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
     }
-
     temp = std::make_unique<int16_t[]>(max_units);
     input = std::make_unique<int16_t[]>(max_units);
 
@@ -329,23 +383,6 @@ int Network::evaluate(Position pos, int ply)
 
     int32_t val = compute_incre_forward_pass(pos);
     return val;
-    auto wdl =get_wdl();
-    float val_win =expf(quant_to_float(wdl.win));
-    float val_loss = expf(quant_to_float(wdl.loss));
-    float val_draw = expf(quant_to_float(wdl.draw));
-    float sum = val_win+val_loss+val_draw;
-
-    float score = (val_win-val_loss)/sum;
-    float draw_perc = val_draw/sum;
-
-    float test = (1.0f-draw_perc);
-    score*=1.0;
-    score*=500;
-    //test
-    score = std::round(score);
-
-
-    return score;
 }
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
@@ -356,6 +393,8 @@ int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {
         return net2.evaluate(pos, ply);
     }
 }
+
+
 
 
 

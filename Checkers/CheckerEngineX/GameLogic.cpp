@@ -182,6 +182,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply pl
     }
     //check again if repetition2 = repetition1
     if (ply > 0 && board.is_repetition2(last_rev)) {
+        auto temp = nodeCounter&1;
+        return 2*temp-1;
         return 0;
     }
 
