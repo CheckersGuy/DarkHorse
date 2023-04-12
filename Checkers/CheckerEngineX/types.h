@@ -72,6 +72,7 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
 //constant for extensions and reductions
 
+const size_t NUM_BUCKETS = 8;
 constexpr int prob_cut = 45;//50
 constexpr int asp_wind = 10;//15
 constexpr int MAX_ASP = 200;
@@ -94,6 +95,7 @@ enum Score : int {
     TB_WIN = 14000,
     TB_LOSS = -14000
 };
+
 
 
 

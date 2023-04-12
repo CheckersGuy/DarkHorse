@@ -190,6 +190,7 @@ void Network::load(std::string file) {
 }
 
 void Network::load_bucket(std::string file){
+   
   //loading the buckets
     std::ifstream stream(file, std::ios::binary);
     if (!stream.good())
@@ -200,13 +201,10 @@ void Network::load_bucket(std::string file){
     uint32_t num_hidden,num_buckets;
     stream.read((char*)&num_hidden,sizeof(uint32_t));
     stream.read((char*)&num_buckets,sizeof(uint32_t));
-    std::cout<<"NumHidden: "<<num_hidden<<std::endl;
-    std::cout<<"NumBuckets: "<<num_buckets<<std::endl;
     std::vector<uint32_t> layer_dims;
     for(auto k=0;k<num_hidden;++k){
       uint32_t hidden;
       stream.read((char*)&hidden,sizeof(uint32_t));
-      std::cout<<"hidden: "<<hidden<<std::endl;
       layer_dims.emplace_back(hidden);
     }
     //adding the accumulator
@@ -223,7 +221,6 @@ void Network::load_bucket(std::string file){
 
     num_ft_weights = layers.front().in_features*layers.front().out_features;
     num_ft_bias = layers.front().out_features;
-    std::cout<<"NumFTBias: "<<num_ft_bias<<std::endl;
     //number of weights and biases for the remaining layers
     
     //computing the number of weights
@@ -262,10 +259,16 @@ void Network::init(){
     if(layers.size()==0){
       return;
     }
+    bucket_weight_offset = 0;
+    bucket_bias_offset = 0;
     for (Layer l : layers)
     {
         max_units = std::max(std::max(l.in_features, l.out_features), max_units);
+        bucket_weight_offset+=l.in_features*l.out_features;
+        bucket_bias_offset+=l.out_features;
     }
+    bucket_weight_offset-=layers.front().out_features*layers.front().in_features;
+    bucket_bias_offset-=layers.front().out_features;
     temp = std::make_unique<int16_t[]>(max_units);
     input = std::make_unique<int16_t[]>(max_units);
 
@@ -274,6 +277,7 @@ void Network::init(){
         input[i] = 0;
     }
     accumulator.init(this);
+
 
 }
 
@@ -309,7 +313,14 @@ int32_t Network::get_max_bias() const {
 
 }
 
+
 int Network::compute_incre_forward_pass(Position next) {
+  int index =next.bucket_index();
+  
+  return compute_incre_forward_pass(next,index);
+}
+
+int Network::compute_incre_forward_pass(Position next,int bucket_index) {
     int16_t *z_previous;
 
     if (next.color == BLACK) {
@@ -331,8 +342,8 @@ int Network::compute_incre_forward_pass(Position next) {
         input[i] = temp[i];
         temp[i] = 0;
     }
-    auto weight_index_offset =0;
-    auto bias_index_offset = 0;
+    auto weight_index_offset =bucket_weight_offset*bucket_index;
+    auto bias_index_offset = bucket_bias_offset*bucket_index;
        for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
 
@@ -341,7 +352,7 @@ int Network::compute_incre_forward_pass(Position next) {
             int sum =biases[i+bias_index_offset];
             for (auto j = 0; j < l.in_features; ++j)
             {
-                sum+= weights[weight_index_offset + i * l.in_features + j] * input[j];
+                sum+= weights[weight_index_offset+ i * l.in_features + j] * input[j];
             }
             if (k < layers.size() - 1) {
                 auto value= std::clamp(sum/64,  0, 127);
@@ -365,7 +376,7 @@ int Network::compute_incre_forward_pass(Position next) {
     return input[0];
 }
 
-int Network::operator[](size_t index) {
+int Network::operator[](int index) {
     return input[index];
 }
 
