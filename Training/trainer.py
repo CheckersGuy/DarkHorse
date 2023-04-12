@@ -45,23 +45,23 @@ if __name__ == "__main__":
                                        batch_size=batch_size, buffer_size=35000000)
 
 
-    model.load_state_dict(torch.load("bucket.pt"))
-    model.save_quantized_bucket("bucket.quant")
+   # model.load_state_dict(torch.load("bucket.pt"))
+    #model.save_quantized_bucket("bucket.quant")
     #model.save_quantized("bla.quant")
 
     
 
     
-    #check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
+    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    #trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
 
-    #trainer.fit(model, data_loader,ckpt_path="Networks/bucket.ckpt")
-    #model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
-    #torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
+    trainer.fit(model, data_loader)
+    model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
+    torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
     
-    #model = LitMLP.PatternModel()
+    model = LitMLP.PatternModel()
 
 
 #merge_data(["TrainData/window2.train","TrainData/window1.train","TrainData/window3.train","TrainData/window0.train"],"TrainData/giga.train")

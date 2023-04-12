@@ -46,13 +46,14 @@ class Network(pl.LightningModule):
         self.gamma = 0.985
 
 
-        self.num_buckets =3
+        self.num_buckets =8
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1,L2*self.num_buckets)
         self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
         self.output = nn.Linear(L3,1*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
+        self.init_layers()
 
     def forward(self, x,buckets):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
@@ -77,9 +78,23 @@ class Network(pl.LightningModule):
         return out
 
 
-    def init_layers():
-        #needs to be implement
-        pass
+    def init_layers(self):
+        l1_weight = self.layer_one.weight
+        l1_bias = self.layer_one.bias
+        l2_weight = self.layer_sec.weight
+        l2_bias = self.layer_sec.bias
+        output_weight = self.output.weight
+        output_bias = self.output.bias
+
+        with torch.no_grad():
+            output_bias.fill_(0.0)
+            for i in range(1,self.num_buckets):
+                l1_weight[i*L2 : (i+1)*L2, : ] = l1_weight[0 : L2, :]
+                l1_bias[i*L2 : (i+1)*L2 ] = l1_bias[0 : L2]
+                l2_weight[i*L3 : (i+1)*L3, : ] = l2_weight[0 : L3, :]
+                l2_bias[i*L3 : (i+1)*L3 ] = l1_bias[0 : L3]
+                output_weight[i:i+1,:] = output_weight[0:1,:]
+
 
 
     def write_header(self,file_out):
@@ -124,8 +139,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("bucket.quant")
-        torch.save(self.state_dict(),"bucket.pt")
+        self.save_quantized_bucket("bucket2.quant")
+        torch.save(self.state_dict(),"bucket2.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

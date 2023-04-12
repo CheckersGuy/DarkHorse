@@ -10,21 +10,10 @@
 
 
 
- int get_bucket_index(uint32_t bp,uint32_t wp,uint32_t k){
-    auto piece_count = Bits::pop_count(bp|wp);
-    if(piece_count<=6)
-        return 0;
-    if(piece_count<=14)
-      return 1;
-    
-    return 2;
-
-}
 
 
 void BatchProvider::next(float *results, int64_t *moves,int64_t* buckets, float *inputs) {
     //needs some refactoring at some point
-    const size_t NUM_BUCKETS = 2;
     auto create_input = [&](Sample s, float *input, size_t off) {
         if (s.position.get_color() == BLACK) {
             s.position = s.position.get_color_flip();
@@ -87,7 +76,7 @@ void BatchProvider::next(float *results, int64_t *moves,int64_t* buckets, float 
         auto result = create_input(current, inputs, off);
         results[i] = result;
         moves[i] = current.move;
-        buckets[i]=get_bucket_index(current.position.BP, current.position.WP, current.position.K);
+        buckets[i]=current.position.bucket_index();
     }
 
 

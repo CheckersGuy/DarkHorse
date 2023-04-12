@@ -53,16 +53,16 @@ int main(int argl, const char **argc) {
     //net_file = "square6.quant";
     net_file = "test4.quant";
   }
-
+ /* 
   network.addLayer(Layer{120, 1024});
   network.addLayer(Layer{1024, 16});
   network.addLayer(Layer{16, 32});
   network.addLayer(Layer{32, 1});
   network.load(net_file);
- // network.load_bucket("bucket.quant");
-  network.init();
-  std::cout<<"Printing the network"<<std::endl;
-  std::cout<<network<<std::endl;
+ */
+
+   network.load_bucket("bucket2.quant");
+  //network.init();
 
 
 
@@ -144,7 +144,6 @@ int main(int argl, const char **argc) {
     } else if (current == "new_game") {
       TT.clear();
       TT.age_counter = 0u;
-      network.init();
       Statistics::mPicker.policy.init();
       board = Board{};
       std::string position;

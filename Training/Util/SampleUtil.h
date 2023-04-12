@@ -11,8 +11,12 @@ struct GameStat{
   size_t num_wins{0},num_draws{0};
   size_t num_positions{0};
   size_t num_unqiue{0};
+  std::array<int,NUM_BUCKETS>bucket_distrib{0};
   friend std::ostream& operator <<(std::ostream&stream, const GameStat& other){
-    stream<<"Wins: "<<other.num_wins<<" Draws: "<<other.num_draws<<" NumPositions: "<<other.num_positions<<" Unique: "<<other.num_unqiue;
+    stream<<"Wins: "<<other.num_wins<<" Draws: "<<other.num_draws<<" NumPositions: "<<other.num_positions<<" Unique: "<<other.num_unqiue<<std::endl;
+    for(auto i=0;i<NUM_BUCKETS;++i){
+      std::cout<<"Bucket: "<<other.bucket_distrib[i]<<std::endl;
+    }
     return stream;
   }
 };

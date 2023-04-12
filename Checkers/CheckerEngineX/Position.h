@@ -193,7 +193,8 @@ struct Position {
 
     //given two consecutive positions,returns the move made
     static std::optional<Move> get_move(Position orig, Position next);
-
+    
+    int bucket_index();
 };
 
 namespace std {

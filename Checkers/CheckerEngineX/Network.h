@@ -17,8 +17,8 @@
 class Network;
 
 struct Layer {
-    uint32_t in_features;
-    uint32_t out_features;
+    int in_features;
+    int out_features;
 };
 
 //named triple
@@ -86,7 +86,9 @@ struct Network {
     std::unique_ptr<int16_t[]> weights;
     std::unique_ptr<int16_t[]> input;
     std::unique_ptr<int16_t[]> temp;
-    uint32_t max_units{0};
+    int bucket_bias_offset =0;
+    int bucket_weight_offset=0;
+    int max_units{0};
     size_t num_buckets{0};
     Accumulator accumulator;
 
@@ -107,15 +109,15 @@ struct Network {
 
     void print_output_layer();
 
+    int compute_incre_forward_pass(Position next, int bucket_index);
+ 
     int compute_incre_forward_pass(Position next);
     
-    
-
     int evaluate(Position pos, int ply);
 
     static int evaluate(Position pos, int ply, Network& net1, Network& net2);
     
-    int operator[](size_t index);
+    int operator[](int index);
 
     friend class Accumulator;
 

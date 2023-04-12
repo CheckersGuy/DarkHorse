@@ -352,10 +352,10 @@ void Match::start() {
                         } else {
                             wins_one++;
                         }
+                    }else{
+                      draws++;
                     }
-                    if (inter.is_n_fold(3)) {
-                        draws++;
-                    }
+                   
                     inter.reset_engines();
                     inter.history.clear();
                 }
