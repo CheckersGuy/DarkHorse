@@ -226,8 +226,8 @@ void get_game_stats(std::string input_proto, GameStat &stats){
      if(!filter.has(sample.position)){
         stats.num_unqiue++;
         filter.insert(sample.position);
+        stats.bucket_distrib[sample.position.bucket_index()]++;
      }
-     stats.bucket_distrib[sample.position.bucket_index()]++;
    }
    stats.num_positions+=samples.size();
    auto result = get_game_result(game);

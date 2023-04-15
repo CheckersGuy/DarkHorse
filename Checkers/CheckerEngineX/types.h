@@ -49,7 +49,6 @@ constexpr auto get_lut(Generator &&generator) {
     return result;
 }
 
-
 constexpr uint32_t big_region = 30583;
 constexpr uint32_t region = 13107;
 constexpr uint32_t INNER_SQUARES = 132638688;
@@ -72,7 +71,9 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
 //constant for extensions and reductions
 
-const size_t NUM_BUCKETS = 8;
+
+constexpr uint32_t BUCKET_PATTERN = (1<<7) | (1<<10) |  (1<<14) | (1<<17) | (1<<21);
+const size_t NUM_BUCKETS = 32;
 constexpr int prob_cut = 45;//50
 constexpr int asp_wind = 10;//15
 constexpr int MAX_ASP = 200;
