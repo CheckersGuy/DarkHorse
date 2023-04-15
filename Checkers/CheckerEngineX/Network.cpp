@@ -201,6 +201,7 @@ void Network::load_bucket(std::string file){
     uint32_t num_hidden,num_buckets;
     stream.read((char*)&num_hidden,sizeof(uint32_t));
     stream.read((char*)&num_buckets,sizeof(uint32_t));
+    this->num_buckets = num_buckets;
     std::vector<uint32_t> layer_dims;
     for(auto k=0;k<num_hidden;++k){
       uint32_t hidden;

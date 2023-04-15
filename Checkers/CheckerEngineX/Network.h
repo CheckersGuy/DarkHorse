@@ -123,6 +123,7 @@ struct Network {
 
     friend std::ostream& operator<<(std::ostream& stream,const Network& other){
       stream<<"Num_Layers: "<<other.layers.size()<<std::endl;
+      stream<<"Num_Buckets: "<<other.num_buckets<<std::endl;
       for(auto& layer : other.layers){
         stream<<"Layer: "<<"InFeatures: "<<layer.in_features<<" OutFeatures: "<<layer.out_features<<std::endl;;
       }

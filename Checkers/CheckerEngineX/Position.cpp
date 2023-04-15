@@ -1,7 +1,9 @@
 
 #include "Position.h"
+#include "Bits.h"
 #include "MoveListe.h"
 #include "MGenerator.h"
+#include "types.h"
 
 
 std::optional<Move> Position::get_move(Position orig, Position next) {
@@ -349,9 +351,13 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 
 int Position::bucket_index(){
   //8 buckets
-  int pieces = piece_count();
-  int bucket_index = (pieces-1)/3;
-  return bucket_index; 
+  Position temp = *this;
+  if(temp.get_color() == BLACK){
+    temp = temp.get_color_flip();
+  }
+  uint32_t maske = BUCKET_PATTERN;
+  int count = Bits::pext(temp.BP|temp.WP, maske);
+  return count;
 
 }
 
