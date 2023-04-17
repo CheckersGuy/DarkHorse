@@ -19,7 +19,8 @@ import struct
 import ctypes
 import pathlib
 import numpy as np
-
+import ranger21
+from lion_pytorch import Lion
 L1 = 1024
 L2 = 16
 L3 = 32
@@ -113,17 +114,15 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = Ranger(self.parameters())
+       # optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
-        #optimizer = ranger21.Ranger21(self.parameters(),lr=1e-3, eps=1.0e-7,
-        #                              use_warmup=False,warmdown_active=False,
-        #                              weight_decay=0.0,
-        #                              num_batches_per_epoch=self.number_of_steps/self.batch_size,num_epochs=self.num_epochs)
-        #optimizer = Lion(self.parameters(),lr=1e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
+
+
     def training_step(self, train_batch, batch_idx):
+        self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-result),2.5).mean()
@@ -132,6 +131,7 @@ class Network(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
+        self.step()
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
@@ -139,8 +139,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("bucket4.quant")
-        torch.save(self.state_dict(),"bucket4.pt")
+        self.save_quantized_bucket("bucketcrazy.quant")
+        torch.save(self.state_dict(),"bucketcrazy.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

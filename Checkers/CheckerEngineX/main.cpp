@@ -60,7 +60,7 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{32, 1});
   network.load(net_file);
  */
-  network.load_bucket("bucket4.quant");
+  network.load_bucket("bucketcrazy.quant");
 
  
 

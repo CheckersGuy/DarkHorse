@@ -351,14 +351,14 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 
 int Position::bucket_index(){
   //8 buckets
-  Position temp = *this;
-  if(temp.get_color() == BLACK){
-    temp = temp.get_color_flip();
+  Position t = *this;
+  int piece_count = t.piece_count();
+  if(color ==BLACK){
+    t = get_color_flip();
   }
-  uint32_t maske = BUCKET_PATTERN;
-  int count = Bits::pext(temp.BP|temp.WP, maske);
-  return count;
-
+  auto pattern = BUCKET_PATTERN;
+  auto temp = Bits::pext(t.BP|t.WP,pattern);
+  return temp;
 }
 
 

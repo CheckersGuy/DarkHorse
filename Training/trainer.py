@@ -42,7 +42,7 @@ if __name__ == "__main__":
   #  model = Experimental.Network()
     data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
                                        val_data="TrainData/val.train",
-                                       batch_size=batch_size, buffer_size=35000000)
+                                       batch_size=batch_size, buffer_size=65000000)
 
 
    # model.load_state_dict(torch.load("bucket.pt"))
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/bucket4.ckpt")
+    trainer.fit(model, data_loader)
     model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
     
