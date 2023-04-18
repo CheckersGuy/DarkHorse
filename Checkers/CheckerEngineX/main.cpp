@@ -60,11 +60,12 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{32, 1});
   network.load(net_file);
  */
-  network.load_bucket("bucketcrazy.quant");
+  network.load_bucket("megacrazy.quant");
 
- 
-
-
+/* 
+  Position test =Position::get_start_position();
+  network.print_bucket_evals(test);
+*/
 
 
   if (parser.has_option("search"))

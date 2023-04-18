@@ -47,7 +47,7 @@ class Network(pl.LightningModule):
         self.gamma = 0.965
 
 
-        self.num_buckets =32
+        self.num_buckets =256
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1,L2*self.num_buckets)
@@ -139,8 +139,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("bucketcrazy.quant")
-        torch.save(self.state_dict(),"bucketcrazy.pt")
+        self.save_quantized_bucket("megacrazy.quant")
+        torch.save(self.state_dict(),"megacrazy.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

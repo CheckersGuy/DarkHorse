@@ -4,6 +4,7 @@
 
 #include "Network.h"
 #include "GameLogic.h"
+#include "types.h"
 #include <cstdint>
 
 
@@ -323,7 +324,6 @@ int Network::compute_incre_forward_pass(Position next) {
 
 int Network::compute_incre_forward_pass(Position next,int bucket_index) {
     int16_t *z_previous;
-
     if (next.color == BLACK) {
         z_previous = accumulator.black_acc.get();
     } else {
@@ -395,6 +395,15 @@ int Network::evaluate(Position pos, int ply)
 
     int32_t val = compute_incre_forward_pass(pos);
     return val;
+}
+
+
+void Network::print_bucket_evals(Position next){
+
+  for(auto i=0;i<NUM_BUCKETS;++i){
+    auto eval = compute_incre_forward_pass(next,i);
+    std::cout<<"Bucket "<<i<<": "<<eval<<std::endl;
+  }
 }
 
 int Network::evaluate(Position pos, int ply, Network &net1, Network &net2) {

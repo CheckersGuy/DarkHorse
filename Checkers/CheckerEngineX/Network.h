@@ -130,6 +130,8 @@ struct Network {
 
       return stream;
     }
+
+    void print_bucket_evals(Position next);
 };
 
 void testing_simd_functions();
