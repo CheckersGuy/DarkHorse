@@ -356,7 +356,7 @@ int Position::bucket_index(){
   if(color ==BLACK){
     t = get_color_flip();
   }
-  auto pattern = BUCKET_PATTERN;
+  auto pattern = PROMO_SQUARES_BLACK |PROMO_SQUARES_WHITE;
   auto temp = Bits::pext(t.BP|t.WP,pattern);
   return temp;
 }
