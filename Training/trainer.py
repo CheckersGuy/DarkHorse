@@ -57,7 +57,7 @@ if __name__ == "__main__":
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/crazy.ckpt")
+    trainer.fit(model, data_loader)
     model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
     torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
     
