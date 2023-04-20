@@ -131,7 +131,6 @@ class Network(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
-        self.step()
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
@@ -139,8 +138,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("megacrazy.quant")
-        torch.save(self.state_dict(),"megacrazy.pt")
+        self.save_quantized_bucket("scal2.quant")
+        torch.save(self.state_dict(),"scal2.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
@@ -218,12 +217,14 @@ class Network(pl.LightningModule):
 
         layer = self.layers[0]
         weights = layer.weight.detach().numpy().flatten("F")
-        weights = weights * 127.0
-        np.clip(weights, min16, max16)
+        weights = weights * 127.0*4.0
+        weights = np.round(weights)
+        weights = np.clip(weights, min16, max16)
         weights = weights.astype(np.int16)
         bias = layer.bias.detach().numpy().flatten("F")
-        bias = bias * 127.0
-        np.clip(bias, min16, max16)
+        bias = bias * 127.0*4.0
+        bias = np.round(bias)
+        bias = np.clip(bias, min16, max16)
         bias = bias.astype(np.int16)
         buffer_weights.extend(weights.tobytes())
         buffer_bias.extend(bias.tobytes())
@@ -243,11 +244,13 @@ class Network(pl.LightningModule):
                 #quantization
                 weights = bucket_weights[i].detach().numpy().flatten()
                 weights = weights*64.0
-                np.clip(weights,min16,max16)
+                weights = np.round(weights)
+                weights = np.clip(weights,min16,max16)
                 weights = weights.astype(np.int16)
                 print(bucket_bias[i].size())
                 bias = bucket_bias[i].detach().numpy().flatten()
                 bias = bias*(127.0 * 64.0)
+                bias = np.round(bias)
                 bias = bias.astype(np.int32)
                 buffer_weights.extend(weights.tobytes())
                 buffer_bias.extend(bias.tobytes())

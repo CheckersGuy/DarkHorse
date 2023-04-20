@@ -336,8 +336,8 @@ int Network::compute_incre_forward_pass(Position next,int bucket_index) {
     }
     accumulator.update(next.color,next);
     for (auto i = 0; i < layers[0].out_features; i++) {
-        
-        auto value = std::clamp(z_previous[i], int16_t{0}, int16_t{127});
+        int16_t p = z_previous[i]/4;
+        auto value = std::clamp(p, int16_t{0}, int16_t{127});
         temp[i]=value*value;
         temp[i]=temp[i]/128;
         //temp[i]=value;
