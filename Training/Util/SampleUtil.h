@@ -7,10 +7,16 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include "../BloomFilter.h"
+
+
+//endgame_cutoff_ply is the length of a game ignoring all positions with less then <=10 pieces
+
+
 struct GameStat{
   size_t num_wins{0},num_draws{0};
   size_t num_positions{0};
   size_t num_unqiue{0};
+  double endgame_cutoff_ply{0};
   std::array<int,NUM_BUCKETS>bucket_distrib{0};
   friend std::ostream& operator <<(std::ostream&stream, const GameStat& other){
     stream<<"Wins: "<<other.num_wins<<" Draws: "<<other.num_draws<<" NumPositions: "<<other.num_positions<<" Unique: "<<other.num_unqiue<<std::endl;

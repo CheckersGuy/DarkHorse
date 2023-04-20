@@ -8,6 +8,11 @@
 #include <cstdint>
 
 
+
+Layer::Layer(int in, int out):in_features(in),out_features(out){
+
+}
+
 void Accumulator::refresh() {
     for(auto i=0; i<size; ++i) {
         white_acc[i]=net->ft_biases[i];
@@ -210,12 +215,12 @@ void Network::load_bucket(std::string file){
       layer_dims.emplace_back(hidden);
     }
     //adding the accumulator
-    layers.emplace_back(Layer{120,layer_dims[0]});
+    layers.emplace_back(Layer(120,layer_dims[0]));
     //adding the remaining layers
     for(auto k=0;k<layer_dims.size()-1;++k){
-      layers.emplace_back(Layer{layer_dims[k],layer_dims[k+1]});
+      layers.emplace_back(Layer(layer_dims[k],layer_dims[k+1]));
     }
-    layers.emplace_back(Layer{layer_dims[num_hidden-1],1});
+    layers.emplace_back(Layer(layer_dims[num_hidden-1],1));
     
     //number of weights and biases for the feature transformer
     size_t num_ft_weights,num_hidden_weights;

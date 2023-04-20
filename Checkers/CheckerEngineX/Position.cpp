@@ -350,15 +350,7 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index(){
-  //8 buckets
-  Position t = *this;
-  int piece_count = t.piece_count();
-  if(color ==BLACK){
-    t = get_color_flip();
-  }
-  auto pattern = PROMO_SQUARES_BLACK |PROMO_SQUARES_WHITE;
-  auto temp = Bits::pext(t.BP|t.WP,pattern);
-  return temp;
+  return 0;
 }
 
 
