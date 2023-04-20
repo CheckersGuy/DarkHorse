@@ -222,18 +222,30 @@ void get_game_stats(std::string input_proto, GameStat &stats){
   batch.ParseFromIstream(&stream);
  for(auto game : batch.games()){
    auto samples = extract_sample(game);
-   for(auto sample : samples){
+   int end_cutoff =-1;
+   for(int k=0;k<samples.size();++k){
+     auto sample = samples[k];
      if(!filter.has(sample.position)){
         stats.num_unqiue++;
         filter.insert(sample.position);
         stats.bucket_distrib[sample.position.bucket_index()]++;
+        auto piece_count = sample.position.piece_count();
+        if(piece_count<=10){
+          end_cutoff = k;
+        }
      }
    }
+   if(end_cutoff!=-1){
+    stats.endgame_cutoff_ply += end_cutoff;  
+   }
+
+
    stats.num_positions+=samples.size();
    auto result = get_game_result(game);
    stats.num_wins+=(result !=DRAW);
    stats.num_draws+=(result == DRAW);
  }
+ stats.endgame_cutoff_ply/=stats.num_unqiue;
 
 
 }

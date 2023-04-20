@@ -21,7 +21,7 @@ import pathlib
 import numpy as np
 import ranger21
 from lion_pytorch import Lion
-L1 = 1024
+L1 =1024
 L2 = 16
 L3 = 32
 
@@ -47,7 +47,7 @@ class Network(pl.LightningModule):
         self.gamma = 0.965
 
 
-        self.num_buckets =256
+        self.num_buckets =1
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1,L2*self.num_buckets)

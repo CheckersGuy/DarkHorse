@@ -19,6 +19,8 @@ class Network;
 struct Layer {
     int in_features;
     int out_features;
+
+    Layer(int in, int out);
 };
 
 //named triple
