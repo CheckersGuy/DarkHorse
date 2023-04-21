@@ -350,7 +350,8 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index(){
-  return 0;
+  auto pieces = piece_count();
+  return (pieces-1)/6;
 }
 
 
