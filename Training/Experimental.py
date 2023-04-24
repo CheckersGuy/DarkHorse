@@ -60,9 +60,8 @@ class Network(pl.LightningModule):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
         indices = buckets.flatten()+offset
 
-        output of the accumulator
-       ac = self.accu.forward(x)
-       ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
+        ac = self.accu.forward(x)
+        ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
 
        # ac = self.accu.forward(x)
        # ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
