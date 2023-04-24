@@ -2,6 +2,7 @@
 //
 #include <chrono>
 #include <assert.h>
+#include <fcntl.h>
 #include <fstream>
 #include <random>
 #include <stdio.h>
@@ -77,37 +78,50 @@ void write_raw_data(std::string input_proto){
 }
 
 
-void sort_raw_data(std::string raw_data){
+void sort_raw_data(std::string raw_data,std::string copy){
+  std::mt19937_64 generator(3123123131ull);
   int fd; // file-descriptor
+  int out_fd;
   size_t size;
   struct stat s;
   int status;
   Sample * mapped;
+  Sample* mapped2;
+
   fd = open(raw_data.c_str(),O_RDWR);
+  out_fd = open(copy.c_str(),O_RDWR);
+  if(out_fd==-1){
+    std::cout<<"Error"<<std::endl;
+    std::cout<<copy<<std::endl;
+    std::exit(-1);
+  }
   status = fstat(fd,&s);
   size = s.st_size;
+  auto num_samples = s.st_size/sizeof(Sample);
   std::cout<<"size: "<<s.st_size/sizeof(Sample)<<std::endl;
-  
-  mapped = (Sample*)mmap(0,size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
-  auto num_samples = size/sizeof(Sample);
-  Zobrist::init_zobrist_keys();
-  std::hash<Sample> hasher;
-  std::mt19937_64 generator;
-  std::uniform_int_distribution<size_t> distrib;
- /* 
-  std::sort(mapped,mapped+num_samples,[&](const Sample& one,const  Sample& two){
-        return distrib(generator)> distrib(generator);
-      });
-*/
-  std::shuffle(mapped,mapped+num_samples,generator);
 
-  for(auto i=0;i<500;++i){
-    Sample current = mapped[i];
-    current.position.print_position();
-    std::cout<<std::endl;
+  mapped = (Sample*)mmap(0,size,PROT_READ,MAP_SHARED,fd,0);
+  mapped2 = (Sample*)mmap(0,size,PROT_WRITE,MAP_SHARED,out_fd,0);
+
+  std::vector<uint32_t> indices;
+  for(auto i=0;i<num_samples;++i){
+    indices.emplace_back(i);
+  }
+  std::cout<<"Shuffling indices"<<std::endl;
+  std::shuffle(indices.begin(),indices.end(),generator);
+  std::cout<<"Shuffled indices"<<std::endl;
+  auto perc = num_samples/100;
+  for(auto i=0;i<num_samples;++i){
+    mapped2[i]=mapped[indices[i]];
+    if(((i+1)% perc) == 0){
+      std::cout<<"Shuffled "<<i<<" of "<<num_samples<<" items"<<std::endl;
+    }
   }
 
+
+
   munmap(mapped, size);
+  munmap(mapped2,size);
 
   close(fd);
 
@@ -183,7 +197,6 @@ size_t counter =0;
 
 void create_shuffled_raw(std::string input_prot){
  write_raw_data(input_prot);
- sort_raw_data(input_prot+".raw");
 }
 
 
