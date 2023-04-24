@@ -21,7 +21,7 @@ import pathlib
 import numpy as np
 import ranger21
 from lion_pytorch import Lion
-L1 =1024
+L1 =2*1024
 L2 = 16
 L3 = 32
 
@@ -47,10 +47,10 @@ class Network(pl.LightningModule):
         self.gamma = 0.965
 
 
-        self.num_buckets =4
+        self.num_buckets = 8
         self.accu = nn.Linear(120,L1)
 
-        self.layer_one =nn.Linear(L1,L2*self.num_buckets)
+        self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
         self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
         self.output = nn.Linear(L3,1*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
@@ -61,8 +61,15 @@ class Network(pl.LightningModule):
         indices = buckets.flatten()+offset
 
         #output of the accumulator
+       # ac = self.accu.forward(x)
+        #ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
+
         ac = self.accu.forward(x)
-        ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
+        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+        ac_x,ac_y = ac.split(L1//2,dim = 1)
+        ac_out = ac_x.mul(ac_y)*(127.0/128.0)
+
+
 
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
@@ -114,7 +121,6 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-       # optimizer = Ranger(self.parameters())
         optimizer = torch.optim.AdamW(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
@@ -138,8 +144,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("bucket4.quant")
-        torch.save(self.state_dict(),"bucket4.pt")
+        self.save_quantized_bucket("bucketelem.quant")
+        torch.save(self.state_dict(),"buckeelem.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

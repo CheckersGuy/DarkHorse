@@ -35,7 +35,7 @@ std::vector<Sample> extract_sample(const Proto::Game& game);
 
 void write_raw_data(std::string input_proto);
 
-void sort_raw_data(std::string raw_data);
+void sort_raw_data(std::string raw_data,std::string copy);
 
 void create_shuffled_raw(std::string input_proto);
 
