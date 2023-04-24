@@ -59,7 +59,7 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
 
 void write_raw_data(std::string input_proto){
   auto output_name = input_proto+".raw";
-  std::ifstream stream(input_proto);
+  std::ifstream stream(input_proto,std::ios::binary);
   if(!stream.good()){
     std::cerr<<"Could not load the file"<<std::endl;
     std::cerr<<"File: "<<input_proto<<std::endl;
@@ -71,7 +71,10 @@ void write_raw_data(std::string input_proto){
   for(auto game : batch.games()){
     auto samples = extract_sample(game);
     for(auto s : samples){
-      out_stream<<s;
+      if(!s.is_training_sample()){
+        continue;
+      }
+      out_stream.write((char*)&s,sizeof(Sample));
     }
   }
 

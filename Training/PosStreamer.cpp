@@ -26,7 +26,9 @@ Sample PosStreamer::get_next() {
                 std::shuffle(data.begin(),data.end(),generator);
               }
               auto positions = extract_sample(game);
-              for(auto pos : positions){
+              for(auto pos : positions) {
+                if(!pos.is_training_sample())
+                  continue;
                 buffer.emplace_back(pos);
               }
             }
@@ -51,8 +53,6 @@ Sample PosStreamer::get_next() {
     
   }
     Sample next = buffer[ptr++];
-    std::string result_string;
-  
     
     return next;
 } 
