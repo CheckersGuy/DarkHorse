@@ -68,10 +68,7 @@ void BatchProvider::next(float *results, int64_t *moves,int64_t* buckets, float 
     for (auto i = 0; i < get_batch_size(); ++i) {
         Sample current;
         size_t num_pieces;
-        do{
-          current =get_streamer().get_next();
-          num_pieces = Bits::pop_count(current.position.BP|current.position.WP);
-        }while(current.position.has_jumps(current.position.get_color()) || current.result ==UNKNOWN || current.move ==-1);
+        current =get_streamer().get_next();
         size_t off = INPUT_SIZE * i;
         auto result = create_input(current, inputs, off);
         results[i] = result;

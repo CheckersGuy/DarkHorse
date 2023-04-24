@@ -54,6 +54,8 @@ struct Sample {
     bool operator==(const Sample &other) const;
 
     bool operator!=(const Sample &other) const;
+
+    bool is_training_sample() const;
 };
 
 namespace std {

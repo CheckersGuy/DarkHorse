@@ -21,7 +21,7 @@ import pathlib
 import numpy as np
 import ranger21
 from lion_pytorch import Lion
-L1 =2*1024
+L1 =1024
 L2 = 16
 L3 = 32
 
@@ -50,7 +50,7 @@ class Network(pl.LightningModule):
         self.num_buckets = 8
         self.accu = nn.Linear(120,L1)
 
-        self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
+        self.layer_one =nn.Linear(L1,L2*self.num_buckets)
         self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
         self.output = nn.Linear(L3,1*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
@@ -60,14 +60,14 @@ class Network(pl.LightningModule):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
         indices = buckets.flatten()+offset
 
-        #output of the accumulator
-       # ac = self.accu.forward(x)
-        #ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
+        output of the accumulator
+       ac = self.accu.forward(x)
+       ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
 
-        ac = self.accu.forward(x)
-        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
-        ac_x,ac_y = ac.split(L1//2,dim = 1)
-        ac_out = ac_x.mul(ac_y)*(127.0/128.0)
+       # ac = self.accu.forward(x)
+       # ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+       #  ac_x,ac_y = ac.split(L1//2,dim = 1)
+       # ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
 
 
