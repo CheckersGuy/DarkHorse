@@ -1,21 +1,13 @@
+
+import numpy as np
 import torch.nn as nn
 import torch
-from torch.optim import optimizer
-import torchmetrics
+
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
-from ranger import Ranger
 import struct
 import ctypes
 import pathlib
-import numpy as np
-from enum import IntEnum
-import Lamb 
-import Focal
-from lion_pytorch import Lion
-import torch.functional as F
-import ranger21
-
 
 class Relu1(nn.Module):
     def __init__(self):

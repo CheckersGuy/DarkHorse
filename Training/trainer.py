@@ -40,7 +40,7 @@ if __name__ == "__main__":
     epochs = 420
     model = Experimental.Network()
   #  model = Experimental.Network()
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.raw",
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.copy.raw",
                                        val_data="TrainData/val.train",
                                        batch_size=batch_size, buffer_size=125000000)
 
@@ -52,18 +52,13 @@ if __name__ == "__main__":
     
 
     
-    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
+    #check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
-
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs)
+#  trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
+#tttt
 
     trainer.fit(model, data_loader)
-    model.save_quantized("Networks/{}.quant".format("nonwdltest2"))
-    torch.save(model.state_dict(),"Networks/{}.pt".format("nonwdlnext"))
-    
-    model = LitMLP.PatternModel()
 
 
 #merge_data(["TrainData/window2.train","TrainData/window1.train","TrainData/window3.train","TrainData/window0.train"],"TrainData/giga.train")
-
-

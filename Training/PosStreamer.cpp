@@ -33,14 +33,17 @@ Sample PosStreamer::get_next() {
               }
             }
             else{
-              buffer.emplace_back(mapped[offset++]);
-              offset=offset%num_samples;
+              Sample s = mapped[offset++];
+              if(s.is_training_sample()){
+                buffer.emplace_back(s);        
+              }
+              size_t samples_in_file =file_size/sizeof(Sample);
+              if(offset>=samples_in_file){
+                offset=0;
+              };
             }
             }
              if (shuffle) {
-               if(is_raw_data){
-                 std::cout<<"Using raw data"<<std::endl;
-               }
             std::cout<<"Shuffled"<<std::endl;
             std::cout<<"Offset: "<<offset<<std::endl;
             std::cout<<"BufferSize after fill: "<<buffer.size()<<std::endl;
@@ -69,12 +72,6 @@ size_t PosStreamer::ptr_position() {
 
 const std::string &PosStreamer::get_file_path() {
     return file_path;
-}
-
-
-size_t PosStreamer::get_file_size() const {
-    std::filesystem::path my_path(file_path);
-    return std::filesystem::file_size(my_path);
 }
 
 void PosStreamer::set_shuffle(bool shuff) {
