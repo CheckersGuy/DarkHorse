@@ -1,37 +1,20 @@
 import torch.nn as nn
 import torch
 from torch.nn.modules import activation
-import torchmetrics
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
 from ranger import Ranger
 import struct
-import ctypes
-import pathlib
 import numpy as np
 import torch.nn as nn
 import torch
 import torchmetrics
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader
-from ranger import Ranger
 import struct
-import ctypes
-import pathlib
 import numpy as np
-import ranger21
-from lion_pytorch import Lion
-L1 =1024
+
+L1 =2*1024
 L2 = 16
 L3 = 32
-
-class Relu1(nn.Module):
-    def __init__(self):
-        super(Relu1, self).__init__()
-
-    def forward(self, x):
-        return (127.0/128.0)*torch.clamp(x,0.0,1.0)**2
-
 
 
 class Network(pl.LightningModule):
@@ -42,15 +25,13 @@ class Network(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.number_of_steps =1000
-        self.num_epochs=120
         self.gamma = 0.965
 
 
         self.num_buckets = 8
         self.accu = nn.Linear(120,L1)
 
-        self.layer_one =nn.Linear(L1,L2*self.num_buckets)
+        self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
         self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
         self.output = nn.Linear(L3,1*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
@@ -60,13 +41,13 @@ class Network(pl.LightningModule):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
         indices = buckets.flatten()+offset
 
-        ac = self.accu.forward(x)
-        ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
+        #ac = self.accu.forward(x)
+       # ac_out =(127.0/128.0)* torch.clamp(ac,0.0,1.0)**2
 
-       # ac = self.accu.forward(x)
-       # ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
-       #  ac_x,ac_y = ac.split(L1//2,dim = 1)
-       # ac_out = ac_x.mul(ac_y)*(127.0/128.0)
+        ac = self.accu.forward(x)
+        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+        ac_x,ac_y = ac.split(L1//2,dim = 1)
+        ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
 
 
@@ -105,13 +86,19 @@ class Network(pl.LightningModule):
 
 
     def write_header(self,file_out):
-        num_hidden = 3;
-        file_out.write(struct.pack("I", num_hidden))
+        num_layers = len(self.layers)
+        file_out.write(struct.pack("I", num_layers))
         file_out.write(struct.pack("I", self.num_buckets))
-        file_out.write(struct.pack("I", L1))
-        file_out.write(struct.pack("I", L2))
-        file_out.write(struct.pack("I", L3))
+                    
+        file_out.write(struct.pack("I", self.accu.in_features))
+        file_out.write(struct.pack("I", self.accu.out_features))
 
+        for layer in self.layers[1:]:
+            file_out.write(struct.pack("I", layer.in_features))
+            file_out.write(struct.pack("I", layer.out_features//self.num_buckets))
+
+
+       
     def step(self):
         with torch.no_grad():
             for layer in self.layers[1:]:
@@ -121,9 +108,9 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters())
+        #optimizer = Ranger(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
-
 
 
     def training_step(self, train_batch, batch_idx):
@@ -265,33 +252,8 @@ class Network(pl.LightningModule):
         file.close()
         self.to(device_gpu)
 
-                
         return
-        for layer in self.layers[1:]:
-            print(layer.weight.size())
-            if isinstance(layer, torch.nn.Linear):
-                weights = layer.weight.detach().numpy().flatten()
-                weights = weights * 64.0
-                np.clip(weights, min16, max16)
-                weights = weights.astype(np.int16)
-                bias = layer.bias.detach().numpy().flatten()
-                bias = bias * (127.0 * 64.0)
-                bias = bias.astype(np.int32)
-                buffer_weights.extend(weights.tobytes())
-                buffer_bias.extend(bias.tobytes())
-                num_weights += len(weights)
-                num_bias += len(bias)
-
-        file.write(buffer_weights)
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
-        return
-
-
-
-
-
+  
 
 
 

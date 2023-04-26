@@ -194,7 +194,7 @@ void Network::load(std::string file) {
     stream.close();
   
 }
-
+//needs to be rewritten for the new architecture ...
 void Network::load_bucket(std::string file){
    
   //loading the buckets
@@ -204,24 +204,20 @@ void Network::load_bucket(std::string file){
         std::cerr << "Could not load network file, path " << file<< std::endl;
         std::exit(-1);
     }
-    uint32_t num_hidden,num_buckets;
-    stream.read((char*)&num_hidden,sizeof(uint32_t));
+    uint32_t num_layers,num_buckets;
+    stream.read((char*)&num_layers,sizeof(uint32_t));
     stream.read((char*)&num_buckets,sizeof(uint32_t));
     this->num_buckets = num_buckets;
-    std::vector<uint32_t> layer_dims;
-    for(auto k=0;k<num_hidden;++k){
-      uint32_t hidden;
-      stream.read((char*)&hidden,sizeof(uint32_t));
-      layer_dims.emplace_back(hidden);
+
+    for(auto i=0;i<num_layers;++i){
+      uint32_t in_features;
+      uint32_t out_features;
+      stream.read((char*)&in_features,sizeof(uint32_t));
+      stream.read((char*)&out_features,sizeof(uint32_t));
+      layers.emplace_back(Layer(in_features,out_features));
     }
-    //adding the accumulator
-    layers.emplace_back(Layer(120,layer_dims[0]));
-    //adding the remaining layers
-    for(auto k=0;k<layer_dims.size()-1;++k){
-      layers.emplace_back(Layer(layer_dims[k],layer_dims[k+1]));
-    }
-    layers.emplace_back(Layer(layer_dims[num_hidden-1],1));
-    
+
+  
     //number of weights and biases for the feature transformer
     size_t num_ft_weights,num_hidden_weights;
     size_t num_ft_bias,num_hidden_bias;
@@ -342,6 +338,15 @@ int Network::compute_incre_forward_pass(Position next,int bucket_index) {
         temp[i]=temp[i]/128;
         //temp[i]=value;
     }
+  
+    auto offset = layers[0].out_features/2;
+    for (auto i = 0; i < offset; i++) {
+        auto value =temp[i]*temp[i+offset];
+        temp[i]=value/128;
+    }
+
+    //first part should still be ok
+
 
     for (auto i = 0; i < layers[0].out_features; ++i)
     {
@@ -352,7 +357,7 @@ int Network::compute_incre_forward_pass(Position next,int bucket_index) {
     auto bias_index_offset = bucket_bias_offset*bucket_index;
        for (auto k = 1; k < layers.size(); ++k) {
         Layer l = layers[k];
-
+    
         for (auto i = 0; i < l.out_features; i++)
         {
             int sum =biases[i+bias_index_offset];

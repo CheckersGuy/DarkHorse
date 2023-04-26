@@ -60,8 +60,8 @@ int main(int argl, const char **argc) {
   network.addLayer(Layer{32, 1});
   network.load(net_file);
  */
-  network.load_bucket("bucket8.quant");
-
+  network.load_bucket("bucketelem.quant");
+  std::cout<<network<<std::endl;
 /* 
   Position test =Position::get_start_position();
   network.print_bucket_evals(test);

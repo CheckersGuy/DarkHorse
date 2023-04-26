@@ -39,8 +39,8 @@ private:
     size_t offset{0};
     //in case we have a 'raw'file
     Sample * mapped;
-    size_t file_size;
     int fd;
+    size_t file_size{0};
    
 
 public:
@@ -83,15 +83,24 @@ public:
         }else{
           //we memory map the entire data !!!
           struct stat s;
-          fd = open(file_path.c_str(),O_RDWR);
+          fd = open(file_path.c_str(),O_RDONLY);
+          if(fd ==-1){
+            std::cerr<<"Could not open file"<<std::endl;
+            std::exit(-1);
+          }
           auto r =fstat(fd,&s);
           file_size = s.st_size;
-          num_samples = file_size/sizeof(Sample);
-          mapped = (Sample*)mmap(0,file_size,PROT_READ |PROT_WRITE,MAP_SHARED,fd,0);
+          mapped = (Sample*)mmap(0,s.st_size,PROT_READ,MAP_SHARED,fd,0);
+          for(auto i=0;i<(s.st_size/sizeof(Sample));++i){
+            Sample current = mapped[i];
+            if(current.is_training_sample()){
+                num_samples++;
+            }
         }
         buffer_size = std::min(num_samples,buffer_size);
         ptr = buffer.size()+1000;
 
+    }
     }
     ~PosStreamer(){
       if(is_raw_data){
@@ -106,8 +115,6 @@ public:
     size_t get_buffer_size() const;
 
     size_t ptr_position();
-
-    size_t get_file_size() const;
 
     size_t get_num_positions() const;
 
