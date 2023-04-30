@@ -38,7 +38,7 @@ def merge_data(files,output):
 if __name__ == "__main__":
     batch_size = 4*8192 
     epochs = 420
-    model = Experimental.Network()
+    model = Experimental.PolicyNetwork()
   #  model = Experimental.Network()
     data_loader = LitMLP.LitDataModule(train_data="TrainData/giga.train.copy.raw",
                                        val_data="TrainData/val.train",
@@ -52,13 +52,12 @@ if __name__ == "__main__":
     
 
     
-    #check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
+    check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs)
-#  trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
-#tttt
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
     trainer.fit(model, data_loader)
+    #trainer.fit(model, data_loader)
 
 
 #merge_data(["TrainData/window2.train","TrainData/window1.train","TrainData/window3.train","TrainData/window0.train"],"TrainData/giga.train")
