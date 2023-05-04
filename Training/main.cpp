@@ -22,7 +22,9 @@
 int main(int argl, const char **argc) {
 
 
-  //count_real_duplicates("/home/leagu/DarkHorse/Training/TrainData/giga.train.raw", "/home/leagu/DarkHorse/Training/TrainData/gigaremoved.train.raw");
+  write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train");
+  sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw" ,"/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw");
+  return 0;
 
  // Book::create_train_file(
    //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",

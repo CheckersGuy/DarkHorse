@@ -43,4 +43,6 @@ void view_game(std::string input_proto, int index);
 
 void get_game_stats(std::string input_proto,GameStat& stats);
 
+void compute_policy_accuracy(std::string train_file,Network& network);
+
 Result get_game_result(Proto::Game game);

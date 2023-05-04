@@ -26,6 +26,9 @@ struct Layer {
 //named triple
 struct Wdl{
   int win,loss,draw;
+  float win_prob,draw_prob,loss_prob;
+  
+
 };
 
 bool is_uncertain_eval(Wdl wdl);

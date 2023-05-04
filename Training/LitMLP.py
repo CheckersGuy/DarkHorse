@@ -497,4 +497,4 @@ class WDLDataSet(BatchDataSet):
         is_draw =torch.eq(result,draw).to(torch.int64)
         is_lost = torch.eq(result,lost).to(torch.int64)
         wdl_values = is_won*0+is_lost*1+is_draw*2
-        return wdl_values, torch.Tensor(moves), torch.Tensor(buckets), torch.Tensor(inputs)
+        return wdl_values, torch.LongTensor(moves), torch.LongTensor(buckets), torch.Tensor(inputs)

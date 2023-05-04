@@ -53,14 +53,8 @@ int main(int argl, const char **argc) {
     //net_file = "square6.quant";
     net_file = "test4.quant";
   }
- /* 
-  network.addLayer(Layer{120, 1024});
-  network.addLayer(Layer{1024, 16});
-  network.addLayer(Layer{16, 32});
-  network.addLayer(Layer{32, 1});
-  network.load(net_file);
- */
-  network.load_bucket("bucketelem.quant");
+
+  network.load_bucket("testing.quant");
 /* 
   Position test =Position::get_start_position();
   network.print_bucket_evals(test);
