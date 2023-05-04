@@ -2,6 +2,7 @@
 //
 #include <chrono>
 #include <assert.h>
+#include <cstdint>
 #include <fcntl.h>
 #include <fstream>
 #include <random>
@@ -13,7 +14,7 @@
 #include "../Sample.h"
 #include "../../Checkers/CheckerEngineX/MGenerator.h"
 #include "SampleUtil.h"
-
+#include <algorithm>
 
 
 std::vector<Sample> extract_sample(const Proto::Game& game){
@@ -57,79 +58,102 @@ std::vector<Sample> extract_sample(const Proto::Game& game){
 }
 
 
-void write_raw_data(std::string input_proto){
+void write_raw_data(std::string input_proto)
+{
+  //Note: Use ftruncate to set the size of the file
   auto output_name = input_proto+".raw";
-  std::ifstream stream(input_proto,std::ios::binary);
-  if(!stream.good()){
-    std::cerr<<"Could not load the file"<<std::endl;
-    std::cerr<<"File: "<<input_proto<<std::endl;
-    std::exit(-1);
-  }
-  std::ofstream out_stream(output_name);
+  Sample* mapped;
   Proto::Batch batch;
+  std::ifstream stream(input_proto);
   batch.ParseFromIstream(&stream);
+  size_t counter =0;
+  size_t total_counter =0;
   for(auto game : batch.games()){
+    auto samples = extract_sample(game);
+    for(auto s : samples)
+    {
+      total_counter++;
+      if(!s.is_training_sample()){
+        continue;
+      }
+      counter++;
+    }
+  }
+  std::cout<<"Counted training samples"<<std::endl;
+  std::cout<<"ValidSamples: "<<counter<<std::endl;
+  std::cout<<"TotalSamples: "<<total_counter<<std::endl;
+  std::mt19937_64 generator(getSystemTime());
+  FILE *fp=fopen(output_name.c_str(), "w");
+  ftruncate(fileno(fp), sizeof(Sample)*counter);
+  fclose(fp);
+  int fd = open(output_name.c_str(),O_RDWR);
+  
+  mapped =(Sample*)mmap(0,sizeof(Sample)*counter,PROT_WRITE |PROT_READ,MAP_SHARED,fd,0);
+  const size_t counted=counter;
+  counter =0;
+   for(auto game : batch.games()){
     auto samples = extract_sample(game);
     for(auto s : samples){
       if(!s.is_training_sample()){
         continue;
       }
-      out_stream.write((char*)&s,sizeof(Sample));
+    if(((counter+1)%100000 )==0){
+      double perc = (double)counter;
+      perc/=(double)counted;
+      std::cout<<"Progress: "<<perc<<std::endl;
+    }
+      mapped[counter++]=s;
     }
   }
+  
+   for(auto i=0;i<1000;++i){
+     mapped[i].position.print_position();
+     std::cout<<std::endl;
+   }
+
+  munmap(mapped,counted*sizeof(Sample));
+
 
 }
 
 
 void sort_raw_data(std::string raw_data,std::string copy){
   std::mt19937_64 generator(3123123131ull);
-  int fd; // file-descriptor
-  int out_fd;
-  size_t size;
   struct stat s;
   int status;
-  Sample * mapped;
-  Sample* mapped2;
-
-  fd = open(raw_data.c_str(),O_RDWR);
-  out_fd = open(copy.c_str(),O_RDWR);
-  if(out_fd==-1){
+  std::vector<uint32_t>indices;
+  int fd = open(raw_data.c_str(),O_RDWR);
+  if(fd==-1){
     std::cout<<"Error"<<std::endl;
     std::cout<<copy<<std::endl;
     std::exit(-1);
   }
   status = fstat(fd,&s);
-  size = s.st_size;
-  auto num_samples = s.st_size/sizeof(Sample);
-  std::cout<<"size: "<<s.st_size/sizeof(Sample)<<std::endl;
-
-  mapped = (Sample*)mmap(0,size,PROT_READ,MAP_SHARED,fd,0);
-  mapped2 = (Sample*)mmap(0,size,PROT_WRITE,MAP_SHARED,out_fd,0);
-
-  std::vector<uint32_t> indices;
-  for(auto i=0;i<num_samples;++i){
-    indices.emplace_back(i);
-  }
-  std::cout<<"Shuffling indices"<<std::endl;
-  std::shuffle(indices.begin(),indices.end(),generator);
-  std::cout<<"Shuffled indices"<<std::endl;
-  auto perc = num_samples/100;
-  for(auto i=0;i<num_samples;++i){
-    mapped2[i]=mapped[indices[i]];
-    if(((i+1)% perc) == 0){
-      std::cout<<"Shuffled "<<i<<" of "<<num_samples<<" items"<<std::endl;
-    }
-  }
-
-
-
-  munmap(mapped, size);
-  munmap(mapped2,size);
-
   close(fd);
+  auto num_samples = s.st_size/sizeof(Sample);
+  
+  std::vector<Sample> samples;
+  for(auto i=0;i<num_samples;++i){
+    samples.emplace_back(Sample{});
+  }
+  std::ifstream stream(raw_data,std::ios::binary);
+  if(!stream.good()){
+    std::cerr<<"Error"<<std::endl;
+    std::exit(-1);
+  }
+  stream.read((char*)&samples[0],sizeof(Sample)*num_samples);
+  std::shuffle(samples.begin(),samples.end(),generator);
+  
+  std::ofstream out_stream(copy,std::ios::binary);
+  if(!out_stream.good()){
+    std::cerr<<"Error"<<std::endl;
+    std::exit(-1);
+  }
+  out_stream.write((char*)&samples[0],sizeof(Sample)*num_samples);
+
 
 }
-
+//needs to be redone
 void count_real_duplicates(std::string raw_data,std::string output){
   std::ofstream stream(output,std::ios::binary);
   if(!stream.good()){
@@ -155,7 +179,7 @@ void count_real_duplicates(std::string raw_data,std::string output){
         auto key2 = Zobrist::generate_key(two.position);
         return key1>key2;
       });
-size_t counter =0;
+  size_t counter =0;
   for(auto i=0;i<num_samples;){
     auto sample = mapped[i];
     size_t start = i;
@@ -184,12 +208,6 @@ size_t counter =0;
     
   }
   std::cout<<"New size : "<<counter<<" vs old_size : "<<num_samples<<std::endl;
-
-
-
-
-
-
   munmap(mapped, size);
 
   close(fd);

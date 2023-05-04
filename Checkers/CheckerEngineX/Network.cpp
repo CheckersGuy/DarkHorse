@@ -23,15 +23,31 @@ void Accumulator::refresh() {
 }
 
 
+float quant_to_float(int quant){
+  return static_cast<float>(quant)/127.0;
+}
+
+
+
 Wdl Network::get_wdl(){
  Wdl values;
  values.win = (*this)[0];
  values.loss = (*this)[1];
  values.draw =(*this)[2];
+
+ values.win_prob =std::exp(quant_to_float(values.win));
+ values.loss_prob = std::exp(quant_to_float(values.loss));
+ values.draw_prob = std::exp(quant_to_float(values.draw));
+ double sum = values.win_prob+values.draw_prob+values.loss_prob;
+ values.win_prob/=sum;
+ values.draw_prob/=sum;
+ values.loss_prob/=sum;
  return values;
 }
 
-
+bool is_uncertain_eval(Wdl wdl){
+  return wdl.draw_prob<=0.25 && std::abs(wdl.win_prob-wdl.loss_prob)<=0.05;
+}
 
 void Accumulator::apply(Color perp, Position before, Position after)
 {
@@ -402,9 +418,13 @@ int Network::evaluate(Position pos, int ply)
     {
         return loss(ply);
     }
-
     int32_t val = compute_incre_forward_pass(pos);
+
+//auto wdl = get_wdl();
+   // float value =(wdl.win_prob-wdl.loss_prob)*350*(1.0-wdl.draw_prob);
+    //return static_cast<int>(std::round(value));i 
     return val;
+
 }
 
 

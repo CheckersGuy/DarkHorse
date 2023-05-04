@@ -11,9 +11,10 @@ import torchmetrics
 import pytorch_lightning as pl
 import struct
 import numpy as np
-
+from focal_loss.focal_loss import FocalLoss
+from polyloss import Poly1FocalLoss
 L1 =2*1024
-L2 = 16
+L2 =16
 L3 = 32
 
 P_L1=512
@@ -28,7 +29,7 @@ class Network(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.985
 
 
         self.num_buckets =8
@@ -133,8 +134,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("bucketelem2.quant")
-        torch.save(self.state_dict(),"buckeelem2.pt")
+        self.save_quantized_bucket("testing.quant")
+        torch.save(self.state_dict(),"testing.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
@@ -258,23 +259,23 @@ class Network(pl.LightningModule):
         return
 
 
-class PolicyNetwork(pl.LightningModule):
+OUT_WDL=3
+class WDLNetwork(pl.LightningModule):
 
     def __init__(self):
-        super(PolicyNetwork, self).__init__()
+        super(WDLNetwork, self).__init__()
         self.layers = []
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
         self.gamma = 0.965
-
-
+        self.criterion = FocalLoss(gamma=2)
         self.num_buckets =8
-        self.accu = nn.Linear(120,P_L1)
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
-        self.layer_one =nn.Linear(P_L1//2,P_L2*self.num_buckets)
-        self.layer_sec = nn.Linear(P_L2,P_L3*self.num_buckets);
-        self.output = nn.Linear(P_L3,128*self.num_buckets)
+        self.accu = nn.Linear(120,L1)
+
+        self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
+        self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
+        self.output = nn.Linear(L3,OUT_WDL*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
         self.init_layers()
 
@@ -287,23 +288,22 @@ class PolicyNetwork(pl.LightningModule):
 
         ac = self.accu.forward(x)
         ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
-        ac_x,ac_y = ac.split(P_L1//2,dim = 1)
+        ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
 
 
-        l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,P_L2))
-        l1c = l1s.view(-1,P_L2)[indices]
+        l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
+        l1c = l1s.view(-1,L2)[indices]
         l1c = (127.0/128.0)*torch.clamp(l1c,0.0,1.0)**2
         
-        l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,P_L3))
+        l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,L3))
         l2c = l2s.view(-1,L3)[indices]
         l2c = (127.0/128.0)*torch.clamp(l2c,0.0,1.0)**2
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
-        l3c = l3s.view(-1,128)[indices]
-
-        return l3c
+        l3c = l3s.view(-1,OUT_WDL)[indices]
+        return torch.nn.functional.softmax(l3c,dim=1)
 
 
     def init_layers(self):
@@ -321,7 +321,7 @@ class PolicyNetwork(pl.LightningModule):
                 l1_bias[i*L2 : (i+1)*L2 ] = l1_bias[0 : L2]
                 l2_weight[i*L3 : (i+1)*L3, : ] = l2_weight[0 : L3, :]
                 l2_bias[i*L3 : (i+1)*L3 ] = l1_bias[0 : L3]
-                output_weight[i:i+1,:] = output_weight[0:1,:]
+                output_weight[i*OUT_WDL:(i+1)*OUT_WDL,:] = output_weight[0:OUT_WDL,:]
 
 
 
@@ -337,8 +337,10 @@ class PolicyNetwork(pl.LightningModule):
             file_out.write(struct.pack("I", layer.in_features))
             file_out.write(struct.pack("I", layer.out_features//self.num_buckets))
 
+    def accuracy(self, logits, target):
+        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
+        return 100 * acc
 
-       
     def step(self):
         with torch.no_grad():
             for layer in self.layers[1:]:
@@ -348,32 +350,31 @@ class PolicyNetwork(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
+        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False,weight_decay=0,lr=4e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
-    def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("policy.quant")
-        torch.save(self.state_dict(),"policy.pt")
-        return
-
-    def accuracy(self, logits, target):
-        acc = torch.sum(torch.eq(torch.argmax(logits, -1), target).to(torch.float32)) / len(target)
-        return 100 * acc
-
     def training_step(self, train_batch, batch_idx):
-        result, move, buckets, x = train_batch
-        policy = self.forward(x,buckets)
-        loss_policy = self.criterion(policy, move.squeeze(dim=1))
-        acc = self.accuracy(policy, move.squeeze())
+        wdl_values, move, buckets, x = train_batch
+        output = self.forward(x,buckets)
+        loss = self.criterion(output, wdl_values.squeeze(dim=1))
+        acc = self.accuracy(output, wdl_values.squeeze())
         self.log('train_acc_step', acc, prog_bar=True)
-        return loss_policy
+        return loss
 
     def validation_step(self, val_batch, batch_idx):
-        result, move, buckets, x = val_batch
-        policy = self.forward(x,buckets)
-        loss_policy = self.criterion(policy, move.squeeze(dim=1))
-        self.log('val_loss', loss_policy)
-        return loss_policy
+        #self.step()
+        wdl_values, move, buckets, x = val_batch
+        output = self.forward(x,buckets)
+        loss = self.criterion(output, wdl_values.squeeze(dim=1))
+        acc = self.accuracy(output, wdl_values.squeeze())
+        self.log('val_acc_step', acc)
+        return loss
+
+  
+    def validation_epoch_end(self, outputs):
+        self.save_quantized_bucket("bucketwdl.quant")
+        torch.save(self.state_dict(),"bucketwdl.pt")
 
     def save_quantized_bucket(self, output):
         self.step()
@@ -440,9 +441,4 @@ class PolicyNetwork(pl.LightningModule):
         self.to(device_gpu)
 
         return
-
-  
-
-
-
 

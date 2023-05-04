@@ -12,14 +12,8 @@ MovePicker mPicker;
 
 
 void MovePicker::init() {
-  /*
-  policy.addLayer(Layer{120, 256});
-  policy.addLayer(Layer{256, 32});
-  policy.addLayer(Layer{32, 32});
-  policy.addLayer(Layer{32, 128});
-  policy.load("policy.quant");
-  policy.init();
-  */
+ // policy.load_bucket("policy.quant");
+ // std::cout<<policy<<std::endl;
 }
 
 
@@ -129,7 +123,11 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply, Move move
         return (int) Bits::pop_count(move.captures);
     }
 
-    //return policy[get_policy_encoding(current.get_color(), move)];
+    //auto value  = policy[get_policy_encoding(current.get_color(), move)];
+    //std::cout<<"From: "<<(int)move.get_from_index()<<std::endl;
+    //std::cout<<"To: "<<(int)move.get_to_index()<<std::endl;
+    //std::cout<<value<<std::endl;
+    //return value;
 
     if(move == killer_moves[ply][1] || move == killer_moves[ply][0]) {
         return std::numeric_limits<int32_t>::max()-1000;
