@@ -1,42 +1,40 @@
-#include <vector>
+#include "GameLogic.h"
 #include "MGenerator.h"
 #include "MovePicker.h"
-#include "Transposition.h"
-#include "GameLogic.h"
 #include "Perft.h"
 #include "Selfplay.h"
+#include "Transposition.h"
+#include <vector>
 inline Position posFromString(const std::string &pos) {
-    Position result;
-    for (uint32_t i = 0; i < 32u; ++i) {
-        uint32_t current = 1u << i;
-        if (pos[i] == '1') {
-            result.BP |= current;
-        } else if (pos[i] == '2') {
-            result.WP |= current;
-        } else if (pos[i] == '3') {
-            result.K |= current;
-            result.BP |= current;
-        } else if (pos[i] == '4') {
-            result.K |= current;
-            result.WP |= current;
-        }
+  Position result;
+  for (uint32_t i = 0; i < 32u; ++i) {
+    uint32_t current = 1u << i;
+    if (pos[i] == '1') {
+      result.BP |= current;
+    } else if (pos[i] == '2') {
+      result.WP |= current;
+    } else if (pos[i] == '3') {
+      result.K |= current;
+      result.BP |= current;
+    } else if (pos[i] == '4') {
+      result.K |= current;
+      result.WP |= current;
     }
-    if (pos[32] == 'B') {
-        result.color = BLACK;
-    } else {
-        result.color = WHITE;
-    }
-    result.key = Zobrist::generate_key(result);
-    return result;
+  }
+  if (pos[32] == 'B') {
+    result.color = BLACK;
+  } else {
+    result.color = WHITE;
+  }
+  result.key = Zobrist::generate_key(result);
+  return result;
 }
 
+// game-generation
 
-
-//game-generation
-
+#include "CmdParser.h"
 #include "Network.h"
 #include "types.h"
-#include "CmdParser.h"
 int main(int argl, const char **argc) {
   CmdParser parser(argl, argc);
   parser.parse_command_line();
@@ -50,16 +48,15 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    //net_file = "square6.quant";
+    // net_file = "square6.quant";
     net_file = "test4.quant";
   }
 
-  network.load_bucket("testing.quant");
-/* 
-  Position test =Position::get_start_position();
-  network.print_bucket_evals(test);
-*/
-
+  network.load_bucket("testing4.quant");
+  /*
+    Position test =Position::get_start_position();
+    network.print_bucket_evals(test);
+  */
 
   if (parser.has_option("search"))
 
@@ -94,31 +91,27 @@ int main(int argl, const char **argc) {
     return 0;
   }
 
-
-  if(parser.has_option("selfplay")  ){
+  if (parser.has_option("selfplay")) {
     Selfplay selfplay;
     int hash_size;
-   if (parser.has_option("hash_size")) {
+    if (parser.has_option("hash_size")) {
       hash_size = parser.as<int>("hash_size");
     } else {
       hash_size = 22;
     }
-   TT.resize(hash_size);
+    TT.resize(hash_size);
 
     int time;
-    if(parser.has_option("time")){
+    if (parser.has_option("time")) {
       time = parser.as<int>("time");
-    }else{
-      time =65;
+    } else {
+      time = 65;
     }
 
-
-  selfplay.start_loop();
+    selfplay.start_loop();
 
     return 0;
-
   }
-
 
   std::string current;
   while (std::cin >> current) {

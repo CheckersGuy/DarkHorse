@@ -32,7 +32,7 @@ class Network(pl.LightningModule):
         self.gamma = 0.985
 
 
-        self.num_buckets =8
+        self.num_buckets =48
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
@@ -111,9 +111,9 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False,weight_decay=0,lr=4e-3)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        optimizer = torch.optim.NAdam(self.parameters(),lr=4e-3,weight_decay=0)
+        #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=4e-3,cycle_momentum=False)
         return [optimizer],[scheduler]
 
 
@@ -134,8 +134,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("testing.quant")
-        torch.save(self.state_dict(),"testing.pt")
+        self.save_quantized_bucket("testing4.quant")
+        torch.save(self.state_dict(),"testing4.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
