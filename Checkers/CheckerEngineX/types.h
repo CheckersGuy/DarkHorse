@@ -5,48 +5,46 @@
 #ifndef CHECKERSTEST_TYPES_H
 #define CHECKERSTEST_TYPES_H
 
-
-#include <iostream>
-#include <cstdint>
 #include <algorithm>
-#include <cassert>
-#include <thread>
 #include <array>
 #include <assert.h>
-//Utility functions and other stuff
+#include <cassert>
+#include <cstdint>
+#include <iostream>
+#include <thread>
+// Utility functions and other stuff
 
 inline uint64_t getSystemTime() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>
-            (std::chrono::high_resolution_clock::now().time_since_epoch()).count();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::high_resolution_clock::now().time_since_epoch())
+      .count();
 }
 
-//overload trick
+// overload trick
 
-template<typename... Ts>
-struct overload : Ts ... {
-    using Ts::operator()...;
+template <typename... Ts> struct overload : Ts... {
+  using Ts::operator()...;
 };
-template<typename... Ts> overload(Ts...) -> overload<Ts...>;
+template <typename... Ts> overload(Ts...) -> overload<Ts...>;
 
-
-template<size_t base> auto power_lambda = [](size_t exp) {
-    size_t result = 1;
-    for (auto i = 0; i < exp; ++i) {
-        result *= base;
-    }
-    return result;
+template <size_t base>
+auto power_lambda = [](size_t exp) {
+  size_t result = 1;
+  for (auto i = 0; i < exp; ++i) {
+    result *= base;
+  }
+  return result;
 };
 
-
-template<size_t size, typename Generator>
+template <size_t size, typename Generator>
 constexpr auto get_lut(Generator &&generator) {
-    using data_type = decltype(generator(0));
-    std::array<data_type, size> result{};
+  using data_type = decltype(generator(0));
+  std::array<data_type, size> result{};
 
-    for (auto i = 0; i < size; ++i) {
-        result[i] = generator(i);
-    }
-    return result;
+  for (auto i = 0; i < size; ++i) {
+    result[i] = generator(i);
+  }
+  return result;
 }
 
 constexpr uint32_t big_region = 30583;
@@ -68,145 +66,124 @@ inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
 
 inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
+// constant for extensions and reductions
 
-//constant for extensions and reductions
+constexpr uint32_t BUCKET_PATTERN = (1 << 0) | (1 << 1) | (1 << 31) | (1 << 30);
 
-
-constexpr uint32_t BUCKET_PATTERN = (1<<7) | (1<<10) |  (1<<14) | (1<<17) | (1<<21);
-const size_t NUM_BUCKETS = 8;
-constexpr int prob_cut = 45;//45
-constexpr int asp_wind =10;//10
+const size_t NUM_BUCKETS = 32 + 14; // 46 in total;
+constexpr int prob_cut = 45;        // 45
+constexpr int asp_wind = 10;        // 10
 constexpr int MAX_ASP = 200;
-constexpr int MAX_KILLERS =4;
-constexpr std::array<int,27> LMR_TABLE = {1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
-
+constexpr int MAX_KILLERS = 4;
+constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,
+                                           1, 2, 2, 2, 2, 2, 2, 2, 2,
+                                           2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 using Depth = int;
 using Ply = int;
 using Value = int;
 
-enum SEARCH : int {
-    MAX_PLY = 256
-};
+enum SEARCH : int { MAX_PLY = 256 };
 enum Score : int {
-    INFINITE = 1500000,
-    EVAL_INFINITE = 15000,
-    MATE_IN_MAX_PLY = 15000-MAX_PLY,
-    MATED_IN_MAX_PLY =-15000+MAX_PLY,
-    TB_WIN = 14000,
-    TB_LOSS = -14000
+  INFINITE = 1500000,
+  EVAL_INFINITE = 15000,
+  MATE_IN_MAX_PLY = 15000 - MAX_PLY,
+  MATED_IN_MAX_PLY = -15000 + MAX_PLY,
+  TB_WIN = 14000,
+  TB_LOSS = -14000
 };
 
-
-
-
-enum Color : char {
-    BLACK = -1, WHITE = 1
-};
+enum Color : char { BLACK = -1, WHITE = 1 };
 enum PieceType : uint8_t {
-    BPAWN = 0, WPAWN = 1, BKING = 2, WKING = 3, KING = 4, PAWN = 5, EMPTY = 6
+  BPAWN = 0,
+  WPAWN = 1,
+  BKING = 2,
+  WKING = 3,
+  KING = 4,
+  PAWN = 5,
+  EMPTY = 6
 };
-enum Flag : uint8_t {
-    None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u
-};
+enum Flag : uint8_t { None = 0u, TT_EXACT = 1u, TT_LOWER = 2u, TT_UPPER = 3u };
 
 enum MoveType {
-    PawnMove, KingMove, PromoMove, KingCapture, PawnCapture, PromoCapture
+  PawnMove,
+  KingMove,
+  PromoMove,
+  KingCapture,
+  PawnCapture,
+  PromoCapture
 };
 
-inline bool isEval(Value val) {
-    return std::abs(val) <= EVAL_INFINITE;
-}
+inline bool isEval(Value val) { return std::abs(val) <= EVAL_INFINITE; }
 
-inline bool isMateVal(Value val) {
-    return std::abs(val) >= MATE_IN_MAX_PLY;
-}
+inline bool isMateVal(Value val) { return std::abs(val) >= MATE_IN_MAX_PLY; }
 
+inline Value loss(int ply) { return -EVAL_INFINITE + ply; }
 
-inline Value loss(int ply) {
-    return -EVAL_INFINITE+ ply;
-}
+constexpr Color operator~(Color color) { return static_cast<Color>(-color); }
 
-constexpr Color operator~(Color color) {
-    return static_cast<Color>(-color);
-}
+inline bool isLoss(Value val) { return val <= MATED_IN_MAX_PLY; }
 
-inline bool isLoss(Value val) {
-    return val <= MATED_IN_MAX_PLY;
-}
-
-inline bool isWin(Value val) {
-    return val >= MATE_IN_MAX_PLY;
-}
+inline bool isWin(Value val) { return val >= MATE_IN_MAX_PLY; }
 
 inline Value valueFromTT(Value val, int ply) {
-    if (isLoss(val)) {
-        return val + ply;
-    } else if (isWin(val)) {
-        return val - ply;
-    }
-    return val;
+  if (isLoss(val)) {
+    return val + ply;
+  } else if (isWin(val)) {
+    return val - ply;
+  }
+  return val;
 }
 
 inline Value toTT(Value val, int ply) {
-    if (isLoss(val)) {
-        return val - ply;
-    } else if (isWin(val)) {
-        return val + ply;
-    }
-    return val;
+  if (isLoss(val)) {
+    return val - ply;
+  } else if (isWin(val)) {
+    return val + ply;
+  }
+  return val;
 }
 
 inline int div_round(int a, int b) {
-    a += b / 2;
-    const int div = a / b;
-    return (a < 0 && a != b * div) ? div - 1 : div;
+  a += b / 2;
+  const int div = a / b;
+  return (a < 0 && a != b * div) ? div - 1 : div;
 }
 
-
-template<Color color>
-constexpr uint32_t defaultShift(const uint32_t maske) {
-    if constexpr(color == BLACK) {
-        return maske << 4u;
-    } else {
-        return maske >> 4u;
-    }
+template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
+  if constexpr (color == BLACK) {
+    return maske << 4u;
+  } else {
+    return maske >> 4u;
+  }
 }
 
-template<Color color>
-constexpr
-uint32_t forwardMask(const uint32_t maske) {
-    if constexpr (color == BLACK) {
-        return ((maske & MASK_L3) << 3u) | ((maske & MASK_L5) << 5u);
-    } else {
-        return ((maske & MASK_R3) >> 3u) | ((maske & MASK_R5) >> 5u);
-    }
+template <Color color> constexpr uint32_t forwardMask(const uint32_t maske) {
+  if constexpr (color == BLACK) {
+    return ((maske & MASK_L3) << 3u) | ((maske & MASK_L5) << 5u);
+  } else {
+    return ((maske & MASK_R3) >> 3u) | ((maske & MASK_R5) >> 5u);
+  }
 }
 
-template<Color color, PieceType type>
-constexpr
-uint32_t get_neighbour_squares(uint32_t maske) {
+template <Color color, PieceType type>
+constexpr uint32_t get_neighbour_squares(uint32_t maske) {
 
-    if constexpr(type == KING) {
-        uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
-        squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);
-        return squares;
-    } else {
-        return defaultShift<color>(maske) | forwardMask<color>(maske);
-    }
-
-
+  if constexpr (type == KING) {
+    uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
+    squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);
+    return squares;
+  } else {
+    return defaultShift<color>(maske) | forwardMask<color>(maske);
+  }
 }
 
-template<Color color>
-constexpr
-uint32_t get_promotion_rank() {
-    if constexpr(color == WHITE) {
-        return 0xf0;
-    } else {
-        return 0x0f000000;
-    }
+template <Color color> constexpr uint32_t get_promotion_rank() {
+  if constexpr (color == WHITE) {
+    return 0xf0;
+  } else {
+    return 0x0f000000;
+  }
 }
 
-
-#endif //CHECKERSTEST_TYPES_H
+#endif // CHECKERSTEST_TYPES_H
