@@ -151,7 +151,7 @@ Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
   if (!in_pv && local.i >= 2) {
     const auto index = std::min(local.depth, (int)LMR_TABLE.size() - 1);
     red = 1; // previous value
-    // return LMR_TABLE[index];
+    return LMR_TABLE[index];
   }
   return red;
 }
