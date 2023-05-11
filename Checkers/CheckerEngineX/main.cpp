@@ -118,6 +118,7 @@ int main(int argl, const char **argc) {
     if (current == "init") {
       TT.age_counter = 0u;
       initialize();
+      Statistics::mPicker.clear_scores();
       std::string hash_string;
       std::cin >> hash_string;
       const int hash_size = std::stoi(hash_string);
@@ -126,6 +127,7 @@ int main(int argl, const char **argc) {
                 << "\n";
     } else if (current == "new_game") {
       TT.clear();
+      Statistics::mPicker.clear_scores();
       TT.age_counter = 0u;
       Statistics::mPicker.policy.init();
       board = Board{};
