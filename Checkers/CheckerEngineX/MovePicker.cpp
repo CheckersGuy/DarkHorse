@@ -95,7 +95,7 @@ void MovePicker::clear_scores() {
 
 void MovePicker::reduce_scores() {
   for (auto i = 0; i < history.size(); ++i) {
-    history[i] = history[i] / 4;
+    history[i] = history[i] / 2;
   }
 
   for (auto i = 0; i < killer_moves.size(); ++i) {
@@ -105,13 +105,13 @@ void MovePicker::reduce_scores() {
   }
   for (auto i = 0; i < counter_history.size(); ++i) {
     for (auto k = 0; k < counter_history[0].size(); ++k) {
-      counter_history[i][k] = counter_history[i][k] / 4;
+      counter_history[i][k] = counter_history[i][k] / 2;
     }
   }
 
   for (auto i = 0; i < follow_history.size(); ++i) {
     for (auto k = 0; k < follow_history[0].size(); ++k) {
-      follow_history[i][k] = follow_history[i][k] / 4;
+      follow_history[i][k] = follow_history[i][k] / 2;
     }
   }
 }
