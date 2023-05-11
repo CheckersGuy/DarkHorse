@@ -30,6 +30,8 @@ public:
 
   void clear_scores();
 
+  void reduce_scores();
+
   void update_scores(Position pos, Move *list, Move move, Move previous,
                      Move previous_own, int depth);
 

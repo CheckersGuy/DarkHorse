@@ -92,6 +92,30 @@ void MovePicker::clear_scores() {
     }
   }
 }
+
+void MovePicker::reduce_scores() {
+  for (auto i = 0; i < history.size(); ++i) {
+    history[i] = history[i] / 4;
+  }
+
+  for (auto i = 0; i < killer_moves.size(); ++i) {
+    for (auto k = 0; k < MAX_KILLERS; ++k) {
+      killer_moves[i][k] = Move{};
+    }
+  }
+  for (auto i = 0; i < counter_history.size(); ++i) {
+    for (auto k = 0; k < counter_history[0].size(); ++k) {
+      counter_history[i][k] = counter_history[i][k] / 4;
+    }
+  }
+
+  for (auto i = 0; i < follow_history.size(); ++i) {
+    for (auto k = 0; k < follow_history[0].size(); ++k) {
+      follow_history[i][k] /= follow_history[i][k] / 4;
+    }
+  }
+}
+
 int MovePicker::get_move_score(Position pos, Move move, Move previous,
                                Move previous_own, Depth depth) {
   // const int index = get_move_encoding(pos.get_color(),move);
@@ -122,16 +146,6 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
     return (int)Bits::pop_count(move.captures);
   }
 
-  // auto value  = policy[get_policy_encoding(current.get_color(), move)];
-  // std::cout<<"From: "<<(int)move.get_from_index()<<std::endl;
-  // std::cout<<"To: "<<(int)move.get_to_index()<<std::endl;
-  // std::cout<<value<<std::endl;
-  // return value;
-  /*
-    if (move == killer_moves[ply][1] || move == killer_moves[ply][0]) {
-      return std::numeric_limits<int32_t>::max() - 1000;
-    }
-  */
   for (auto i = 0; i < MAX_KILLERS; ++i) {
     if (move == killer_moves[ply][i]) {
       return std::numeric_limits<int32_t>::max() - 1000;
