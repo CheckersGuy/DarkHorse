@@ -336,23 +336,6 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index() {
-  /*
-auto pieces = piece_count();
-return (pieces-1)/8;
-*/
   auto pieces = piece_count();
-  Position temp = *this;
-  if (temp.get_color() == BLACK) {
-    temp = temp.get_color_flip();
-  }
-  auto rank = Bits::bitscan_foward(temp.BP) / 4;
-  if (pieces > 12) {
-    const uint32_t maske = BUCKET_PATTERN;
-    auto index = Bits::pext(temp.BP, maske) + 16 * (pieces > 18);
-    return index;
-  } else if (pieces > 6) {
-    return rank + 32;
-  } else {
-    return rank + 32 + 8;
-  }
+  return (pieces - 1) / 8;
 }
