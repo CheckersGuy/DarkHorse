@@ -84,8 +84,7 @@ void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {
-  // Statistics::mPicker.clear_scores();
-  Statistics::mPicker.reduce_scores();
+  Statistics::mPicker.clear_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
