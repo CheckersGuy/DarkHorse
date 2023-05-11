@@ -11,6 +11,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     game_board = Board{};
     game_board = Position::get_start_position();
     TT.age_counter = 0;
+    TT.clear();
   }
   // setting the board
 
@@ -50,7 +51,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     game_board.play_move(m.value());
   } else {
     // debug<<"Reset move, because we didnt find it"<<std::endl;
-
+    TT.clear();
     game_board = Board{};
     game_board = temp;
     TT.age_counter = 0;
