@@ -111,7 +111,7 @@ void MovePicker::reduce_scores() {
 
   for (auto i = 0; i < follow_history.size(); ++i) {
     for (auto k = 0; k < follow_history[0].size(); ++k) {
-      follow_history[i][k] /= follow_history[i][k] / 4;
+      follow_history[i][k] = follow_history[i][k] / 4;
     }
   }
 }
