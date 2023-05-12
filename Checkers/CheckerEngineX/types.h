@@ -47,8 +47,6 @@ constexpr auto get_lut(Generator &&generator) {
   return result;
 }
 
-constexpr uint32_t big_region = 30583;
-constexpr uint32_t region = 13107;
 constexpr uint32_t INNER_SQUARES = 132638688;
 constexpr uint32_t OUTER_SQUARES = 135796752;
 constexpr uint32_t MASK_L3 = 14737632u;
@@ -72,9 +70,9 @@ constexpr uint32_t BUCKET_PATTERN = (1 << 0) | (1 << 1) | (1 << 31) | (1 << 30);
 
 const size_t NUM_BUCKETS = 8; // 46 in total;
 constexpr int prob_cut = 45;  // 45
-constexpr int asp_wind = 15;  // 10
+constexpr int asp_wind = 10;  // 10
 constexpr int MAX_ASP = 200;
-constexpr int MAX_KILLERS = 4;
+constexpr int MAX_KILLERS = 2;
 constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            1, 1, 1, 2, 2, 2, 2, 2, 2,
                                            2, 2, 2, 2, 2, 2, 2, 2, 2};
@@ -94,7 +92,7 @@ enum Score : int {
 };
 
 enum Color : char { BLACK = -1, WHITE = 1 };
-enum PieceType : uint8_t {
+enum PieceType : int {
   BPAWN = 0,
   WPAWN = 1,
   BKING = 2,
@@ -142,12 +140,6 @@ inline Value toTT(Value val, int ply) {
     return val + ply;
   }
   return val;
-}
-
-inline int div_round(int a, int b) {
-  a += b / 2;
-  const int div = a / b;
-  return (a < 0 && a != b * div) ? div - 1 : div;
 }
 
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
