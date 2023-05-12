@@ -11,7 +11,7 @@ Value max_value = INFINITE;
 SearchGlobal glob;
 Network network, network2;
 
-void initialize() { initialize(321231231ull); }
+void initialize() { initialize(getSystemTime()); }
 
 #ifdef USE_DB
 int max_db_pieces, max_db_cache;
