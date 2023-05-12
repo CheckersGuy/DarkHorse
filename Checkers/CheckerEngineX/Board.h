@@ -6,55 +6,50 @@
 #define CHECKERSTEST_BOARD_H
 
 #include "Move.h"
-#include <string>
-#include "types.h"
 #include "Position.h"
 #include "Zobrist.h"
+#include "types.h"
+#include <string>
 
 class Board {
 
 public:
-    std::array<Position, MAX_PLY+600> pStack;
+  std::array<Position, MAX_PLY + 600> pStack;
+
 public:
-    int last_non_rev{0};
-    int pCounter = 0;
+  int last_non_rev{0};
+  int pCounter = 0;
 
-    Board() = default;
+  Board() = default;
 
-    Board(const Board &board);
+  Board(const Board &board);
 
-    void print_board() const;
+  void print_board() const;
 
-    void make_move(Move move);
+  void make_move(Move move);
 
-    void undo_move();
+  void undo_move();
 
-    bool is_silent_position();
+  bool is_silent_position();
 
-    Position &get_position();
+  Position &get_position();
 
-    Position previous() const;
+  Position previous() const;
 
-    uint64_t get_current_key() const;
+  uint64_t get_current_key() const;
 
-    bool is_repetition2(int last_rev)const;
+  bool is_repetition(int last_rev) const;
 
-    bool is_repetition()const;
+  Color get_mover() const;
 
-    Color get_mover() const;
+  Board &operator=(Position pos);
 
-    Board &operator=(Position pos);
+  size_t history_length() const;
 
-    size_t history_length()const;
-
-    Position history_at(size_t idx) const;
-    //difference between make-move and play move is that
-    //play move is not being used for the tree search
-    void play_move(Move move);
-    
-
-
+  Position history_at(size_t idx) const;
+  // difference between make-move and play move is that
+  // play move is not being used for the tree search
+  void play_move(Move move);
 };
 
-
-#endif //CHECKERSTEST_BOARD_H
+#endif // CHECKERSTEST_BOARD_H

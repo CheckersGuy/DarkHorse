@@ -168,7 +168,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     throw std::string{"Time_out"};
   }
   // check again if repetition2 = repetition1
-  if (ply > 0 && board.is_repetition2(last_rev)) {
+  if (ply > 0 && board.is_repetition(last_rev)) {
     return 0;
   }
 
