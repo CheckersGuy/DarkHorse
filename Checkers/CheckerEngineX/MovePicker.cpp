@@ -143,7 +143,10 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
   }
 
   if (move.is_capture()) {
-    return (int)Bits::pop_count(move.captures);
+    const uint32_t kings_captured = move.captures & current.K;
+    const uint32_t pawns_captured = move.captures & (~current.K);
+    return (int)(Bits::pop_count(kings_captured) * 3 +
+                 Bits::pop_count(pawns_captured) * 2);
   }
 
   for (auto i = 0; i < MAX_KILLERS; ++i) {
@@ -176,9 +179,7 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,
     follow_history[get_history_index(pos, previous_own)]
                   [get_history_index(pos, move)] += delta;
   }
-
-  while (top != move) {
-    top = *liste;
+  while ((top = *(liste++)) != move) {
     int &score = history[get_history_index(pos, top)];
     update_history_score(score, -delta);
 
@@ -191,8 +192,6 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,
       follow_history[get_history_index(pos, previous_own)]
                     [get_history_index(pos, move)] -= delta;
     }
-
-    liste++;
   }
 }
 } // namespace Statistics
