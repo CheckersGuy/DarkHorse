@@ -136,21 +136,46 @@ void sort_raw_data(std::string raw_data, std::string copy) {
   }
   stream.read((char *)&samples[0], sizeof(Sample) * num_samples);
 
-  for (auto i = 0; i < num_samples; ++i) {
+  std::sort(samples.begin(), samples.end(), [](Sample one, Sample two) {
+    auto key1 = Zobrist::generate_key(one.position);
+    auto key2 = Zobrist::generate_key(two.position);
+    return key1 < key2;
+  });
+  std::vector<Sample> reduced_samples;
+  int i;
+  for (i = 0; i < num_samples; ++i) {
+    int start;
+    bool changed = false;
+    // scanning through the file
+    Position start_pos = samples[i].position;
+    for (start = i; start < num_samples; ++start) {
+      auto current = samples[start];
+      if (current.position != start_pos) {
+        break;
+      }
+      if (current.result != samples[i].result) {
+        changed = true;
+      }
+    }
+    if (changed) {
+      for (auto k = i; k < start; ++k) {
+        reduced_samples.emplace_back(samples[k]);
+      }
+    } else {
+      reduced_samples.emplace_back(samples[i]);
+    }
+    i = start;
   }
+  std::shuffle(reduced_samples.begin(), reduced_samples.end(), generator);
 
-  // Now I am trying to remove all 'valid' duplicate  s
-  // std::shuffle(samples.begin(),samples.end(),generator);
-  // experimental stuff
-  /*
-  std::ofstream out_stream(copy,std::ios::binary);
-  if(!out_stream.good()){
-    std::cerr<<"Error"<<std::endl;
+  std::ofstream out_stream(copy, std::ios::binary);
+  if (!out_stream.good()) {
+    std::cerr << "Error" << std::endl;
     std::exit(-1);
   }
 
-  out_stream.write((char*)&samples[0],sizeof(Sample)*num_samples);
-*/
+  out_stream.write((char *)&reduced_samples[0],
+                   sizeof(Sample) * (reduced_samples.size()));
 }
 // needs to be redone
 void count_real_duplicates(std::string raw_data, std::string output) {

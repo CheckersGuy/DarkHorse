@@ -141,57 +141,6 @@ class Network(pl.LightningModule):
         return {"loss": avg_loss, "log": tensorboard_logs}
 
 
-    def save_quantized(self, output):
-        self.step()
-        min16 = np.iinfo(np.int16).min
-        max16 = np.iinfo(np.int16).max
-
-        device = torch.device("cpu")
-        device_gpu = torch.device("cuda")
-        self.to(device)
-        buffer_weights = bytearray()
-        buffer_bias = bytearray()
-        num_weights = 0
-        num_bias = 0
-        file = open(output, "wb")
-        layer = self.layers[0]
-        weights = layer.weight.detach().numpy().flatten("F")
-        weights = weights * 127.0
-        np.clip(weights, min16, max16)
-        weights = weights.astype(np.int16)
-        bias = layer.bias.detach().numpy().flatten("F")
-        bias = bias * 127.0
-        np.clip(bias, min16, max16)
-        bias = bias.astype(np.int16)
-        buffer_weights.extend(weights.tobytes())
-        buffer_bias.extend(bias.tobytes())
-        num_weights += len(weights)
-        num_bias += len(bias)
-
-        for layer in self.layers[1:]:
-            if isinstance(layer, torch.nn.Linear):
-                print(layer.weight.size())
-                weights = layer.weight.detach().numpy().flatten()
-                weights = weights * 64.0
-                np.clip(weights, min16, max16)
-                weights = weights.astype(np.int16)
-                bias = layer.bias.detach().numpy().flatten()
-                bias = bias * (127.0 * 64.0)
-                bias = bias.astype(np.int32)
-                buffer_weights.extend(weights.tobytes())
-                buffer_bias.extend(bias.tobytes())
-                num_weights += len(weights)
-                num_bias += len(bias)
-
-        file.write(struct.pack("I", num_weights))
-        file.write(buffer_weights)
-        file.write(struct.pack("I", num_bias))
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
-        return
-
-
     def save_quantized_bucket(self, output):
         self.step()
         min16 = np.iinfo(np.int16).min
@@ -268,7 +217,7 @@ class WDLNetwork(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.965
+        self.gamma = 0.985
         self.criterion = FocalLoss(gamma=2)
         self.num_buckets =8
         self.accu = nn.Linear(120,L1)
@@ -349,8 +298,7 @@ class WDLNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        #optimizer = Ranger(self.parameters(),betas=(0.9,0.999),eps = 1.0e-7,gc_loc = False,use_gc = False,weight_decay=0,lr=4e-3)
+        optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=4e-3)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
