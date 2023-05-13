@@ -81,6 +81,7 @@ void write_raw_data(std::string input_proto) {
       samples.emplace_back(s);
     }
   }
+  std::cout << "NumSamples: " << samples.size() << std::endl;
   out_stream.write((char *)&samples[0], sizeof(Sample) * samples.size());
 }
 
