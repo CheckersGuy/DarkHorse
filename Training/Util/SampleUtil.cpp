@@ -57,13 +57,20 @@ std::vector<Sample> extract_sample(const Proto::Game &game) {
 
 void write_raw_data(std::string input_proto) {
   // Note: Use ftruncate to set the size of the file
-  auto output_name = input_proto + ".raw";
-  Sample *mapped;
+  std::string output_name = input_proto + ".raw";
   Proto::Batch batch;
   std::ifstream stream(input_proto);
+  if (!stream.good()) {
+    std::exit(-1);
+  }
+  std::ofstream out_stream(output_name);
+  if (!out_stream.good()) {
+    std::exit(-1);
+  }
   batch.ParseFromIstream(&stream);
   size_t counter = 0;
   size_t total_counter = 0;
+  std::vector<Sample> samples;
   for (auto game : batch.games()) {
     auto samples = extract_sample(game);
     for (auto s : samples) {
@@ -71,43 +78,10 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
-      counter++;
+      samples.emplace_back(s);
     }
   }
-  std::cout << "Counted training samples" << std::endl;
-  std::cout << "ValidSamples: " << counter << std::endl;
-  std::cout << "TotalSamples: " << total_counter << std::endl;
-  std::mt19937_64 generator(getSystemTime());
-  FILE *fp = fopen(output_name.c_str(), "w");
-  ftruncate(fileno(fp), sizeof(Sample) * counter);
-  fclose(fp);
-  int fd = open(output_name.c_str(), O_RDWR);
-
-  mapped = (Sample *)mmap(0, sizeof(Sample) * counter, PROT_WRITE | PROT_READ,
-                          MAP_SHARED, fd, 0);
-  const size_t counted = counter;
-  counter = 0;
-  for (auto game : batch.games()) {
-    auto samples = extract_sample(game);
-    for (auto s : samples) {
-      if (!s.is_training_sample()) {
-        continue;
-      }
-      if (((counter + 1) % 100000) == 0) {
-        double perc = (double)counter;
-        perc /= (double)counted;
-        std::cout << "Progress: " << perc << std::endl;
-      }
-      mapped[counter++] = s;
-    }
-  }
-
-  for (auto i = 0; i < 1000; ++i) {
-    mapped[i].position.print_position();
-    std::cout << std::endl;
-  }
-
-  munmap(mapped, counted * sizeof(Sample));
+  out_stream.write((char *)&samples[0], sizeof(Sample) * samples.size());
 }
 
 void sort_raw_data(std::string raw_data, std::string copy) {
