@@ -18,9 +18,10 @@
 
 int main(int argl, const char **argc) {
 
-  // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train");
-  // sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw"
-  // ,"/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw"); return 0;
+  write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train");
+  sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw",
+                "/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw");
+  return 0;
 
   // Book::create_train_file(
   //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
