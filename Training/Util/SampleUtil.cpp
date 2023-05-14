@@ -70,6 +70,7 @@ void write_raw_data(std::string input_proto) {
   batch.ParseFromIstream(&stream);
   size_t counter = 0;
   size_t total_counter = 0;
+  std::vector<Sample> train_samples;
   std::vector<Sample> samples;
   for (auto game : batch.games()) {
     auto samples = extract_sample(game);
@@ -78,12 +79,12 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
-      std::cout << s << std::endl;
-      samples.emplace_back(s);
+      train_samples.emplace_back(s);
     }
   }
   std::cout << "NumSamples: " << samples.size() << std::endl;
-  out_stream.write((char *)&samples[0], sizeof(Sample) * samples.size());
+  out_stream.write((char *)&train_samples[0],
+                   sizeof(Sample) * train_samples.size());
 }
 
 void sort_raw_data(std::string raw_data, std::string copy) {
