@@ -79,7 +79,7 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
-      s.position.key = Zobrist::generate_key(s.position.key);
+      s.position.key = Zobrist::generate_key(s.position);
       train_samples.emplace_back(s);
     }
   }
