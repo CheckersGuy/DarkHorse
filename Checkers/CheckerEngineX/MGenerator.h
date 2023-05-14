@@ -8,16 +8,6 @@
 #include "MoveListe.h"
 #include "immintrin.h"
 // little hellper to do some move ordering while generating moves
-template <Color color> inline uint32_t get_highest_rank_bit(uint32_t input) {
-  // highest_rank with respect to a checkers-board
-  if constexpr (color == BLACK) {
-    auto index = __builtin_clz(input) ^ 31u;
-    return 1u << index;
-  } else {
-    uint32_t maske = input & ~(input - 1u);
-    return maske;
-  }
-}
 
 struct PerftCallBack {
   size_t num_nodes{0ull};
