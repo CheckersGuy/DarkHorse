@@ -76,6 +76,7 @@ void write_raw_data(std::string input_proto) {
     for (auto s : samples) {
       total_counter++;
       if (!s.is_training_sample()) {
+        std::cout << s << std::endl;
         continue;
       }
       samples.emplace_back(s);
