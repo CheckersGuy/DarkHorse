@@ -33,12 +33,11 @@ private:
   std::mt19937_64 generator;
   bool shuffle{true};
   bool is_raw_data{false};
-  size_t num_samples; // number of samples
+  size_t num_samples{0}; // number of samples
   size_t offset{0};
   // in case we have a 'raw'file
   Sample *mapped;
   int fd;
-  size_t file_size{0};
 
 public:
   PosStreamer(std::string file_path, size_t buff_size = 200000,
@@ -85,21 +84,15 @@ public:
         std::exit(-1);
       }
       auto r = fstat(fd, &s);
-      file_size = s.st_size;
+      num_samples = s.st_size / sizeof(Sample);
       mapped = (Sample *)mmap(0, s.st_size, PROT_READ, MAP_SHARED, fd, 0);
-      for (auto i = 0; i < (s.st_size / sizeof(Sample)); ++i) {
-        Sample current = mapped[i];
-        if (current.is_training_sample()) {
-          num_samples++;
-        }
-      }
       buffer_size = std::min(num_samples, buffer_size);
       ptr = buffer.size() + 1000;
     }
   }
   ~PosStreamer() {
     if (is_raw_data) {
-      munmap(mapped, file_size);
+      munmap(mapped, num_samples * sizeof(Sample));
     }
   }
 

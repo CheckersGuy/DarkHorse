@@ -18,10 +18,10 @@
 
 int main(int argl, const char **argc) {
 
-  write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train");
-  sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw",
-                "/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw");
-  return 0;
+  // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train");
+  // sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw",
+  // "/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw");
+  // return 0;
 
   // Book::create_train_file(
   //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
@@ -30,7 +30,8 @@ int main(int argl, const char **argc) {
   // GameStat stats;
   // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/giga.train",
   // stats); std::cout<<stats<<std::endl; return 0;
-  // view_game("/home/leagu/DarkHorse/Training/TrainData/testing2.train", 2222);
+  // view_game("/home/leagu/DarkHorse/Training/TrainData/testing2.train",
+  // 2222);
   /*     std::ifstream
      stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
       std::istream_iterator<Game>begin(stream);
