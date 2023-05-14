@@ -78,6 +78,7 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
+      std::cout << s << std::endl;
       samples.emplace_back(s);
     }
   }
