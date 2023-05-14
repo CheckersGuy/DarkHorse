@@ -52,7 +52,7 @@ int main(int argl, const char **argc) {
     net_file = "test4.quant";
   }
 
-  network.load_bucket("testing5.quant");
+  network.load_bucket("testing6.quant");
   /*
     Position test =Position::get_start_position();
     network.print_bucket_evals(test);

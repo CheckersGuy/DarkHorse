@@ -300,7 +300,7 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
          Depth depth, int last_rev) {
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
 

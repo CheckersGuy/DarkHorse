@@ -108,7 +108,7 @@ private:
   int wins_one{0}, wins_two{0}, draws{0};
   int threads{1};
   std::vector<std::string> positions;
-  std::string openingBook{"../Training/Positions/train12.book"};
+  std::string openingBook{"../Training/Positions/drawbook.book"};
 
 public:
   explicit Match(const std::string &first, const std::string &second)
