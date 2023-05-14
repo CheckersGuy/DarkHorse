@@ -82,7 +82,7 @@ void write_raw_data(std::string input_proto) {
       train_samples.emplace_back(s);
     }
   }
-  std::cout << "NumSamples: " << samples.size() << std::endl;
+  std::cout << "NumSamples: " << train_samples.size() << std::endl;
   out_stream.write((char *)&train_samples[0],
                    sizeof(Sample) * train_samples.size());
 }
@@ -112,14 +112,16 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     std::exit(-1);
   }
   stream.read((char *)&samples[0], sizeof(Sample) * num_samples);
-
+  std::cout << "Daten werden nach Duplikaten sortiert" << std::endl;
   std::sort(samples.begin(), samples.end(), [](Sample one, Sample two) {
     auto key1 = Zobrist::generate_key(one.position);
     auto key2 = Zobrist::generate_key(two.position);
     return key1 < key2;
   });
+  std::cout << "Daten wurden sortiert" << std::endl;
   std::vector<Sample> reduced_samples;
   int i;
+  std::cout << "Duplikate werden nun aussortiert" << std::endl;
   for (i = 0; i < num_samples; ++i) {
     int start;
     bool changed = false;
