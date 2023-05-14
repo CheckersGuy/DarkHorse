@@ -75,7 +75,6 @@ void write_raw_data(std::string input_proto) {
     auto samples = extract_sample(game);
     for (auto s : samples) {
       total_counter++;
-      std::cout << s << std::endl;
       if (!s.is_training_sample()) {
         continue;
       }
