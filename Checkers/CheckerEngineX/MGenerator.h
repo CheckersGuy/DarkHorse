@@ -48,7 +48,7 @@ inline void get_silent_moves(const Position &pos, CallBack &&call_back) {
 
   const uint32_t nocc = ~(pos.BP | pos.WP);
   while (pawn_movers) {
-    uint32_t maske = get_highest_rank_bit<color>(pawn_movers);
+    uint32_t maske = pawn_movers & ~(pawn_movers - 1u);
     uint32_t squares = get_neighbour_squares<color, PAWN>(maske);
     squares &= nocc;
     while (squares) {
@@ -60,7 +60,7 @@ inline void get_silent_moves(const Position &pos, CallBack &&call_back) {
   }
 
   while (king_movers) {
-    uint32_t maske = get_highest_rank_bit<~color>(king_movers);
+    uint32_t maske = king_movers & ~(king_movers - 1u);
     uint32_t squares = get_neighbour_squares<color, KING>(maske);
     squares &= nocc;
     while (squares) {
