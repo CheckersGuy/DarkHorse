@@ -79,6 +79,7 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
+      s.position.key = Zobrist::generate_key(s.position.key);
       train_samples.emplace_back(s);
     }
   }
@@ -114,9 +115,7 @@ void sort_raw_data(std::string raw_data, std::string copy) {
   stream.read((char *)&samples[0], sizeof(Sample) * num_samples);
   std::cout << "Daten werden nach Duplikaten sortiert" << std::endl;
   std::sort(samples.begin(), samples.end(), [](Sample one, Sample two) {
-    auto key1 = Zobrist::generate_key(one.position);
-    auto key2 = Zobrist::generate_key(two.position);
-    return key1 < key2;
+    return one.position.key < two.position.key;
   });
   std::cout << "Daten wurden sortiert" << std::endl;
   std::vector<Sample> reduced_samples;
