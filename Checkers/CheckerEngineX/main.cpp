@@ -129,7 +129,6 @@ int main(int argl, const char **argc) {
       TT.clear();
       Statistics::mPicker.clear_scores();
       TT.age_counter = 0u;
-      Statistics::mPicker.policy.init();
       board = Board{};
       std::string position;
       std::cin >> position;

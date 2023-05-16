@@ -18,6 +18,7 @@ struct Local {
   Move sing_move;
   Move skip_move;
   Value sing_score;
+  std::array<Move, HIST_LEN> move_history;
 };
 
 class MoveListe {

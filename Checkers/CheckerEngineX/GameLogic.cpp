@@ -11,73 +11,7 @@ Value max_value = INFINITE;
 SearchGlobal glob;
 Network network, network2;
 
-void initialize() { initialize(getSystemTime()); }
-
-#ifdef USE_DB
-int max_db_pieces, max_db_cache;
-bool tablebase_initialized = false;
-int status;
-EGDB_TYPE egdb_type;
-EGDB_DRIVER *handle;
-
-void print_msgs(char *msg) { printf("%s", msg); }
-
-#define DB_PATH "D:\\kr_english_wld"
-void init_tablebase(int db_cache, int max_pieces, std::ostream &stream) {
-
-  /* Check that db files are present, get db type and size. */
-  int found_pieces;
-  status = egdb_identify(DB_PATH, &egdb_type, &found_pieces);
-  max_db_pieces = max_pieces;
-  max_db_cache = db_cache;
-  if (status) {
-    stream << ("No database found at %s\n", DB_PATH);
-    std::exit(-1);
-  }
-  /* Open database for probing. */
-  handle =
-      egdb_open(EGDB_NORMAL, max_db_pieces, max_db_cache, DB_PATH, print_msgs);
-  if (!handle) {
-    stream << ("Error returned from egdb_open()\n");
-    std::exit(-1);
-  } else {
-    tablebase_initialized = true;
-  }
-};
-
-std::optional<int> get_tb_result(Position pos, int max_pieces,
-                                 EGDB_DRIVER *handle) {
-  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-    return std::nullopt;
-
-  EGDB_NORMAL_BITBOARD board;
-  board.white = pos.WP;
-  board.black = pos.BP;
-  board.king = pos.K;
-
-  EGDB_BITBOARD normal;
-  normal.normal = board;
-  auto val = handle->lookup(
-      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
-
-  if (val == EGDB_UNKNOWN) {
-    return std::nullopt;
-  }
-
-  if (val == EGDB_WIN)
-    return std::make_optional(TB_WIN);
-
-  if (val == EGDB_LOSS)
-    return std::make_optional(-TB_WIN);
-  ;
-
-  if (val == EGDB_DRAW)
-    return std::make_optional(0);
-
-  return std::nullopt;
-}
-
-#endif
+void initialize() { initialize(32134155995143ull); }
 
 void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 
@@ -108,6 +42,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   size_t total_time = 0;
   auto test_time = getSystemTime();
   for (int i = 1; i <= depth; i += 2) {
+    Statistics::mPicker.clear_move_history();
     auto start_time = getSystemTime();
     std::stringstream ss;
     nodeCounter = 0;
@@ -158,7 +93,7 @@ Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
 
 Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
              Ply ply, Depth depth, int last_rev, Move previous,
-             Move previous_own, Move excluded) {
+             Move previous_own, History history) {
 
   pv.clear();
   nodeCounter++;
@@ -188,6 +123,11 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   local.previous_own = previous_own;
   local.skip_move = excluded;
   local.sing_move = Move{};
+
+  // setting move_history
+
+  std::copy(history.begin(), history.end(), local.move_history.begin());
+
   // checking win condition
 
   NodeInfo info;
@@ -235,40 +175,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
-
-#ifdef USE_DB
-  if (ply > 0 && depth >= 3) {
-    auto tb_value = get_tb_result(board.get_position(), max_db_pieces, handle);
-    if (tb_value.has_value()) {
-      auto value = tb_value.value();
-      // Draw detected
-      if (value == 0) {
-        return value;
-      }
-      value = (value < 0) ? value = MATED_IN_MAX_PLY + local.ply + 1
-                          : MATE_IN_MAX_PLY - local.ply - 1;
-
-      if (value < 0) {
-        // Upper bound
-        if (value <= alpha) {
-
-          TT.store_hash(value, pos_key, TT_UPPER,
-                        std::min(MAX_PLY - 1, depth + 6), Move{});
-          return value;
-        }
-        max_value = value;
-      } else {
-        if (value >= beta) {
-          TT.store_hash(value, pos_key, TT_LOWER,
-                        std::min(MAX_PLY - 1, depth + 6), Move{});
-          return value;
-        }
-        local.best_score = value;
-      }
-    }
-  }
-#endif
-
   int start_index = 0;
   if (in_pv && local.ply < mainPV.length()) {
     const Move mv = mainPV[local.ply];
@@ -321,8 +227,9 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
     }
 
     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
+      History history;
       return Search::search(in_pv, board, pv, alpha, beta, ply, 1, last_rev,
-                            Move{}, Move{}, Move{});
+                            Move{}, Move{}, history);
     }
 
     bestValue = network.evaluate(board.get_position(), ply);
@@ -394,6 +301,13 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line,
   Depth new_depth = local.depth - 1 + extension;
 
   board.make_move(move);
+  // now we can set the move history
+
+  for (auto i = 1; i < HIST_LEN; ++i) {
+    local.move_history[i] = local.move_history[i - 1];
+  }
+  local.move_history[0] = move;
+
   // Needs an update, do not prune if we are in terriroty of tablebases
   if (!in_pv && local.depth > 1 && std::abs(local.beta) < TB_WIN) {
 
@@ -404,7 +318,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line,
     if (board_val >= newBeta) {
       Value value = -Search::search(false, board, line, -(newBeta + 1),
                                     -newBeta, local.ply + 1, newDepth, last_rev,
-                                    move, local.previous, local.skip_move);
+                                    move, local.previous, local.move_history);
       if (value >= newBeta) {
         val = value;
       }
@@ -415,16 +329,16 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line,
     if ((in_pv && local.i != 0) || reduction != 0) {
       val = -Search::search(false, board, line, -new_alpha - 1, -new_alpha,
                             local.ply + 1, new_depth - reduction, last_rev,
-                            move, local.previous, local.skip_move);
+                            move, local.previous, local.move_history);
       if (val > new_alpha) {
         val = -Search::search(in_pv, board, line, -local.beta, -new_alpha,
                               local.ply + 1, new_depth, last_rev, move,
-                              local.previous, local.skip_move);
+                              local.previous, local.move_history);
       }
     } else {
       val = -Search::search(in_pv, board, line, -local.beta, -new_alpha,
                             local.ply + 1, new_depth, last_rev, move,
-                            local.previous, local.skip_move);
+                            local.previous, local.move_history);
     }
   }
   board.undo_move();

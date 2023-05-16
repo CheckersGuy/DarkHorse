@@ -19,7 +19,6 @@ public:
   std::array<std::array<Move, MAX_KILLERS>, MAX_PLY> killer_moves;
   std::array<std::array<int, 32 * 16>, 32 * 16> counter_history;
   std::array<std::array<int, 32 * 16>, 32 * 16> follow_history;
-  Network policy;
   int get_move_score(Position pos, Move move, Move previous, Move previous_own,
                      Depth depth);
 
