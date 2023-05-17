@@ -15,10 +15,6 @@ struct Local {
   Ply ply;
   int i;
   Move move, previous, previous_own;
-  Move sing_move;
-  Move skip_move;
-  Value sing_score;
-  std::array<Move, HIST_LEN> move_history;
 };
 
 class MoveListe {
