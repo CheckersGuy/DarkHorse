@@ -1,6 +1,4 @@
-//
-// Created by Robin on 10.06.2017.
-//
+
 
 #ifndef CHECKERSTEST_GAMELOGIC_H
 #define CHECKERSTEST_GAMELOGIC_H
@@ -30,8 +28,6 @@ struct SearchGlobal {
 
 extern SearchGlobal glob;
 
-using History = std::array<Move, HIST_LEN>;
-
 Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
 
 Value search(Board board, Move &best, Depth depth, uint32_t time, bool print);
@@ -48,7 +44,7 @@ void search_asp(Local &local, Board &board, Value last_score, Depth depth);
 
 Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta,
              Ply ply, Depth depth, int last_rev, Move previous,
-             Move previous_own, History history);
+             Move previous_own);
 
 void move_loop(bool in_pv, Local &local, Board &board, Line &pv,
                MoveListe &liste, int last_rev);

@@ -73,7 +73,6 @@ constexpr int prob_cut = 45;  // 45
 constexpr int asp_wind = 10;  // 10
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
-constexpr int HIST_LEN = 5;
 constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            1, 1, 1, 2, 2, 2, 2, 2, 2,
                                            2, 2, 2, 2, 2, 2, 2, 2, 2};
@@ -168,14 +167,6 @@ constexpr uint32_t get_neighbour_squares(uint32_t maske) {
     return squares;
   } else {
     return defaultShift<color>(maske) | forwardMask<color>(maske);
-  }
-}
-
-template <Color color> constexpr uint32_t get_promotion_rank() {
-  if constexpr (color == WHITE) {
-    return 0xf0;
-  } else {
-    return 0x0f000000;
   }
 }
 
