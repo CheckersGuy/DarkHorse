@@ -225,11 +225,11 @@ class Interface:
 
 
 interface = Interface()
-interface.time_per_move = 75
-interface.parallelism = 218
+interface.time_per_move = 50
+interface.parallelism = 4
 interface.hash_size =22
-interface.max_games =1000000
-interface.network_file="square5.quant"
-interface.read_openings("Positions/train12.book")
+interface.max_games =10000
+interface.network_file="testing6.quant"
+interface.read_openings("Positions/train13.book")
 interface.start()
 

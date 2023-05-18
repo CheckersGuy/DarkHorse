@@ -114,16 +114,14 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous,
 int MovePicker::get_move_score(Position current, Depth depth, int ply,
                                Move move, Move previous, Move previous_own,
                                Move ttMove) {
-
+  if (move == ttMove) {
+    return std::numeric_limits<int32_t>::max();
+  }
   if (move.is_capture()) {
     const uint32_t kings_captured = move.captures & current.K;
     const uint32_t pawns_captured = move.captures & (~current.K);
     return (int)(Bits::pop_count(kings_captured) * 3 +
                  Bits::pop_count(pawns_captured) * 2);
-  }
-
-  if (move == ttMove) {
-    return std::numeric_limits<int32_t>::max();
   }
 
   for (auto i = 0; i < MAX_KILLERS; ++i) {

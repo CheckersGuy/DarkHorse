@@ -22,10 +22,12 @@ int main(int argl, const char **argc) {
   // sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testing.train.raw",
   // "/home/leagu/DarkHorse/Training/TrainData/shuffled.train.raw");
   // return 0;
+  /*
+    Book::create_train_file(
+        "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
+        "/home/leagu/DarkHorse/Training/Positions/train12.book", 9);
 
-  // Book::create_train_file(
-  //   "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-  //  "/home/leagu/DarkHorse/Training/Positions/train12.book", 6);
+  */
 
   // GameStat stats;
   // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/giga.train",
