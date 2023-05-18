@@ -6,6 +6,7 @@
 #define READING_NETWORK_H
 
 #include "Position.h"
+#include "Simd.h"
 #include <cmath>
 #include <cstring>
 #include <fstream>
@@ -13,22 +14,23 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-
 class Network;
 
 struct Layer {
-  int in_features;
-  int out_features;
+  const int in_features;
+  const int out_features;
 
   Layer(int in, int out);
 };
 
 struct Accumulator {
-  std::unique_ptr<int16_t[]> black_acc;
-  std::unique_ptr<int16_t[]> white_acc;
+  int16_t *black_acc;
+  int16_t *white_acc;
   size_t size;
   Position previous_black, previous_white;
   Network *net = nullptr;
+
+  ~Accumulator();
 
   void init(Network *net);
 
@@ -67,26 +69,26 @@ template <typename T> void display_network_data(std::string network_file) {
 }
 
 struct Network {
+  constexpr static size_t ALIGNMENT = 32;
   std::vector<Layer> layers;
-  std::unique_ptr<int16_t[]> ft_biases;
-  std::unique_ptr<int16_t[]> ft_weights;
-  std::unique_ptr<int32_t[]> biases;
-  std::unique_ptr<int16_t[]> weights;
-  std::unique_ptr<int16_t[]> input;
-  std::unique_ptr<int16_t[]> temp;
+  int16_t *ft_biases;
+  int16_t *ft_weights;
+  int32_t *biases;
+  int16_t *weights;
+  int16_t *input;
   int bucket_bias_offset = 0;
   int bucket_weight_offset = 0;
   int max_units{0};
   size_t num_buckets{0};
   Accumulator accumulator;
 
+  ~Network();
+
   int32_t get_max_weight() const;
 
   int32_t get_max_bias() const;
 
   void addLayer(Layer layer);
-
-  void load(std::string file);
 
   void load_bucket(std::string file);
 

@@ -11,7 +11,7 @@ Value max_value = INFINITE;
 SearchGlobal glob;
 Network network, network2;
 
-void initialize() { initialize(32134155995143ull); }
+void initialize() { initialize(getSystemTime()); }
 
 void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 

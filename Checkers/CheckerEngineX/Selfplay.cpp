@@ -1,4 +1,5 @@
 #include "Selfplay.h"
+#include "MovePicker.h"
 #include "Zobrist.h"
 #include "types.h"
 #include <unistd.h>
@@ -14,6 +15,7 @@ void Selfplay::start_loop() {
 Selfplay::Selfplay() {
   int pid = getpid();
   Zobrist::init_zobrist_keys(pid ^ getSystemTime());
+  Statistics::mPicker.init();
 }
 
 void Selfplay::set_time_per_move(int time) { time_per_move = time; }
@@ -38,7 +40,7 @@ void Selfplay::parse_command(std::string command) {
     // loading a new network file
     if (split[0] == "loadnetwork") {
       auto net_file = split[1];
-      network.load(net_file);
+      network.load_bucket(net_file);
     }
 
     if (split[0] == "settings") {
@@ -75,7 +77,6 @@ SelfGame Selfplay::play_game(std::string fen_string) {
   // testing resign threshholds next
   // network.load("Networks/client.quant");
   TT.clear();
-  network.init();
   Statistics::mPicker.clear_scores();
   SelfGame game;
   Board board;
