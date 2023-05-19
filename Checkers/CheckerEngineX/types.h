@@ -68,9 +68,9 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
 constexpr uint32_t BUCKET_PATTERN = (1 << 0) | (1 << 1) | (1 << 31) | (1 << 30);
 
-const size_t NUM_BUCKETS = 8; // 46 in total;
-constexpr int prob_cut = 45;  // 45
-constexpr int asp_wind = 10;  // 10
+const size_t NUM_BUCKETS = 8;
+constexpr int prob_cut = 45;
+constexpr int asp_wind = 10;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,

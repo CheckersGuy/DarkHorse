@@ -7,11 +7,12 @@ Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
 Value max_value = INFINITE;
+Value last_eval = -INFINITE;
 
 SearchGlobal glob;
 Network network;
 
-void initialize() { initialize(31231414123ull); }
+void initialize() { initialize(getSystemTime()); }
 
 void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 
@@ -27,6 +28,10 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 
   MoveListe liste;
   get_moves(board.get_position(), liste);
+  if (liste.length() == 1) {
+    best = liste[0];
+    return last_eval;
+  }
 
   endTime = getSystemTime() + time;
 
@@ -75,6 +80,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
     stream << "TotalNodes: " << total_nodes << "\n";
     stream << "TotalTime: " << getSystemTime() - test_time << "\n";
   }
+  last_eval = eval;
   return eval;
 }
 
