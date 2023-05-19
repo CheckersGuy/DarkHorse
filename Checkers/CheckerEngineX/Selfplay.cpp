@@ -73,9 +73,6 @@ void Selfplay::terminate() { stop = true; }
 void Selfplay::set_resign_threshhold(float value) {}
 
 SelfGame Selfplay::play_game(std::string fen_string) {
-  // to be added
-  // testing resign threshholds next
-  // network.load("Networks/client.quant");
   TT.clear();
   Statistics::mPicker.clear_scores();
   SelfGame game;
@@ -90,11 +87,7 @@ SelfGame Selfplay::play_game(std::string fen_string) {
       return game;
     }
     int k;
-    if (liste.length() == 1) {
-      best = liste[0];
-    } else {
-      searchValue(board, best, MAX_PLY, time_per_move, false, std::cout);
-    }
+    searchValue(board, best, MAX_PLY, time_per_move, false, std::cout);
     for (k = 0; k < liste.length(); k++) {
       if (liste[k] == best) {
         break;
@@ -103,9 +96,11 @@ SelfGame Selfplay::play_game(std::string fen_string) {
     game.second.emplace_back(k);
     board.make_move(best);
 
-    bool is_rep = board.is_repetition(0);
-    if (is_rep)
+    auto count =
+        std::count(game.second.begin(), game.second.end(), game.second.back());
+    if (count >= 3) {
       break;
+    }
   }
 
   return game;

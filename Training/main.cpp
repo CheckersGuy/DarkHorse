@@ -30,25 +30,26 @@ int main(int argl, const char **argc) {
   */
 
   // GameStat stats;
-  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/giga.train",
-  // stats); std::cout<<stats<<std::endl; return 0;
-  // view_game("/home/leagu/DarkHorse/Training/TrainData/testing2.train",
-  // 2222);
+  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/window.train",
+  //  stats);
+
+  // std::cout << stats << std::endl;
+  // return 0;
   /*     std::ifstream
-     stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-      std::istream_iterator<Game>begin(stream);
-      std::istream_iterator<Game>end;
-      std::for_each(begin,end,[](Game g){
-          std::vector<Position>positions;
-          g.extract_positions(std::back_inserter(positions));
-          for(auto pos : positions){
-              pos.print_position();
-          }
-          std::cout<<"\n\n\n";
+    stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
+     std::istream_iterator<Game>begin(stream);
+     std::istream_iterator<Game>end;
+     std::for_each(begin,end,[](Game g){
+         std::vector<Position>positions;
+         g.extract_positions(std::back_inserter(positions));
+         for(auto pos : positions){
+             pos.print_position();
+         }
+         std::cout<<"\n\n\n";
 
-      });
+     });
 
-      return 0;  */
+     return 0;  */
   /*     for(auto i=0;i<50;++i){
       Encoding test;
       auto val = i%4;

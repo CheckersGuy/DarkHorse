@@ -253,20 +253,14 @@ void get_game_stats(std::string input_proto, GameStat &stats) {
     int end_cutoff = -1;
     for (int k = 0; k < samples.size(); ++k) {
       auto sample = samples[k];
+      std::cout << sample << std::endl;
       if (!filter.has(sample.position)) {
         stats.num_unqiue++;
         filter.insert(sample.position);
-        stats.bucket_distrib[sample.position.bucket_index()]++;
-        auto piece_count = sample.position.piece_count();
-        if (piece_count <= 10) {
-          end_cutoff = k;
-        }
       }
+      stats.bucket_distrib[sample.position.bucket_index()]++;
     }
-    if (end_cutoff != -1) {
-      stats.endgame_cutoff_ply += end_cutoff;
-    }
-
+    std::cout << std::endl;
     stats.num_positions += samples.size();
     auto result = get_game_result(game);
     stats.num_wins += (result != DRAW);
