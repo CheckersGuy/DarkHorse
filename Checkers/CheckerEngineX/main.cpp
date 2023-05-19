@@ -49,15 +49,10 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "square6.quant";
-    net_file = "quanty.quant";
+    net_file = "testing6.quant";
   }
 
-  network.load_bucket("testing6.quant");
-  /*
-    Position test =Position::get_start_position();
-    network.print_bucket_evals(test);
-  */
-
+  network.load_bucket(net_file);
   if (parser.has_option("search"))
 
   {

@@ -116,7 +116,6 @@ class Interface:
                 self.engine.state = States.INIT
             
             if self.engine.state == States.INIT:
-                #print("Refreshed network")
                 self.send_play_command(self.pick_opening(),process)
                 self.engine.state = States.PLAYING_GAME
 
@@ -202,7 +201,7 @@ class Interface:
                 game.move_indices.extend([int(value) for value in g[1:]])
                 batch.games.append(game)
             data = batch.SerializeToString()
-            with open("window.train","wb") as file:
+            with open("TrainData/window.train","wb") as file:
                 file.write(data)
  
             write_lock.release()
@@ -226,9 +225,9 @@ class Interface:
 
 interface = Interface()
 interface.time_per_move = 50
-interface.parallelism = 4
+interface.parallelism = 14
 interface.hash_size =22
-interface.max_games =10000
+interface.max_games =100
 interface.network_file="testing6.quant"
 interface.read_openings("Positions/train13.book")
 interface.start()
