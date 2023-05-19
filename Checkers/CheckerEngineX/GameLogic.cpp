@@ -9,9 +9,9 @@ uint64_t nodeCounter = 0u;
 Value max_value = INFINITE;
 
 SearchGlobal glob;
-Network network, network2;
+Network network;
 
-void initialize() { initialize(getSystemTime()); }
+void initialize() { initialize(31231414123ull); }
 
 void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 
