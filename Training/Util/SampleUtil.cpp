@@ -18,12 +18,12 @@
 
 std::vector<Sample> extract_sample(const Proto::Game &game) {
   // extracting samples;
-  MoveListe liste;
   std::vector<Sample> samples;
   Board board;
   board = Position::pos_from_fen(game.start_position());
   for (const auto &index : game.move_indices()) {
-    liste.reset();
+
+    MoveListe liste;
     get_moves(board.get_position(), liste);
     Move move = liste[index];
     Sample s;
@@ -33,11 +33,10 @@ std::vector<Sample> extract_sample(const Proto::Game &game) {
           s.position.get_color(), liste[index]);
     }
     samples.emplace_back(s);
-    board.make_move(move);
+    board.play_move(move);
   }
   // getting the game result
-
-  liste.reset();
+  MoveListe liste;
   get_moves(board.get_position(), liste);
   Result end_result = DRAW;
   if (liste.length() == 0) {
@@ -254,6 +253,7 @@ void get_game_stats(std::string input_proto, GameStat &stats) {
     for (int k = 0; k < samples.size(); ++k) {
       auto sample = samples[k];
       std::cout << sample << std::endl;
+      std::cout << "NumSamples: " << samples.size() << std::endl;
       if (!filter.has(sample.position)) {
         stats.num_unqiue++;
         filter.insert(sample.position);

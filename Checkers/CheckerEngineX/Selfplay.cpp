@@ -73,7 +73,6 @@ void Selfplay::terminate() { stop = true; }
 void Selfplay::set_resign_threshhold(float value) {}
 
 SelfGame Selfplay::play_game(std::string fen_string) {
-  TT.clear();
   Statistics::mPicker.clear_scores();
   SelfGame game;
   Board board;
@@ -94,11 +93,12 @@ SelfGame Selfplay::play_game(std::string fen_string) {
       }
     }
     game.second.emplace_back(k);
-    board.make_move(best);
+    board.play_move(best);
 
-    auto count =
-        std::count(game.second.begin(), game.second.end(), game.second.back());
-    if (count >= 3) {
+    auto count = 0;
+
+    bool is_rep = board.is_repetition(0);
+    if (is_rep) {
       break;
     }
   }
