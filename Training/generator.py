@@ -111,7 +111,7 @@ class Interface:
                 break
 
             if self.engine.state == States.DEFAULT:
-                self.load_network_command("Networks/{}".format(self.network_file),process)
+                #self.load_network_command("Networks/{}".format(self.network_file),process)
                 self.send_settings_command(process)
                 self.engine.state = States.INIT
             
@@ -227,8 +227,8 @@ interface = Interface()
 interface.time_per_move = 50
 interface.parallelism = 14
 interface.hash_size =22
-interface.max_games =100
+interface.max_games =20
 interface.network_file="testing6.quant"
-interface.read_openings("Positions/train13.book")
+interface.read_openings("Positions/train12.book")
 interface.start()
 

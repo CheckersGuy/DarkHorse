@@ -29,10 +29,10 @@ int main(int argl, const char **argc) {
 
   */
 
-  // GameStat stats;
-  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/window.train",
-  //  stats);
-
+  GameStat stats;
+  get_game_stats("/home/leagu/DarkHorse/Training/TrainData/window.train",
+                 stats);
+  return 0;
   // std::cout << stats << std::endl;
   // return 0;
   /*     std::ifstream
