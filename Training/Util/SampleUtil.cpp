@@ -70,7 +70,6 @@ void write_raw_data(std::string input_proto) {
   size_t counter = 0;
   size_t total_counter = 0;
   std::vector<Sample> train_samples;
-  std::vector<Sample> samples;
   for (auto game : batch.games()) {
     auto samples = extract_sample(game);
     for (auto s : samples) {
@@ -213,22 +212,26 @@ void get_game_stats(std::string input_proto, GameStat &stats) {
     std::cerr << "Could not open stream" << std::endl;
     std::exit(-1);
   }
+
+  size_t counter = 0;
   batch.ParseFromIstream(&stream);
   for (auto game : batch.games()) {
     auto samples = extract_sample(game);
     int end_cutoff = -1;
     for (int k = 0; k < samples.size(); ++k) {
       auto sample = samples[k];
+      if (!sample.is_training_sample())
+        continue;
+      counter++;
       if (!filter.has(sample.position)) {
         stats.num_unqiue++;
         filter.insert(sample.position);
       }
       stats.bucket_distrib[sample.position.bucket_index()]++;
     }
-    stats.num_positions += samples.size();
     auto result = get_game_result(game);
     stats.num_wins += (result != DRAW);
     stats.num_draws += (result == DRAW);
   }
-  stats.endgame_cutoff_ply /= stats.num_unqiue;
+  stats.num_positions = counter;
 }
