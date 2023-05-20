@@ -12,7 +12,7 @@ Value last_eval = -INFINITE;
 SearchGlobal glob;
 Network network;
 
-void initialize() { initialize(41231231ull); }
+void initialize() { initialize(21231231ull); }
 
 void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 
