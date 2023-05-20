@@ -43,7 +43,7 @@ std::vector<Sample> extract_sample(const Proto::Game &game) {
     end_result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
   }
 
-  if (game.move_indices_size() >= 500) {
+  if (game.move_indices_size() >= 600) {
     end_result = UNKNOWN;
   }
 
@@ -91,7 +91,6 @@ void sort_raw_data(std::string raw_data, std::string copy) {
   std::mt19937_64 generator(3123123131ull);
   struct stat s;
   int status;
-  std::vector<uint32_t> indices;
   int fd = open(raw_data.c_str(), O_RDWR);
   if (fd == -1) {
     std::cout << "Error" << std::endl;
@@ -112,47 +111,14 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     std::exit(-1);
   }
   stream.read((char *)&samples[0], sizeof(Sample) * num_samples);
-  std::cout << "Daten werden nach Duplikaten sortiert" << std::endl;
-  std::sort(samples.begin(), samples.end(), [](Sample one, Sample two) {
-    return one.position.key < two.position.key;
-  });
-  std::cout << "Daten wurden sortiert" << std::endl;
-  std::vector<Sample> reduced_samples;
-  int i;
-  std::cout << "Duplikate werden nun aussortiert" << std::endl;
-  for (i = 0; i < num_samples; ++i) {
-    int start;
-    bool changed = false;
-    // scanning through the file
-    Position start_pos = samples[i].position;
-    for (start = i; start < num_samples; ++start) {
-      auto current = samples[start];
-      if (current.position != start_pos) {
-        break;
-      }
-      if (current.result != samples[i].result) {
-        changed = true;
-      }
-    }
-    if (changed) {
-      for (auto k = i; k < start; ++k) {
-        reduced_samples.emplace_back(samples[k]);
-      }
-    } else {
-      reduced_samples.emplace_back(samples[i]);
-    }
-    i = start;
-  }
-  std::shuffle(reduced_samples.begin(), reduced_samples.end(), generator);
-
   std::ofstream out_stream(copy, std::ios::binary);
   if (!out_stream.good()) {
     std::cerr << "Error" << std::endl;
     std::exit(-1);
   }
+  std::shuffle(samples.begin(), samples.end(), generator);
 
-  out_stream.write((char *)&reduced_samples[0],
-                   sizeof(Sample) * (reduced_samples.size()));
+  out_stream.write((char *)&samples[0], sizeof(Sample) * (samples.size()));
 }
 // needs to be redone
 void count_real_duplicates(std::string raw_data, std::string output) {
@@ -211,6 +177,7 @@ void count_real_duplicates(std::string raw_data, std::string output) {
   munmap(mapped, size);
 
   close(fd);
+  stream = std::ofstream("debug.txt");
 }
 
 void create_shuffled_raw(std::string input_prot) { write_raw_data(input_prot); }
@@ -252,15 +219,12 @@ void get_game_stats(std::string input_proto, GameStat &stats) {
     int end_cutoff = -1;
     for (int k = 0; k < samples.size(); ++k) {
       auto sample = samples[k];
-      std::cout << sample << std::endl;
-      std::cout << "NumSamples: " << samples.size() << std::endl;
       if (!filter.has(sample.position)) {
         stats.num_unqiue++;
         filter.insert(sample.position);
       }
       stats.bucket_distrib[sample.position.bucket_index()]++;
     }
-    std::cout << std::endl;
     stats.num_positions += samples.size();
     auto result = get_game_result(game);
     stats.num_wins += (result != DRAW);

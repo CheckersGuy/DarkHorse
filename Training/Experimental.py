@@ -13,7 +13,7 @@ import numpy as np
 from focal_loss.focal_loss import FocalLoss
 import adabelief_pytorch
 L1 =2*1024
-L2 =32
+L2 =16
 L3 = 32
 
 
@@ -25,10 +25,10 @@ class Network(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.985
+        self.gamma = 0.975
 
 
-        self.num_buckets =8
+        self.num_buckets =6
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
@@ -108,9 +108,9 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.NAdam(self.parameters(),lr=4e-3,weight_decay=0)
-        optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=4e-3)
-        #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=4e-3,cycle_momentum=False)
+        optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        #scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=1e-3,cycle_momentum=False)
         return [optimizer],[scheduler]
 
 
@@ -131,8 +131,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("quanty.quant")
-        torch.save(self.state_dict(),"quanty.pt")
+        self.save_quantized_bucket("data2.quant")
+        torch.save(self.state_dict(),"data2.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

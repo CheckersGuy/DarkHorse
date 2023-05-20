@@ -45,6 +45,9 @@ struct Sample {
       stream << "BLACK_WON";
     else if (s.result == WHITE_WON)
       stream << "WHITE_WON";
+    else if (s.result == UNKNOWN) {
+      stream << "UNKNOWN";
+    }
 
     stream << std::endl;
 

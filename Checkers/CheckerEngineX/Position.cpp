@@ -240,7 +240,7 @@ bool Position::has_any_move() const {
   return (movers != 0) || has_jumps(color);
 }
 
-uint32_t Position::piece_count() const { return Bits::pop_count(WP | BP); }
+int Position::piece_count() const { return Bits::pop_count(WP | BP); }
 
 bool Position::has_jumps(Color color) const {
   if (color == BLACK) {
@@ -336,6 +336,6 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index() {
-  auto pieces = piece_count();
-  return (pieces - 1) / 8;
+  int pieces = piece_count();
+  return (pieces - 1) / 4;
 }
