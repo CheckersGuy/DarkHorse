@@ -20,7 +20,7 @@ int main(int argl, const char **argc) {
 
   write_raw_data("/home/leagu/DarkHorse/Training/TrainData/windowmaster.train");
   sort_raw_data(
-      "/home/leagu/DarkHorse/Training/TrainData/windowmaster.train",
+      "/home/leagu/DarkHorse/Training/TrainData/windowmaster.train.raw",
       "/home/leagu/DarkHorse/Training/TrainData/windowmasterremoved.train");
   /*
     Book::create_train_file(
