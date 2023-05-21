@@ -127,6 +127,8 @@ void sort_raw_data(std::string raw_data, std::string copy) {
   std::unordered_map<Position, Entry> my_map;
 
   for (auto &sample : samples) {
+    if (sample.result == UNKNOWN || !sample.is_training_sample())
+      continue;
     Entry &entry = my_map[sample.position];
     entry.w_win += (sample.result == WHITE_WON);
     entry.b_win += (sample.result == BLACK_WON);
@@ -134,9 +136,10 @@ void sort_raw_data(std::string raw_data, std::string copy) {
   }
   samples.clear();
   std::vector<Sample> new_samples;
-
+  size_t second_counter = 0;
   for (auto &[key, value] : my_map) {
     auto count = (value.b_win != 0) + (value.w_win != 0) + (value.draw != 0);
+
     // Case only wins,draws
     if (count == 1) {
       Sample next;
@@ -150,7 +153,10 @@ void sort_raw_data(std::string raw_data, std::string copy) {
       }
       new_samples.emplace_back(next);
     } else {
-      std::cout << "Found second case" << std::endl;
+      second_counter++;
+      if ((second_counter % 10000) == 0) {
+        std::cout << "NumSecondCases: " << second_counter << std::endl;
+      }
       for (auto i = 0; i < value.b_win; ++i) {
         Sample next;
         next.position = key;
