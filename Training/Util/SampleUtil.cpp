@@ -81,12 +81,19 @@ void write_raw_data(std::string input_proto) {
       train_samples.emplace_back(s);
     }
   }
+  std::mt19937_64 generator(32112415ull);
+  std::shuffle(train_samples.begin(), train_samples.end(), generator);
   std::cout << "NumSamples: " << train_samples.size() << std::endl;
   out_stream.write((char *)&train_samples[0],
                    sizeof(Sample) * train_samples.size());
 }
 
 void sort_raw_data(std::string raw_data, std::string copy) {
+  struct Entry {
+    int w_win{0};
+    int b_win{0};
+    int draw{0};
+  };
   std::mt19937_64 generator(3123123131ull);
   struct stat s;
   int status;
@@ -115,71 +122,59 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     std::cerr << "Error" << std::endl;
     std::exit(-1);
   }
-  std::shuffle(samples.begin(), samples.end(), generator);
 
-  out_stream.write((char *)&samples[0], sizeof(Sample) * (samples.size()));
-}
-// needs to be redone
-void count_real_duplicates(std::string raw_data, std::string output) {
-  std::ofstream stream(output, std::ios::binary);
-  if (!stream.good()) {
-    std::exit(-1);
+  // inserting into hashtable
+  std::unordered_map<Position, Entry> my_map;
+
+  for (auto &sample : samples) {
+    Entry &entry = my_map[sample.position];
+    entry.w_win += (sample.result == WHITE_WON);
+    entry.b_win += (sample.result == BLACK_WON);
+    entry.draw += (sample.result == DRAW);
   }
-  int fd; // file-descriptor
-  size_t size;
-  struct stat s;
-  int status;
-  Sample *mapped;
-  fd = open(raw_data.c_str(), O_RDWR);
-  status = fstat(fd, &s);
-  size = s.st_size;
-  std::cout << "size: " << s.st_size / sizeof(Sample) << std::endl;
+  samples.clear();
+  std::vector<Sample> new_samples;
 
-  mapped = (Sample *)mmap(0, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-  auto num_samples = size / sizeof(Sample);
-
-  std::sort(mapped, mapped + num_samples,
-            [&](const Sample &one, const Sample &two) {
-              auto key1 = Zobrist::generate_key(one.position);
-              auto key2 = Zobrist::generate_key(two.position);
-              return key1 > key2;
-            });
-  size_t counter = 0;
-  for (auto i = 0; i < num_samples;) {
-    auto sample = mapped[i];
-    size_t start = i;
-    while (sample.position == mapped[i].position) {
-      ++i;
-    }
-    bool switched = false;
-    for (auto k = start; k < i; ++k) {
-      if (mapped[k].result != mapped[start].result) {
-        switched = true;
-        break;
+  for (auto &[key, value] : my_map) {
+    auto count = (value.b_win != 0) + (value.w_win != 0) + (value.draw != 0);
+    // Case only wins,draws
+    if (count == 1) {
+      Sample next;
+      next.position = key;
+      if (value.b_win != 0) {
+        next.result = BLACK_WON;
+      } else if (value.w_win != 0) {
+        next.result = WHITE_WON;
+      } else {
+        next.result = DRAW;
       }
-    }
-    if (switched) {
-      for (auto k = start; k < i; ++k) {
-        stream << mapped[k];
-        counter++;
-      }
+      new_samples.emplace_back(next);
     } else {
-      counter++;
-      stream << sample;
-    }
-    if ((counter % 1000) == 0) {
-      std::cout << "Counter: " << counter << std::endl;
+      std::cout << "Found second case" << std::endl;
+      for (auto i = 0; i < value.b_win; ++i) {
+        Sample next;
+        next.position = key;
+        next.result = BLACK_WON;
+        new_samples.emplace_back(next);
+      }
+      for (auto i = 0; i < value.w_win; ++i) {
+        Sample next;
+        next.position = key;
+        next.result = WHITE_WON;
+        new_samples.emplace_back(next);
+      }
+      for (auto i = 0; i < value.draw; ++i) {
+        Sample next;
+        next.position = key;
+        next.result = DRAW;
+        new_samples.emplace_back(next);
+      }
     }
   }
-  std::cout << "New size : " << counter << " vs old_size : " << num_samples
-            << std::endl;
-  munmap(mapped, size);
-
-  close(fd);
-  stream = std::ofstream("debug.txt");
+  std::shuffle(new_samples.begin(), new_samples.end(), generator);
+  out_stream.write((char *)&new_samples[0],
+                   sizeof(Sample) * new_samples.size());
 }
-
-void create_shuffled_raw(std::string input_prot) { write_raw_data(input_prot); }
 
 void view_game(std::string input_proto, int index) {
   Proto::Batch batch;
