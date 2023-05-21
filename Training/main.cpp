@@ -19,18 +19,21 @@
 int main(int argl, const char **argc) {
 
   write_raw_data("/home/leagu/DarkHorse/Training/TrainData/windowmaster.train");
+  sort_raw_data(
+      "/home/leagu/DarkHorse/Training/TrainData/windowmaster.train",
+      "/home/leagu/DarkHorse/Training/TrainData/windowmasterremoved.train");
   /*
     Book::create_train_file(
         "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
         "/home/leagu/DarkHorse/Training/Positions/train12.book", 9);
 
   */
-
-  GameStat stats;
-  get_game_stats("/home/leagu/DarkHorse/Training/TrainData/windowmaster.train",
-                 stats);
-  std::cout << stats << std::endl;
   return 0;
+  // GameStat stats;
+  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/windowmaster.train",
+  //                stats);
+  // std::cout << stats << std::endl;
+  // return 0;
   /*     std::ifstream
     stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
      std::istream_iterator<Game>begin(stream);
