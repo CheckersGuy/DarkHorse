@@ -93,6 +93,7 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     int w_win{0};
     int b_win{0};
     int draw{0};
+    int unknown{0};
   };
   std::mt19937_64 generator(3123123131ull);
   struct stat s;
@@ -133,6 +134,7 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     entry.w_win += (sample.result == WHITE_WON);
     entry.b_win += (sample.result == BLACK_WON);
     entry.draw += (sample.result == DRAW);
+    entry.unknown += (sample.result == UNKNOWN);
   }
   samples.clear();
   std::vector<Sample> new_samples;
@@ -148,10 +150,14 @@ void sort_raw_data(std::string raw_data, std::string copy) {
         next.result = BLACK_WON;
       } else if (value.w_win != 0) {
         next.result = WHITE_WON;
-      } else {
+      } else if (value.draw != 0) {
         next.result = DRAW;
+      } else {
+        next.result = UNKNOWN;
       }
-      new_samples.emplace_back(next);
+      if (next.result != UNKNOWN) {
+        new_samples.emplace_back(next);
+      }
     } else {
       second_counter++;
       if ((second_counter % 10000) == 0) {
