@@ -131,8 +131,8 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("data2.quant")
-        torch.save(self.state_dict(),"data2.pt")
+        self.save_quantized_bucket("data3.quant")
+        torch.save(self.state_dict(),"data3.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}

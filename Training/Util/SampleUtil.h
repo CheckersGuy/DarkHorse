@@ -36,8 +36,6 @@ void write_raw_data(std::string input_proto);
 
 void sort_raw_data(std::string raw_data, std::string copy);
 
-void create_shuffled_raw(std::string input_proto);
-
 void view_game(std::string input_proto, int index);
 
 void get_game_stats(std::string input_proto, GameStat &stats);
