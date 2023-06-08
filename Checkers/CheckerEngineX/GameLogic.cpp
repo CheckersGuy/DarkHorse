@@ -88,7 +88,7 @@ namespace Search {
 
 Depth reduce(Local &local, Board &board, Move move, bool in_pv) {
   Depth red = 0;
-  if (!in_pv && local.i >= 2) {
+  if (local.i >= (2 + in_pv) && local.depth >= 2) {
     const auto index = std::min(local.depth, (int)LMR_TABLE.size() - 1);
     red = 1; // previous value
     return LMR_TABLE[index];
@@ -263,7 +263,7 @@ Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line,
   board.make_move(move);
   // now we can set the move history
 
-  if (!in_pv && local.depth > 1 && std::abs(local.beta) < TB_WIN) {
+  if (!in_pv && local.depth >= 3 && std::abs(local.beta) < TB_WIN) {
 
     Value newBeta = local.beta + prob_cut;
     Depth newDepth = std::max(local.depth - 4, 1);

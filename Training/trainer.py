@@ -35,11 +35,11 @@ def merge_data(files,output):
 
 
 
-if __name__ == "__main__d":
+if __name__ == "__main__":
     batch_size = 8192 
     epochs = 420
-    model = Experimental.Network()
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/windowmasterremoved.train.raw",
+    model = Experimental.Network2()
+    data_loader = LitMLP.LitDataModule(train_data="TrainData/shuffled.train.raw",
                                        val_data="TrainData/val.train",
                                        batch_size=batch_size, buffer_size=125000000)
 
@@ -59,5 +59,5 @@ if __name__ == "__main__d":
     #trainer.fit(model, data_loader)
 
 
-merge_data(["TrainData/window0.train","TrainData/window1.train","TrainData/window2.train","TrainData/window3.train","TrainData/window4.train","TrainData/window5.train", 
-            "TrainData/window6.train","TrainData/window7.train","TrainData/window8.train","TrainData/testing.train"],"TrainData/windowmaster.train")
+#merge_data(["TrainData/window0.train","TrainData/window1.train","TrainData/window2.train","TrainData/window3.train","TrainData/window4.train","TrainData/window5.train", 
+#            "TrainData/window6.train","TrainData/window7.train","TrainData/window8.train"],"TrainData/windowmaster.train")

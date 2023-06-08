@@ -29,11 +29,11 @@ int main(int argl, const char **argc) {
 
   */
   // return 0;
-  GameStat stats;
-  get_game_stats("/home/leagu/DarkHorse/Training/TrainData/ultimate.train",
-                 stats);
-  std::cout << stats << std::endl;
-  return 0;
+  // GameStat stats;
+  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/ultimate.train",
+  //              stats);
+  // std::cout << stats << std::endl;
+  // return 0;
   /*     std::ifstream
     stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
      std::istream_iterator<Game>begin(stream);
