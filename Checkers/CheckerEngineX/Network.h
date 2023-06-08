@@ -6,21 +6,24 @@
 #define READING_NETWORK_H
 
 #include "Position.h"
-#include "Simd.h"
 #include <cmath>
+#include <cstdint>
 #include <cstring>
 #include <fstream>
 #include <immintrin.h>
 #include <iostream>
 #include <memory>
+#include <ranges>
 #include <vector>
 class Network;
 
 struct Layer {
   const int in_features;
   const int out_features;
+  const int16_t *weights;
+  const int32_t *bias;
 
-  Layer(int in, int out);
+  Layer(int in, int out, int16_t *weights, int32_t *bias);
 };
 
 struct Accumulator {
@@ -76,17 +79,10 @@ struct Network {
   int32_t *biases;
   int16_t *weights;
   int16_t *input;
-  int bucket_bias_offset = 0;
-  int bucket_weight_offset = 0;
   int max_units{0};
-  size_t num_buckets{0};
   Accumulator accumulator;
 
   ~Network();
-
-  int32_t get_max_weight() const;
-
-  int32_t get_max_bias() const;
 
   void addLayer(Layer layer);
 
@@ -108,7 +104,6 @@ struct Network {
 
   friend std::ostream &operator<<(std::ostream &stream, const Network &other) {
     stream << "Num_Layers: " << other.layers.size() << std::endl;
-    stream << "Num_Buckets: " << other.num_buckets << std::endl;
     for (auto &layer : other.layers) {
       stream << "Layer: "
              << "InFeatures: " << layer.in_features
@@ -118,8 +113,6 @@ struct Network {
 
     return stream;
   }
-
-  void print_bucket_evals(Position next);
 };
 
 void testing_simd_functions();

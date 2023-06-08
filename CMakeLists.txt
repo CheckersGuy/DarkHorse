@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.9)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_BUILD_TYPE "Release")
@@ -7,10 +7,11 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-pthread")
   add_compile_options("-ffat-lto-objects")
   add_compile_options("-fuse-linker-plugin")
-  add_compile_options("-flto")
-  add_compile_options("-Ofast")
-  add_compile_options("-msse4.1")
-
+  add_compile_options("-O3")
+  add_compile_options("-mavx2")
+  add_compile_options("-mavx")
+  add_compile_options("-funroll-loops")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIRS})
@@ -41,7 +42,7 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
-#add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
+add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
 
 
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
@@ -59,6 +60,7 @@ endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 
+target_compile_definitions(Simd PUBLIC "AVX")
 #target_compile_definitions(MainEngine PUBLIC "USE_DB")
 #target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
 #target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
