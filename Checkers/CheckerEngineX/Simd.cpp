@@ -41,6 +41,9 @@ inline void accum_activation(int16_t *input, const int input_size) {
 
 #ifdef BASE
 
+  for (auto i = 0; i < input_size) {
+  }
+
 #endif // DEBUG
 }
 
