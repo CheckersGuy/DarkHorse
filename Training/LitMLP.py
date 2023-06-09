@@ -285,7 +285,6 @@ class PolicyNetwork(pl.LightningModule):
 
         self.layers.append(nn.Linear(hidden[len(hidden) - 2], hidden[len(hidden) - 1]))
         self.net = nn.Sequential(*self.layers)
-        self.criterion = torch.nn.CrossEntropyLoss(ignore_index=-1)
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
         self.gamma = 0.96
