@@ -64,10 +64,6 @@ inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
 
 inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
-// constant for extensions and reductions
-
-constexpr uint32_t BUCKET_PATTERN = (1 << 0) | (1 << 1) | (1 << 31) | (1 << 30);
-
 const size_t NUM_BUCKETS = 1;
 constexpr int prob_cut = 30; // 30;
 constexpr int asp_wind = 10; // 15;
