@@ -9,10 +9,7 @@ namespace Statistics {
 
 MovePicker mPicker;
 
-void MovePicker::init() {
-  // policy.load_bucket("policy.quant");
-  // std::cout<<policy<<std::endl;
-}
+void MovePicker::init() {}
 
 int MovePicker::get_move_encoding(Move move) {
   int dir;
@@ -102,6 +99,7 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous,
     auto counter = counter_history[get_history_index(pos, previous)][index];
     score += counter;
   }
+
   if (!previous_own.is_empty() && !previous_own.is_capture() &&
       !move.is_capture()) {
     auto follow = follow_history[get_history_index(pos, previous_own)][index];
@@ -138,7 +136,7 @@ void update_history_score(int &score, int delta) { score += delta; }
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                Move previous, Move previous_own, int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * depth, 16 * 16);
+  const int delta = std::min(depth * depth, 18 * 18);
   update_history_score(history[index], delta);
   Move top = liste[0];
 

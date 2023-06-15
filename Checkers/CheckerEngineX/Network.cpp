@@ -145,29 +145,19 @@ void Accumulator::init(Network *net) {
 
 void Accumulator::add_feature(int16_t *in, int index) {
   // adding the index-th column to our feature vector
-  for (auto i = 0; i < size; ++i) {
-    in[i] += net->ft_weights[index * net->layers[0].out_features + i];
-  }
+  Simd::vec_add(net->ft_weights + index * net->layers[0].out_features, in,
+                size);
 }
 
 void Accumulator::remove_feature(int16_t *in, int index) {
   // adding the index-th column to our feature vector
-  for (auto i = 0; i < size; ++i) {
-    in[i] -= net->ft_weights[index * net->layers[0].out_features + i];
-  }
+  Simd::vec_diff(net->ft_weights + index * net->layers[0].out_features, in,
+                 size);
 }
 
-void Network::print_output_layer() {
-  auto outputs = layers.back().out_features;
-
-  for (int i = 0; i < outputs; ++i) {
-    std::cout << "Index: " << i << " " << input[i] << std::endl;
-  }
-}
 // needs to be rewritten for the new architecture ...
 void Network::load_bucket(std::string file) {
 
-  // loading the buckets
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
     std::cerr << "Could not load network file, path " << file << std::endl;
@@ -196,7 +186,10 @@ void Network::load_bucket(std::string file) {
   num_hidden_weights = 0;
   num_hidden_bias = 0;
 
-  for (auto &[in_features, out_features] : layer_temp | std::views::drop(1)) {
+  for (auto &[in_features, out_features] : layer_temp) {
+    if (in_features == 120) {
+      continue;
+    }
     num_hidden_weights += in_features * out_features;
     num_hidden_bias += out_features;
   }
@@ -222,7 +215,10 @@ void Network::load_bucket(std::string file) {
   int f_in_features = layer_temp.front().first;
   int f_out_features = layer_temp.front().second;
   layers.emplace_back(Layer(f_in_features, f_out_features, nullptr, nullptr));
-  for (auto &[in_features, out_features] : layer_temp | std::views::drop(1)) {
+  for (auto &[in_features, out_features] : layer_temp) {
+    if (in_features == 120) {
+      continue;
+    }
     layers.emplace_back(Layer(in_features, out_features,
                               weights + weight_offset, biases + bias_offset));
     bias_offset += out_features;
@@ -242,15 +238,14 @@ void Network::init() {
   }
   input = (int16_t *)std::aligned_alloc(Network::ALIGNMENT,
                                         sizeof(int16_t) * max_units);
+
+  af_output = (int32_t *)std::aligned_alloc(Network::ALIGNMENT,
+                                            sizeof(int32_t) * max_units);
+
   accumulator.init(this);
 }
 
-int Network::compute_incre_forward_pass(Position next) {
-  const int index = next.bucket_index();
-  return compute_incre_forward_pass(next, index);
-}
-
-int Network::compute_incre_forward_pass(Position next, int bucket_index) {
+int16_t *Network::compute_incre_forward_pass(Position next) {
   int16_t *z_previous;
   if (next.color == BLACK) {
     z_previous = accumulator.black_acc;
@@ -258,18 +253,10 @@ int Network::compute_incre_forward_pass(Position next, int bucket_index) {
     z_previous = accumulator.white_acc;
   }
   accumulator.update(next.color, next);
-  for (auto i = 0; i < layers[0].out_features; i++) {
-    int16_t p = z_previous[i] / 4;
-    auto value = std::clamp(p, int16_t{0}, int16_t{127});
-    value = value * value;
-    input[i] = value / 128;
-  }
+  Simd::accum_activation(z_previous, input, layers[0].out_features);
 
-  const int offset = layers[0].out_features / 2;
-  for (auto i = 0; i < offset; i++) {
-    auto value = input[i] * input[i + offset];
-    input[i] = value / 128;
-  }
+  // double ratio = ((double)(nnz)) / ((double)layers[0].out_features / 2);
+  // std::cout << "Ratio: " << ratio << std::endl;
 
   int in_offset = 0;
   for (auto k = 1; k < layers.size() - 1; ++k) {
@@ -277,25 +264,26 @@ int Network::compute_incre_forward_pass(Position next, int bucket_index) {
     for (auto i = 0; i < l.out_features; i++) {
       int sum = l.bias[i];
 
-      for (auto j = 0; j < l.in_features; ++j) {
-        sum += l.weights[i * l.in_features + j] * input[j + in_offset];
-      }
+      sum += Simd::flatten(l.weights + i * l.in_features, input + in_offset,
+                           l.in_features);
 
-      int16_t value = std::clamp(sum / 64, 0, 127);
-      value = value * value;
-      input[i + in_offset + l.in_features] = value / 128;
+      af_output[i + in_offset + l.in_features] = sum / 64;
     }
+
+    Simd::square_clipped(af_output + in_offset + l.in_features,
+                         input + in_offset + l.in_features, l.out_features);
 
     in_offset += l.in_features;
   }
   const Layer &l = layers.back();
   for (auto i = 0; i < l.out_features; i++) {
     int sum = l.bias[i];
-    for (auto j = 0; j < l.in_features; ++j) {
-      sum += l.weights[i * l.in_features + j] * input[j + in_offset];
-    }
-    return sum / 64;
+    sum += Simd::flatten(l.weights + i * l.in_features, input + in_offset,
+                         l.in_features);
+
+    input[i + in_offset + l.in_features] = sum / 64;
   }
+  return &input[in_offset + l.in_features];
 }
 
 int Network::operator[](int index) { return input[index]; }
@@ -308,5 +296,5 @@ int Network::evaluate(Position pos, int ply) {
   if (pos.WP == 0 && pos.get_color() == WHITE) {
     return loss(ply);
   }
-  return compute_incre_forward_pass(pos);
+  return *compute_incre_forward_pass(pos);
 }

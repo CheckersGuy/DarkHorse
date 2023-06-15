@@ -6,6 +6,7 @@
 #define READING_NETWORK_H
 
 #include "Position.h"
+#include "Simd.h"
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -48,29 +49,6 @@ struct Accumulator {
   void refresh();
 };
 
-template <typename T> void display_network_data(std::string network_file) {
-  std::ifstream stream(network_file, std::ios::binary);
-  if (!stream.good()) {
-    std::cerr << "Could not load the weights" << std::endl;
-    std::exit(-1);
-  }
-
-  int num_weights, num_bias;
-  stream.read((char *)&num_weights, sizeof(int));
-  auto weights = std::make_unique<T[]>(num_weights);
-
-  stream.read((char *)weights.get(), sizeof(T) * num_weights);
-  stream.read((char *)&num_bias, sizeof(int));
-  auto biases = std::make_unique<T[]>(num_bias);
-  stream.read((char *)biases.get(), sizeof(T) * num_bias);
-
-  for (auto i = 0; i < num_bias; ++i) {
-    std::cout << biases[i] << std::endl;
-  }
-
-  stream.close();
-}
-
 struct Network {
   constexpr static size_t ALIGNMENT = 32;
   std::vector<Layer> layers;
@@ -78,7 +56,8 @@ struct Network {
   int16_t *ft_weights;
   int32_t *biases;
   int16_t *weights;
-  int16_t *input;
+  int16_t *input;     // input or output of activations
+  int32_t *af_output; // affine transform output
   int max_units{0};
   Accumulator accumulator;
 
@@ -90,11 +69,7 @@ struct Network {
 
   void init();
 
-  void print_output_layer();
-
-  int compute_incre_forward_pass(Position next, int bucket_index);
-
-  int compute_incre_forward_pass(Position next);
+  int16_t *compute_incre_forward_pass(Position next);
 
   int evaluate(Position pos, int ply);
 
@@ -115,5 +90,4 @@ struct Network {
   }
 };
 
-void testing_simd_functions();
 #endif // READING_NETWORK_H
