@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_BUILD_TYPE "Release")
+SET(CMAKE_BUILD_TYPE "Debug")
   add_compile_options("-march=native")
   add_compile_options("-mtune=native")
   add_compile_options("-pthread")
@@ -9,13 +9,12 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-fuse-linker-plugin")
   add_compile_options("-O3")
   add_compile_options("-mavx2")
-  add_compile_options("-mavx")
   add_compile_options("-funroll-loops")
-set(CMAKE_CXX_COMPILER "clang++")
+  set(CMAKE_CXX_COMPILER "clang++")
 include(CheckIPOSupported)
 check_ipo_supported()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
-#find_package(Protobuf REQUIRED)
+find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIRS})
 
 if (UNIX)
@@ -41,10 +40,12 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+add_executable(testing ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
 
 
 set_target_properties(MainEngine PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
 

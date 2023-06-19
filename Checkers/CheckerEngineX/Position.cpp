@@ -336,10 +336,6 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index() {
-  // int pieces = piece_count();
-  // return (pieces - 1) / 6;
-  if (get_color() == BLACK) {
-    return 1;
-  }
-  return 0;
+  int pieces = piece_count();
+  return (pieces - 1) / 6;
 }

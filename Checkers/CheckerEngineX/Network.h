@@ -5,8 +5,8 @@
 #ifndef READING_NETWORK_H
 #define READING_NETWORK_H
 
+#include "Layer.h"
 #include "Position.h"
-#include "Simd.h"
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -16,60 +16,60 @@
 #include <memory>
 #include <ranges>
 #include <vector>
+
 class Network;
 
 struct Layer {
   const int in_features;
   const int out_features;
-  const int16_t *weights;
+  const int8_t *weights;
   const int32_t *bias;
 
-  Layer(int in, int out, int16_t *weights, int32_t *bias);
+  Layer(int in, int out, int8_t *weights, int32_t *bias);
 };
 
 struct Accumulator {
-  int16_t *black_acc;
-  int16_t *white_acc;
-  size_t size;
+  static constexpr int OutDim = 1512;
+  alignas(64) int16_t black_acc[OutDim] = {0};
+  alignas(64) int16_t white_acc[OutDim] = {0};
+  int16_t *ft_biases;
+  int16_t *ft_weights;
+
+  int size;
   Position previous_black, previous_white;
-  Network *net = nullptr;
 
   ~Accumulator();
 
-  void init(Network *net);
-
   void update(Color per, Position after);
 
-  void add_feature(int16_t *input, int index);
+  inline void add_feature(int16_t *in, int index) {
+    Simd::vec_add<OutDim>(ft_weights + index * OutDim, in);
+  }
 
-  void remove_feature(int16_t *input, int index);
+  inline void remove_feature(int16_t *in, int index) {
+    Simd::vec_diff<OutDim>(ft_weights + index * OutDim, in);
+  }
 
   void apply(Color color, Position before, Position after);
 
   void refresh();
+
+  void load_weights(std::ifstream &stream);
 };
 
 struct Network {
-  constexpr static size_t ALIGNMENT = 32;
+  constexpr static size_t ALIGNMENT = 64;
   std::vector<Layer> layers;
-  int16_t *ft_biases;
-  int16_t *ft_weights;
-  int32_t *biases;
-  int16_t *weights;
-  int16_t *input;     // input or output of activations
-  int32_t *af_output; // affine transform output
   int max_units{0};
   Accumulator accumulator;
-
-  ~Network();
-
-  void addLayer(Layer layer);
+  QLayer<1512, 16, Activation::SqRelu> first;
+  QLayer<16, 32, Activation ::SqRelu> second;
+  QLayer<32, 1> output;
+  alignas(64) int8_t input[2048 + 32 + 32 + 1] = {0};
 
   void load_bucket(std::string file);
 
-  void init();
-
-  int16_t *compute_incre_forward_pass(Position next);
+  int32_t *compute_incre_forward_pass(Position next);
 
   int evaluate(Position pos, int ply);
 
