@@ -39,16 +39,39 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     // loading biases and weights
     // loading the weights not sure if correct
 
-    for (auto i = 0; i < OutDim; ++i) {
-      for (auto j = 0; j < PadInDim; ++j) {
-        int8_t weight;
-        if (j < InDim) {
-          stream.read((char *)&weight, sizeof(int8_t));
-        } else {
-          weight = 0;
-        }
+    // specialization if the output-dimensions is divisible by 4
+    // then we do blocked-mat-mul
 
-        weights[i * PadInDim + j] = weight;
+    if constexpr ((OutDim % 4) == 0) {
+      int8_t temp_weights[PadInDim * PadOutDim];
+      for (auto i = 0; i < OutDim; ++i) {
+        for (auto j = 0; j < PadInDim; ++j) {
+          int8_t weight;
+          if (j < InDim) {
+            stream.read((char *)&weight, sizeof(int8_t));
+          } else {
+            weight = 0;
+          }
+
+          temp_weights[i * PadInDim + j] = weight;
+        }
+      }
+      // reordering the weights
+      // to be continued
+
+    } else {
+
+      for (auto i = 0; i < OutDim; ++i) {
+        for (auto j = 0; j < PadInDim; ++j) {
+          int8_t weight;
+          if (j < InDim) {
+            stream.read((char *)&weight, sizeof(int8_t));
+          } else {
+            weight = 0;
+          }
+
+          weights[i * PadInDim + j] = weight;
+        }
       }
     }
 
