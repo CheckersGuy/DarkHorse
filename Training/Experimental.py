@@ -14,7 +14,7 @@ from focal_loss.focal_loss import FocalLoss
 import adabelief_pytorch
 from ranger_adabelief import RangerAdaBelief
 from sophia import SophiaG
-L1 =1512
+L1 =2*1024
 L2 =16
 L3 = 32
 
@@ -225,7 +225,7 @@ class Network2(pl.LightningModule):
 
 
         self.accu = nn.Linear(120,L1)
-        self.layer_one =nn.Linear(L1,L2)
+        self.layer_one =nn.Linear(L1//2,L2)
         self.layer_sec = nn.Linear(L2,L3);
         self.output = nn.Linear(L3,1)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
@@ -234,15 +234,15 @@ class Network2(pl.LightningModule):
     def forward(self, x,buckets):
         ac = self.accu.forward(x)
 
-        ac =torch.clamp(ac,0.0,1.0)
-        #ac_x,ac_y = ac.split(L1,dim = 1)
-        #ac_out = ac_x.mul(ac_y) *(127.0/128.0)
+        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+        ac_x,ac_y = ac.split(L1//2,dim = 1)
+        ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
-        l1s = self.layer_one(ac)
-        l1c = torch.clamp(l1s,0.0,1.0)
+        l1s = self.layer_one(ac_out)
+        l1c = (127.0/128.0)*torch.clamp(l1s,0.0,1.0)**2
         
         l2s = self.layer_sec(l1c)
-        l2c = torch.clamp(l2s,0.0,1.0)
+        l2c = (127.0/128.0)*torch.clamp(l2s,0.0,1.0)**2
 
         l3s = self.output(l2c)
         out = torch.sigmoid(l3s)

@@ -58,7 +58,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   if (!engine_initialized) {
-    network.load_bucket("testing5.quant");
+    network.load_bucket("int8test.quant");
     TT.resize(22);
     initialize();
     Statistics::mPicker.init();

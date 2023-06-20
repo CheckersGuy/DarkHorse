@@ -9,7 +9,7 @@
 #include <memory>
 #include <new>
 #include <random>
-#define BASE
+#define AVX256
 
 namespace Simd {
 
@@ -64,6 +64,12 @@ inline void accum_activation(int16_t *acc, int16_t *out) {
   for (auto i = 0; i < input_size; ++i) {
     int16_t val = acc[i];
     val = std::clamp(val, int16_t{0}, int16_t{127});
+    val = (val * val) / 128;
+    out[i] = val;
+  }
+  for (auto i = 0; i < input_size / 2; ++i) {
+    int16_t val = out[i + input_size / 2] * out[i];
+    val = val / 128;
     out[i] = val;
   }
 
@@ -119,11 +125,16 @@ inline void accum_activation8(int16_t *acc, int8_t *out) {
 
 #ifdef BASE
 
-  for (auto i = 0; i < input_size; ++i) {
+  for (auto i = 0; i < input_size / 2; ++i) {
     int16_t val = acc[i];
     val = std::clamp(val, int16_t{0}, int16_t{127});
+    val = (val * val) / 128;
 
-    out[i] = val;
+    int16_t val2 = acc[i + input_size / 2];
+    val2 = std::clamp(val2, int16_t{0}, int16_t{127});
+    val2 = (val2 * val2) / 128;
+
+    out[i] = (val * val2) / 128;
   }
 
 #endif // DEBUG
@@ -206,6 +217,8 @@ inline void square_clipped8(int32_t *input, int8_t *output) {
 #ifdef BASE
   for (auto i = 0; i < length; ++i) {
     int val = std::clamp(input[i], 0, 127);
+    val = val * val;
+    val = val / 128;
     output[i] = val;
   }
 #endif
@@ -248,6 +261,7 @@ inline void square_clipped8_128(int32_t *input, int8_t *output,
 #ifdef BASE
   for (auto i = 0; i < length; ++i) {
     int val = std::clamp(input[i], 0, 127);
+    val = (val * val) / 128;
     output[i] = val;
   }
 
@@ -284,7 +298,7 @@ int flatten(const int16_t *weights, const int16_t *input) {
 template <int length> inline void vec_add(const int16_t *input, int16_t *out) {
 #ifdef AVX256
   // some experimental stuff
-  const int num_chunks = length / 16;
+  constexpr int num_chunks = length / 16;
   auto accu = reinterpret_cast<__m256i *>(out);
   auto in = reinterpret_cast<const __m256i *>(input);
   for (auto i = 0; i < num_chunks; ++i) {
@@ -305,7 +319,7 @@ template <int length> inline void vec_add(const int16_t *input, int16_t *out) {
 }
 template <int length> inline void vec_diff(const int16_t *input, int16_t *out) {
 #ifdef AVX256
-  const int num_chunks = length / 16;
+  constexpr int num_chunks = length / 16;
   auto accu = reinterpret_cast<__m256i *>(out);
   auto in = reinterpret_cast<const __m256i *>(input);
   for (auto i = 0; i < num_chunks; ++i) {
@@ -392,11 +406,3 @@ inline int flatten8_128(const int8_t *weights, const int8_t *input,
 }
 
 } // namespace Simd
-/*
-int main(const int argl, const char **argc) {
-  std::cout << "Hello world" << std::endl;
-  int input = atoi(argc[1]);
-
-  Simd::test(input);
-}
-*/
