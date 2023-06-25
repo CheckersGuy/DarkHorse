@@ -336,6 +336,13 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index() {
-  int pieces = piece_count();
-  return (pieces - 1) / 6;
+  // int pieces = piece_count();
+  auto maske = PROMO_SQUARES_WHITE | PROMO_SQUARES_BLACK;
+  auto copy = *this;
+  if (copy.get_color() == BLACK) {
+    copy = copy.get_color_flip();
+  }
+  auto index = Bits::pext((copy.BP | copy.WP) & (~copy.K), maske);
+  // return (pieces - 1) / 4;
+  return index;
 }

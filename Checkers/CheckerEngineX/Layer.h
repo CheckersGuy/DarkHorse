@@ -35,13 +35,32 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim];
   alignas(CACHE_LINE_SIZE) int32_t buffer[OutDim] = {0};
 
+  int get_weight_index(int index) {
+    // we unroll the outer loop by 4
+    const int BLOCK_ROWS = 4;
+    const int BLOCK_COLS = 32;
+
+    const int ROW = index / PadInDim;
+    const int COL = index % PadInDim;
+    const int BLOCK_SIZE = BLOCK_ROWS * BLOCK_COLS;
+    int NUM_ROW_BLOCKS = PadInDim / BLOCK_COLS;
+
+    int row = ROW / BLOCK_COLS;
+    int col = COL / BLOCK_COLS;
+    //  std::cout << "RowBlock: " << row << std::endl;
+    //  std::cout << "RowCol:" << col << std::endl;
+    int block_row = row % BLOCK_ROWS;
+    int block_col = row % BLOCK_COLS;
+
+    // std::cout << "BlockRow: " << block_row << std::endl;
+    // std::cout << "BlockCol: " << block_col << std::endl;
+    // std::cout << "Index: (" << row << ", " << col << ")" << std::endl;
+
+    return (PadInDim / BLOCK_COLS) * row * BLOCK_SIZE + col * BLOCK_SIZE +
+           block_row * BLOCK_ROWS + block_col;
+  }
+
   void load_params(std::ifstream &stream) {
-    // loading biases and weights
-    // loading the weights not sure if correct
-
-    // specialization if the output-dimensions is divisible by 4
-    // then we do blocked-mat-mul
-
     if constexpr ((OutDim % 4) == 0) {
       int8_t temp_weights[PadInDim * PadOutDim];
       for (auto i = 0; i < OutDim; ++i) {
@@ -53,11 +72,12 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
             weight = 0;
           }
 
-          temp_weights[i * PadInDim + j] = weight;
+          // temp_weights[i * PadInDim + j] = weight;
+
+          weights[i * PadInDim + j] = weight;
         }
       }
-      // reordering the weights
-      // to be continued
+      // reordering weights
 
     } else {
 
@@ -78,10 +98,6 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
   }
   auto *forward(int8_t *input) {
-    // implement loading the network first
-    // then the base case
-    // then testing
-    // then AVX2
     for (auto i = 0; i < OutDim; ++i) {
       int sum = biases[i];
       sum += Simd::flatten8<PadInDim>(weights + PadInDim * i, input);

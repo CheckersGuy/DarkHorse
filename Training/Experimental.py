@@ -13,7 +13,6 @@ import numpy as np
 from focal_loss.focal_loss import FocalLoss
 import adabelief_pytorch
 from ranger_adabelief import RangerAdaBelief
-from sophia import SophiaG
 L1 =2*1024
 L2 =16
 L3 = 32
@@ -30,7 +29,7 @@ class Network(pl.LightningModule):
         self.gamma = 0.98
 
 
-        self.num_buckets =4
+        self.num_buckets =16*16
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
