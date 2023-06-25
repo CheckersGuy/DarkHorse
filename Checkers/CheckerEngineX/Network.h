@@ -19,17 +19,8 @@
 
 class Network;
 
-struct Layer {
-  const int in_features;
-  const int out_features;
-  const int8_t *weights;
-  const int32_t *bias;
-
-  Layer(int in, int out, int8_t *weights, int32_t *bias);
-};
-
 struct Accumulator {
-  static constexpr int OutDim = 2048;
+  static constexpr int OutDim = 2 * 1024;
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
   int16_t *ft_biases;
@@ -61,7 +52,6 @@ struct Accumulator {
 
 struct Network {
   constexpr static size_t ALIGNMENT = 64;
-  std::vector<Layer> layers;
   int max_units{0};
   Accumulator accumulator;
   QLayer<1024, 16, Activation::SqRelu> first;
@@ -78,18 +68,6 @@ struct Network {
   int operator[](int index);
 
   friend class Accumulator;
-
-  friend std::ostream &operator<<(std::ostream &stream, const Network &other) {
-    stream << "Num_Layers: " << other.layers.size() << std::endl;
-    for (auto &layer : other.layers) {
-      stream << "Layer: "
-             << "InFeatures: " << layer.in_features
-             << " OutFeatures: " << layer.out_features << std::endl;
-      ;
-    }
-
-    return stream;
-  }
 };
 
 #endif // READING_NETWORK_H

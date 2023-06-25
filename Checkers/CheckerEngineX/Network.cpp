@@ -10,10 +10,6 @@
 
 // Note:: Should look at the accumulator because it's using the input variable
 // as well
-
-Layer::Layer(int in, int out, int8_t *w, int32_t *b)
-    : in_features(in), out_features(out), weights(w), bias(b) {}
-
 void Accumulator::refresh() {
   for (auto i = 0; i < OutDim; ++i) {
     white_acc[i] = ft_biases[i];
@@ -154,7 +150,7 @@ int32_t *Network::compute_incre_forward_pass(Position next) {
     z_previous = accumulator.white_acc;
   }
   accumulator.update(next.color, next);
-  Simd::accum_activation8<2048>(z_previous, input);
+  Simd::accum_activation8<2 * 1024>(z_previous, input);
   auto *out = first.forward(input);
   out = second.forward(out);
   auto *eval = output.forward(out);
