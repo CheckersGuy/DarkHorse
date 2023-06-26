@@ -18,7 +18,6 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-msse2")
   add_compile_options("-fno-peel-loops")
 
-  # set(CMAKE_CXX_COMPILER "clang++")
 include(CheckIPOSupported)
 check_ipo_supported()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")

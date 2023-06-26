@@ -404,5 +404,34 @@ inline int flatten8_128(const int8_t *weights, const int8_t *input,
 
 #endif
 }
+inline __m128i m256_haddx4(__m256i sum0, __m256i sum1, __m256i sum2,
+                           __m256i sum3, __m128i bias) {
+  sum0 = _mm256_hadd_epi32(sum0, sum1);
+  sum2 = _mm256_hadd_epi32(sum2, sum3);
+
+  sum0 = _mm256_hadd_epi32(sum0, sum2);
+
+  __m128i sum128lo = _mm256_castsi256_si128(sum0);
+  __m128i sum128hi = _mm256_extracti128_si256(sum0, 1);
+
+  return _mm_add_epi32(_mm_add_epi32(sum128lo, sum128hi), bias);
+};
+inline void m256_add_dpbusd_epi32(__m256i &acc, __m256i a, __m256i b) {
+  __m256i product0 = _mm256_maddubs_epi16(a, b);
+
+  __m256i one = _mm256_set1_epi16(1);
+  product0 = _mm256_madd_epi16(product0, one);
+  acc = _mm256_add_epi32(acc, product0);
+}
+
+inline void m256_add_dpbusd_epi32x2(__m256i &acc, __m256i a0, __m256i b0,
+                                    __m256i a1, __m256i b1) {
+  // more unrolling fun -> we save 1 addition
+  __m256i product0 = _mm256_maddubs_epi16(a0, b0);
+  __m256i product1 = _mm256_maddubs_epi16(a1, b1);
+  product0 = _mm256_madd_epi16(product0, _mm256_set1_epi16(1));
+  product1 = _mm256_madd_epi16(product1, _mm256_set1_epi16(1));
+  acc = _mm256_add_epi32(acc, _mm256_add_epi32(product0, product1));
+}
 
 } // namespace Simd

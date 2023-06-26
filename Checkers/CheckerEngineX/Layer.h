@@ -2,6 +2,7 @@
 #include "Simd.h"
 #include <algorithm>
 #include <cstdint>
+#include <emmintrin.h>
 #include <fstream>
 #include <immintrin.h>
 #include <iostream>
@@ -33,10 +34,11 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
 
   alignas(CACHE_LINE_SIZE) int32_t biases[OutDim];
   alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim];
-  alignas(CACHE_LINE_SIZE) int32_t buffer[OutDim] = {0};
+  alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
 
   int get_weight_index(int index) {
-    // we unroll the outer loop by 4
+    // Check if this is correct
+    //  we unroll the outer loop by 4
     const int BLOCK_ROWS = 4;
     const int BLOCK_COLS = 32;
 
@@ -45,24 +47,26 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     const int BLOCK_SIZE = BLOCK_ROWS * BLOCK_COLS;
     int NUM_ROW_BLOCKS = PadInDim / BLOCK_COLS;
 
-    int row = ROW / BLOCK_COLS;
+    int row = ROW / BLOCK_ROWS;
     int col = COL / BLOCK_COLS;
     //  std::cout << "RowBlock: " << row << std::endl;
     //  std::cout << "RowCol:" << col << std::endl;
-    int block_row = row % BLOCK_ROWS;
-    int block_col = row % BLOCK_COLS;
+    int block_row = ROW % BLOCK_ROWS;
+    int block_col = COL % BLOCK_COLS;
 
     // std::cout << "BlockRow: " << block_row << std::endl;
     // std::cout << "BlockCol: " << block_col << std::endl;
     // std::cout << "Index: (" << row << ", " << col << ")" << std::endl;
 
-    return (PadInDim / BLOCK_COLS) * row * BLOCK_SIZE + col * BLOCK_SIZE +
-           block_row * BLOCK_ROWS + block_col;
+    int out = (PadInDim / BLOCK_COLS) * row * BLOCK_SIZE + col * BLOCK_SIZE +
+              block_row * BLOCK_COLS + block_col;
+    return out;
   }
 
   void load_params(std::ifstream &stream) {
+
     if constexpr ((OutDim % 4) == 0) {
-      int8_t temp_weights[PadInDim * PadOutDim];
+      int8_t temp_weights[PadInDim * OutDim] = {0};
       for (auto i = 0; i < OutDim; ++i) {
         for (auto j = 0; j < PadInDim; ++j) {
           int8_t weight;
@@ -72,13 +76,15 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
             weight = 0;
           }
 
-          // temp_weights[i * PadInDim + j] = weight;
-
-          weights[i * PadInDim + j] = weight;
+          temp_weights[i * PadInDim + j] = weight;
         }
       }
-      // reordering weights
-
+      // weirdd stuff happening
+      //  reordering weights
+      for (int i = 0; i < PadInDim * OutDim; ++i) {
+        auto index = get_weight_index(i);
+        weights[index] = temp_weights[i];
+      }
     } else {
 
       for (auto i = 0; i < OutDim; ++i) {
@@ -98,10 +104,38 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
   }
   auto *forward(int8_t *input) {
-    for (auto i = 0; i < OutDim; ++i) {
-      int sum = biases[i];
-      sum += Simd::flatten8<PadInDim>(weights + PadInDim * i, input);
-      buffer[i] = sum / 64;
+    if constexpr ((OutDim % 4) != 0) {
+      for (auto i = 0; i < OutDim; ++i) {
+        int sum = biases[i];
+        sum += Simd::flatten8<PadInDim>(weights + PadInDim * i, input);
+        buffer[i] = sum / 64;
+      }
+    } else {
+      constexpr int in_chunks = PadInDim / 32; // number of blocks in a  row
+      constexpr int out_chunks = OutDim / 4;   // number of blocks in a column
+      const auto *in = reinterpret_cast<const __m256i *>(input);
+      const auto *bias = reinterpret_cast<const __m128i *>(biases);
+      auto *out = reinterpret_cast<__m128i *>(buffer);
+
+      for (auto i = 0; i < out_chunks; ++i) {
+        __m256i acc[4] = {_mm256_setzero_si256()};
+        int block_index = i * PadInDim * 4;
+        for (auto j = 0; j < in_chunks; ++j) {
+          const auto in_reg = _mm256_load_si256(in + j);
+          const auto weight_index = block_index + j * 128;
+
+          const auto *weight_vec =
+              reinterpret_cast<const __m256i *>(weights + weight_index);
+          for (auto k = 0; k < 4; ++k) {
+            const auto weight = _mm256_load_si256(&weight_vec[k]);
+            Simd::m256_add_dpbusd_epi32(acc[k], in_reg, weight);
+          }
+        }
+        const __m128i b = _mm_load_si128(bias + i);
+        auto out_val = Simd::m256_haddx4(acc[0], acc[1], acc[2], acc[3], b);
+        out_val = _mm_srai_epi32(out_val, 6);
+        _mm_store_si128(out + i, out_val);
+      }
     }
 
     if constexpr (ac == Id) {
