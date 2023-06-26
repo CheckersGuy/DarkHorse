@@ -8,7 +8,7 @@
 static constexpr int BLOCK_ROWS = 2;
 static constexpr int BLOCK_COLS = 2;
 static constexpr int INPUT_SIZE = 8; // number of columns in the input matrix
-
+/*
 int get_weight_index(int index) {
   const int ROW = index / INPUT_SIZE;
   const int COL = index % INPUT_SIZE;
@@ -55,3 +55,4 @@ int main(const int argl, const char **argc) {
   auto test_index = get_weight_index(index);
   std::cout << "Index: " << test_index << std::endl;
 }
+*/
