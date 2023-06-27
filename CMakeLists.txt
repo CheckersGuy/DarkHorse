@@ -19,11 +19,18 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-fno-peel-loops")
   #add_link_options("-lstdc++")
 
-include(CheckIPOSupported)
-check_ipo_supported()
+  if(UNIX)
+    include(CheckIPOSupported)
+    check_ipo_supported()
+    find_package(Protobuf REQUIRED)
+    include_directories(${Protobuf_INCLUDE_DIRS})
+  endif()
+  if(WIN32)
+    set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
+  endif()
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
-find_package(Protobuf REQUIRED)
-include_directories(${Protobuf_INCLUDE_DIRS})
+
 
 if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)
@@ -48,30 +55,32 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/m
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+
+if (UNIX)
 add_executable(testing ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
-
-
 set_target_properties(MainEngine PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
-add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
+endif()
 
+if(WIN32)
+  add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
+endif()
 
-add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${THeaders} ${TSources})
-set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training")
-
+if(UNIX)
+  add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${THeaders} ${TSources})
+  set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training")
+endif()
 
 if (UNIX)
     add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources} ${PROTO_SRCS} ${PROTO_HDRS})
     set_target_properties(Train PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
+    set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 
-
-#target_compile_definitions(MainEngine PUBLIC "USE_DB")
-#target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
-#target_link_libraries(Dark  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
+if(UNIX)
 target_link_libraries(Train ${Protobuf_LIBRARIES})
 target_link_libraries(pyhelper ${Protobuf_LIBRARIES})
+endif()
+
