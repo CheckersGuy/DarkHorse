@@ -17,6 +17,7 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-msse4.1")
   add_compile_options("-msse2")
   add_compile_options("-fno-peel-loops")
+  #add_link_options("-lstdc++")
 
 include(CheckIPOSupported)
 check_ipo_supported()
@@ -67,6 +68,7 @@ if (UNIX)
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
+
 
 #target_compile_definitions(MainEngine PUBLIC "USE_DB")
 #target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)

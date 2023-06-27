@@ -29,8 +29,6 @@ inline int32_t hsum_8x32(__m256i v) {
 
 template <int input_size>
 inline void accum_activation(int16_t *acc, int16_t *out) {
-  // combined the element-wise multiplicaiton and the square clipped relu
-  // maybe its a good idea to split this up at some point
 #ifdef AVX256
 
   constexpr int num_chunks = input_size / 16;
@@ -140,44 +138,6 @@ inline void accum_activation8(int16_t *acc, int8_t *out) {
 #endif // DEBUG
 }
 
-inline void square_clipped(int32_t *input, int16_t *output, const int length) {
-// to be continued
-#ifdef AVX256
-  const int control = 0b11011000;
-  const int num_chunks = length / 8;
-  auto *in = reinterpret_cast<const __m256i *>(input);
-  auto *out = reinterpret_cast<__m256i *>(output);
-  const auto max_val = _mm256_set1_epi16(127);
-  const auto min_val = _mm256_set1_epi16(0);
-
-  for (auto i = 0; i < num_chunks / 2; ++i) {
-    auto temp = _mm256_load_si256(in + 2 * i);
-    auto temp2 = _mm256_load_si256(in + 2 * i + 1);
-
-    // 16 bit integers below
-    auto packed =
-        _mm256_permute4x64_epi64(_mm256_packs_epi32(temp, temp2), control);
-
-    packed = _mm256_max_epi16(packed, min_val);
-    packed = _mm256_min_epi16(packed, max_val);
-
-    auto result = _mm256_srli_epi16(_mm256_mullo_epi16(packed, packed), 7);
-    _mm256_store_si256(out + i, result);
-  }
-
-#endif
-
-#ifdef BASE
-
-  for (auto i = 0; i < length; ++i) {
-    int val = std::clamp(input[i], 0, 127);
-    val = val * val;
-    val = val / 128;
-    output[i] = val;
-  }
-
-#endif
-}
 template <int length>
 inline void square_clipped8(int32_t *input, int8_t *output) {
 
@@ -224,77 +184,6 @@ inline void square_clipped8(int32_t *input, int8_t *output) {
 #endif
 }
 
-inline void square_clipped8_128(int32_t *input, int8_t *output,
-                                const int length) {
-  // to be continued
-#ifdef AVX256
-  const int num_chunks = length / 4;
-  auto *in = reinterpret_cast<const __m128i *>(input);
-  auto *out = reinterpret_cast<__m128i *>(output);
-  const auto max_val = _mm_set1_epi16(127);
-  const auto min_val = _mm_set1_epi16(0);
-  for (auto i = 0; i < num_chunks / 4; ++i) {
-    auto temp1 = _mm_load_si128(in + 4 * i);
-    auto temp2 = _mm_load_si128(in + 4 * i + 1);
-    auto temp3 = _mm_load_si128(in + 4 * i + 2);
-    auto temp4 = _mm_load_si128(in + 4 * i + 3);
-
-    auto packed1 = _mm_packs_epi32(temp1, temp2);
-    auto packed2 = _mm_packs_epi32(temp3, temp4);
-
-    packed1 = _mm_max_epi16(packed1, min_val);
-    packed1 = _mm_min_epi16(packed1, max_val);
-    packed1 = _mm_mullo_epi16(packed1, packed1);
-    packed1 = _mm_srai_epi16(packed1, 7);
-
-    packed2 = _mm_max_epi16(packed2, min_val);
-    packed2 = _mm_min_epi16(packed2, max_val);
-    packed2 = _mm_mullo_epi16(packed2, packed2);
-    packed2 = _mm_srai_epi16(packed2, 7);
-
-    auto result = _mm_packs_epi16(packed1, packed2);
-    _mm_store_si128(out + i, result);
-  }
-
-#endif
-
-#ifdef BASE
-  for (auto i = 0; i < length; ++i) {
-    int val = std::clamp(input[i], 0, 127);
-    val = (val * val) / 128;
-    output[i] = val;
-  }
-
-#endif
-}
-
-template <int length>
-int flatten(const int16_t *weights, const int16_t *input) {
-#ifdef AVX256
-  __m256i acc = _mm256_setzero_si256();
-
-  const int num_chunks = length / 16;
-  auto *w = reinterpret_cast<const __m256i *>(weights);
-  auto *in = reinterpret_cast<const __m256i *>(input);
-
-  for (auto i = 0; i < num_chunks; ++i) {
-    auto w_temp = _mm256_load_si256(w + i);
-    auto in_temp = _mm256_load_si256(in + i);
-    auto sum = _mm256_madd_epi16(w_temp, in_temp);
-    acc = _mm256_add_epi32(acc, sum);
-  }
-  return hsum_8x32(acc);
-#endif
-
-#ifdef BASE
-  int32_t sum = 0;
-  for (auto i = 0; i < length; ++i) {
-    sum += input[i] * weights[i];
-  }
-  return sum;
-
-#endif
-}
 template <int length> inline void vec_add(const int16_t *input, int16_t *out) {
 #ifdef AVX256
   // some experimental stuff
@@ -375,35 +264,7 @@ inline int flatten8(const int8_t *weights, const int8_t *input) {
 
 #endif
 }
-inline int flatten8_128(const int8_t *weights, const int8_t *input,
-                        const int length) {
-#ifdef AVX256
-  __m128i acc = _mm_setzero_si128();
 
-  const int num_chunks = length / 16;
-  auto *w = reinterpret_cast<const __m128i *>(weights);
-  auto *in = reinterpret_cast<const __m128i *>(input);
-  for (auto i = 0; i < num_chunks; ++i) {
-    auto w_temp = _mm_load_si128(w + i);
-    auto in_temp = _mm_load_si128(in + i);
-
-    auto temp = _mm_maddubs_epi16(in_temp, w_temp);
-    __m128i one = _mm_set1_epi16(1);
-    auto product = _mm_madd_epi16(one, temp);
-    acc = _mm_add_epi32(acc, product);
-  }
-  return hsum_epi32_avx(acc);
-#endif
-#ifdef BASE
-  int sum = 0;
-  for (auto i = 0; i < length; ++i) {
-    sum += input[i] * weights[i];
-  }
-
-  return sum;
-
-#endif
-}
 inline __m128i m256_haddx4(__m256i sum0, __m256i sum1, __m256i sum2,
                            __m256i sum3, __m128i bias) {
   sum0 = _mm256_hadd_epi32(sum0, sum1);
@@ -422,16 +283,6 @@ inline void m256_add_dpbusd_epi32(__m256i &acc, __m256i a, __m256i b) {
   __m256i one = _mm256_set1_epi16(1);
   product0 = _mm256_madd_epi16(product0, one);
   acc = _mm256_add_epi32(acc, product0);
-}
-
-inline void m256_add_dpbusd_epi32x2(__m256i &acc, __m256i a0, __m256i b0,
-                                    __m256i a1, __m256i b1) {
-  // more unrolling fun -> we save 1 addition
-  __m256i product0 = _mm256_maddubs_epi16(a0, b0);
-  __m256i product1 = _mm256_maddubs_epi16(a1, b1);
-  product0 = _mm256_madd_epi16(product0, _mm256_set1_epi16(1));
-  product1 = _mm256_madd_epi16(product1, _mm256_set1_epi16(1));
-  acc = _mm256_add_epi32(acc, _mm256_add_epi32(product0, product1));
 }
 
 } // namespace Simd

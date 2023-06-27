@@ -64,7 +64,6 @@ inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
 
 inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
-const size_t NUM_BUCKETS = 1;
 constexpr int prob_cut = 30; // 30;
 constexpr int asp_wind = 10; // 15;
 constexpr int MAX_ASP = 200;
@@ -106,6 +105,31 @@ enum MoveType {
   PawnCapture,
   PromoCapture
 };
+inline void *std_aligned_alloc(size_t alignment, size_t size) {
+#if defined(POSIXALIGNEDALLOC)
+  void *mem;
+  return posix_memalign(&mem, alignment, size) ? nullptr : mem;
+#elif defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
+  return _mm_malloc(size, alignment);
+#elif defined(_WIN32)
+  return _aligned_malloc(size, alignment);
+#else
+  return std::aligned_alloc(alignment, size);
+#endif
+}
+
+inline void std_aligned_free(void *ptr) {
+
+#if defined(POSIXALIGNEDALLOC)
+  free(ptr);
+#elif defined(_WIN32) && !defined(_M_ARM) && !defined(_M_ARM64)
+  _mm_free(ptr);
+#elif defined(_WIN32)
+  _aligned_free(ptr);
+#else
+  free(ptr);
+#endif
+}
 
 inline bool isEval(Value val) { return std::abs(val) <= EVAL_INFINITE; }
 

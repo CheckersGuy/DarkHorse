@@ -1,5 +1,6 @@
 // #include "Network.h"
 #include "Simd.h"
+#include "types.h"
 #include <algorithm>
 #include <cstdint>
 #include <emmintrin.h>
@@ -37,8 +38,7 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
 
   int get_weight_index(int index) {
-    // Check if this is correct
-    //  we unroll the outer loop by 4
+
     const int BLOCK_ROWS = 4;
     const int BLOCK_COLS = 32;
 
@@ -49,14 +49,9 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
 
     int row = ROW / BLOCK_ROWS;
     int col = COL / BLOCK_COLS;
-    //  std::cout << "RowBlock: " << row << std::endl;
-    //  std::cout << "RowCol:" << col << std::endl;
+
     int block_row = ROW % BLOCK_ROWS;
     int block_col = COL % BLOCK_COLS;
-
-    // std::cout << "BlockRow: " << block_row << std::endl;
-    // std::cout << "BlockCol: " << block_col << std::endl;
-    // std::cout << "Index: (" << row << ", " << col << ")" << std::endl;
 
     int out = (PadInDim / BLOCK_COLS) * row * BLOCK_SIZE + col * BLOCK_SIZE +
               block_row * BLOCK_COLS + block_col;
@@ -64,7 +59,7 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   }
 
   void load_params(std::ifstream &stream) {
-
+    //
     if constexpr ((OutDim % 4) == 0) {
       int8_t temp_weights[PadInDim * OutDim] = {0};
       for (auto i = 0; i < OutDim; ++i) {
@@ -79,14 +74,12 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
           temp_weights[i * PadInDim + j] = weight;
         }
       }
-      // weirdd stuff happening
-      //  reordering weights
       for (int i = 0; i < PadInDim * OutDim; ++i) {
         auto index = get_weight_index(i);
         weights[index] = temp_weights[i];
       }
+      stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
     } else {
-
       for (auto i = 0; i < OutDim; ++i) {
         for (auto j = 0; j < PadInDim; ++j) {
           int8_t weight;
@@ -99,11 +92,10 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
           weights[i * PadInDim + j] = weight;
         }
       }
+      stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
     }
-
-    stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
   }
-  auto *forward(int8_t *input) {
+  auto *forward(int8_t *input, int bucket_index) {
     if constexpr ((OutDim % 4) != 0) {
       for (auto i = 0; i < OutDim; ++i) {
         int sum = biases[i];
