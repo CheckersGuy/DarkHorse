@@ -46,7 +46,8 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   size_t total_nodes = 0;
   size_t total_time = 0;
   auto test_time = getSystemTime();
-  for (int i = 1; i <= depth; i += 2) {
+  int i;
+  for (i = 1; i <= depth; i += 2) {
     auto start_time = getSystemTime();
     std::stringstream ss;
     nodeCounter = 0;
