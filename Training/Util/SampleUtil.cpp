@@ -133,8 +133,6 @@ void sort_raw_data(std::string raw_data, std::string copy) {
     Entry &entry = my_map[sample.position];
     entry.w_win += (sample.result == WHITE_WON);
     entry.b_win += (sample.result == BLACK_WON);
-    entry.draw += (sample.result == DRAW);
-    entry.unknown += (sample.result == UNKNOWN);
   }
   samples.clear();
   std::vector<Sample> new_samples;
@@ -234,7 +232,6 @@ void get_game_stats(std::string input_proto, GameStat &stats) {
         stats.num_unqiue++;
         filter.insert(sample.position);
       }
-      stats.bucket_distrib[sample.position.bucket_index()]++;
     }
     auto result = get_game_result(game);
     stats.num_wins += (result != DRAW);

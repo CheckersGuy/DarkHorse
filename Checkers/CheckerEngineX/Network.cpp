@@ -20,10 +20,10 @@ void Accumulator::refresh() {
 }
 
 void Accumulator::load_weights(std::ifstream &stream) {
-  ft_weights = (int16_t *)std::aligned_alloc(Network::ALIGNMENT,
-                                             (120 * OutDim) * sizeof(int16_t));
-  ft_biases = (int16_t *)std::aligned_alloc(Network::ALIGNMENT,
-                                            OutDim * sizeof(int16_t));
+  ft_weights = (int16_t *)std_aligned_alloc(Network::ALIGNMENT,
+                                            (120 * OutDim) * sizeof(int16_t));
+  ft_biases = (int16_t *)std_aligned_alloc(Network::ALIGNMENT,
+                                           OutDim * sizeof(int16_t));
   stream.read((char *)ft_weights, sizeof(int16_t) * (OutDim * 120));
   stream.read((char *)ft_biases, sizeof(int16_t) * (OutDim));
 
@@ -34,8 +34,8 @@ void Accumulator::load_weights(std::ifstream &stream) {
 }
 
 Accumulator::~Accumulator() {
-  free(ft_biases);
-  free(ft_weights);
+  std_aligned_free(ft_biases);
+  std_aligned_free(ft_weights);
 }
 
 void Accumulator::apply(Color perp, Position before, Position after) {
@@ -129,6 +129,18 @@ void Accumulator::update(Color perp, Position after) {
   }
 }
 
+int8_t *Accumulator::forward(int8_t *in, const Position &next) {
+  int16_t *z_previous;
+  if (next.color == BLACK) {
+    z_previous = black_acc;
+  } else {
+    z_previous = white_acc;
+  }
+  update(next.color, next);
+  Simd::accum_activation8<OutDim>(z_previous, in);
+  return in;
+}
+
 void Network::load_bucket(std::string file) {
 
   std::ifstream stream(file, std::ios::binary);
@@ -136,6 +148,7 @@ void Network::load_bucket(std::string file) {
     std::cerr << "Could not load network file, path " << file << std::endl;
     std::exit(-1);
   }
+  // need to load buckets
   accumulator.load_weights(stream);
   first.load_params(stream);
   second.load_params(stream);
@@ -143,18 +156,11 @@ void Network::load_bucket(std::string file) {
 }
 
 int32_t *Network::compute_incre_forward_pass(Position next) {
-  int16_t *z_previous;
-  if (next.color == BLACK) {
-    z_previous = accumulator.black_acc;
-  } else {
-    z_previous = accumulator.white_acc;
-  }
-  accumulator.update(next.color, next);
-  Simd::accum_activation8<2 * 1024>(z_previous, input);
-  auto *out = first.forward(input);
-  out = second.forward(out);
-  auto *eval = output.forward(out);
-  return eval;
+  auto bucket_index = next.bucket_index();
+  auto *out = accumulator.forward(input, next);
+  out = first.forward(out, bucket_index);
+  out = second.forward(out, bucket_index);
+  return output.forward(out, bucket_index);
 }
 
 int Network::operator[](int index) { return input[index]; }

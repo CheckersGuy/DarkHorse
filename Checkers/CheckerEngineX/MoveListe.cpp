@@ -32,7 +32,6 @@ void MoveListe::sort(Position current, Local &local, Move ttMove,
     scores[j] = tmp;
   }
 }
-
 void MoveListe::remove(Move move) {
 
   int i;

@@ -48,6 +48,8 @@ struct Accumulator {
   void refresh();
 
   void load_weights(std::ifstream &stream);
+
+  int8_t *forward(int8_t *in, const Position &next);
 };
 
 struct Network {
