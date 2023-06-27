@@ -1,6 +1,6 @@
 #include "CheckerBoard.h"
 #include <fstream>
-std::ofstream debug("debug.file", std::ios::app);
+#include <string>
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -45,12 +45,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // CheckerBoard Bug
   auto m = Position::get_move(game_board.get_position(), temp);
   if (m.has_value()) {
-    // debug<<"Move played by opponent"<<std::endl;
-    // debug<<"From: "<<m->get_from_index()<<" To:
-    // "<<m->get_to_index()<<std::endl;
     game_board.play_move(m.value());
   } else {
-    // debug<<"Reset move, because we didnt find it"<<std::endl;
     TT.clear();
     game_board = Board{};
     game_board = temp;
@@ -59,28 +55,17 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     network.load_bucket("int8test.quant");
-    TT.resize(22);
+    TT.resize(21);
     initialize();
     Statistics::mPicker.init();
     engine_initialized = true;
+    glob.reply = str;
   }
-  uint32_t time_to_use = static_cast<int>(maxtime * 1000);
-  // debug<<"Time to use: " << time_to_use<<"\n";
-  // debug<<"Fen: "<<game_board.get_position().get_fen_string()<<std::endl;
+  uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
   Move best;
   auto value =
-      searchValue(game_board, best, MAX_PLY, time_to_use, false, debug);
-  // debug<<"\n";
-  // debug<<"Found the move: "<<" From: "<<best.get_from_index()<< " To:
-  // "<<best.get_to_index()<<std::endl;
+      searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
   game_board.play_move(best);
-
-  /* 	MoveListe liste;
-          get_moves(game_board.get_position(),liste);
-          game_board.make_move(liste[0]);
-          last_position = game_board.get_position(); */
-
-  // update the board
 
   Position c = game_board.get_position();
   for (auto i = 0; i < 32; ++i) {
@@ -105,8 +90,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       board[col][row] = CB_FREE;
     }
   }
-  // debug<<"Position after we moved"<<"\n";
-  // debug<<game_board.get_position().get_pos_string();
 
   if (isMateVal(value)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
@@ -137,8 +120,8 @@ int enginecommand(char str[256], char reply[1024]) {
 
   if (strcmp(command, "staticevaluation") == 0) {
     Move best;
-    // auto value = searchValue(game_board,best, 0, 100000000, true,);
-    // static_eval(param1, reply);
+    auto *eval = network.compute_incre_forward_pass(game_board.get_position());
+    strcpy(reply, std::to_string(*eval).c_str());
     return (1);
   }
 

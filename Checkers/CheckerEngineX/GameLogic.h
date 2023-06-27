@@ -3,9 +3,7 @@
 #ifndef CHECKERSTEST_GAMELOGIC_H
 #define CHECKERSTEST_GAMELOGIC_H
 
-#ifdef USE_DB
-#include "egdb.h"
-#endif
+#define CHECKERBOARD
 
 #include "Bits.h"
 #include "Board.h"
@@ -18,7 +16,9 @@
 #include <types.h>
 struct SearchGlobal {
   uint32_t sel_depth;
-
+#ifdef CHECKERBOARD
+  char *reply;
+#endif
   // will be called whenever we find a new move
   void new_move();
 
