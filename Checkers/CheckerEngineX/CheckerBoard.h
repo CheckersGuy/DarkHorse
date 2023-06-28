@@ -1,3 +1,4 @@
+#define CHECKERBOARD
 #include "GameLogic.h"
 #include <iostream>
 #include <stdint.h>
@@ -152,4 +153,3 @@ inline int coorstonumber(int x, int y, int gametype) {
 
   return number;
 }
-

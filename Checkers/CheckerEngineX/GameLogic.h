@@ -3,8 +3,6 @@
 #ifndef CHECKERSTEST_GAMELOGIC_H
 #define CHECKERSTEST_GAMELOGIC_H
 
-#define CHECKERBOARD
-
 #include "Bits.h"
 #include "Board.h"
 #include "Line.h"
