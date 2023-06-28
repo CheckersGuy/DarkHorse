@@ -119,6 +119,15 @@ int enginecommand(char str[256], char reply[1024]) {
   }
 
   if (strcmp(command, "staticevaluation") == 0) {
+    if (!engine_initialized) {
+      network.load_bucket("int8test.quant");
+      TT.resize(21);
+      initialize();
+      Statistics::mPicker.init();
+      engine_initialized = true;
+      glob.reply = str;
+    }
+
     Move best;
     auto *eval = network.compute_incre_forward_pass(game_board.get_position());
     strcpy(reply, std::to_string(*eval).c_str());
