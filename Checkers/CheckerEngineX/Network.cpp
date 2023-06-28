@@ -129,7 +129,7 @@ void Accumulator::update(Color perp, Position after) {
   }
 }
 
-int8_t *Accumulator::forward(int8_t *in, const Position &next) {
+uint8_t *Accumulator::forward(uint8_t *in, const Position &next) {
   int16_t *z_previous;
   if (next.color == BLACK) {
     z_previous = black_acc;

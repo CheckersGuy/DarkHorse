@@ -59,7 +59,6 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   }
 
   void load_params(std::ifstream &stream) {
-    //
     if constexpr ((OutDim % 4) == 0) {
       int8_t temp_weights[PadInDim * OutDim] = {0};
       for (auto i = 0; i < OutDim; ++i) {
@@ -95,7 +94,7 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
       stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
     }
   }
-  auto *forward(int8_t *input, int bucket_index) {
+  auto *forward(uint8_t *input, int bucket_index) {
     if constexpr ((OutDim % 4) != 0) {
       for (auto i = 0; i < OutDim; ++i) {
         int sum = biases[i];
