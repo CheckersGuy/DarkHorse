@@ -49,7 +49,7 @@ struct Accumulator {
 
   void load_weights(std::ifstream &stream);
 
-  int8_t *forward(int8_t *in, const Position &next);
+  uint8_t *forward(uint8_t *in, const Position &next);
 };
 
 struct Network {
@@ -59,7 +59,7 @@ struct Network {
   QLayer<1024, 16, Activation::SqRelu> first;
   QLayer<16, 32, Activation ::SqRelu> second;
   QLayer<32, 1> output;
-  alignas(64) int8_t input[2048 + 32 + 32 + 1] = {0};
+  alignas(64) uint8_t input[2048 + 32 + 32 + 1] = {0};
 
   void load_bucket(std::string file);
 
