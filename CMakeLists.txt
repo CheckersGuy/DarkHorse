@@ -65,6 +65,7 @@ endif()
 
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
+  target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
 endif()
 
 if(UNIX)
