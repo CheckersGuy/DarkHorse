@@ -2,6 +2,8 @@
 #include "MovePicker.h"
 #include "Network.h"
 #include "types.h"
+#include <bits/chrono.h>
+#include <chrono>
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -45,10 +47,10 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   }
   size_t total_nodes = 0;
   size_t total_time = 0;
-  auto test_time = getSystemTime();
   int i;
+  double speed = 0;
   for (i = 1; i <= depth; i += 2) {
-    auto start_time = getSystemTime();
+    auto start_time = std::chrono::high_resolution_clock::now();
     std::stringstream ss;
     nodeCounter = 0;
     try {
@@ -58,25 +60,34 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
     }
     total_nodes += nodeCounter;
 
-    auto time = (getSystemTime() - start_time);
-    total_time += time;
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        end_time - start_time)
+                        .count();
+    if (duration > 0)
+      speed = (double)nodeCounter / (double)duration;
+    total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
+                      end_time - start_time)
+                      .count();
     eval = local.best_score;
     best = mainPV.getFirstMove();
+
+    double time_seconds = (double)total_time / 1000.0;
     if (print) {
       std::string temp = std::to_string(eval) + " ";
       ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
       ss << "Nodes: " << total_nodes << " | ";
-      ss << "Time: " << time << "\n";
-      ss << "Speed: " << ((time > 0) ? nodeCounter / time : 0) << " "
-         << mainPV.toString() << "\n\n";
-      ss << "Time needed: " << time << "\n";
+      ss << "Time: " << time_seconds << "\n";
+      ss << "Speed: " << (int)(1000000.0 * speed) << " " << mainPV.toString()
+         << "\n\n";
       stream << ss.str();
     }
 #ifdef CHECKERBOARD
+    double time_seconds = (double)total_time / 1000.0;
     std::stringstream reply_stream;
     reply_stream << "depth " << i << "/" << glob.sel_depth;
-    reply_stream << " time " << (((double)time) / 1000.0);
-    reply_stream << " speed " << ((time > 0) ? nodeCounter / time : 0);
+    reply_stream << " time " << time_seconds;
+    reply_stream << " speed " << (int)(1000000.0 * speed);
     reply_stream << " pv " << mainPV.toString();
     strcpy(glob.reply, reply_stream.str().c_str());
 #endif
@@ -85,15 +96,12 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
       break;
     }
   }
-  if (print) {
-    stream << "TotalNodes: " << total_nodes << "\n";
-    stream << "TotalTime: " << getSystemTime() - test_time << "\n";
-  }
 #ifdef CHECKERBOARD
+  double time_seconds = (double)total_time / 1000.0;
   std::stringstream reply_stream;
   reply_stream << "depth " << i << "/" << glob.sel_depth;
-  reply_stream << " time " << (((double)time) / 1000.0);
-  reply_stream << " speed " << ((time > 0) ? nodeCounter / time : 0);
+  reply_stream << " time " << time_seconds;
+  reply_stream << " speed " << (int)(1000000.0 * speed);
   reply_stream << " pv " << mainPV.toString();
   strcpy(glob.reply, reply_stream.str().c_str());
 #endif
