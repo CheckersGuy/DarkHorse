@@ -83,7 +83,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
       stream << ss.str();
     }
 #ifdef CHECKERBOARD
-    double time_seconds = (double)total_time / 1000.0;
     std::stringstream reply_stream;
     reply_stream << "depth " << i << "/" << glob.sel_depth;
     reply_stream << " time " << time_seconds;
