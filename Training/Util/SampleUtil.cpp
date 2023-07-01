@@ -8,13 +8,48 @@
 #include <chrono>
 #include <cstdint>
 #include <fcntl.h>
-#include <fstream>
 #include <random>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <thread>
 #include <vector>
+
+void gather_positions(std::vector<std::string> data, std::string output) {
+
+  // works for game_data and sample data
+  std::ofstream out_stream(output);
+  if (!out_stream.good()) {
+    std::exit(-1);
+  }
+
+  BloomFilter<Position> filter(40711816683, 6);
+  size_t unique_counter = 0;
+  auto from_samples = [&](std::string input) {
+    std::ifstream stream(input);
+    if (!stream.good()) {
+      std::exit(-1);
+    }
+
+    for (;;) {
+      Sample current;
+      stream.read((char *)&current, sizeof(Sample));
+      if (!filter.has(current.position)) {
+        unique_counter++;
+        out_stream.write((char *)&current.position, sizeof(Sample));
+      }
+      filter.insert(current.position);
+      if (!stream.good()) {
+        break;
+      }
+    }
+  };
+
+  for (auto &file : data) {
+    from_samples(file);
+  }
+  std::cout << "UniquePositions: " << unique_counter << std::endl;
+}
 
 std::vector<Sample> extract_sample(const Proto::Game &game) {
   // extracting samples;

@@ -17,6 +17,8 @@ struct SearchGlobal {
 #ifdef CHECKERBOARD
   char *reply;
 #endif
+
+  bool stop_search = false;
   // will be called whenever we find a new move
   void new_move();
 

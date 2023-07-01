@@ -7,13 +7,13 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // to be implemented
 
   if (info & CB_RESET_MOVES) {
-    // debug<<"Reset moves"<<"\n";
     game_board = Board{};
     game_board = Position::get_start_position();
     TT.age_counter = 0;
     TT.clear();
+    glob.stop_search = true;
   }
-  // setting the board
+  // dunno if this is going to work
 
   Position temp;
   for (auto i = 0; i < 32; ++i) {

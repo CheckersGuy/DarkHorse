@@ -17,7 +17,7 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-msse4.1")
   add_compile_options("-msse2")
   add_compile_options("-fno-peel-loops")
-  #add_link_options("-lstdc++")
+  add_link_options("-lstdc++")
 
   if(UNIX)
     include(CheckIPOSupported)
@@ -65,7 +65,7 @@ endif()
 
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
+  target_compile_definitions(Dark "CHECKERBOARD")
 endif()
 
 if(UNIX)

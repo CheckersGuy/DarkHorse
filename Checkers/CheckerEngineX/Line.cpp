@@ -27,8 +27,8 @@ void Line::concat(const Move &best, const Line &line) {
 std::string Line::toString() const {
   std::string current;
   for (int k = 0; k < length(); ++k) {
-    current += std::to_string(myArray[k].get_from_index()) + "-";
-    current += std::to_string(myArray[k].get_to_index()) + " ";
+    current += std::to_string(myArray[k].get_from_index() + 1) + "-";
+    current += std::to_string(myArray[k].get_to_index() + 1) + " ";
   }
   return current;
 }
