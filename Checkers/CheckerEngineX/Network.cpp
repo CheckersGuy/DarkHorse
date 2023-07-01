@@ -7,9 +7,13 @@
 #include "types.h"
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
+#include <immintrin.h>
 
 // Note:: Should look at the accumulator because it's using the input variable
 // as well
+//
+
 void Accumulator::refresh() {
   for (auto i = 0; i < OutDim; ++i) {
     white_acc[i] = ft_biases[i];
@@ -50,35 +54,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   auto BK_O =
       after.get_pieces<BLACK, KING>() & (~before.get_pieces<BLACK, KING>());
 
-  size_t offset = 0;
-
-  while (WP_O) {
-    auto index = Bits::bitscan_foward(WP_O) - 4 + offset;
-    add_feature(input, index);
-    WP_O &= WP_O - 1;
-  }
-  offset += 28;
-
-  while (BP_O) {
-    auto index = Bits::bitscan_foward(BP_O) + offset;
-    add_feature(input, index);
-    BP_O &= BP_O - 1;
-  }
-  offset += 28;
-
-  while (WK_O) {
-    auto index = Bits::bitscan_foward(WK_O) + offset;
-    add_feature(input, index);
-    WK_O &= WK_O - 1;
-  }
-  offset += 32;
-
-  while (BK_O) {
-    auto index = Bits::bitscan_foward(BK_O) + offset;
-    add_feature(input, index);
-    BK_O &= BK_O - 1;
-  }
-
   auto WP_Z =
       (~after.get_pieces<WHITE, PAWN>()) & (before.get_pieces<WHITE, PAWN>());
   auto BP_Z =
@@ -88,35 +63,118 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   auto BK_Z =
       (~after.get_pieces<BLACK, KING>()) & (before.get_pieces<BLACK, KING>());
 
+  int offset = 0;
+  int num_active = 0;
+  int num_removed = 0;
+  while (WP_O) {
+    auto index = Bits::bitscan_foward(WP_O) - 4 + offset;
+    active_features[num_active++] = index;
+    // add_feature(input, index);
+    WP_O &= WP_O - 1;
+  }
+  offset += 28;
+
+  while (BP_O) {
+    auto index = Bits::bitscan_foward(BP_O) + offset;
+    active_features[num_active++] = index;
+    // add_feature(input, index);
+    BP_O &= BP_O - 1;
+  }
+  offset += 28;
+
+  while (WK_O) {
+    auto index = Bits::bitscan_foward(WK_O) + offset;
+    active_features[num_active++] = index;
+    //    add_feature(input, index);
+    WK_O &= WK_O - 1;
+  }
+  offset += 32;
+
+  while (BK_O) {
+    auto index = Bits::bitscan_foward(BK_O) + offset;
+    active_features[num_active++] = index;
+    //    add_feature(input, index);
+    BK_O &= BK_O - 1;
+  }
+
   offset = 0;
 
-  // to be continued
   while (WP_Z) {
     auto index = Bits::bitscan_foward(WP_Z) - 4 + offset;
-    remove_feature(input, index);
+    removed_features[num_removed++] = index;
+    //  remove_feature(input, index);
     WP_Z &= WP_Z - 1;
   }
   offset += 28;
 
   while (BP_Z) {
     auto index = Bits::bitscan_foward(BP_Z) + offset;
-    remove_feature(input, index);
+    removed_features[num_removed++] = index;
+    // remove_feature(input, index);
     BP_Z &= BP_Z - 1;
   }
   offset += 28;
 
   while (WK_Z) {
     auto index = Bits::bitscan_foward(WK_Z) + offset;
-    remove_feature(input, index);
+    removed_features[num_removed++] = index;
+    // remove_feature(input, index);
     WK_Z &= WK_Z - 1;
   }
   offset += 32;
 
   while (BK_Z) {
     auto index = Bits::bitscan_foward(BK_Z) + offset;
-    remove_feature(input, index);
+    removed_features[num_removed++] = index;
+    // remove_feature(input, index);
     BK_Z &= BK_Z - 1;
   }
+  // std::cout << (num_removed + num_active) << std::endl;
+
+  // testing some stuff
+  auto *accu = reinterpret_cast<__m256i *>(input);
+  constexpr int num_regs = 16; // number of available avx2 registers
+  constexpr int OutRegisters = OutDim / 16; // each register can hold 16 int16_t
+  constexpr int num_chunks =
+      OutRegisters / num_regs; // we have 16 avx2 registers
+
+  for (auto k = 0; k < num_chunks; ++k) {
+    __m256i regs[num_regs];
+
+    for (auto i = 0; i < num_regs; ++i) {
+      regs[i] = _mm256_load_si256(accu + i + k * num_regs);
+    }
+    for (auto i = 0; i < num_active; ++i) {
+      const __m256i *weights =
+          reinterpret_cast<__m256i *>(ft_weights + OutDim * active_features[i]);
+
+      for (auto j = 0; j < num_regs; ++j) {
+        regs[j] = _mm256_add_epi16(
+            _mm256_load_si256(weights + j + k * num_regs), regs[j]);
+      }
+    }
+
+    for (auto i = 0; i < num_removed; ++i) {
+      const __m256i *weights = reinterpret_cast<const __m256i *>(
+          ft_weights + OutDim * removed_features[i]);
+      for (auto j = 0; j < num_regs; ++j) {
+        regs[j] = _mm256_sub_epi16(
+            regs[j], _mm256_load_si256(weights + j + k * num_regs));
+      }
+    }
+    for (auto i = 0; i < num_regs; ++i) {
+      _mm256_store_si256(accu + i + k * num_regs, regs[i]);
+    }
+  }
+  /*
+    for (auto i = 0; i < num_active; ++i) {
+      add_feature(input, active_features[i]);
+    }
+
+    for (auto i = 0; i < num_removed; ++i) {
+      remove_feature(input, removed_features[i]);
+    }
+    */
 }
 
 void Accumulator::update(Color perp, Position after) {

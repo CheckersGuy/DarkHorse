@@ -26,10 +26,10 @@ class Network(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.995
 
 
-        self.num_buckets =32
+        self.num_buckets =16
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)

@@ -21,6 +21,8 @@ void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {
+
+  glob.stop_search = false;
   Statistics::mPicker.clear_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
@@ -110,6 +112,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 #endif
 
   last_eval = eval;
+
   return eval;
 }
 
@@ -133,6 +136,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
 
   if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
+  }
+  if (glob.stop_search) {
+    return -INFINITE;
   }
   // check again if repetition2 = repetition1
   if (ply > 0 && board.is_repetition(last_rev)) {

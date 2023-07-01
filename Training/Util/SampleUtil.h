@@ -2,12 +2,13 @@
 #include "../Sample.h"
 #include "../generator.pb.h"
 #include <fcntl.h>
+#include <fstream>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
 // endgame_cutoff_ply is the length of a game ignoring all positions with less
 // then <=10 pieces
 
@@ -15,7 +16,6 @@ struct GameStat {
   size_t num_wins{0}, num_draws{0};
   size_t num_positions{0};
   size_t num_unqiue{0};
-  double endgame_cutoff_ply{0};
   friend std::ostream &operator<<(std::ostream &stream, const GameStat &other) {
     stream << "Wins: " << other.num_wins << " Draws: " << other.num_draws
            << " NumPositions: " << other.num_positions
@@ -23,6 +23,8 @@ struct GameStat {
     return stream;
   }
 };
+
+void gather_positions(std::vector<std::string> data, std::string output);
 
 void count_real_duplicates(std::string raw_data, std::string output);
 

@@ -22,12 +22,12 @@ bool Sample::operator!=(const Sample &other) const {
   return !((*this) == other);
 }
 
-std::ofstream &operator<<(std::ofstream &stream, const Sample s) {
+std::ofstream &operator<<(std::ofstream &stream, Sample s) {
   stream.write((char *)&s, sizeof(Sample));
   return stream;
 }
 
-std::ifstream &operator>>(std::ifstream &stream, Sample &s) {
+std::ifstream &operator>>(std::ifstream &stream, Sample s) {
   stream.read((char *)&s, sizeof(Sample));
   return stream;
 }
