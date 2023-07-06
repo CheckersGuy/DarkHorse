@@ -9,8 +9,6 @@
 #include <array>
 
 struct Local {
-  Value alpha, beta;
-  Value best_score{-INFINITE};
   Move move, previous, previous_own;
 };
 
