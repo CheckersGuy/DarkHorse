@@ -37,21 +37,15 @@ Value search(Board board, Move &best, Depth depth, uint32_t time, bool print);
 
 namespace Search {
 
-void search_asp(Local &local, Board &board, Value last_score, Depth depth);
+Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <bool is_root>
 Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta,
              Ply ply, Depth depth, int last_rev, Move previous,
              Move previous_own);
 
-void move_loop(bool in_pv, Local &local, Board &board, Line &pv,
-               MoveListe &liste, int last_rev);
-
 Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
          Depth depth, int last_rev);
-
-Value searchMove(bool in_pv, Move move, Local &local, Board &board, Line &line,
-                 int extension, int last_rev);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
