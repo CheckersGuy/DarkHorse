@@ -227,6 +227,7 @@ void Match::start() {
   int mainPipe[num_matches][numEngines][2];
   int enginePipe[num_matches][numEngines][2];
   int game_count = -num_matches;
+  std::cout << "BigTest" << std::endl;
 
   const size_t num_local = positions.size() / num_matches;
   for (int p = 0; p < num_matches; ++p) {
@@ -281,8 +282,8 @@ void Match::start() {
     }
     printf("\r");
     printf("\r");
-    printf("%-5s %-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
-    printf("%-5d %-5d %-5d %-5d", wins_one, wins_two, draws);
+    printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
+    printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
     while (game_count < maxGames) {
       for (int k = 0; k < interfaces.size(); ++k) {
         Interface &inter = interfaces[k];

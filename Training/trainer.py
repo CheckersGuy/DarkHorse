@@ -1,19 +1,12 @@
 from subprocess import run
-import grpc
 import LitMLP
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-import torch
 import Helper as h
 import torch.nn.functional as F
 import numpy as np
 import ctypes
 import pathlib
-import os.path
-import os
-import sys
-import logging
-logging.basicConfig(filename="trainer.log",encoding="utf-8",level = logging.DEBUG)
 import Experimental
 libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
 c_lib = ctypes.CDLL(libname)
@@ -38,7 +31,7 @@ def merge_data(files,output):
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 420
-    model = Experimental.Network()
+    model = Experimental.Network2()
     data_loader = LitMLP.LitDataModule(train_data="TrainData/shuffled.train.raw",
                                        val_data="TrainData/val.train",
                                        batch_size=batch_size, buffer_size=125000000)
@@ -55,10 +48,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/bucket16.ckpt")
-   # trainer.fit(model, data_loader)
-
-    #trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader)
 
 
 #merge_data(["TrainData/window0.train","TrainData/window1.train","TrainData/window2.train","TrainData/window3.train","TrainData/window4.train","TrainData/window5.train", 

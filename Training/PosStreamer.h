@@ -42,7 +42,7 @@ private:
 public:
   PosStreamer(std::string file_path, size_t buff_size = 200000,
               size_t seed = 12312312) {
-
+    std::cout << "Calling constructor" << std::endl;
     this->file_path = file_path;
     gen_seed = seed;
     buffer_size = buff_size;

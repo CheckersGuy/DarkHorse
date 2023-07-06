@@ -1,6 +1,4 @@
 #include <algorithm>
-#include <bits/chrono.h>
-#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <emmintrin.h>
@@ -8,7 +6,6 @@
 #include <iostream>
 #include <memory>
 #include <new>
-#include <random>
 #define AVX256
 
 namespace Simd {
