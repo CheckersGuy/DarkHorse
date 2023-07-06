@@ -59,6 +59,7 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   }
 
   void load_params(std::ifstream &stream) {
+    //
     if constexpr ((OutDim % 4) == 0) {
       int8_t temp_weights[PadInDim * OutDim] = {0};
       for (auto i = 0; i < OutDim; ++i) {

@@ -28,8 +28,9 @@ struct Accumulator {
 
   int size;
   Position previous_black, previous_white;
-  std::array<int, 32> active_features;
   std::array<int, 32> removed_features;
+  std::array<int, 32> active_features;
+  // testing some stuff
 
   ~Accumulator();
 

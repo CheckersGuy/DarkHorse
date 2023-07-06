@@ -339,10 +339,6 @@ int Position::bucket_index() {
   // auto pieces = piece_count();
   //
   // trying buckets once again
-  Position copy = *this;
-  if (copy.get_color() == BLACK) {
-    copy = copy.get_color_flip();
-  }
-  auto index = Bits::pext(copy.BP | copy.WP, PROMO_SQUARES_BLACK);
-  return index;
+
+  return 0;
 }

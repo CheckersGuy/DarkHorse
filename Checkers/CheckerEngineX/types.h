@@ -64,13 +64,14 @@ inline constexpr auto powers5 = get_lut<8>(power_lambda<5>);
 
 inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 
-constexpr int prob_cut = 30; // 30;
+constexpr int prob_cut = 26; // 30;
 constexpr int asp_wind = 10; // 15;
+constexpr int NUM_BUCKETS = 1;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            1, 1, 1, 2, 2, 2, 2, 2, 2,
-                                           2, 2, 2, 2, 2, 2, 2, 2, 2};
+                                           2, 2, 2, 2, 2, 3, 3, 3, 3};
 using Depth = int;
 using Ply = int;
 using Value = int;
@@ -143,22 +144,12 @@ inline bool isLoss(Value val) { return val <= MATED_IN_MAX_PLY; }
 
 inline bool isWin(Value val) { return val >= MATE_IN_MAX_PLY; }
 
-inline Value valueFromTT(Value val, int ply) {
-  if (isLoss(val)) {
-    return val + ply;
-  } else if (isWin(val)) {
-    return val - ply;
-  }
-  return val;
+inline Value value_to_tt(Value v, int ply) {
+  return v >= MATE_IN_MAX_PLY ? v + ply : v <= MATED_IN_MAX_PLY ? v - ply : v;
 }
 
-inline Value toTT(Value val, int ply) {
-  if (isLoss(val)) {
-    return val - ply;
-  } else if (isWin(val)) {
-    return val + ply;
-  }
-  return val;
+inline Value value_from_tt(Value v, int ply) {
+  return v >= MATE_IN_MAX_PLY ? v - ply : v <= MATED_IN_MAX_PLY ? v + ply : v;
 }
 
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
