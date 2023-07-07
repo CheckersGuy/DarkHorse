@@ -115,16 +115,16 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 namespace Search {
 
 Depth reduce(int move_index, Depth depth, Board &board, Move move, bool in_pv) {
-  if (move_index >= (2 + in_pv) && depth >= 2 && !move.is_capture()) {
-    const auto index = std::min(depth, (int)LMR_TABLE.size() - 1);
-    return LMR_TABLE[index];
+  if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
+    auto red = (!in_pv && move_index >= 4) ? 2 : 1;
+    return red;
   }
   return 0;
 }
 
 template <bool is_root>
-Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
-             Ply ply, Depth depth, int last_rev, Move previous,
+Value search(Move excluded, bool in_pv, Board &board, Line &pv, Value alpha,
+             Value beta, Ply ply, Depth depth, int last_rev, Move previous,
              Move previous_own) {
 
   pv.clear();
@@ -135,7 +135,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     throw std::string{"Time_out"};
   }
 
-  if (!is_root && ply > 0 && board.is_repetition(last_rev)) {
+  if (!is_root && board.is_repetition(last_rev)) {
     return 0;
   }
 
@@ -150,13 +150,12 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   Value best_score = -INFINITE;
   NodeInfo info;
   Move tt_move;
+  Move sing_move;
+  Value sing_score = -INFINITE;
 
   if (ply >= MAX_PLY) {
     return board.get_mover() * network.evaluate(board.get_position(), ply);
   }
-  if (alpha >= -loss(ply)) {
-    return alpha;
-  };
 
   MoveListe liste;
 
@@ -168,16 +167,35 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   // mate distance pruning
   alpha = std::max(loss(ply), alpha);
   beta = std::min(-loss(ply + 1), beta);
+  if (alpha >= beta) {
+    return alpha;
+  }
 
   bool found_hash = TT.find_hash(board.get_current_key(), info);
+  // At root we can still use the tt_move for move_ordering
+  if (is_root && found_hash && info.flag != Flag::None) {
+    tt_move = info.tt_move;
+  }
   if (!is_root && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
     auto tt_score = value_from_tt(info.score, ply);
     if (info.depth >= depth && info.flag != Flag::None) {
-      if ((info.flag == TT_UPPER && tt_score >= beta) ||
-          (info.flag == TT_LOWER && tt_score <= alpha) ||
+      if ((info.flag == TT_LOWER && tt_score >= beta) ||
+          (info.flag == TT_UPPER && tt_score <= alpha) ||
           info.flag == TT_EXACT) {
         return tt_score;
+      }
+    }
+    // singular move extensions
+    if ((info.flag == TT_LOWER || info.flag == TT_EXACT) &&
+        info.depth >= depth - 3 && info.score < MATE_IN_MAX_PLY) {
+      // checking for legality of the move stored;
+      auto it = (!tt_move.is_empty())
+                    ? std::find(liste.begin(), liste.end(), tt_move)
+                    : liste.end();
+      if (it != liste.end()) {
+        sing_score = tt_score;
+        sing_move = tt_move;
       }
     }
   }
@@ -200,17 +218,35 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   for (auto i = 0; i < liste.length(); ++i) {
     // moveLoop starts here
     Move move = liste[i];
+    if (move == excluded) {
+      continue;
+    }
     Line local_pv;
     Depth reduction = Search::reduce(i, depth, board, move, in_pv);
+
+    Value val = -INFINITE;
+
+    // singular extensions
+    if (depth >= 7 && extension == 0 && in_pv && excluded.is_empty() &&
+        move == sing_move && sing_score != -INFINITE) {
+      Line line;
+      Value threshhold = 40;
+      Value newBeta = sing_score - threshhold;
+      Value value = Search::search<false>(
+          sing_move, in_pv, board, line, (newBeta - 1), newBeta, ply, depth - 4,
+          last_rev, local.previous, local.previous_own);
+      if (value <= alpha) {
+        extension = 1;
+      }
+    }
     if (move.is_capture() || move.is_pawn_move(board.get_position().K)) {
       last_rev = board.pCounter;
     }
+    board.make_move(move);
 
-    Value val = -INFINITE;
     Depth new_depth = depth - 1 + extension;
 
-    board.make_move(move);
-    if (!in_pv && depth > 3 && std::abs(beta) < TB_WIN) {
+    if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Value newBeta = beta + prob_cut;
       Depth newDepth = std::max(depth - 4, 1);
@@ -218,8 +254,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
                             ply + 1, 0, last_rev);
       if (board_val >= newBeta) {
         Value value = -Search::search<false>(
-            false, board, local_pv, -(newBeta + 1), -newBeta, ply + 1, newDepth,
-            last_rev, move, local.previous);
+            excluded, false, board, local_pv, -(newBeta + 1), -newBeta, ply + 1,
+            newDepth, last_rev, move, local.previous);
         if (value >= newBeta) {
           board.undo_move();
           TT.store_hash(value, board.get_current_key(), TT_LOWER, new_depth + 1,
@@ -230,18 +266,19 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     }
 
     if ((in_pv && i != 0) || reduction != 0) {
-      val = -Search::search<false>(
-          (i == 0) ? in_pv : false, board, local_pv, -alpha - 1, -alpha,
-          ply + 1, new_depth - reduction, last_rev, move, local.previous);
-      if (val > alpha && val < beta) {
-        val = -Search::search<false>((i == 0) ? in_pv : false, board, local_pv,
-                                     -beta, -alpha, ply + 1, new_depth,
-                                     last_rev, move, local.previous);
+      val = -Search::search<false>(excluded, (i == 0) ? in_pv : false, board,
+                                   local_pv, -alpha - 1, -alpha, ply + 1,
+                                   new_depth - reduction, last_rev, move,
+                                   local.previous);
+      if (val > alpha) {
+        val = -Search::search<false>(excluded, (i == 0) ? in_pv : false, board,
+                                     local_pv, -beta, -alpha, ply + 1,
+                                     new_depth, last_rev, move, local.previous);
       }
     } else {
-      val = -Search::search<false>((i == 0) ? in_pv : false, board, local_pv,
-                                   -beta, -alpha, ply + 1, new_depth, last_rev,
-                                   move, local.previous);
+      val = -Search::search<false>(excluded, (i == 0) ? in_pv : false, board,
+                                   local_pv, -beta, -alpha, ply + 1, new_depth,
+                                   last_rev, move, local.previous);
     }
     board.undo_move();
     if (val > best_score) {
@@ -275,9 +312,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   Value tt_value = value_to_tt(best_score, ply);
   Flag flag;
   if (best_score <= old_alpha) {
-    flag = TT_LOWER;
-  } else if (best_score >= beta) {
     flag = TT_UPPER;
+  } else if (best_score >= beta) {
+    flag = TT_LOWER;
   } else {
     flag = TT_EXACT;
   }
@@ -312,8 +349,8 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
     }
 
     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-      return Search::search<false>(in_pv, board, pv, alpha, beta, ply, 1,
-                                   last_rev, Move{}, Move{});
+      return Search::search<false>(Move{}, in_pv, board, pv, alpha, beta, ply,
+                                   1, last_rev, Move{}, Move{});
     }
 
     return network.evaluate(board.get_position(), ply);
@@ -353,8 +390,8 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
       Line line;
       Value alpha = last_score - alpha_margin;
       Value beta = last_score + beta_margin;
-      auto score = search<true>(true, board, line, alpha, beta, 0, depth, 0,
-                                Move{}, Move{});
+      auto score = search<true>(Move{}, true, board, line, alpha, beta, 0,
+                                depth, 0, Move{}, Move{});
       best_score = score;
       if (score <= alpha) {
         alpha_margin *= 2;
@@ -367,8 +404,8 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
     }
   }
   Line line;
-  auto value = search<true>(true, board, line, -INFINITE, INFINITE, 0, depth, 0,
-                            Move{}, Move{});
+  auto value = search<true>(Move{}, true, board, line, -INFINITE, INFINITE, 0,
+                            depth, 0, Move{}, Move{});
   best_score = value;
   mainPV = line;
   return best_score;

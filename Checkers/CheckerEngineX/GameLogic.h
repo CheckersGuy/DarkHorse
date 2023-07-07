@@ -40,8 +40,8 @@ namespace Search {
 Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <bool is_root>
-Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta,
-             Ply ply, Depth depth, int last_rev, Move previous,
+Value search(Move excluded, bool in_pv, Board &board, Line &line, Value alpha,
+             Value beta, Ply ply, Depth depth, int last_rev, Move previous,
              Move previous_own);
 
 Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
