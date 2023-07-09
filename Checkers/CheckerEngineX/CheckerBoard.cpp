@@ -1,4 +1,5 @@
 #include "CheckerBoard.h"
+#include "types.h"
 #include <fstream>
 #include <string>
 extern "C" int getmove(int board[8][8], int color, double maxtime,
@@ -63,7 +64,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   Move best;
   auto value =
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
-  auto value_perspective = value * game_board.get_mover();
   game_board.play_move(best);
 
   Position c = game_board.get_position();
@@ -90,10 +90,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
 
-  if (isMateVal(value_perspective)) {
+  if (std::abs(value) >= MATE_IN_MAX_PLY) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
-  last_position = game_board.get_position();
   return CB_UNKNOWN;
 }
 
