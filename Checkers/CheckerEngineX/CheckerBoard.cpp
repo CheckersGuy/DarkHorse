@@ -2,15 +2,22 @@
 #include "types.h"
 #include <fstream>
 #include <string>
+
+bool engine_initialized = false;
+Board game_board;
+
+int num_draw_scores = 0;
+
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
   // to be implemented
 
-  if (info & CB_RESET_MOVES) {
+  if ((info & CB_RESET_MOVES)) {
     game_board = Board{};
     TT.age_counter = 0;
     TT.clear();
+    num_draw_scores = 0;
   }
   // dunno if this is going to work
 
@@ -50,6 +57,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     game_board = Board{};
     game_board = temp;
     TT.age_counter = 0;
+    num_draw_scores = 0;
   }
 
   if (!engine_initialized) {
@@ -59,6 +67,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     Statistics::mPicker.init();
     engine_initialized = true;
     glob.reply = str;
+    num_draw_scores = 0;
   }
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
   Move best;
@@ -68,7 +77,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   Position c = game_board.get_position();
   for (auto i = 0; i < 32; ++i) {
-    const auto mask = 1 << i;
+    const uint32_t mask = 1u << i;
     size_t cb_index = To64[i];
     int row = cb_index / 8;
     int col = 7 - cb_index % 8;
