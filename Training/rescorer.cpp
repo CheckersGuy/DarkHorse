@@ -7,7 +7,7 @@ int main(int argl, const char **argc) {
 
   std::string file_name = argc[1];
   std::string path = "../Training/TrainData/" + file_name;
-  std::cout << "Path: " << path << std::endlL;
+  std::cout << "Path: " << path << std::endl;
   std::ifstream stream(path.c_str());
   if (!stream.good()) {
     std::cout << "Could not open the stream" << std::endl;
