@@ -3,8 +3,6 @@
 //
 
 #include "PosStreamer.h"
-#include "Sample.h"
-#include <sys/stat.h>
 size_t PosStreamer::get_num_positions() const { return num_samples; }
 
 Sample PosStreamer::get_next() {

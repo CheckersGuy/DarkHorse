@@ -24,8 +24,8 @@ public:
 
   void add_move(Move next);
 
-  void sort(Position current, Depth depth, Ply ply, Local &local, Move ttMove,
-            int start_index);
+  void sort(Position current, Depth depth, Ply ply, Move previous,
+            Move previous_own, Move ttMove, int start_index);
 
   bool is_empty() const;
 

@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <string>
 #include <sys/mman.h>
-
+#include <sys/stat.h>
 class PosStreamer {
 
 private:
@@ -54,47 +54,19 @@ public:
     if (file_path.ends_with(".raw")) {
       is_raw_data = true;
     }
-    // loading the game
-    if (!is_raw_data) {
-      stream = std::ifstream(file_path, std::ios::binary);
-      if (!stream.good()) {
-        std::cerr << "Could not open the stream" << std::endl;
-        std::cerr << "FileName: " << file_path << std::endl;
-        std::exit(-1);
-      }
-
-      Proto::Batch batch;
-      batch.ParseFromIstream(&stream);
-      std::cout << "Counting number of positions" << std::endl;
-      size_t size = 0;
-      for (auto game : batch.games()) {
-        data.emplace_back(game);
-      }
-      for (Proto::Game game : data) {
-        size += game.move_indices_size() + 1;
-      }
-      std::cout << "Counted: " << size << " positions" << std::endl;
-      num_samples = size;
-    } else {
-      // we memory map the entire data !!!
-      struct stat s;
-      fd = open(file_path.c_str(), O_RDONLY);
-      if (fd == -1) {
-        std::cerr << "Could not open file" << std::endl;
-        std::exit(-1);
-      }
-      auto r = fstat(fd, &s);
-      num_samples = s.st_size / sizeof(Sample);
-      mapped = (Sample *)mmap(0, s.st_size, PROT_READ, MAP_SHARED, fd, 0);
-      buffer_size = std::min(num_samples, buffer_size);
-      ptr = buffer.size() + 1000;
+    struct stat s;
+    fd = open(file_path.c_str(), O_RDONLY);
+    if (fd == -1) {
+      std::cerr << "Could not open file" << std::endl;
+      std::exit(-1);
     }
+    auto r = fstat(fd, &s);
+    num_samples = s.st_size / sizeof(Sample);
+    mapped = (Sample *)mmap(0, s.st_size, PROT_READ, MAP_SHARED, fd, 0);
+    buffer_size = std::min(num_samples, buffer_size);
+    ptr = buffer.size() + 1000;
   }
-  ~PosStreamer() {
-    if (is_raw_data) {
-      munmap(mapped, num_samples * sizeof(Sample));
-    }
-  }
+  ~PosStreamer() { munmap(mapped, num_samples * sizeof(Sample)); }
 
   Sample get_next();
 

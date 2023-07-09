@@ -13,17 +13,22 @@ void MovePicker::init() {}
 
 int MovePicker::get_move_encoding(Move move) {
   int dir;
-  if ((((move.to & MASK_L3) << 3) == move.from) ||
-      (((move.to & MASK_L5) << 5) == move.from)) {
+
+  if ((((move.from & MASK_L3) << 3) == move.to) ||
+      (((move.from & MASK_L5) << 5) == move.to)) {
     dir = 0;
-  } else if (((move.to) << 4) == move.from) {
+
+  } else if (((move.from) << 4) == move.to) {
     dir = 1;
-  } else if (((move.to) >> 4) == move.from) {
+
+  } else if (((move.from) >> 4) == move.to) {
     dir = 2;
-  } else if ((((move.to & MASK_R3) >> 3) == move.from) ||
-             (((move.to & MASK_R5) >> 5) == move.from)) {
+
+  } else if ((((move.from & MASK_R3) >> 3) == move.to) ||
+             (((move.from & MASK_R5) >> 5) == move.to)) {
     dir = 3;
-  }
+  };
+
   return 4 * move.get_from_index() + dir;
 }
 
@@ -56,15 +61,21 @@ int MovePicker::get_history_index(Position pos, Move move) {
   int orig_sq = move.get_from_index();
   int dir = 0;
 
-  if ((((MASK_R3 & move.to) >> 3) == move.from) ||
-      (((MASK_R5 & move.to) >> 5) == move.from)) {
+  if ((((move.from & MASK_L3) << 3) == move.to) ||
+      (((move.from & MASK_L5) << 5) == move.to)) {
+    dir = 0;
+
+  } else if (((move.from) << 4) == move.to) {
     dir = 1;
-  } else if ((((MASK_L3 & move.to) << 3) == move.from) ||
-             (((MASK_L5 & move.to) << 5) == move.from)) {
+
+  } else if (((move.from) >> 4) == move.to) {
     dir = 2;
-  } else if ((move.to << 4) == move.from) {
+
+  } else if ((((move.from & MASK_R3) >> 3) == move.to) ||
+             (((move.from & MASK_R5) >> 5) == move.to)) {
     dir = 3;
-  }
+  };
+
   const int index = 16 * orig_sq + 4 * dir + t;
   return index;
 }
@@ -95,7 +106,7 @@ int MovePicker::get_move_score(Position pos, Move move, Move previous,
   const int index = get_history_index(pos, move);
   int score = history[index];
 
-  if (!previous.is_capture() && !move.is_capture()) {
+  if (!previous.is_capture() && !move.is_capture() && !previous.is_empty()) {
     auto counter = counter_history[get_history_index(pos, previous)][index];
     score += counter;
   }
@@ -140,7 +151,7 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,
   update_history_score(history[index], delta);
   Move top = liste[0];
 
-  if (!previous.is_capture() && !move.is_capture()) {
+  if (!previous.is_capture() && !move.is_capture() && !previous.is_empty()) {
     counter_history[get_history_index(pos, previous)]
                    [get_history_index(pos, move)] += delta;
   }
@@ -154,7 +165,7 @@ void MovePicker::update_scores(Position pos, Move *liste, Move move,
   while ((top = *(liste++)) != move) {
     int &score = history[get_history_index(pos, top)];
     update_history_score(score, -delta);
-    if (!previous.is_capture() && !top.is_capture()) {
+    if (!previous.is_capture() && !top.is_capture() && !previous.is_empty()) {
       counter_history[get_history_index(pos, previous)]
                      [get_history_index(pos, top)] -= delta;
     }

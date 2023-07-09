@@ -36,7 +36,22 @@ if (UNIX)
     file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.h  )
     file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.cpp)
     file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
+    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.cpp)
+    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.cpp)
+    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp)
+    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.cpp)
+
+
+
+
     file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.h)
+    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.h)
+    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.h)
+    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h)
+    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.h)
+
+
+
     list(REMOVE_ITEM TSources  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h)
     list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
@@ -49,6 +64,7 @@ file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CHeaders "${CMAKE_//CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp")
 list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h")
+list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 
 
@@ -68,8 +84,7 @@ if(WIN32)
 endif()
 
 if(UNIX)
-  add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${PyHeaders} ${PySources} ${CSources} ${CHeaders} ${THeaders} ${TSources})
-  set_target_properties(pyhelper PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/Training")
+  add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${CHeaders} ${CSources} ${PySources} ${PyHeaders})
 endif()
 
 if (UNIX)
