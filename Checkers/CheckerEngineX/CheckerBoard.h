@@ -1,4 +1,3 @@
-#define CHECKERBOARD
 #include "GameLogic.h"
 #include <iostream>
 #include <stdint.h>
