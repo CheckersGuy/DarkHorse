@@ -5,6 +5,7 @@
 #include "Selfplay.h"
 #include "Transposition.h"
 #include <vector>
+#include <string>
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {

@@ -5,11 +5,12 @@
 #ifndef READING_BATCHPROVIDER_H
 #define READING_BATCHPROVIDER_H
 
-#include "../Checkers/CheckerEngineX/Zobrist.h"
+#include "../Checkers/CheckerEngineX/Position.h"
 #include "../Checkers/CheckerEngineX/types.h"
+#include "PyHelper.h"
+#include "generator.pb.h"
 #include <PosStreamer.h>
 #include <cstddef>
-#include <deque>
 #include <memory>
 
 // making things a little more readable
@@ -24,7 +25,6 @@ public:
       : streamer(path, buffer_size, getSystemTime()) {
     this->batch_size = batch_size;
     this->buffer_size = buffer_size;
-    Zobrist::init_zobrist_keys(getSystemTime());
   }
 
   BatchProvider(std::string path, size_t buffer_size, size_t batch_size,
@@ -32,7 +32,6 @@ public:
       : streamer(path, buffer_size, getSystemTime()) {
     this->batch_size = batch_size;
     this->buffer_size = buffer_size;
-    Zobrist::init_zobrist_keys(getSystemTime());
   }
 
   size_t get_batch_size() const;
