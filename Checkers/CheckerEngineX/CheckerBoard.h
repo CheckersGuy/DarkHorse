@@ -57,13 +57,10 @@ constexpr auto get_lut1(Generator &&generator) {
   return result;
 };
 
-Position last_position;
-bool engine_initialized = false;
 constexpr std::array<size_t, 32> To64 = get_lut1<32>([](size_t index) {
   auto row = index / 4;
   return ((row & 1) == 0) ? 2 * index + 1 : 2 * index;
 });
-Board game_board;
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
