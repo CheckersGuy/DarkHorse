@@ -8,10 +8,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (info & CB_RESET_MOVES) {
     game_board = Board{};
-    game_board = Position::get_start_position();
     TT.age_counter = 0;
     TT.clear();
-    glob.stop_search = true;
   }
   // dunno if this is going to work
 
@@ -65,6 +63,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   Move best;
   auto value =
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
+  auto value_perspective = value * game_board.get_mover();
   game_board.play_move(best);
 
   Position c = game_board.get_position();
@@ -91,7 +90,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
 
-  if (isMateVal(value)) {
+  if (isMateVal(value_perspective)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
   last_position = game_board.get_position();
