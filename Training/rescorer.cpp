@@ -23,11 +23,9 @@ int main(int argl, const char **argc) {
     });
     */
   Sample test;
-  int counter = 0;
-  while (stream >> test && counter < 1000) {
+
+  while (stream >> test) {
     std::cout << test << std::endl;
     std::cout << "----------------------------" << std::endl;
-    counter++;
   }
-  test.position.print_position();
 }
