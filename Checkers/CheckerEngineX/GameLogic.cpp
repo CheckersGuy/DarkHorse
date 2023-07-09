@@ -290,7 +290,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
       val = -Search::search<false>(
           ss + 1, (i == 0) ? in_pv : false, board, local_pv, -alpha - 1, -alpha,
           ply + 1, new_depth - reduction, last_rev, move, local.previous);
-      if (val > alpha) {
+      if (val > alpha && val < beta) {
         val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
                                      local_pv, -beta, -alpha, ply + 1,
                                      new_depth, last_rev, move, local.previous);

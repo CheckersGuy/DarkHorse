@@ -52,7 +52,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto m = Position::get_move(game_board.get_position(), temp);
   if (m.has_value()) {
     game_board.play_move(m.value());
-  } else {
+  } else if (!m.has_value() ||
+             (temp.piece_count() > game_board.get_position().piece_count())) {
     TT.clear();
     game_board = Board{};
     game_board = temp;
