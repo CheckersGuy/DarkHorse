@@ -32,7 +32,7 @@ std::ofstream &operator<<(std::ofstream &stream, Sample s) {
   return stream;
 }
 
-std::ifstream &operator>>(std::ifstream &stream, Sample s) {
+std::ifstream &operator>>(std::ifstream &stream, const Sample &s) {
   stream.read((char *)&s, sizeof(Sample));
   return stream;
 }

@@ -20,16 +20,13 @@ constexpr Result operator~(Result one) {
   return one;
 }
 
-// Needs some more changes above
-// Draw shouldnt be zero
-
 struct Sample {
   Position position;
   Result result{UNKNOWN};
   int move{-1};
-  friend std::ofstream &operator<<(std::ofstream &stream, Sample s);
+  friend std::ofstream &operator<<(std::ofstream &stream, const Sample s);
 
-  friend std::ifstream &operator>>(std::ifstream &stream, Sample s);
+  friend std::ifstream &operator>>(std::ifstream &stream, const Sample &s);
   friend std::ostream &operator<<(std::ostream &stream, const Sample &s) {
     s.position.print_position();
     stream << s.position.get_fen_string() << std::endl;
