@@ -25,7 +25,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 
   Statistics::mPicker.clear_scores();
   glob.sel_depth = 0u;
-  TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
   nodeCounter = 0;
   mainPV.clear();
@@ -98,6 +97,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
     }
 #endif
 
+    last_eval = eval;
     if (isMateVal(best_score)) {
       break;
     }
@@ -113,8 +113,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   strcpy(glob.reply, reply_stream.str().c_str());
 #endif
 
-  last_eval = eval;
-
+  TT.age_counter = (TT.age_counter + 1) & 63ull;
   return eval;
 }
 
