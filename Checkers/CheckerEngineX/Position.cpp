@@ -185,7 +185,7 @@ Position Position::get_color_flip() const {
   next.WP = getMirrored(BP);
   next.K = getMirrored(K);
   next.color = ~color;
-  next.key = key ^ Zobrist::color_black;
+  // next.key = key ^ Zobrist::color_black;
   return next;
 }
 
@@ -226,7 +226,7 @@ Position Position::get_start_position() {
   for (int i = 20; i <= 31; i++) {
     pos.WP |= 1u << i;
   }
-  pos.key = Zobrist::generate_key(pos);
+  // pos.key = Zobrist::generate_key(pos);
   return pos;
 }
 

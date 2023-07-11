@@ -1,5 +1,6 @@
 #include "Sample.h"
 #include "egdb.h"
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -7,7 +8,26 @@
 
 void print_msgs(char *msg) { printf("%s", msg); }
 
-Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+// for the new dataloader in rust
+struct SampleData {
+  std::string fen_string;
+  Position pos;
+  int16_t eval;
+  int8_t result;
+
+  friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {}
+  friend std::ofstream &operator<<(std::ofstream &stream, SampleData other) {
+    uint16_t size = other.fen_string.size();
+    stream.write((char *)&size, sizeof(uint16_t));
+    stream.write((char *)&other.fen_string[0], other.fen_string.size());
+    stream.write((char *)&other.eval, sizeof(int16_t));
+    stream.write((char *)&other.result, sizeof(int8_t));
+    return stream;
+  }
+
+}
+
+get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
   if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
     return UNKNOWN;
 

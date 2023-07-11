@@ -59,10 +59,6 @@ Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream);
 
-void initialize();
-
-void initialize(uint64_t seed);
-
 extern Network network;
 
 #endif // CHECKERSTEST_GAMELOGIC_H

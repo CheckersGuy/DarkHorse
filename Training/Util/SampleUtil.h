@@ -9,8 +9,6 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-// endgame_cutoff_ply is the length of a game ignoring all positions with less
-// then <=10 pieces
 
 struct GameStat {
   size_t num_wins{0}, num_draws{0};

@@ -8,7 +8,6 @@ size_t op_index = 0;
 void create_train_file(std::string base_book, std::string output, int depth) {
   pos_counter = 0;
   op_index = 0;
-  initialize();
   TT.resize(20);
   network.load_bucket("testing6.quant");
   std::unordered_set<Position> positions;

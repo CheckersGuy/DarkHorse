@@ -72,7 +72,6 @@ struct MoveReceiver {
     Move mv{maske, next};
     Position copy = pos;
     copy.make_move(mv);
-    Zobrist::update_zobrist_keys(copy, mv);
     perft_check(copy, depth - 1, call_back);
   };
 
@@ -81,7 +80,6 @@ struct MoveReceiver {
     Move mv{from, to, captures};
     Position copy = pos;
     copy.make_move(mv);
-    Zobrist::update_zobrist_keys(copy, mv);
     perft_check(copy, depth - 1, call_back);
   };
 };

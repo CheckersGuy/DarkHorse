@@ -19,6 +19,7 @@ struct NodeInfo {
 };
 
 struct MoveEncoding {
+  // How to encode empty moves ?
   MoveEncoding(Move move);
   MoveEncoding() = default;
   uint8_t from_index : 6;
