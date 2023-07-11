@@ -4,8 +4,8 @@
 #include "Perft.h"
 #include "Selfplay.h"
 #include "Transposition.h"
-#include <vector>
 #include <string>
+#include <vector>
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -27,7 +27,6 @@ inline Position posFromString(const std::string &pos) {
   } else {
     result.color = WHITE;
   }
-  result.key = Zobrist::generate_key(result);
   return result;
 }
 
@@ -40,7 +39,6 @@ int main(int argl, const char **argc) {
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
-  initialize();
   Statistics::mPicker.init();
 
   int time, depth, hash_size;
@@ -112,7 +110,6 @@ int main(int argl, const char **argc) {
   while (std::cin >> current) {
     if (current == "init") {
       TT.age_counter = 0u;
-      initialize();
       Statistics::mPicker.clear_scores();
       std::string hash_string;
       std::cin >> hash_string;

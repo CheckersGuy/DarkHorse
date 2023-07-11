@@ -3,6 +3,7 @@
 //
 
 #include "Board.h"
+#include <cstdint>
 
 Position &Board::get_position() { return pStack[pCounter]; }
 
@@ -28,7 +29,7 @@ void Board::play_move(Move move) {
 void Board::make_move(Move move) {
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
-  Zobrist::update_zobrist_keys(get_position(), move);
+  // Zobrist::update_zobrist_keys(get_position(), move);
   pStack[pCounter].make_move(move);
 }
 
@@ -40,7 +41,8 @@ Board &Board::operator=(Position pos) {
   get_position().WP = pos.WP;
   get_position().K = pos.K;
   get_position().color = pos.color;
-  get_position().key = Zobrist::generate_key(get_position());
+  // get_position().key = Zobrist::generate_key(get_position());
+
   return *this;
 }
 
@@ -51,7 +53,24 @@ bool Board::is_silent_position() {
           get_position().get_jumpers<BLACK>() == 0u);
 }
 
-uint64_t Board::get_current_key() const { return pStack[pCounter].key; }
+uint64_t hash_combine(uint64_t lhs, uint64_t rhs) {
+  lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
+  return lhs;
+}
+uint64_t hash(uint64_t x) {
+  x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+  x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+  x = x ^ (x >> 31);
+  return x;
+}
+uint64_t Board::get_current_key() const {
+  const Position p = pStack[pCounter];
+  uint64_t first =
+      static_cast<uint64_t>(p.BP) | (static_cast<uint64_t>(p.WP) << 32);
+  uint64_t second =
+      static_cast<uint64_t>(p.K) | (static_cast<uint64_t>(p.color) << 32);
+  return hash_combine(hash(first), hash(second));
+}
 
 bool Board::is_repetition(int last_rev) const {
   auto end = std::max(last_rev - 1, 0);

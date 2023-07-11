@@ -112,7 +112,6 @@ void write_raw_data(std::string input_proto) {
       if (!s.is_training_sample()) {
         continue;
       }
-      s.position.key = Zobrist::generate_key(s.position);
       train_samples.emplace_back(s);
     }
   }
@@ -244,7 +243,6 @@ Result get_game_result(Proto::Game game) {
   return result;
 }
 void get_game_stats(std::string input_proto, GameStat &stats) {
-  Zobrist::init_zobrist_keys();
   BloomFilter<Position> filter(9585058378, 7);
   Proto::Batch batch;
   std::ifstream stream(input_proto);

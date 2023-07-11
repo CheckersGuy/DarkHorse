@@ -10,10 +10,6 @@ Value last_eval = -INFINITE;
 SearchGlobal glob;
 Network network;
 
-void initialize() { initialize(21231231ull); }
-
-void initialize(uint64_t seed) { Zobrist::init_zobrist_keys(seed); }
-
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {
@@ -39,8 +35,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   }
   */
 
-  endTime = getSystemTime() + time;
-
   Value eval = -INFINITE;
   Local local;
 
@@ -49,6 +43,8 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
     return Search::qs(search_stack.get(), false, board, mainPV, -INFINITE,
                       INFINITE, 0, 0, board.pCounter);
   }
+
+  endTime = getSystemTime() + time;
   size_t total_nodes = 0;
   size_t total_time = 0;
   int i;
@@ -149,7 +145,6 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     return Search::qs(ss, in_pv, board, pv, alpha, beta, ply, depth, last_rev);
   }
   Local local;
-  local.move = Move{};
   local.previous = previous;
   // ss->previous = previous;
   local.previous_own = previous_own;
@@ -167,6 +162,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
   NodeInfo info;
   Move tt_move;
   Move sing_move;
+  Move best_move;
   Value sing_score = -INFINITE;
 
   if (ply >= MAX_PLY) {
@@ -216,8 +212,9 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     }
   }
 
-  bool likelyFailLow =
-      (found_hash && in_pv && info.flag == TT_UPPER && info.depth >= depth);
+  if (in_pv && !found_hash && depth >= 6) {
+    depth--;
+  }
 
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
@@ -267,8 +264,6 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     board.make_move(move);
     // setting the 'previous move in the search stack'
 
-    Depth new_depth = depth - 1 + extension;
-
     if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Value newBeta = beta + prob_cut;
@@ -281,13 +276,14 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
             newDepth, last_rev, move, local.previous);
         if (value >= newBeta) {
           board.undo_move();
-          TT.store_hash(value, board.get_current_key(), TT_LOWER, new_depth + 1,
-                        move);
+          TT.store_hash(value, board.get_current_key(), TT_LOWER, newDepth + 1,
+                        (!move.is_capture()) ? move : Move{});
           return value;
         }
       }
     }
 
+    Depth new_depth = depth - 1 + extension;
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<false>(
           ss + 1, (i == 0) ? in_pv : false, board, local_pv, -alpha - 1, -alpha,
@@ -305,26 +301,26 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      local.move = move;
-      pv.concat(move, local_pv);
+      best_move = move;
       if (best_score >= beta &&
           !board.get_position().has_jumps(board.get_mover()) &&
           liste.length() > 1) {
         Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
-                                          local.move, local.previous,
+                                          move, local.previous,
                                           local.previous_own, depth);
         // updating killer moves
         auto &killers = Statistics::mPicker.killer_moves;
         for (auto i = 1; i < MAX_KILLERS; ++i) {
           killers[ply][i] = killers[ply][i - 1];
         }
-        killers[ply][0] = local.move;
+        killers[ply][0] = move;
+      }
+      if (val > alpha) {
+        pv.concat(move, local_pv);
+        alpha = val;
       }
       if (best_score >= beta) {
         break;
-      }
-      if (val > alpha) {
-        alpha = val;
       }
     }
   }
@@ -342,7 +338,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     } else {
       flag = TT_EXACT;
     }
-    Move store_move = (local.move.is_capture()) ? Move{} : local.move;
+    Move store_move = (best_move.is_capture()) ? Move{} : best_move;
     TT.store_hash(tt_value, board.get_current_key(), flag, depth, store_move);
   }
   return best_score;
@@ -352,7 +348,7 @@ Value qs(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
          Value beta, Ply ply, Depth depth, int last_rev) {
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
 
@@ -387,15 +383,19 @@ Value qs(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     Move move = moves[i];
     Line localPV;
     board.make_move(move);
-    Value value =
-        -Search::qs(ss, ((i == 0) ? in_pv : false), board, localPV, -beta,
-                    -std::max(alpha, bestValue), ply + 1, depth - 1, last_rev);
+    Value value = -Search::qs(ss, ((i == 0) ? in_pv : false), board, localPV,
+                              -beta, -alpha, ply + 1, depth - 1, last_rev);
     board.undo_move();
     if (value > bestValue) {
       bestValue = value;
-      pv.concat(move, localPV);
+      if (value > alpha) {
+        pv.concat(move, localPV);
+      }
       if (value >= beta)
         break;
+      else {
+        alpha = value;
+      }
     }
   }
 

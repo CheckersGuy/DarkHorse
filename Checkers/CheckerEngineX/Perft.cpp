@@ -59,7 +59,8 @@ void Table::set_capacity(size_t capacity) {
 }
 
 size_t Table::probe(Position pos, int depth) {
-  auto index = pos.key % capacity;
+  // needs to be redone
+  auto index = 0;
   if (entries[index][1].WP == pos.WP && entries[index][1].BP == pos.BP &&
       entries[index][1].K == pos.K && entries[index][1].depth == depth) {
     return entries[index][1].nodes;
@@ -71,7 +72,7 @@ size_t Table::probe(Position pos, int depth) {
 }
 
 void Table::store(Position pos, int depth, uint64_t nodes) {
-  auto index = pos.key % capacity;
+  auto index = 0;
   if (depth > entries[index][0].depth) {
     entries[index][0] = Entry(pos, depth, nodes);
   } else {
@@ -93,7 +94,6 @@ uint64_t perft_check(Position &pos, int depth) {
   for (int i = 0; i < liste.length(); ++i) {
     Position copy = pos;
     copy.make_move(liste[i]);
-    Zobrist::update_zobrist_keys(copy, liste[i]);
     counter += perft_check(copy, depth - 1);
   }
 

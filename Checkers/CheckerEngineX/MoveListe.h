@@ -9,7 +9,7 @@
 #include <array>
 
 struct Local {
-  Move move, previous, previous_own;
+  Move previous, previous_own;
 };
 
 class MoveListe {

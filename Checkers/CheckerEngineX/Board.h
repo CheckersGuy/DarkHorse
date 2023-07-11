@@ -8,7 +8,6 @@
 #include "Move.h"
 #include "Network.h"
 #include "Position.h"
-#include "Zobrist.h"
 #include "types.h"
 #include <string>
 class Board {

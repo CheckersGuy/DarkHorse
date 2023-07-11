@@ -1,6 +1,5 @@
 #include "Selfplay.h"
 #include "MovePicker.h"
-#include "Zobrist.h"
 #include "types.h"
 #include <unistd.h>
 void Selfplay::start_loop() {
@@ -14,7 +13,6 @@ void Selfplay::start_loop() {
 
 Selfplay::Selfplay() {
   int pid = getpid();
-  Zobrist::init_zobrist_keys(pid ^ getSystemTime());
   Statistics::mPicker.init();
 }
 

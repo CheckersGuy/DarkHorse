@@ -13,7 +13,7 @@ Transposition::Transposition(size_t capacity) {
 }
 
 void MoveEncoding::encode_move(Move move) {
-  from_index = move.get_from_index();
+  from_index = (!move.is_empty()) ? move.get_from_index() : 32;
   uint8_t dir;
   if ((((move.from & MASK_L3) << 3) == move.to) ||
       (((move.from & MASK_L5) << 5) == move.to)) {
@@ -35,6 +35,9 @@ void MoveEncoding::encode_move(Move move) {
 MoveEncoding::MoveEncoding(Move m) { encode_move(m); }
 
 Move MoveEncoding::get_move() {
+  if (from_index == 32) {
+    return Move{};
+  }
   Move move;
   uint32_t from = 1u << from_index;
   uint32_t to;
@@ -78,19 +81,24 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
 
-  int max_entry = 0;
-  int max_value = -100000;
   for (auto i = 1; i < bucket_size; ++i) {
     if (cluster.ent[i].key == lock) {
 
       if (cluster.ent[i].depth < depth) {
         cluster.ent[i].depth = depth;
         cluster.ent[i].flag = flag;
-        cluster.ent[i].best_move = MoveEncoding(tt_move);
+        cluster.ent[i].best_move = (!tt_move.is_empty())
+                                       ? MoveEncoding(tt_move)
+                                       : cluster.ent[i].best_move;
         cluster.ent[i].value = value;
         cluster.ent[i].age = age_counter;
       } else {
         cluster.ent[i].age = age_counter;
+        if (!tt_move.is_empty() && cluster.ent[i].best_move.from_index == 32) {
+          // got an empty move
+          cluster.ent[i].best_move = MoveEncoding(tt_move);
+        }
+        // something wrong here
       }
 
       return;
