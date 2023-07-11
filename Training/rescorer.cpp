@@ -72,7 +72,6 @@ int main(int argl, const char **argc) {
   Sample test;
 
   while (stream >> test) {
-    std::cout << "Test" << std::endl;
     auto result = get_tb_result(test.position, 10, handle);
     if (result != UNKNOWN && result != test.result) {
 
@@ -81,6 +80,7 @@ int main(int argl, const char **argc) {
                                                  : "BLACK_WON";
 
       std::cout << test << "\n";
+      std::cout << "TableBaseResult : " << result_string << std::endl;
 
       std::cout << "----------------------------" << std::endl;
     }
