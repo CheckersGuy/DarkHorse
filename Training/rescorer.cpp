@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#define DB_PATH "E:\kr_english_wld"
+#define DB_PATH "E:\\kr_english_wld"
 
 void print_msgs(char *msg) { printf("%s", msg); }
 
@@ -58,11 +58,6 @@ int main(int argl, const char **argc) {
     printf("Error returned from egdb_open()\n");
     return (1);
   }
-  std::cout << "Starting Rescoring the training data" << std::endl;
-  std::string in_file("../Training/TrainData/reinf.train");
-  std::string out_file("../Training/TrainData/reinfformatted.train");
-
-  std::cout << "Done rescoring" << std::endl;
 
   std::cout << "Hello I am the rescorer" << std::endl;
 
