@@ -63,6 +63,33 @@ int main(int argl, const char **argc) {
   std::string out_file("../Training/TrainData/reinfformatted.train");
 
   std::cout << "Done rescoring" << std::endl;
+
+  std::cout << "Hello I am the rescorer" << std::endl;
+
+  std::string file_name = argc[1];
+  std::string path = "../Training/TrainData/" + file_name;
+  std::cout << "Path: " << path << std::endl;
+  std::ifstream stream(path.c_str());
+  if (!stream.good()) {
+    std::cout << "Could not open the stream" << std::endl;
+  }
+
+  Sample test;
+
+  while (stream >> test) {
+    auto result = get_tb_result(test.position, 10, handle);
+    if (result != UNKNOWN && result != test.result) {
+
+      auto result_string = (result == WHITE_WON) ? "WHITE_WON"
+                           : (result == DRAW)    ? "DRAW"
+                                                 : "BLACK_WON";
+
+      std::cout << test << "\n";
+
+      std::cout << "----------------------------" << std::endl;
+    }
+  }
+
   handle->close(handle);
 
   return 0;
