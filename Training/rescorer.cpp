@@ -62,7 +62,6 @@ int main(int argl, const char **argc) {
   std::string in_file("../Training/TrainData/reinf.train");
   std::string out_file("../Training/TrainData/reinfformatted.train");
 
-  create_samples_from_games(in_file, out_file, max_pieces, handle);
   std::cout << "Done rescoring" << std::endl;
   handle->close(handle);
 
