@@ -3,7 +3,6 @@ project(reading)
 SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-march=native")
-  add_compile_options("-pthread")
   add_link_options("-flto")
   add_compile_options("-fuse-linker-plugin")
   add_compile_options("-Ofast")
@@ -17,7 +16,8 @@ SET(CMAKE_BUILD_TYPE "Release")
   add_compile_options("-msse4.1")
   add_compile_options("-msse2")
   add_link_options("-lstdc++")
-
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
   if(UNIX)
     include(CheckIPOSupported)
     check_ipo_supported()
@@ -56,6 +56,9 @@ if (UNIX)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h)
     list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.h)
+    list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
+
+
 endif ()
 
 
@@ -72,7 +75,6 @@ list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp)
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
-
 if (UNIX)
 add_executable(testing ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
@@ -82,13 +84,18 @@ endif()
 
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  add_executable(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp)
+  add_executable(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp
+    $CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
   set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-
+  target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.dll)
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
+  target_link_libraries(Rescorer PRIVATE Threads::Threads)
+  target_link_libraries(Dark PRIVATE Threads::Threads)
+
 endif()
 
 if(UNIX)
+  #no longer working
   add_library(pyhelper SHARED ${PROTO_SRCS} ${PROTO_HDRS} ${CHeaders} ${CSources} ${PySources} ${PyHeaders})
 endif()
 
@@ -102,5 +109,6 @@ set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CU
 if(UNIX)
 target_link_libraries(Train ${Protobuf_LIBRARIES})
 target_link_libraries(pyhelper ${Protobuf_LIBRARIES})
+target_link_libraries(MainEngine PRIVATE Threads::Threads)
 endif()
 
