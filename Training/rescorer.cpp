@@ -70,10 +70,13 @@ int main(int argl, const char **argc) {
   }
 
   Sample test;
-
+  int total_counter = 0;
+  int wrong_counter = 0;
   while (stream >> test) {
     auto result = get_tb_result(test.position, 10, handle);
+    total_counter += (result != UNKNOWN);
     if (result != UNKNOWN && result != test.result) {
+      wrong_counter++;
 
       auto result_string = (result == WHITE_WON) ? "WHITE_WON"
                            : (result == DRAW)    ? "DRAW"
