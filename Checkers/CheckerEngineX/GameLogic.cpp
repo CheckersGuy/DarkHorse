@@ -163,6 +163,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
   Move tt_move;
   Move sing_move;
   Move best_move;
+  Value tt_value = -INFINITE;
   Value sing_score = -INFINITE;
 
   if (ply >= MAX_PLY) {
@@ -187,10 +188,13 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
   // At root we can still use the tt_move for move_ordering
   if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
+    tt_value = value_from_tt(info.score, ply);
   }
   if (!in_pv && !is_root && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
     auto tt_score = value_from_tt(info.score, ply);
+    tt_value = value_from_tt(info.score, ply);
+
     if (info.depth >= depth && info.flag != Flag::None) {
       if ((info.flag == TT_LOWER && tt_score >= beta) ||
           (info.flag == TT_UPPER && tt_score <= alpha) ||
@@ -229,6 +233,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
   }
   Value old_alpha = alpha;
 
+  Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
     // moveLoop starts here
     Move move = liste[i];
@@ -260,17 +265,18 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     board.make_move(move);
     // setting the 'previous move in the search stack'
 
-    if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
+    if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY &&
+        !(tt_value != -INFINITE && tt_value < prob_beta &&
+          info.depth >= depth - 3)) {
       Line line;
-      Value newBeta = beta + prob_cut;
       Depth newDepth = std::max(depth - 4, 1);
-      Value board_val = -qs(ss + 1, in_pv, board, line, -newBeta, -newBeta + 1,
-                            ply + 1, 0, last_rev);
-      if (board_val >= newBeta) {
+      Value board_val = -qs(ss + 1, in_pv, board, line, -prob_beta,
+                            -prob_beta + 1, ply + 1, 0, last_rev);
+      if (board_val >= prob_beta) {
         Value value = -Search::search<false>(
-            ss + 1, false, board, local_pv, -(newBeta + 1), -newBeta, ply + 1,
+            ss + 1, false, board, local_pv, -prob_beta, -prob_beta + 1, ply + 1,
             newDepth, last_rev, move, local.previous);
-        if (value >= newBeta) {
+        if (value >= prob_beta) {
           board.undo_move();
           TT.store_hash(value, board.get_current_key(), TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
@@ -289,7 +295,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
                                      local_pv, -beta, -alpha, ply + 1,
                                      new_depth, last_rev, move, local.previous);
       }
-      if (in_pv && val > alpha && (is_root || val < beta) {
+      if (in_pv && val > alpha && (is_root || val < beta)) {
         val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
                                      local_pv, -beta, -alpha, ply + 1,
                                      new_depth, last_rev, move, local.previous);
