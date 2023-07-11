@@ -87,7 +87,7 @@ if(WIN32)
   add_executable(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp
     $CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
   set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-  target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.dll)
+  target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.lib)
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
   target_link_libraries(Rescorer PRIVATE Threads::Threads)
   target_link_libraries(Dark PRIVATE Threads::Threads)
