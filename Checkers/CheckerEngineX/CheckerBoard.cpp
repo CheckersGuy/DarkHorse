@@ -64,7 +64,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   if (!engine_initialized) {
     network.load_bucket("int8test.quant");
     TT.resize(21);
-    initialize();
     Statistics::mPicker.init();
     engine_initialized = true;
     glob.reply = str;
@@ -130,7 +129,6 @@ int enginecommand(char str[256], char reply[1024]) {
     if (!engine_initialized) {
       network.load_bucket("int8test.quant");
       TT.resize(21);
-      initialize();
       Statistics::mPicker.init();
       engine_initialized = true;
       glob.reply = str;
