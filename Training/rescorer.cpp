@@ -90,6 +90,8 @@ int main(int argl, const char **argc) {
   }
 
   handle->close(handle);
+  std::cout << "TotalCounter: " << total_counter << std::endl;
+  std::cout << "WrongCounter: " << wrong_counter << std::endl;
 
   return 0;
 }
