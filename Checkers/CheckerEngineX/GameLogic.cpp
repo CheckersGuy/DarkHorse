@@ -212,10 +212,6 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     }
   }
 
-  if (in_pv && !found_hash && depth >= 6) {
-    depth--;
-  }
-
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
     const Move mv = mainPV[ply];
@@ -283,12 +279,17 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
       }
     }
 
-    Depth new_depth = depth - 1 + extension;
+    Depth new_depth = depth - 1 + extension - reduction;
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<false>(
           ss + 1, (i == 0) ? in_pv : false, board, local_pv, -alpha - 1, -alpha,
           ply + 1, new_depth - reduction, last_rev, move, local.previous);
-      if (val > alpha && val < beta) {
+      if (!in_pv && val > alpha) {
+        val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
+                                     local_pv, -beta, -alpha, ply + 1,
+                                     new_depth, last_rev, move, local.previous);
+      }
+      if (in_pv && val > alpha && val < beta) {
         val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
                                      local_pv, -beta, -alpha, ply + 1,
                                      new_depth, last_rev, move, local.previous);
