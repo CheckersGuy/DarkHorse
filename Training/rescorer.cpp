@@ -53,7 +53,7 @@ int main(int argl, const char **argc) {
   printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
 
   /* Open database for probing. */
-  handle = egdb_open(EGDB_NORMAL, max_pieces, 4000, DB_PATH, print_msgs);
+  handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
   if (!handle) {
     printf("Error returned from egdb_open()\n");
     return (1);
@@ -72,6 +72,7 @@ int main(int argl, const char **argc) {
   Sample test;
 
   while (stream >> test) {
+    std::cout << "Test" << std::endl;
     auto result = get_tb_result(test.position, 10, handle);
     if (result != UNKNOWN && result != test.result) {
 
