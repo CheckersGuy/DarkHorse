@@ -120,7 +120,8 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Board &board, Move move, bool in_pv) {
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
     auto red = (!in_pv && move_index >= 4) ? 2 : 1;
-    return red;
+    auto index = std::min(depth, (int)LMR_TABLE.size() - 1);
+    return LMR_TABLE[index];
   }
   return 0;
 }
@@ -265,7 +266,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     board.make_move(move);
     // setting the 'previous move in the search stack'
 
-    if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
+    if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Depth newDepth = std::max(depth - 4, 1);
       Value board_val = -qs(ss + 1, in_pv, board, line, -prob_beta,
@@ -283,20 +284,20 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
       }
     }
 
-    Depth new_depth = depth - 1 + extension - reduction;
+    Depth new_depth = depth - 1 + extension;
     if ((in_pv && i != 0) || reduction != 0) {
-      val = -Search::search<false>(
-          ss + 1, (i == 0) ? in_pv : false, board, local_pv, -alpha - 1, -alpha,
-          ply + 1, new_depth - reduction, last_rev, move, local.previous);
+      val = -Search::search<false>(ss + 1, false, board, local_pv, -alpha - 1,
+                                   -alpha, ply + 1, new_depth - reduction,
+                                   last_rev, move, local.previous);
       if (!in_pv && val > alpha) {
-        val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
-                                     local_pv, -beta, -alpha, ply + 1,
-                                     new_depth, last_rev, move, local.previous);
+        val = -Search::search<false>(ss + 1, false, board, local_pv, -beta,
+                                     -alpha, ply + 1, new_depth, last_rev, move,
+                                     local.previous);
       }
       if (in_pv && val > alpha && (is_root || val < beta)) {
-        val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
-                                     local_pv, -beta, -alpha, ply + 1,
-                                     new_depth, last_rev, move, local.previous);
+        val = -Search::search<false>(ss + 1, true, board, local_pv, -beta,
+                                     -alpha, ply + 1, new_depth, last_rev, move,
+                                     local.previous);
       }
     } else {
       val = -Search::search<false>(ss + 1, (i == 0) ? in_pv : false, board,
@@ -306,7 +307,6 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      best_move = move;
       if (best_score >= beta &&
           !board.get_position().has_jumps(board.get_mover()) &&
           liste.length() > 1) {
@@ -321,6 +321,7 @@ Value search(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
         killers[ply][0] = move;
       }
       if (val > alpha) {
+        best_move = move;
         pv.concat(move, local_pv);
         alpha = val;
       }
@@ -388,8 +389,9 @@ Value qs(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
     Move move = moves[i];
     Line localPV;
     board.make_move(move);
-    Value value = -Search::qs(ss, ((i == 0) ? in_pv : false), board, localPV,
-                              -beta, -alpha, ply + 1, depth - 1, last_rev);
+    Value value =
+        -Search::qs(ss, ((i == 0) ? in_pv : false), board, localPV, -beta,
+                    -alpha, ply + 1, depth - 1, board.pCounter - 2);
     board.undo_move();
     if (value > bestValue) {
       bestValue = value;

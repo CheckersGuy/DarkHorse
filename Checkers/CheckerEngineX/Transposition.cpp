@@ -14,6 +14,8 @@ Transposition::Transposition(size_t capacity) {
 
 void MoveEncoding::encode_move(Move move) {
   from_index = (!move.is_empty()) ? move.get_from_index() : 32;
+  if (move.is_empty())
+    return;
   uint8_t dir;
   if ((((move.from & MASK_L3) << 3) == move.to) ||
       (((move.from & MASK_L5) << 5) == move.to)) {
@@ -87,17 +89,14 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
       if (cluster.ent[i].depth < depth) {
         cluster.ent[i].depth = depth;
         cluster.ent[i].flag = flag;
-        cluster.ent[i].best_move = (!tt_move.is_empty())
-                                       ? MoveEncoding(tt_move)
-                                       : cluster.ent[i].best_move;
+        if (!tt_move.is_empty()) {
+          cluster.ent[i].best_move = MoveEncoding(tt_move);
+        }
+
         cluster.ent[i].value = value;
         cluster.ent[i].age = age_counter;
       } else {
         cluster.ent[i].age = age_counter;
-        if (!tt_move.is_empty() && cluster.ent[i].best_move.from_index == 32) {
-          // got an empty move
-          cluster.ent[i].best_move = MoveEncoding(tt_move);
-        }
         // something wrong here
       }
 
