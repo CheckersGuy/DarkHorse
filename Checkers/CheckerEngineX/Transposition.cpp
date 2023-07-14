@@ -97,6 +97,9 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
         cluster.ent[i].age = age_counter;
       } else {
         cluster.ent[i].age = age_counter;
+        if (cluster.ent[i].best_move.from_index == 32) {
+          cluster.ent[i].best_move = MoveEncoding(tt_move);
+        }
         // something wrong here
       }
 

@@ -87,42 +87,17 @@ void MovePicker::clear_scores() {
       killer_moves[i][k] = Move{};
     }
   }
-  for (auto i = 0; i < counter_history.size(); ++i) {
-    for (auto k = 0; k < counter_history[0].size(); ++k) {
-      counter_history[i][k] = 0;
-    }
-  }
-
-  for (auto i = 0; i < follow_history.size(); ++i) {
-    for (auto k = 0; k < follow_history[0].size(); ++k) {
-      follow_history[i][k] = 0;
-    }
-  }
 }
 
-int MovePicker::get_move_score(Position pos, Move move, Move previous,
-                               Move previous_own, Depth depth) {
+int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
   // const int index = get_move_encoding(pos.get_color(),move);
   const int index = get_history_index(pos, move);
   int score = history[index];
-
-  if (!previous.is_capture() && !move.is_capture() && !previous.is_empty()) {
-    auto counter = counter_history[get_history_index(pos, previous)][index];
-    score += counter;
-  }
-
-  if (!previous_own.is_empty() && !previous_own.is_capture() &&
-      !move.is_capture()) {
-    auto follow = follow_history[get_history_index(pos, previous_own)][index];
-    score += follow;
-  }
-
   return score;
 }
 
 int MovePicker::get_move_score(Position current, Depth depth, int ply,
-                               Move move, Move previous, Move previous_own,
-                               Move ttMove) {
+                               Move move, Move ttMove) {
   if (move == ttMove) {
     return std::numeric_limits<int32_t>::max();
   }
@@ -139,41 +114,21 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
     }
   }
 
-  return get_move_score(current, move, previous, previous_own, depth);
+  return get_move_score(current, move, depth);
 }
 
 void update_history_score(int &score, int delta) { score += delta; }
 
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
-                               Move previous, Move previous_own, int depth) {
+                               int depth) {
   const int index = get_history_index(pos, move);
   const int delta = std::min(depth * depth, 18 * 18);
   update_history_score(history[index], delta);
-  Move top = liste[0];
-
-  if (!previous.is_capture() && !move.is_capture() && !previous.is_empty()) {
-    counter_history[get_history_index(pos, previous)]
-                   [get_history_index(pos, move)] += delta;
-  }
-
-  if (!previous_own.is_empty() && !previous_own.is_capture() &&
-      !move.is_capture()) {
-    follow_history[get_history_index(pos, previous_own)]
-                  [get_history_index(pos, move)] += delta;
-  }
-
-  while ((top = *(liste++)) != move) {
-    int &score = history[get_history_index(pos, top)];
+  Move *top = &liste[0];
+  while (*top != move) {
+    int &score = history[get_history_index(pos, *top)];
     update_history_score(score, -delta);
-    if (!previous.is_capture() && !top.is_capture() && !previous.is_empty()) {
-      counter_history[get_history_index(pos, previous)]
-                     [get_history_index(pos, top)] -= delta;
-    }
-    if (!previous_own.is_empty() && !previous_own.is_capture() &&
-        !top.is_capture()) {
-      follow_history[get_history_index(pos, previous_own)]
-                    [get_history_index(pos, top)] -= delta;
-    }
+    top++;
   }
 }
 } // namespace Statistics

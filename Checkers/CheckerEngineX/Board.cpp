@@ -29,7 +29,6 @@ void Board::play_move(Move move) {
 void Board::make_move(Move move) {
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
-  // Zobrist::update_zobrist_keys(get_position(), move);
   pStack[pCounter].make_move(move);
 }
 
@@ -41,7 +40,6 @@ Board &Board::operator=(Position pos) {
   get_position().WP = pos.WP;
   get_position().K = pos.K;
   get_position().color = pos.color;
-  // get_position().key = Zobrist::generate_key(get_position());
 
   return *this;
 }
