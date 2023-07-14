@@ -18,21 +18,17 @@ private:
 
 public:
   std::array<std::array<Move, MAX_KILLERS>, MAX_PLY> killer_moves;
-  std::array<std::array<int, 32 * 16>, 32 * 16> counter_history;
-  std::array<std::array<int, 32 * 16>, 32 * 16> follow_history;
 
-  int get_move_score(Position pos, Move move, Move previous, Move previous_own,
-                     Depth depth);
+  int get_move_score(Position pos, Move move, Depth depth);
 
   int get_move_score(Position current, Depth depth, int ply, Move move,
-                     Move previous, Move previous_own, Move ttMove);
+                     Move ttMove);
 
   int get_history_index(Position pos, Move move);
 
   void clear_scores();
 
-  void update_scores(Position pos, Move *list, Move move, Move previous,
-                     Move previous_own, int depth);
+  void update_scores(Position pos, Move *list, Move move, int depth);
 
   static int get_move_encoding(Move move);
   static int get_policy_encoding(Color color, Move move);

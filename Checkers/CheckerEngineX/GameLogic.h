@@ -29,11 +29,6 @@ struct SearchGlobal {
   void score_update();
 };
 
-struct SearchStack {
-  Move previous; // the move leading to the current positions
-  Move excluded; // for singular move extensions
-};
-
 extern SearchGlobal glob;
 
 Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
@@ -42,15 +37,14 @@ Value search(Board board, Move &best, Depth depth, uint32_t time, bool print);
 
 namespace Search {
 
-Value search_asp(SearchStack *ss, Board &board, Value last_score, Depth depth);
+Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <bool is_root>
-Value search(SearchStack *ss, bool in_pv, Board &board, Line &line, Value alpha,
-             Value beta, Ply ply, Depth depth, int last_rev, Move previous,
-             Move previous_own);
+Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta,
+             Ply ply, Depth depth, int last_rev);
 
-Value qs(SearchStack *ss, bool in_pv, Board &board, Line &pv, Value alpha,
-         Value beta, Ply ply, Depth depth, int last_rev);
+Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
+         Depth depth, int last_rev);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
