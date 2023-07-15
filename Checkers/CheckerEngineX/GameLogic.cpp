@@ -1,5 +1,6 @@
 #include "GameLogic.h"
 #include "Move.h"
+#include "MovePicker.h"
 #include "types.h"
 
 Line mainPV;
@@ -185,6 +186,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
+
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
     const Move mv = mainPV[ply];
@@ -228,6 +230,18 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
                                    -prob_beta + 1, ply + 1, newDepth, last_rev);
         if (value >= prob_beta) {
           board.undo_move();
+          // try updating history scores here as well+killers
+          if (!board.get_position().has_jumps(board.get_mover()) &&
+              liste.length() > 1) {
+            Statistics::mPicker.update_scores(
+                board.get_position(), &liste.liste[0], move, newDepth + 1);
+            // updating killer moves
+            auto &killers = Statistics::mPicker.killer_moves;
+            for (auto i = 1; i < MAX_KILLERS; ++i) {
+              killers[ply][i] = killers[ply][i - 1];
+            }
+            killers[ply][0] = move;
+          }
           TT.store_hash(value, board.get_current_key(), TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return value;

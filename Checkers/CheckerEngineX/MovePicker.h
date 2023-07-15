@@ -29,6 +29,7 @@ public:
   void clear_scores();
 
   void update_scores(Position pos, Move *list, Move move, int depth);
+  void decay_scores();
 
   static int get_move_encoding(Move move);
   static int get_policy_encoding(Color color, Move move);

@@ -8,14 +8,23 @@
 
 void print_msgs(char *msg) { printf("%s", msg); }
 
-// for the new dataloader in rust
+enum class SampleResult : int { DRAW = 1, WIN = 2, LOSS = 3, UNKNOWN = 0 };
 struct SampleData {
   std::string fen_string;
   Position pos;
   int16_t eval;
   int8_t result;
 
-  friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {}
+  friend std::ifstream &operator>>(std::ifstream &stream,
+                                   const SampleData &other) {
+    uint16_t size;
+    stream.read((char *)&size, sizeof(uint16_t));
+    other.fen_string.reserve(size);
+    stream.read((char *)&other.fen_string[0], sizeof(char));
+    stream.read((char *)&other.eval, sizeof(int16_t));
+    stream.read((char *)&other.result, sizeof(int8_t));
+    return stream;
+  }
   friend std::ofstream &operator<<(std::ofstream &stream, SampleData other) {
     uint16_t size = other.fen_string.size();
     stream.write((char *)&size, sizeof(uint16_t));
@@ -55,6 +64,10 @@ get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
   return UNKNOWN;
 }
+// rescores data and outputs a new data format
+void rescore_data(int max_pieces, std::string input, std::string output) {
+  // to be continued
+}
 
 int main(int argl, const char **argc) {
 
@@ -88,30 +101,36 @@ int main(int argl, const char **argc) {
   if (!stream.good()) {
     std::cout << "Could not open the stream" << std::endl;
   }
+  /*
+    Sample test;
+    int total_counter = 0;
+    int wrong_counter = 0;
+    while (stream >> test) {
+      auto result = get_tb_result(test.position, 10, handle);
+      total_counter += (result != UNKNOWN);
+      if (result != UNKNOWN && result != test.result) {
+        wrong_counter++;
 
-  Sample test;
-  int total_counter = 0;
-  int wrong_counter = 0;
-  while (stream >> test) {
-    auto result = get_tb_result(test.position, 10, handle);
-    total_counter += (result != UNKNOWN);
-    if (result != UNKNOWN && result != test.result) {
-      wrong_counter++;
+        auto result_string = (result == WHITE_WON) ? "WHITE_WON"
+                             : (result == DRAW)    ? "DRAW"
+                                                   : "BLACK_WON";
 
-      auto result_string = (result == WHITE_WON) ? "WHITE_WON"
-                           : (result == DRAW)    ? "DRAW"
-                                                 : "BLACK_WON";
+        std::cout << test << "\n";
+        std::cout << "TableBaseResult : " << result_string << std::endl;
 
-      std::cout << test << "\n";
-      std::cout << "TableBaseResult : " << result_string << std::endl;
-
-      std::cout << "----------------------------" << std::endl;
+        std::cout << "----------------------------" << std::endl;
+      }
     }
-  }
 
-  handle->close(handle);
-  std::cout << "TotalCounter: " << total_counter << std::endl;
-  std::cout << "WrongCounter: " << wrong_counter << std::endl;
+    handle->close(handle);
+    std::cout << "TotalCounter: " << total_counter << std::endl;
+    std::cout << "WrongCounter: " << wrong_counter << std::endl;
+  */
+
+  SampleData test;
+  test.fen_string = "B:WK29:BK4";
+  std::ofstream out_stream("test.data");
+  out_stream << test;
 
   return 0;
 }
