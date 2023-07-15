@@ -5,6 +5,7 @@
 #include "MovePicker.h"
 #include "Position.h"
 #include <assert.h>
+#include <limits>
 namespace Statistics {
 
 MovePicker mPicker;
@@ -89,10 +90,17 @@ void MovePicker::clear_scores() {
   }
 }
 
+void MovePicker::decay_scores() {
+  for (auto i = 0; i < history.size(); ++i) {
+    history[i] /= 10;
+  }
+}
+
 int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
   // const int index = get_move_encoding(pos.get_color(),move);
   const int index = get_history_index(pos, move);
   int score = history[index];
+
   return score;
 }
 
@@ -122,7 +130,7 @@ void update_history_score(int &score, int delta) { score += delta; }
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * depth, 18 * 18);
+  const int delta = std::min(depth * depth, 23 * 23);
   update_history_score(history[index], delta);
   Move *top = &liste[0];
   while (*top != move) {
