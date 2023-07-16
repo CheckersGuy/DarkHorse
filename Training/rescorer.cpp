@@ -15,8 +15,7 @@ struct SampleData {
   int16_t eval;
   int8_t result;
 
-  friend std::ifstream &operator>>(std::ifstream &stream,
-                                   const SampleData &other) {
+  friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {
     uint16_t size;
     stream.read((char *)&size, sizeof(uint16_t));
     other.fen_string.reserve(size);
