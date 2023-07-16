@@ -18,6 +18,7 @@ struct SampleData {
   friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {
     uint16_t size;
     stream.read((char *)&size, sizeof(uint16_t));
+    std::cout << "Size: " << (int)size << std::endl;
     other.fen_string.reserve(size);
     stream.read((char *)&other.fen_string[0], sizeof(char) * size);
     stream.read((char *)&other.eval, sizeof(int16_t));
@@ -126,11 +127,15 @@ int main(int argl, const char **argc) {
 
   SampleData test;
   test.fen_string = "B:WK29:BK4";
-  std::cout << "FenString: " << test.fen_string << std::endl;
   std::ofstream out_stream("test.data", std::ios::binary);
+  if (!out_stream.good()) {
+    std::exit(-1);
+  }
   out_stream << test;
-  out_stream.close();
   std::ifstream in_stream("test.data", std::ios::binary);
+  if (!in_stream.good()) {
+    std::exit(-1);
+  }
   SampleData other;
   in_stream >> other;
   std::cout << "OtherFenString: " << other.fen_string << std::endl;
