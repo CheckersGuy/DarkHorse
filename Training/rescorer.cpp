@@ -126,8 +126,14 @@ int main(int argl, const char **argc) {
 
   SampleData test;
   test.fen_string = "B:WK29:BK4";
-  std::ofstream out_stream("test.data");
+  std::cout << "FenString: " << test.fen_string << std::endl;
+  std::ofstream out_stream("test.data", std::ios::binary);
   out_stream << test;
+  out_stream.close();
+  std::ifstream in_stream("test.data", std::ios::binary);
+  SampleData other;
+  in_stream >> other;
+  std::cout << "OtherFenString: " << other.fen_string << std::endl;
 
   return 0;
 }
