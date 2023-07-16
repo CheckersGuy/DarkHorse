@@ -4,7 +4,6 @@
 
 #include "Board.h"
 #include <cstdint>
-
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
