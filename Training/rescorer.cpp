@@ -20,7 +20,7 @@ struct SampleData {
     stream.read((char *)&size, sizeof(uint16_t));
     std::cout << "Size: " << (int)size << std::endl;
     other.fen_string.reserve(size);
-    stream.read((char *)&other.fen_string[0], sizeof(char) * size);
+    stream.read((char *)&other.fen_string.c_str(), sizeof(char) * size);
     stream.read((char *)&other.eval, sizeof(int16_t));
     stream.read((char *)&other.result, sizeof(int8_t));
     return stream;
@@ -30,7 +30,7 @@ struct SampleData {
     std::cout << "Writing: " << (int)size << std::endl;
     std::cout << "TheStringIs: " << other.fen_string << std::endl;
     stream.write((char *)&size, sizeof(uint16_t));
-    stream.write((char *)&other.fen_string[0], sizeof(char) * size);
+    stream.write((char *)&other.fen_string.c_str(), sizeof(char) * size);
     stream.write((char *)&other.eval, sizeof(int16_t));
     stream.write((char *)&other.result, sizeof(int8_t));
     return stream;
