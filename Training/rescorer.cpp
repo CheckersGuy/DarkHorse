@@ -19,7 +19,7 @@ struct SampleData {
     uint16_t size;
     stream.read((char *)&size, sizeof(uint16_t));
     other.fen_string.reserve(size);
-    stream.read((char *)&other.fen_string[0], sizeof(char));
+    stream.read((char *)&other.fen_string[0], sizeof(char) * size);
     stream.read((char *)&other.eval, sizeof(int16_t));
     stream.read((char *)&other.result, sizeof(int8_t));
     return stream;
@@ -27,7 +27,7 @@ struct SampleData {
   friend std::ofstream &operator<<(std::ofstream &stream, SampleData other) {
     uint16_t size = other.fen_string.size();
     stream.write((char *)&size, sizeof(uint16_t));
-    stream.write((char *)&other.fen_string[0], other.fen_string.size());
+    stream.write((char *)&other.fen_string[0], sizeof(char) * size);
     stream.write((char *)&other.eval, sizeof(int16_t));
     stream.write((char *)&other.result, sizeof(int8_t));
     return stream;
