@@ -4,7 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#define DB_PATH "E:\\kr_english_wld"
+#define DB_PATH "D:\\kr_english_wld"
 
 void print_msgs(char *msg) { printf("%s", msg); }
 
@@ -33,10 +33,9 @@ struct SampleData {
     stream.write((char *)&other.result, sizeof(int8_t));
     return stream;
   }
+};
 
-}
-
-get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
   if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
     return UNKNOWN;
 
@@ -93,7 +92,6 @@ int main(int argl, const char **argc) {
   }
 
   std::cout << "Hello I am the rescorer" << std::endl;
-
   std::string file_name = argc[1];
   std::string path = "../Training/TrainData/" + file_name;
   std::cout << "Path: " << path << std::endl;
