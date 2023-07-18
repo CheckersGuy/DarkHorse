@@ -253,12 +253,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<false>(false, board, local_pv, -alpha - 1, -alpha,
                                    ply + 1, new_depth - reduction, last_rev);
-      if (!in_pv && val > alpha) {
-        val = -Search::search<false>(false, board, local_pv, -beta, -alpha,
-                                     ply + 1, new_depth, last_rev);
-      }
-      if (in_pv && val > alpha && (is_root || val < beta)) {
-        val = -Search::search<false>(true, board, local_pv, -beta, -alpha,
+      if (val > alpha) {
+        val = -Search::search<false>(in_pv, board, local_pv, -beta, -alpha,
                                      ply + 1, new_depth, last_rev);
       }
     } else {

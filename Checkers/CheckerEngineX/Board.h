@@ -13,7 +13,9 @@
 class Board {
 
 public:
-  std::array<Position, MAX_PLY + 600> pStack;
+  std::array<Position, MAX_PLY> pStack;
+  std::array<Position, 400> rep_history;
+  int rep_size = 0;
 
 public:
   int last_non_rev{0};

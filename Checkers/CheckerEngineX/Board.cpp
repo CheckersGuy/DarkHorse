@@ -11,6 +11,9 @@ size_t Board::history_length() const { return pStack.size(); }
 Board::Board(const Board &other) {
   std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
   this->pCounter = other.pCounter;
+  this->rep_size = other.rep_size;
+  std::copy(other.rep_history.begin(), other.rep_history.end(),
+            rep_history.begin());
 }
 
 void Board::print_board() const {
@@ -19,10 +22,9 @@ void Board::print_board() const {
 }
 
 void Board::play_move(Move move) {
-  if (move.is_capture() || move.is_pawn_move(get_position().K)) {
-    this->last_non_rev = pCounter;
-  }
-  this->make_move(move);
+  Position copy = get_position();
+  copy.make_move(move);
+  (*this) = copy;
 }
 
 void Board::make_move(Move move) {
@@ -79,6 +81,18 @@ bool Board::is_repetition(int last_rev) const {
     }
     if (counter >= 2) {
       return true;
+    }
+  }
+  // if we reached the end without encountering an inreversible position
+  // we keep looking through the repetition history for 'our ' side
+  if (end == 0 && rep_size > 0 &&
+      rep_history[0].get_color() == current.get_color()) {
+    for (auto i = rep_size - 1; i >= 0; i--) {
+      if (rep_history[i] == current) {
+        std::ofstream test("debug.txt", std::ios::app);
+        test << "StupidTest" << std::endl;
+        return true;
+      }
     }
   }
   return false;
