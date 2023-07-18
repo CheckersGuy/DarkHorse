@@ -73,8 +73,13 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   Move best;
   auto value =
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
+  bool is_not_rev =
+      best.is_pawn_move(game_board.get_position().K) || best.is_capture();
+  if (is_not_rev) {
+    game_board.rep_size = 0;
+  }
+  game_board.rep_history[game_board.rep_size++] = game_board.get_position();
   game_board.play_move(best);
-
   Position c = game_board.get_position();
   for (auto i = 0; i < 32; ++i) {
     const uint32_t mask = 1u << i;

@@ -165,7 +165,14 @@ int main(int argl, const char **argc) {
       }
       std::cout << "end_move"
                 << "\n";
+      bool is_not_rev = bestMove.is_pawn_move(board.get_position().K) ||
+                        bestMove.is_capture();
+      if (is_not_rev) {
+        board.rep_size = 0;
+      }
+      board.rep_history[board.rep_size++] = board.get_position();
       board.play_move(bestMove);
+      // adding the move to the repetition history for our side
     } else if (current == "terminate") {
       // terminating the program
       break;
