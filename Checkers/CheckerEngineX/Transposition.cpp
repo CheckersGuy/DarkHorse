@@ -86,7 +86,7 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
   for (auto i = 1; i < bucket_size; ++i) {
     if (cluster.ent[i].key == lock) {
 
-      if (cluster.ent[i].depth < depth) {
+      if (cluster.ent[i].depth < depth || flag == TT_EXACT) {
         cluster.ent[i].depth = depth;
         cluster.ent[i].flag = flag;
         // if (!tt_move.is_empty()) {
