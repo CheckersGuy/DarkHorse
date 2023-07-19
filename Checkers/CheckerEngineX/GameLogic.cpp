@@ -198,8 +198,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   int extension = 0;
   if (liste.length() == 1) {
     extension = 1;
-    if (in_pv)
-      extension = 2;
   } else if (in_pv && board.previous().has_jumps() && liste[0].is_capture()) {
     extension = 1;
   }
@@ -221,7 +219,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     board.make_move(move);
     // setting the 'previous move in the search stack'
 
-    if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
+    if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Depth newDepth = std::max(depth - 4, 1);
       Value board_val = -qs(in_pv, board, line, -prob_beta, -prob_beta + 1,
