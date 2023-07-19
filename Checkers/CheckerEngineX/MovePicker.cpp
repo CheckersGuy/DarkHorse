@@ -94,6 +94,11 @@ void MovePicker::decay_scores() {
   for (auto i = 0; i < history.size(); ++i) {
     history[i] /= 10;
   }
+  for (auto i = 0; i < killer_moves.size(); ++i) {
+    for (auto k = 0; k < MAX_KILLERS; ++k) {
+      killer_moves[i][k] = Move{};
+    }
+  }
 }
 
 int MovePicker::get_move_score(Position pos, Move move, Depth depth) {

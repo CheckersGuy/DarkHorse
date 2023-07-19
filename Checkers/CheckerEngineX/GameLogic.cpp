@@ -263,6 +263,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     }
     board.undo_move();
     if (val > best_score) {
+      best_move = move;
       best_score = val;
       if (best_score >= beta &&
           !board.get_position().has_jumps(board.get_mover()) &&
@@ -277,7 +278,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
         killers[ply][0] = move;
       }
       if (val > alpha) {
-        best_move = move;
         pv.concat(move, local_pv);
         alpha = val;
       }
