@@ -87,10 +87,8 @@ bool Board::is_repetition(int last_rev) const {
   // we keep looking through the repetition history for 'our ' side
   if (end == 0 && rep_size > 0 &&
       rep_history[0].get_color() == current.get_color()) {
-    for (auto i = rep_size - 1; i >= 0; i--) {
+    for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i] == current) {
-        std::ofstream test("debug.txt", std::ios::app);
-        test << "StupidTest" << std::endl;
         return true;
       }
     }
