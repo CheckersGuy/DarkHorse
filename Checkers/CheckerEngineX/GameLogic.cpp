@@ -198,7 +198,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   int extension = 0;
   if (liste.length() == 1) {
     extension = 1;
-  } else if (board.previous().has_jumps() && liste[0].is_capture()) {
+    if (in_pv)
+      extension = 2;
+  } else if (in_pv && board.previous().has_jumps() && liste[0].is_capture()) {
     extension = 1;
   }
   const Value old_alpha = alpha;
