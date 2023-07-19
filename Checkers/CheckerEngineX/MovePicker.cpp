@@ -135,7 +135,7 @@ void update_history_score(int &score, int delta) { score += delta; }
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * depth, 23 * 23);
+  const int delta = std::min(depth * depth, 28 * 28);
   update_history_score(history[index], delta);
   Move *top = &liste[0];
   while (*top != move) {
