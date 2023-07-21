@@ -107,8 +107,8 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
     }
     const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
 
-    if (cluster.ent[i].flag == Flag::None || cluster.ent[i].depth < depth ||
-        age_entry != 0) {
+    if (cluster.ent[i].flag == Flag::None ||
+        (cluster.ent[i].depth - 3 * std::max(age_entry, 0) < depth)) {
       cluster.ent[i].depth = depth;
       cluster.ent[i].flag = flag;
       cluster.ent[i].best_move = MoveEncoding(tt_move);
