@@ -126,11 +126,11 @@ int main(int argl, const char **argc) {
 
     // newDataFormat
     SampleData new_format;
-    new_format.fen_string = copy.position.get_fen_string();
-    new_format.result = copy.result;
+    new_format.fen_string = test.position.get_fen_string();
+    new_format.result = test.result;
     out_stream << new_format;
 
-    if (result != UNKNOWN && result != copy.result) {
+    if (result != UNKNOWN && result != test.result) {
       wrong_counter++;
       /*
           auto result_string = (result == WHITE_WON) ? "WHITE_WON"
