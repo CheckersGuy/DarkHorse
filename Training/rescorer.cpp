@@ -102,7 +102,7 @@ int main(int argl, const char **argc) {
     std::cout << "Could not open the input_stream" << std::endl;
   }
   std::ofstream out_stream((path + ".rescored").c_str(), std::ios::binary);
-  if (!stream.good()) {
+  if (!out_stream.good()) {
     std::cout << "Could not open the output_stream" << std::endl;
   }
 
@@ -118,6 +118,7 @@ int main(int argl, const char **argc) {
         copy.result = (copy.result == WHITE_WON) ? BLACK_WON : WHITE_WON;
       }
     }
+    copy.position.print_position();
     auto result = get_tb_result(copy.position, 10, handle);
 
     total_counter += (result != UNKNOWN);
