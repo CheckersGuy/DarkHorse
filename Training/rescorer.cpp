@@ -134,6 +134,7 @@ int main(int argl, const char **argc) {
     std::exit(-1);
   }
   out_stream << test;
+  out_stream.close();
   std::ifstream in_stream("test.data", std::ios::binary);
   if (!in_stream.good()) {
     std::exit(-1);
