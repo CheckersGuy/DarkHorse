@@ -122,7 +122,7 @@ int main(int argl, const char **argc) {
 
     total_counter += (result != UNKNOWN);
     if (result != UNKNOWN) {
-      test.result = UNKNOWN;
+      test.result = result;
     }
 
     // newDataFormat
@@ -133,6 +133,9 @@ int main(int argl, const char **argc) {
 
     if (result != UNKNOWN && result != test.result) {
       wrong_counter++;
+      if ((wrong_counter + 1) % 10000) {
+        std::cout << wrong_counter << std::endl;
+      }
       /*
           auto result_string = (result == WHITE_WON) ? "WHITE_WON"
                                : (result == DRAW)    ? "DRAW"
