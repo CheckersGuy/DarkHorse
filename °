@@ -99,18 +99,12 @@ int main(int argl, const char **argc) {
   std::cout << "Path: " << path << std::endl;
   std::ifstream stream(path.c_str(), std::ios::binary);
   if (!stream.good()) {
-    std::cout << "Could not open the input_stream" << std::endl;
+    std::cout << "Could not open the stream" << std::endl;
   }
-  std::ofstream out_stream((path + ".rescored").c_str(), std::ios::binary);
-  if (!stream.good()) {
-    std::cout << "Could not open the output_stream" << std::endl;
-  }
-
   Sample test;
   int total_counter = 0;
   int wrong_counter = 0;
   while (stream >> test) {
-    total_counter++;
     Sample copy = test;
     if (copy.position.get_color() == BLACK) {
       copy.position = copy.position.get_color_flip();
@@ -124,26 +118,20 @@ int main(int argl, const char **argc) {
     if (result != UNKNOWN) {
       copy.result = UNKNOWN;
     }
-
-    // newDataFormat
-    SampleData new_format;
-    new_format.fen_string = copy.position.get_fen_string();
-    new_format.result = copy.result;
-    out_stream << new_format;
-
-    if (result != UNKNOWN && result != copy.result) {
+    /*
+    if (result != UNKNOWN && result != test.result) {
       wrong_counter++;
-      /*
-          auto result_string = (result == WHITE_WON) ? "WHITE_WON"
-                               : (result == DRAW)    ? "DRAW"
-                                                     : "BLACK_WON";
 
-          std::cout << test << "\n";
-          std::cout << "TableBaseResult : " << result_string << std::endl;
+      auto result_string = (result == WHITE_WON) ? "WHITE_WON"
+                           : (result == DRAW)    ? "DRAW"
+                                                 : "BLACK_WON";
 
-          std::cout << "----------------------------" << std::endl;
-          */
+      std::cout << test << "\n";
+      std::cout << "TableBaseResult : " << result_string << std::endl;
+
+      std::cout << "----------------------------" << std::endl;
     }
+    */
   }
 
   handle->close(handle);
