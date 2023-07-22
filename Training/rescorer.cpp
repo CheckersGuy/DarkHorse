@@ -110,7 +110,7 @@ int main(int argl, const char **argc) {
   int total_counter = 0;
   int wrong_counter = 0;
   while (stream >> test) {
-    std::cout << test << std::endl;
+    // std::cout << test << std::endl;
     total_counter++;
     if (test.position.get_color() == BLACK) {
       test.position = test.position.get_color_flip();
