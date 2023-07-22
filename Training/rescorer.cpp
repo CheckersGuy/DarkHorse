@@ -18,7 +18,7 @@ struct SampleData {
   friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {
     uint16_t size;
     stream.read((char *)&size, sizeof(uint16_t));
-    std::cout << "Size: " << (int)size << std::endl;
+    // std::cout << "Size: " << (int)size << std::endl;
     other.fen_string.resize(size);
     stream.read((char *)other.fen_string.c_str(), sizeof(char) * size);
     stream.read((char *)&other.eval, sizeof(int16_t));
@@ -27,8 +27,8 @@ struct SampleData {
   }
   friend std::ofstream &operator<<(std::ofstream &stream, SampleData other) {
     uint16_t size = other.fen_string.size();
-    std::cout << "Writing: " << (int)size << std::endl;
-    std::cout << "TheStringIs: " << other.fen_string << std::endl;
+    // std::cout << "Writing: " << (int)size << std::endl;
+    // std::cout << "TheStringIs: " << other.fen_string << std::endl;
     stream.write((char *)&size, sizeof(uint16_t));
     stream.write((char *)other.fen_string.c_str(), sizeof(char) * size);
     stream.write((char *)&other.eval, sizeof(int16_t));
