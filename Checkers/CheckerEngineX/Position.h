@@ -48,7 +48,7 @@ struct Square {
 struct Position {
   Color color{BLACK};
   uint32_t WP{0u}, BP{0u}, K{0u};
-  // uint64_t key{0ull};
+  uint64_t k31231{0ull};
 
   template <Color color> constexpr uint32_t get_current() const {
     if constexpr (color == BLACK)
