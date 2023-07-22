@@ -111,19 +111,17 @@ int main(int argl, const char **argc) {
   int wrong_counter = 0;
   while (stream >> test) {
     total_counter++;
-    Sample copy = test;
-    if (copy.position.get_color() == BLACK) {
-      copy.position = copy.position.get_color_flip();
-      if (copy.result != DRAW && copy.result != UNKNOWN) {
-        copy.result = (copy.result == WHITE_WON) ? BLACK_WON : WHITE_WON;
+    if (test.position.get_color() == BLACK) {
+      test.position = test.position.get_color_flip();
+      if (test.result != DRAW && test.result != UNKNOWN) {
+        test.result = (test.result == WHITE_WON) ? BLACK_WON : WHITE_WON;
       }
     }
-    copy.position.print_position();
-    auto result = get_tb_result(copy.position, 10, handle);
+    auto result = get_tb_result(test.position, 10, handle);
 
     total_counter += (result != UNKNOWN);
     if (result != UNKNOWN) {
-      copy.result = UNKNOWN;
+      test.result = UNKNOWN;
     }
 
     // newDataFormat
