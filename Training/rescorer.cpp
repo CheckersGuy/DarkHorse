@@ -120,11 +120,6 @@ int main(int argl, const char **argc) {
     }
     auto result = get_tb_result(test.position, 10, handle);
 
-    total_counter += (result != UNKNOWN);
-    if (result != UNKNOWN) {
-      test.result = result;
-    }
-
     // newDataFormat
     SampleData new_format;
     new_format.fen_string = test.position.get_fen_string();
@@ -146,6 +141,9 @@ int main(int argl, const char **argc) {
 
           std::cout << "----------------------------" << std::endl;
           */
+    }
+    if (result != UNKNOWN) {
+      test.result = result;
     }
   }
 
