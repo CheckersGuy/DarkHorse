@@ -65,12 +65,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
   return UNKNOWN;
 }
-// rescores data and outputs a new data format
-void rescore_data(int max_pieces, std::string input, std::string output) {
-  // to be continued
-}
-
-int main(int argl, const char **argc) {
+int maintest(int argl, const char **argc) {
 
   int i, status, max_pieces, nerrors;
   EGDB_TYPE egdb_type;
@@ -128,7 +123,7 @@ int main(int argl, const char **argc) {
 
     if (result != UNKNOWN && result != test.result) {
       wrong_counter++;
-      if ((wrong_counter + 1) % 10000) {
+      if (((wrong_counter + 1) % 10000) == 0) {
         std::cout << wrong_counter << std::endl;
       }
       /*
@@ -150,7 +145,7 @@ int main(int argl, const char **argc) {
   handle->close(handle);
   std::cout << "TotalCounter: " << total_counter << std::endl;
   std::cout << "WrongCounter: " << wrong_counter << std::endl;
-  /*
+
   {
     SampleData test;
     test.fen_string = "B:WK29:BK4";
@@ -169,26 +164,24 @@ int main(int argl, const char **argc) {
     in_stream >> other;
     std::cout << "OtherFenString: " << other.fen_string << std::endl;
   }
-  */
   return 0;
 }
-/*
+
 int main(int argl, const char **argc) {
   std::cout << "Hello I am the rescorer" << std::endl;
 
   std::string file_name = argc[1];
-  std::string path = "../Training/TrainData/" + file_name;
-  std::cout << "Path: " << path << std::endl;
-  std::ifstream stream(path.c_str());
+  std::string path = "test.data";
+  std::ofstream stream(path.c_str());
   if (!stream.good()) {
     std::cout << "Could not open the stream" << std::endl;
   }
 
-  Sample test;
-
-  while (stream >> test) {
-    std::cout << test << std::endl;
-    std::cout << "----------------------------" << std::endl;
-  }
+  SampleData data;
+  data.fen_string = "W:WK3,K15,K32:BK8,K7,K21,28,K27";
+  data.result = 1;
+  data.eval = 116;
+  // example data
+  stream << data;
+  return 0;
 }
-*/
