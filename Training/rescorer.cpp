@@ -8,7 +8,6 @@
 
 void print_msgs(char *msg) { printf("%s", msg); }
 
-enum class SampleResult : int { DRAW = 1, WIN = 2, LOSS = 3, UNKNOWN = 0 };
 struct SampleData {
   std::string fen_string;
   Position pos;
@@ -65,7 +64,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
   return UNKNOWN;
 }
-int maintest(int argl, const char **argc) {
+int main(int argl, const char **argc) {
 
   int i, status, max_pieces, nerrors;
   EGDB_TYPE egdb_type;
@@ -188,7 +187,7 @@ int maintest(int argl, const char **argc) {
   }
   return 0;
 }
-
+/*
 int main(int argl, const char **argc) {
   std::cout << "Hello I am the rescorer" << std::endl;
 
@@ -207,3 +206,4 @@ int main(int argl, const char **argc) {
   stream << data;
   return 0;
 }
+*/
