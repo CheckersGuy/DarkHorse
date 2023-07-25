@@ -92,6 +92,25 @@ int maintest(int argl, const char **argc) {
   std::string file_name = argc[1];
   std::string path = "../Training/TrainData/" + file_name;
   std::cout << "Path: " << path << std::endl;
+
+  // counting the number of training samples;
+  uint64_t num_samples = 0;
+  {
+    std::ifstream stream(path.c_str(), std::ios::binary);
+    if (!stream.good()) {
+      std::cout << "Could not open the input_stream" << std::endl;
+    }
+    std::istream_iterator<Sample> begin(stream);
+    std::istream_iterator<Sample> end;
+
+    std::for_each(begin, end, [&num_samples](Sample s) {
+      if (s.is_training_sample()) {
+        num_samples++;
+      }
+    });
+  }
+  std::cout << "NumSamples: " << num_samples << std::endl;
+
   std::ifstream stream(path.c_str(), std::ios::binary);
   if (!stream.good()) {
     std::cout << "Could not open the input_stream" << std::endl;
@@ -100,12 +119,15 @@ int maintest(int argl, const char **argc) {
   if (!out_stream.good()) {
     std::cout << "Could not open the output_stream" << std::endl;
   }
-
+  out_stream.write((char *)&num_samples, sizeof(num_samples));
   Sample test;
   int total_counter = 0;
   int wrong_counter = 0;
   while (stream >> test) {
     // std::cout << test << std::endl;
+    if (!test.is_training_sample()) {
+      continue;
+    }
     total_counter++;
     if (test.position.get_color() == BLACK) {
       test.position = test.position.get_color_flip();
