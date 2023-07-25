@@ -99,14 +99,12 @@ int main(int argl, const char **argc) {
     if (!stream.good()) {
       std::cout << "Could not open the input_stream" << std::endl;
     }
-    std::istream_iterator<Sample> begin(stream);
-    std::istream_iterator<Sample> end;
-
-    std::for_each(begin, end, [&num_samples](Sample s) {
-      if (s.is_training_sample()) {
+    Sample check;
+    while (stream >> check) {
+      if (check.is_training_sample()) {
         num_samples++;
       }
-    });
+    }
   }
   std::cout << "NumSamples: " << num_samples << std::endl;
 
