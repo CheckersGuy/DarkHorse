@@ -125,6 +125,8 @@ int main(int argl, const char **argc) {
     if (!test.is_training_sample()) {
       continue;
     }
+    std::cout << test << std::endl;
+    std::cout << std::endl;
     total_counter++;
     if (test.position.get_color() == BLACK) {
       test.position = test.position.get_color_flip();

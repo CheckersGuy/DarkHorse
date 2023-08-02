@@ -38,5 +38,5 @@ std::ifstream &operator>>(std::ifstream &stream, const Sample &s) {
 }
 
 bool Sample::is_training_sample() const {
-  return !((position.has_jumps(position.get_color())) || result == UNKNOWN);
+  return !position.has_jumps(position.color) && result != UNKNOWN;
 }
