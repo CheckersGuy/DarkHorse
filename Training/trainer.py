@@ -1,41 +1,20 @@
-from subprocess import run
-import LitMLP
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
-import Helper as h
-import torch.nn.functional as F
 import numpy as np
-import ctypes
-import pathlib
 import Experimental
-libname = pathlib.Path().absolute().__str__() + "/libpyhelper.so"
-c_lib = ctypes.CDLL(libname)
-import generator_pb2
-
-def merge_data(files,output):
-    out_batch = generator_pb2.Batch()
-    for file in files:
-        with open(file,"rb") as f:
-            data = f.read()
-            batch = generator_pb2.Batch()
-            batch.ParseFromString(data)
-            out_batch.games.extend(batch.games)
-    
-    with open(output,"wb") as f:
-        data = out_batch.SerializeToString()
-        f.write(data)
-
-
+import string_sum
+#import generator_pb2
 
 
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 420
     model = Experimental.Network2()
-    data_loader = LitMLP.LitDataModule(train_data="TrainData/shuffled.train.raw",
-                                       val_data="TrainData/val.train",
-                                       batch_size=batch_size, buffer_size=125000000)
-
+    data_loader = Experimental.LitDataModule(train_data="TrainData/shuffled2.train.raw.rescored",
+                                      val_data="TrainData/val.train.raw",
+                                       batch_size=batch_size, buffer_size=50000000)
+ #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
+    #print(provider.num_samples)
 
    # model.load_state_dict(torch.load("bucket.pt"))
     #model.save_quantized_bucket("bucket.quant")
@@ -51,5 +30,3 @@ if __name__ == "__main__":
     trainer.fit(model, data_loader)
 
 
-#merge_data(["TrainData/window0.train","TrainData/window1.train","TrainData/window2.train","TrainData/window3.train","TrainData/window4.train","TrainData/window5.train", 
-#            "TrainData/window6.train","TrainData/window7.train","TrainData/window8.train"],"TrainData/windowmaster.train")
