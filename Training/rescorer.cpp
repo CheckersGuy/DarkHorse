@@ -121,6 +121,9 @@ int main(int argl, const char **argc) {
   int total_counter = 0;
   int wrong_counter = 0;
   while (stream >> test) {
+    if (total_counter >= 50000) {
+      break;
+    }
     // std::cout << test << std::endl;
     if (!test.is_training_sample()) {
       continue;
