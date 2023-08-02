@@ -10,9 +10,8 @@ import torch
 import pytorch_lightning as pl
 import struct
 import numpy as np
-from focal_loss.focal_loss import FocalLoss
-import adabelief_pytorch
-from ranger_adabelief import RangerAdaBelief
+import string_sum
+from torch.utils.data import DataLoader
 L1 =2*1024
 L2 =16
 L3 = 32
@@ -297,129 +296,12 @@ class Network2(pl.LightningModule):
         self.log('val_loss', loss.detach())
         return {"val_loss": loss.detach()}
 
-    def validation_epoch_end(self, outputs):
-        self.save_quantized_bucket("data6.quant")
-        self.save_quantizedtest("int8.quant")
-        self.save_quantizedtest2("int8test.quant")
+    def on_validation_epoch_end(self, outputs):
+        self.save_quantizedtest2("rescored.quant")
         torch.save(self.state_dict(),"data6.pt")
         avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         return {"loss": avg_loss, "log": tensorboard_logs}
-
-
-    def save_quantized_bucket(self, output):
-        self.step()
-               #write the header file
-        min16 = np.iinfo(np.int16).min
-        max16 = np.iinfo(np.int16).max
-
-        device = torch.device("cpu")
-        device_gpu = torch.device("cuda")
-        self.to(device)
-        buffer_weights = bytearray()
-        buffer_bias = bytearray()
-        num_weights = 0
-        num_bias = 0
-        file = open(output, "wb")
-
-        #saving the header file
-        self.write_header(file)
-
-        layer = self.layers[0]
-        weights = layer.weight.detach().numpy().flatten("F")
-        weights = weights * 127.0
-        weights = np.round(weights)
-        weights = np.clip(weights, min16, max16)
-        weights = weights.astype(np.int16)
-        bias = layer.bias.detach().numpy().flatten("F")
-        bias = bias * 127.0
-        bias = np.round(bias)
-        bias = np.clip(bias, min16, max16)
-        bias = bias.astype(np.int16)
-        buffer_weights.extend(weights.tobytes())
-        buffer_bias.extend(bias.tobytes())
-        num_weights += len(weights)
-        num_bias += len(bias)
-
-
-        for layer in self.layers[1:]:
-            weights = layer.weight
-            weights = layer.weight.detach().numpy().flatten()
-            weights = weights*64.0
-            weights = np.round(weights)
-            weights = np.clip(weights,min16,max16)
-            weights = weights.astype(np.int16)
-            bias = layer.bias.detach().numpy().flatten()
-            bias = bias*(127.0 * 64.0)
-            bias = np.round(bias)
-            bias = bias.astype(np.int32)
-            buffer_weights.extend(weights.tobytes())
-            buffer_bias.extend(bias.tobytes())
-        
-        file.write(buffer_weights)
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
-
-
-
-
-    def save_quantizedtest(self, output):
-        self.step()
-               #write the header file
-        min16 = np.iinfo(np.int16).min
-        max16 = np.iinfo(np.int16).max
-
-        min8 = np.iinfo(np.int8).min
-        max8 = np.iinfo(np.int8).max
-
-        device = torch.device("cpu")
-        device_gpu = torch.device("cuda")
-        self.to(device)
-        buffer_weights = bytearray()
-        buffer_bias = bytearray()
-        num_weights = 0
-        num_bias = 0
-        file = open(output, "wb")
-
-        #saving the header file
-        self.write_header(file)
-
-        layer = self.layers[0]
-        weights = layer.weight.detach().numpy().flatten("F")
-        weights = weights * 127.0
-        weights = np.round(weights)
-        weights = np.clip(weights, min16, max16)
-        weights = weights.astype(np.int16)
-        bias = layer.bias.detach().numpy().flatten("F")
-        bias = bias * 127.0
-        bias = np.round(bias)
-        bias = np.clip(bias, min16, max16)
-        bias = bias.astype(np.int16)
-        buffer_weights.extend(weights.tobytes())
-        buffer_bias.extend(bias.tobytes())
-        num_weights += len(weights)
-        num_bias += len(bias)
-
-
-        for layer in self.layers[1:]:
-            weights = layer.weight
-            weights = layer.weight.detach().numpy().flatten()
-            weights = weights*64.0
-            weights = np.round(weights)
-            weights = np.clip(weights,min8,max8)
-            weights = weights.astype(np.int8)
-            bias = layer.bias.detach().numpy().flatten()
-            bias = bias*(127.0 * 64.0)
-            bias = np.round(bias)
-            bias = bias.astype(np.int32)
-            buffer_weights.extend(weights.tobytes())
-            buffer_bias.extend(bias.tobytes())
-        
-        file.write(buffer_weights)
-        file.write(buffer_bias)
-        file.close()
-        self.to(device_gpu)
 
 
     def save_quantizedtest2(self, output):
@@ -481,6 +363,52 @@ class Network2(pl.LightningModule):
 
         file.close()
         self.to(device_gpu)
+
+class BatchDataSet(torch.utils.data.IterableDataset):
+
+    def __init__(self, batch_size, buffer_size, file_path, shuffle=True):
+        super(BatchDataSet, self).__init__()
+        self.batch_size = batch_size
+        self.buffer_size = buffer_size
+        self.file_path = file_path
+        self.loader =string_sum.BatchProvider(self.file_path,self.buffer_size,self.batch_size,shuffle)
+
+        self.num_samples = self.loader.num_samples
+        print("Called initialization")
+
+    def __iter__(self):
+        return self
+
+    def __len__(self):
+        return self.num_samples//self.batch_size
+
+    def __next__(self):
+        input_size = 120
+        results = np.zeros(self.batch_size, dtype=np.float32)
+        moves = np.zeros(self.batch_size, dtype=np.int64)
+        buckets = np.zeros(self.batch_size, dtype=np.int64)
+        inputs = np.zeros(self.batch_size*input_size, dtype=np.float32)
+        self.loader.testing(inputs,results,buckets)
+
+        return results.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets, inputs.reshape(self.batch_size,input_size)
+
+
+
+class LitDataModule(pl.LightningDataModule):
+
+    def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
+        super(LitDataModule, self).__init__()
+        self.train_set = BatchDataSet(batch_size, buffer_size, train_data, True)
+        self.val_set = BatchDataSet(batch_size, 1000000, val_data, False)
+        self.train_data = train_data
+        self.batch_size = batch_size
+
+    def train_dataloader(self):
+        return DataLoader(self.train_set, batch_size=None, batch_sampler=None, shuffle=False)
+
+    def val_dataloader(self):
+        return DataLoader(self.val_set, batch_size=None, batch_sampler=None, shuffle=False)
+
 
 
 
