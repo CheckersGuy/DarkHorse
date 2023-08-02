@@ -47,7 +47,8 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "int8test.quant";
+    // net_file = "int8test.quant";
+    net_file = "rescored.quant";
   }
 
   network.load_bucket(net_file);

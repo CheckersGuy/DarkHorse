@@ -116,6 +116,8 @@ int main(int argl, const char **argc) {
   if (!out_stream.good()) {
     std::cout << "Could not open the output_stream" << std::endl;
   }
+  // temporary
+  num_samples = 50000;
   out_stream.write((char *)&num_samples, sizeof(num_samples));
   Sample test;
   int total_counter = 0;

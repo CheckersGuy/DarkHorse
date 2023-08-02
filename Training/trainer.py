@@ -11,7 +11,7 @@ if __name__ == "__main__":
     epochs = 420
     model = Experimental.Network2()
     data_loader = Experimental.LitDataModule(train_data="TrainData/shuffled2.train.raw.rescored",
-                                      val_data="TrainData/val.train.raw",
+                                      val_data="TrainData/val.train.raw.rescored",
                                        batch_size=batch_size, buffer_size=50000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
     #print(provider.num_samples)

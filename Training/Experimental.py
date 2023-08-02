@@ -225,6 +225,7 @@ class Network2(pl.LightningModule):
         self.layer_sec = nn.Linear(L2,L3);
         self.output = nn.Linear(L3,1)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
+        self.val_outputs =[]
         self.init_layers()
 
     def forward(self, x,buckets):
@@ -294,13 +295,17 @@ class Network2(pl.LightningModule):
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
+        self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
-    def on_validation_epoch_end(self, outputs):
+    def on_validation_epoch_end(self):
         self.save_quantizedtest2("rescored.quant")
         torch.save(self.state_dict(),"data6.pt")
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
+        avg_loss = torch.stack(self.val_outputs).mean()
+        self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
+        self.log('loss', avg_loss, prog_bar=True)
+        print(avg_loss)
         return {"loss": avg_loss, "log": tensorboard_logs}
 
 
@@ -399,7 +404,7 @@ class LitDataModule(pl.LightningDataModule):
     def __init__(self, train_data, val_data, buffer_size=1500000, batch_size=1000):
         super(LitDataModule, self).__init__()
         self.train_set = BatchDataSet(batch_size, buffer_size, train_data, True)
-        self.val_set = BatchDataSet(batch_size, 1000000, val_data, False)
+        self.val_set = BatchDataSet(batch_size, 100000, val_data, False)
         self.train_data = train_data
         self.batch_size = batch_size
 
