@@ -117,7 +117,6 @@ int main(int argl, const char **argc) {
     std::cout << "Could not open the output_stream" << std::endl;
   }
   // temporary
-  num_samples = 50000;
   out_stream.write((char *)&num_samples, sizeof(num_samples));
   Sample test;
   int total_counter = 0;
@@ -127,9 +126,6 @@ int main(int argl, const char **argc) {
     // std::cout << test << std::endl;
     if (!test.is_training_sample()) {
       continue;
-    }
-    if (total_counter >= 50000) {
-      break;
     }
 
     total_counter++;
