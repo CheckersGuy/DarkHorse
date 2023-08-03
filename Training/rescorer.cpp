@@ -117,7 +117,6 @@ int main(int argl, const char **argc) {
     std::cout << "Could not open the output_stream" << std::endl;
   }
   // temporary
-  num_samples = 50000;
   out_stream.write((char *)&num_samples, sizeof(num_samples));
   Sample test;
   int total_counter = 0;
@@ -129,10 +128,6 @@ int main(int argl, const char **argc) {
       continue;
     }
 
-    if (total_counter >= 50000) {
-      break;
-    }
-
     total_counter++;
     if (test.position.get_color() == BLACK) {
       test.position = test.position.get_color_flip();
@@ -141,6 +136,10 @@ int main(int argl, const char **argc) {
       }
     }
     auto result = get_tb_result(test.position, 10, handle);
+
+    if (result != UNKNOWN) {
+      test.result = result;
+    }
 
     // newDataFormat
     SampleData new_format;
@@ -163,9 +162,6 @@ int main(int argl, const char **argc) {
 
           std::cout << "----------------------------" << std::endl;
           */
-    }
-    if (result != UNKNOWN) {
-      test.result = result;
     }
   }
 
