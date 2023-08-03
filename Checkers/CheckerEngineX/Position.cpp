@@ -135,6 +135,7 @@ Position Position::pos_from_fen(std::string fen_string) {
 }
 
 std::string Position::get_fen_string() const {
+  // not correct!
   if (is_empty())
     return std::string{};
   std::ostringstream stream;
@@ -147,12 +148,20 @@ std::string Position::get_fen_string() const {
     stream << ":W";
   }
 
+  auto board_index =
+      [](auto index) {
+        auto row = index / 4;
+        auto col = index % 4;
+        return 4 * row + 3 - col;
+      }
+
   while (white_pieces) {
     auto square = Bits::bitscan_foward(white_pieces);
+
     const uint32_t mask = 1u << square;
     if (((1u << square) & K))
       stream << "K";
-    square = square + 1u;
+    square = board_index(square) + 1u;
     stream << square;
     if ((white_pieces & (~mask)) != 0u)
       stream << ",";
@@ -169,7 +178,7 @@ std::string Position::get_fen_string() const {
     const uint32_t mask = 1u << square;
     if (((1u << square) & K))
       stream << "K";
-    square = square + 1;
+    square = board_index(square) + 1;
     stream << square;
     if ((black_pieces & (~mask)) != 0u)
       stream << ",";
