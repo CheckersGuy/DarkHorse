@@ -148,12 +148,11 @@ std::string Position::get_fen_string() const {
     stream << ":W";
   }
 
-  auto board_index =
-      [](auto index) {
-        auto row = index / 4;
-        auto col = index % 4;
-        return 4 * row + 3 - col;
-      }
+  auto board_index = [](auto index) {
+    auto row = index / 4;
+    auto col = index % 4;
+    return 4 * row + 3 - col;
+  };
 
   while (white_pieces) {
     auto square = Bits::bitscan_foward(white_pieces);
