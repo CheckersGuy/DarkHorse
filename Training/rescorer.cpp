@@ -136,7 +136,12 @@ int main(int argl, const char **argc) {
       }
     }
     auto result = get_tb_result(test.position, 10, handle);
-
+    if (result != UNKNOWN && result != test.result) {
+      wrong_counter++;
+      if (((wrong_counter + 1) % 10000) == 0) {
+        std::cout << wrong_counter << std::endl;
+      }
+    }
     if (result != UNKNOWN) {
       test.result = result;
     }
@@ -146,23 +151,6 @@ int main(int argl, const char **argc) {
     new_format.fen_string = test.position.get_fen_string();
     new_format.result = test.result;
     out_stream << new_format;
-
-    if (result != UNKNOWN && result != test.result) {
-      wrong_counter++;
-      if (((wrong_counter + 1) % 10000) == 0) {
-        std::cout << wrong_counter << std::endl;
-      }
-      /*
-          auto result_string = (result == WHITE_WON) ? "WHITE_WON"
-                               : (result == DRAW)    ? "DRAW"
-                                                     : "BLACK_WON";
-
-          std::cout << test << "\n";
-          std::cout << "TableBaseResult : " << result_string << std::endl;
-
-          std::cout << "----------------------------" << std::endl;
-          */
-    }
   }
 
   handle->close(handle);
