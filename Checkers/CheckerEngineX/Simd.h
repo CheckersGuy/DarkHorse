@@ -45,23 +45,15 @@ inline void accum_activation8(int16_t *acc, uint8_t *out) {
 
     temp0 = _mm256_max_epi16(temp0, min_val);
     temp0 = _mm256_min_epi16(temp0, max_val);
-    temp0 = _mm256_mullo_epi16(temp0, temp0);
-    temp0 = _mm256_srai_epi16(temp0, 7);
 
     temp1 = _mm256_max_epi16(temp1, min_val);
     temp1 = _mm256_min_epi16(temp1, max_val);
-    temp1 = _mm256_mullo_epi16(temp1, temp1);
-    temp1 = _mm256_srai_epi16(temp1, 7);
 
     temp2 = _mm256_max_epi16(temp2, min_val);
     temp2 = _mm256_min_epi16(temp2, max_val);
-    temp2 = _mm256_mullo_epi16(temp2, temp2);
-    temp2 = _mm256_srai_epi16(temp2, 7);
 
     temp3 = _mm256_max_epi16(temp3, min_val);
     temp3 = _mm256_min_epi16(temp3, max_val);
-    temp3 = _mm256_mullo_epi16(temp3, temp3);
-    temp3 = _mm256_srai_epi16(temp3, 7);
 
     auto result0 = _mm256_srai_epi16(_mm256_mullo_epi16(temp0, temp1), 7);
     auto result1 = _mm256_srai_epi16(_mm256_mullo_epi16(temp2, temp3), 7);

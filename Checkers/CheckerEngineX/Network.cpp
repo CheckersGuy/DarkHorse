@@ -3,6 +3,7 @@
 //
 
 #include "Network.h"
+#include "Bits.h"
 #include "GameLogic.h"
 #include "types.h"
 #include <cstdint>
@@ -231,5 +232,6 @@ int Network::evaluate(Position pos, int ply) {
   if (pos.WP == 0 && pos.get_color() == WHITE) {
     return loss(ply);
   }
+
   return *compute_incre_forward_pass(pos);
 }

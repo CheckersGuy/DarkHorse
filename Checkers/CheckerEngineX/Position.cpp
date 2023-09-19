@@ -344,9 +344,7 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 }
 
 int Position::bucket_index() {
-  // auto pieces = piece_count();
-  //
-  // trying buckets once again
+  auto pieces = piece_count();
 
-  return 0;
+  return (pieces - 1) / 6;
 }
