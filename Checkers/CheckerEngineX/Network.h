@@ -62,7 +62,7 @@ struct Network {
   QLayer<1024, 16, Activation::SqRelu> first;
   QLayer<16, 32, Activation ::SqRelu> second;
   QLayer<32, 1> output;
-  alignas(64) uint8_t input[2048 + 32 + 32 + 1] = {0};
+  alignas(64) uint8_t input[1024 + 32 + 32 + 1] = {0};
 
   void load_bucket(std::string file);
 

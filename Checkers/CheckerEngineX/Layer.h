@@ -33,8 +33,8 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   static constexpr int CACHE_LINE_SIZE = 64;
 #endif
 
-  alignas(CACHE_LINE_SIZE) int32_t biases[OutDim];
-  alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim];
+  alignas(CACHE_LINE_SIZE) int32_t biases[OutDim * NUM_BUCKETS];
+  alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim * NUM_BUCKETS];
   alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
 
   int get_weight_index(int index) {
@@ -59,54 +59,58 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   }
 
   void load_params(std::ifstream &stream) {
-    //
-    if constexpr ((OutDim % 4) == 0) {
-      int8_t temp_weights[PadInDim * OutDim] = {0};
-      for (auto i = 0; i < OutDim; ++i) {
-        for (auto j = 0; j < PadInDim; ++j) {
-          int8_t weight;
-          if (j < InDim) {
-            stream.read((char *)&weight, sizeof(int8_t));
-          } else {
-            weight = 0;
-          }
+    for (auto k = 0; k < NUM_BUCKETS; ++k) {
+      if constexpr ((OutDim % 4) == 0) {
+        int8_t temp_weights[PadInDim * OutDim] = {0};
+        for (auto i = 0; i < OutDim; ++i) {
+          for (auto j = 0; j < PadInDim; ++j) {
+            int8_t weight;
+            if (j < InDim) {
+              stream.read((char *)&weight, sizeof(int8_t));
+            } else {
+              weight = 0;
+            }
 
-          temp_weights[i * PadInDim + j] = weight;
-        }
-      }
-      for (int i = 0; i < PadInDim * OutDim; ++i) {
-        auto index = get_weight_index(i);
-        weights[index] = temp_weights[i];
-      }
-      stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
-    } else {
-      for (auto i = 0; i < OutDim; ++i) {
-        for (auto j = 0; j < PadInDim; ++j) {
-          int8_t weight;
-          if (j < InDim) {
-            stream.read((char *)&weight, sizeof(int8_t));
-          } else {
-            weight = 0;
+            temp_weights[i * PadInDim + j] = weight;
           }
-
-          weights[i * PadInDim + j] = weight;
         }
+        for (int i = 0; i < PadInDim * OutDim; ++i) {
+          auto index = get_weight_index(i);
+          weights[index + k * PadInDim * OutDim] = temp_weights[i];
+        }
+        stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
+      } else {
+        for (auto i = 0; i < OutDim; ++i) {
+          for (auto j = 0; j < PadInDim; ++j) {
+            int8_t weight;
+            if (j < InDim) {
+              stream.read((char *)&weight, sizeof(int8_t));
+            } else {
+              weight = 0;
+            }
+
+            weights[i * PadInDim + j + k * PadInDim * OutDim] = weight;
+          }
+        }
+        stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
       }
-      stream.read((char *)&biases[0], sizeof(int32_t) * OutDim);
     }
   }
   auto *forward(uint8_t *input, int bucket_index) {
+    const auto w_offset = bucket_index * PadInDim * OutDim;
     if constexpr ((OutDim % 4) != 0) {
       for (auto i = 0; i < OutDim; ++i) {
-        int sum = biases[i];
-        sum += Simd::flatten8<PadInDim>(weights + PadInDim * i, input);
+        int sum = biases[i + bucket_index * OutDim];
+        sum +=
+            Simd::flatten8<PadInDim>(weights + PadInDim * i + w_offset, input);
         buffer[i] = sum / 64;
       }
     } else {
       constexpr int in_chunks = PadInDim / 32; // number of blocks in a  row
       constexpr int out_chunks = OutDim / 4;   // number of blocks in a column
       const auto *in = reinterpret_cast<const __m256i *>(input);
-      const auto *bias = reinterpret_cast<const __m128i *>(biases);
+      const auto *bias =
+          reinterpret_cast<const __m128i *>(biases + bucket_index * OutDim);
       auto *out = reinterpret_cast<__m128i *>(buffer);
 
       for (auto i = 0; i < out_chunks; ++i) {
@@ -116,8 +120,8 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
           const auto in_reg = _mm256_load_si256(in + j);
           const auto weight_index = block_index + j * 128;
 
-          const auto *weight_vec =
-              reinterpret_cast<const __m256i *>(weights + weight_index);
+          const auto *weight_vec = reinterpret_cast<const __m256i *>(
+              weights + weight_index + w_offset);
           for (auto k = 0; k < 4; ++k) {
             const auto weight = _mm256_load_si256(&weight_vec[k]);
             Simd::m256_add_dpbusd_epi32(acc[k], in_reg, weight);

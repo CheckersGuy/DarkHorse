@@ -16,8 +16,6 @@ L1 =2*1024
 L2 =16
 L3 = 32
 
-torch.set_float32_matmul_precision('high')
-
 class Network(pl.LightningModule):
 
     def __init__(self):
@@ -26,7 +24,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.96
+        self.gamma = 0.97
 
 
         self.num_buckets =4
@@ -43,7 +41,7 @@ class Network(pl.LightningModule):
         indices = buckets.flatten()+offset
 
         ac = self.accu.forward(x)
-        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+        ac = torch.clamp(ac,0.0,1.0)
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
@@ -107,7 +105,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=2e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -120,7 +118,7 @@ class Network(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.6).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -128,7 +126,7 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2.6).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
@@ -217,7 +215,7 @@ class Network2(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.96
+        self.gamma = 0.98
 
 
         self.accu = nn.Linear(120,L1)
@@ -226,12 +224,11 @@ class Network2(pl.LightningModule):
         self.output = nn.Linear(L3,1)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
         self.val_outputs =[]
-        self.init_layers()
 
     def forward(self, x,buckets):
         ac = self.accu.forward(x)
 
-        ac = (127.0/128.0)*torch.clamp(ac,0.0,1.0)**2
+        ac = torch.clamp(ac,0.0,1.0)
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
@@ -247,20 +244,6 @@ class Network2(pl.LightningModule):
         return out
 
 
-    def init_layers(self):
-        #need to rework init
-        pass
-
-
-    def write_header(self,file_out):
-        num_layers = len(self.layers)
-        file_out.write(struct.pack("I", num_layers))
-        file_out.write(struct.pack("I", self.accu.in_features))
-        file_out.write(struct.pack("I", self.accu.out_features))
-
-        for layer in self.layers[1:]:
-            file_out.write(struct.pack("I", layer.in_features))
-            file_out.write(struct.pack("I", layer.out_features))
 
 
        
@@ -273,7 +256,7 @@ class Network2(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=2e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -285,7 +268,7 @@ class Network2(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.6).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss,prog_bar=True)
         return {"loss": loss, "log": tensorboard_logs}
@@ -293,13 +276,13 @@ class Network2(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2.6).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantizedtest2("rescored3.quant")
+        self.save_quantizedtest2("simple.quant")
         torch.save(self.state_dict(),"data6.pt")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
