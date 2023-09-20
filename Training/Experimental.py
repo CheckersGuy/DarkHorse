@@ -13,7 +13,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 L1 =2*1024
-L2 =16
+L2 =32
 L3 = 32
 
 class Network(pl.LightningModule):
