@@ -132,7 +132,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
   if (strcmp(command, "staticevaluation") == 0) {
     if (!engine_initialized) {
-      network.load_bucket("rescored3.quant");
+      network.load_bucket("buckets.quant");
       TT.resize(21);
       Statistics::mPicker.init();
       engine_initialized = true;
