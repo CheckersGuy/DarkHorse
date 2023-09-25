@@ -203,8 +203,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   }
   const Value old_alpha = alpha;
 
-  const Value prob_beta =
-      beta + std::max(10, prob_cut - 1 * std::min(3, depth / 3));
+  const Value prob_beta = beta + std::max(10, prob_cut - depth / 3);
   for (auto i = 0; i < liste.length(); ++i) {
     // moveLoop starts here
     Move move = liste[i];
