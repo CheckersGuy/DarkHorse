@@ -108,8 +108,8 @@ class Network(pl.LightningModule):
         optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        #scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
+        #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
         return [optimizer],[scheduler]
 
 
@@ -132,7 +132,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("rescored3.quant")
+        self.save_quantized_bucket("cycle.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -351,6 +351,64 @@ class Network2(pl.LightningModule):
 
         file.close()
         self.to(device_gpu)
+
+
+
+class ConvNet(pl.LightningModule):
+
+    def __init__(self):
+        super(Network2, self).__init__()
+        self.layers = []
+      
+        self.max_weight_hidden = 127.0 / 64.0
+        self.min_weight_hidden = -127.0 / 64.0
+        self.gamma = 0.98
+
+        self.val_outputs =[]
+
+    def forward(self, x,buckets):
+       pass
+
+
+
+
+       
+
+    def configure_optimizers(self):
+        #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
+        #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
+        #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        #scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
+        return [optimizer],[scheduler]
+
+
+    def training_step(self, train_batch, batch_idx):
+        result, move,buckets, x = train_batch
+        out = self.forward(x,buckets)
+        loss =torch.pow(torch.abs(out-result),2.6).mean()
+        tensorboard_logs = {"avg_val_loss": loss}
+        self.log('train_loss', loss,prog_bar=True)
+        return {"loss": loss, "log": tensorboard_logs}
+
+    def validation_step(self, val_batch, batch_idx):
+        result, move,buckets, x = val_batch
+        out = self.forward(x,buckets)
+        loss = torch.pow(torch.abs(out - result), 2.6).mean()
+        self.log('val_loss', loss.detach())
+        self.val_outputs.append(loss)
+        return {"val_loss": loss.detach()}
+
+    def on_validation_epoch_end(self):
+        torch.save(self.state_dict(),"data6.pt")
+        avg_loss = torch.stack(self.val_outputs).mean()
+        self.val_outputs.clear()
+        tensorboard_logs = {"avg_val_loss": avg_loss}
+        self.log('loss', avg_loss, prog_bar=True)
+        print(avg_loss)
+        return {"loss": avg_loss, "log": tensorboard_logs}
+
 
 
 class BatchDataSet(torch.utils.data.IterableDataset):

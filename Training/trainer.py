@@ -3,10 +3,11 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import numpy as np
 import Experimental
 import string_sum
+import torch
 #import generator_pb2
 
 
-if __name__ == "__main__":
+if __name__ == "__main__d":
     batch_size = 2*8192 
     epochs = 420
     model = Experimental.Network()
@@ -27,6 +28,11 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v114.ckpt")
+    trainer.fit(model, data_loader)
+
+test = torch.zeros(size=(3,3))
+a = test[:,0:2]
+print(a)
+    
 
 
