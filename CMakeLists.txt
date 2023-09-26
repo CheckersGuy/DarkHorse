@@ -111,4 +111,6 @@ target_link_libraries(Train ${Protobuf_LIBRARIES})
 target_link_libraries(pyhelper ${Protobuf_LIBRARIES})
 target_link_libraries(MainEngine PRIVATE Threads::Threads)
 endif()
-
+if(WIN32)
+target_link_libraries(MainEngine  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib)
+endif()
