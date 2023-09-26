@@ -88,6 +88,7 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
   set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
+  target_compile_definitions(MainEngine PUBLIC "USEDB")
   target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.lib Threads::Threads)
   target_link_libraries(Dark PRIVATE Threads::Threads)
 

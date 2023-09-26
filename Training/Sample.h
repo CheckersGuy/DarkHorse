@@ -8,7 +8,6 @@
 #include "Position.h"
 #include <fstream>
 #include <random>
-enum Result : uint8_t { BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0 };
 
 std::string result_to_string(Result result);
 

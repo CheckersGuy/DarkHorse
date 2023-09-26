@@ -1,15 +1,76 @@
 #include "GameLogic.h"
-#include "Move.h"
-#include "MovePicker.h"
-#include "types.h"
 
 Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
 Value last_eval = -INFINITE;
 
+EGDB_DRIVER *handle;
+
+#define DB_PATH "D:\\kr_english_wld"
 SearchGlobal glob;
 Network network;
+
+void print_msgs(char *msg) { printf("%s", msg); }
+
+void load_tablebase(int num_pieces, int db_hash) {
+
+  int i, status, max_pieces, nerrors;
+  EGDB_TYPE egdb_type;
+
+  /* Check that db files are present, get db type and size. */
+  status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
+  std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  if (status) {
+    printf("No database found at %s\n", DB_PATH);
+    std::exit(-1);
+  }
+  printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
+
+  if (max_pieces < num_pieces) {
+    printf("Could not load tablebase \n");
+    std::exit(-1);
+  }
+
+  /* Open database for probing. */
+  handle = egdb_open(EGDB_NORMAL, num_pieces, db_hash, DB_PATH, print_msgs);
+  if (!handle) {
+    printf("Error returned from egdb_open()\n");
+    std::exit(-1);
+  }
+}
+
+void close_tablebase() { handle->close(handle); }
+
+Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
+    return UNKNOWN;
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = handle->lookup(
+      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == EGDB_UNKNOWN)
+    return UNKNOWN;
+
+  if (val == EGDB_WIN)
+    return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
+
+  if (val == EGDB_LOSS)
+    return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
+
+  if (val == EGDB_DRAW)
+    return DRAW;
+
+  return UNKNOWN;
+}
 
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
