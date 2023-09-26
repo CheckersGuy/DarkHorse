@@ -42,7 +42,7 @@ int main(int argl, const char **argc) {
   Board board;
   Statistics::mPicker.init();
 
-  load_tablebase(10);
+  load_tablebase(10, 2000);
 
   int time, depth, hash_size;
   std::string net_file;
