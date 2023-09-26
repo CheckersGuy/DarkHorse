@@ -1,8 +1,4 @@
 #include "CheckerBoard.h"
-#include "types.h"
-#include <fstream>
-#include <string>
-
 bool engine_initialized = false;
 Board game_board;
 
@@ -62,7 +58,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   if (!engine_initialized) {
-    network.load_bucket("int8test.quant");
+    network.load_bucket("simple.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;

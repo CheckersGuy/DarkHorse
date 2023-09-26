@@ -14,6 +14,8 @@
 #include <thread>
 // Utility functions and other stuff
 
+enum Result : uint8_t { BLACK_WON = 1, WHITE_WON = 2, DRAW = 3, UNKNOWN = 0 };
+
 inline uint64_t getSystemTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::high_resolution_clock::now().time_since_epoch())

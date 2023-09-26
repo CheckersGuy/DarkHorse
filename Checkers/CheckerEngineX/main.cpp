@@ -5,6 +5,7 @@
 #include "Selfplay.h"
 #include "Transposition.h"
 #include <string>
+#include <unistd.h>
 #include <vector>
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -40,6 +41,8 @@ int main(int argl, const char **argc) {
   parser.parse_command_line();
   Board board;
   Statistics::mPicker.init();
+
+  load_tablebase(10);
 
   int time, depth, hash_size;
   std::string net_file;
@@ -179,4 +182,6 @@ int main(int argl, const char **argc) {
       break;
     }
   }
+
+  close_tablebase();
 }

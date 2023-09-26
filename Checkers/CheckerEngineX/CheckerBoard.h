@@ -1,6 +1,11 @@
 #include "GameLogic.h"
+#include "egdb.h"
+#include "types.h"
+#include <fstream>
 #include <iostream>
 #include <stdint.h>
+#include <string>
+
 // Everything related to the checkerboard interface
 #define CB_WHITE 1
 #define CB_BLACK 2
@@ -149,3 +154,5 @@ inline int coorstonumber(int x, int y, int gametype) {
 
   return number;
 }
+
+void load_tablebase(EGDB_DRIVER *handle, int num_pieces);
