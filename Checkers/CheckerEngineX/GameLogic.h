@@ -56,6 +56,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream);
 
 extern Network network;
-void load_tablebase(int num_pieces);
+void load_tablebase(int num_pieces, int db_hash);
 void close_tablebase();
 #endif // CHECKERSTEST_GAMELOGIC_H
