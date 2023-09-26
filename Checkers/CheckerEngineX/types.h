@@ -84,8 +84,8 @@ enum Score : int {
   EVAL_INFINITE = 15000,
   MATE_IN_MAX_PLY = 15000 - MAX_PLY,
   MATED_IN_MAX_PLY = -15000 + MAX_PLY,
-  TB_WIN = 14000,
-  TB_LOSS = -14000
+  TB_WIN = 13000,
+  TB_LOSS = -13000
 };
 
 enum Color : char { BLACK = -1, WHITE = 1 };

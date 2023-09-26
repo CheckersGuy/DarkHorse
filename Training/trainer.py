@@ -7,10 +7,10 @@ import torch
 #import generator_pb2
 
 
-if __name__ == "__main__d":
+if __name__ == "__main__":
     batch_size = 2*8192 
     epochs = 420
-    model = Experimental.Network()
+    model = Experimental.Network2()
     data_loader = Experimental.LitDataModule(train_data="TrainData/shuffled.train.raw.rescored",
                                       val_data="TrainData/val.train.raw.rescored",
                                        batch_size=batch_size, buffer_size=5000000)
@@ -29,10 +29,5 @@ if __name__ == "__main__d":
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
     trainer.fit(model, data_loader)
-
-test = torch.zeros(size=(3,3))
-a = test[:,0:2]
-print(a)
-    
 
 
