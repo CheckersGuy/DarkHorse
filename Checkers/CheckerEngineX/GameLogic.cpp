@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "types.h"
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -43,7 +44,7 @@ void load_tablebase(int num_pieces, int db_hash) {
 
 void close_tablebase() { handle->close(handle); }
 
-Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+Value get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
   if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
     return UNKNOWN;
 
@@ -61,13 +62,13 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
     return UNKNOWN;
 
   if (val == EGDB_WIN)
-    return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
+    return TB_WIN;
 
   if (val == EGDB_LOSS)
-    return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
+    return TB_LOSS;
 
   if (val == EGDB_DRAW)
-    return DRAW;
+    return 0;
 
   return UNKNOWN;
 }
@@ -244,6 +245,29 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
           (info.flag == TT_UPPER && tt_score <= alpha) ||
           info.flag == TT_EXACT) {
         return tt_score;
+      }
+    }
+  }
+
+  // probing tablebase if we have them
+
+  if (!is_root) {
+    auto wdl = get_tb_result(board.get_position(), 6, handle);
+    // if we have a valid tb_result we continue
+    if (wdl != UNKNOWN) {
+
+      auto value = wdl < 0   ? MATED_IN_MAX_PLY + ply + 1
+                   : wdl > 0 ? MATE_IN_MAX_PLY - ply - 1
+                             : 0;
+
+      auto b = wdl < 0 ? TT_UPPER : wdl > 0 ? TT_LOWER : TT_EXACT;
+
+      if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
+        return value;
+      }
+      if (in_pv) {
+        if (b == TT_LOWER)
+          best_score = value, alpha = std::max(alpha, best_score);
       }
     }
   }
