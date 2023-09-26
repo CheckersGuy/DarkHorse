@@ -1,4 +1,5 @@
 #include "CheckerBoard.h"
+#include "GameLogic.h"
 bool engine_initialized = false;
 Board game_board;
 
@@ -64,6 +65,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
+
+    load_tablebase(6, 2000);
   }
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
   Move best;
