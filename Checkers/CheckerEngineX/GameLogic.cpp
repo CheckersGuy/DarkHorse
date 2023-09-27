@@ -231,26 +231,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     return alpha;
   }
 
-  bool found_hash = TT.find_hash(board.get_current_key(), info);
-  // At root we can still use the tt_move for move_ordering
-  if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
-    tt_move = info.tt_move;
-    tt_value = value_from_tt(info.score, ply);
-  }
-  if (!in_pv && !is_root && found_hash && info.flag != Flag::None) {
-    tt_move = info.tt_move;
-    auto tt_score = value_from_tt(info.score, ply);
-    tt_value = value_from_tt(info.score, ply);
-
-    if (info.depth >= depth && info.flag != Flag::None) {
-      if ((info.flag == TT_LOWER && tt_score >= beta) ||
-          (info.flag == TT_UPPER && tt_score <= alpha) ||
-          info.flag == TT_EXACT) {
-        return tt_score;
-      }
-    }
-  }
-
   // probing tablebase if we have them
 
   if (!is_root) {
@@ -270,6 +250,25 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     }
   }
 
+  bool found_hash = TT.find_hash(board.get_current_key(), info);
+  // At root we can still use the tt_move for move_ordering
+  if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
+    tt_move = info.tt_move;
+    tt_value = value_from_tt(info.score, ply);
+  }
+  if (!in_pv && !is_root && found_hash && info.flag != Flag::None) {
+    tt_move = info.tt_move;
+    auto tt_score = value_from_tt(info.score, ply);
+    tt_value = value_from_tt(info.score, ply);
+
+    if (info.depth >= depth && info.flag != Flag::None) {
+      if ((info.flag == TT_LOWER && tt_score >= beta) ||
+          (info.flag == TT_UPPER && tt_score <= alpha) ||
+          info.flag == TT_EXACT) {
+        return tt_score;
+      }
+    }
+  }
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
     const Move mv = mainPV[ply];
