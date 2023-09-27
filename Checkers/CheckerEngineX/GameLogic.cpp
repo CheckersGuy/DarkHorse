@@ -1,5 +1,6 @@
 #include "GameLogic.h"
 #include "types.h"
+#include <optional>
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -44,7 +45,8 @@ void load_tablebase(int num_pieces, int db_hash) {
 
 void close_tablebase() { handle->close(handle); }
 
-Value get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+std::optional<Value> get_tb_result(Position pos, int max_pieces,
+                                   EGDB_DRIVER *handle) {
   if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
     return UNKNOWN;
 
@@ -59,18 +61,18 @@ Value get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
       handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
   if (val == EGDB_UNKNOWN)
-    return UNKNOWN;
+    return std::nullopt;
 
   if (val == EGDB_WIN)
-    return TB_WIN;
+    return std::make_optional(TB_WIN);
 
   if (val == EGDB_LOSS)
-    return TB_LOSS;
+    return std::make_optional(TB_LOSS);
 
   if (val == EGDB_DRAW)
-    return 0;
+    return std::make_optional(0);
 
-  return UNKNOWN;
+  return std::nullopt;
 }
 
 ////////
