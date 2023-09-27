@@ -263,6 +263,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       auto b = wdl < 0 ? TT_UPPER : wdl > 0 ? TT_LOWER : TT_EXACT;
 
       if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
+
+        TT.store_hash(value_to_tt(value, ply), board.get_current_key(), b,
+                      std::min(MAX_PLY - 1, depth + 6), Move{});
         return value;
       }
       if (in_pv) {
