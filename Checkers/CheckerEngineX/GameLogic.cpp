@@ -240,12 +240,14 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
 
       auto value = wdl.value() < 0 ? TB_LOSS : wdl.value() > 0 ? TB_WIN : 0;
 
-      auto b = wdl.value() < 0   ? TT_UPPER
-               : wdl.value() > 0 ? TT_LOWER
-                                 : TT_EXACT;
+      auto b = value < 0 ? TT_UPPER : value > 0 ? TT_LOWER : TT_EXACT;
 
       if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
         return value;
+      }
+      if (in_pv && b == TT_LOWER) {
+        best_score = value;
+        alpha = std::max(alpha, best_score);
       }
     }
   }
