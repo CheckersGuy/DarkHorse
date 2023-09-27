@@ -238,7 +238,9 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     // if we have a valid tb_result we continue
     if (wdl.has_value()) {
 
-      auto value = wdl.value() < 0 ? TB_LOSS : wdl.value() > 0 ? TB_WIN : 0;
+      auto value = wdl.value() < 0   ? TB_LOSS + ply
+                   : wdl.value() > 0 ? TB_WIN - ply
+                                     : 0;
 
       auto b = value < 0 ? TT_UPPER : value > 0 ? TT_LOWER : TT_EXACT;
 
