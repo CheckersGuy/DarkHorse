@@ -237,6 +237,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if (wdl.has_value()) {
 
       if (wdl.value() != 0 && wdl.value() >= beta) {
+        std::cout << "Test" << std::endl;
         return wdl.value();
       }
       if (wdl.value() == 0)
