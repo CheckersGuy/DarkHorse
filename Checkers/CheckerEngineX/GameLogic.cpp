@@ -265,14 +265,13 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   }
   if (!in_pv && !is_root && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
-    auto tt_score = value_from_tt(info.score, ply);
     tt_value = value_from_tt(info.score, ply);
 
     if (info.depth >= depth && info.flag != Flag::None) {
-      if ((info.flag == TT_LOWER && tt_score >= beta) ||
-          (info.flag == TT_UPPER && tt_score <= alpha) ||
+      if ((info.flag == TT_LOWER && tt_value >= beta) ||
+          (info.flag == TT_UPPER && tt_value <= alpha) ||
           info.flag == TT_EXACT) {
-        return tt_score;
+        return tt_value;
       }
     }
   }
@@ -306,7 +305,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       last_rev = board.pCounter;
     }
     board.make_move(move);
-    // setting the 'previous move in the search stack'
 
     if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY &&
         board.get_position().piece_count() > 6) {
