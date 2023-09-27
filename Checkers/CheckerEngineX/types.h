@@ -80,12 +80,12 @@ using Value = int;
 
 enum SEARCH : int { MAX_PLY = 256 };
 enum Score : int {
-  INFINITE = 1500000,
-  EVAL_INFINITE = 15000,
+  INFINITE = 150000,
+  EVAL_INFINITE = 15001,
   MATE_IN_MAX_PLY = 15000 - MAX_PLY,
-  MATED_IN_MAX_PLY = -15000 + MAX_PLY,
+  MATED_IN_MAX_PLY = -MATE_IN_MAX_PLY,
   TB_WIN = 13000 - MAX_PLY,
-  TB_LOSS = -13000 + MAX_PLY
+  TB_LOSS = -TB_WIN
 };
 
 enum Color : char { BLACK = -1, WHITE = 1 };
