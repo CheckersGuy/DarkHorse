@@ -256,13 +256,15 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   if (!is_root) {
     auto wdl = get_tb_result(board.get_position(), 6, handle);
     // if we have a valid tb_result we continue
-    if (wdl != UNKNOWN) {
+    if (wdl.has_value()) {
 
-      auto value = wdl < 0   ? MATED_IN_MAX_PLY + ply + 1
-                   : wdl > 0 ? MATE_IN_MAX_PLY - ply - 1
-                             : 0;
+      auto value = wdl.value() < 0   ? MATED_IN_MAX_PLY + ply + 1
+                   : wdl.value() > 0 ? MATE_IN_MAX_PLY - ply - 1
+                                     : 0;
 
-      auto b = wdl < 0 ? TT_UPPER : wdl > 0 ? TT_LOWER : TT_EXACT;
+      auto b = wdl.value() < 0   ? TT_UPPER
+               : wdl.value() > 0 ? TT_LOWER
+                                 : TT_EXACT;
 
       if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
 
