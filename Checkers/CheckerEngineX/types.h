@@ -69,7 +69,7 @@ inline constexpr auto powers3 = get_lut<12>(power_lambda<3>);
 constexpr int prob_cut = 34; // 30;
 constexpr int asp_wind = 23; // 15;
 constexpr int NUM_BUCKETS = 1;
-constexpr int MAX_ASP = 100;
+constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 constexpr std::array<int, 27> LMR_TABLE = {1, 1, 1, 1, 1, 1, 1, 1, 1,
                                            1, 1, 1, 2, 2, 2, 2, 2, 2,
