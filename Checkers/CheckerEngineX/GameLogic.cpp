@@ -258,19 +258,11 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     // if we have a valid tb_result we continue
     if (wdl.has_value()) {
 
-      auto value = wdl.value() < 0 ? TB_LOSS : wdl.value() > 0 ? TB_WIN : 0;
-
-      auto b = wdl.value() < 0   ? TT_UPPER
-               : wdl.value() > 0 ? TT_LOWER
-                                 : TT_EXACT;
-
-      if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
-        return value;
+      if (wdl.value() != 0 && wdl.value() >= beta) {
+        return wdl.value();
       }
-      if (in_pv) {
-        if (b == TT_LOWER)
-          best_score = value, alpha = std::max(alpha, best_score);
-      }
+      if (wdl.value() == 0)
+        return 0;
     }
   }
 
