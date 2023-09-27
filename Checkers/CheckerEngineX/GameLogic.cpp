@@ -212,6 +212,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   Move best_move;
   Value tt_value = -INFINITE;
   Value sing_score = -INFINITE;
+  Value max_value = INFINITE;
 
   if (ply >= MAX_PLY) {
     return board.get_mover() * network.evaluate(board.get_position(), ply);
@@ -250,6 +251,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       if (in_pv && b == TT_LOWER) {
         best_score = value;
         alpha = std::max(alpha, best_score);
+      } else if (in_pv) {
+        max_value = value;
       }
     }
   }
@@ -372,6 +375,10 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
         break;
       }
     }
+  }
+
+  if (in_pv) {
+    best_score = std::min(max_value, best_score);
   }
 
   if (!is_root) {
