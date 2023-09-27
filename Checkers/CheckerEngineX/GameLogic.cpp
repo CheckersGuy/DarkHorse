@@ -231,6 +231,19 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     return alpha;
   }
 
+  if (!is_root) {
+    auto wdl = get_tb_result(board.get_position(), 6, handle);
+    // if we have a valid tb_result we continue
+    if (wdl.has_value()) {
+
+      if (wdl.value() != 0 && wdl.value() >= beta) {
+        return wdl.value();
+      }
+      if (wdl.value() == 0)
+        return 0;
+    }
+  }
+
   bool found_hash = TT.find_hash(board.get_current_key(), info);
   // At root we can still use the tt_move for move_ordering
   if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
@@ -252,19 +265,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   }
 
   // probing tablebase if we have them
-
-  if (!is_root) {
-    auto wdl = get_tb_result(board.get_position(), 6, handle);
-    // if we have a valid tb_result we continue
-    if (wdl.has_value()) {
-
-      if (wdl.value() != 0 && wdl.value() >= beta) {
-        return wdl.value();
-      }
-      if (wdl.value() == 0)
-        return 0;
-    }
-  }
 
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
