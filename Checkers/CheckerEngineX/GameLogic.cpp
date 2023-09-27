@@ -305,7 +305,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     board.make_move(move);
     // setting the 'previous move in the search stack'
 
-    if (!in_pv && depth >= 3 && std::abs(beta) < TB_WIN) {
+    if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY &&
+        board.get_position().piece_count() > 6) {
       Line line;
       Depth newDepth = std::max(depth - 4, 1);
       Value board_val = -qs(in_pv, board, line, -prob_beta, -prob_beta + 1,
