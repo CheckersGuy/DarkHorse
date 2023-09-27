@@ -48,7 +48,7 @@ void close_tablebase() { handle->close(handle); }
 std::optional<Value> get_tb_result(Position pos, int max_pieces,
                                    EGDB_DRIVER *handle) {
   if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-    return UNKNOWN;
+    return std::nullopt;
 
   EGDB_NORMAL_BITBOARD board;
   board.white = pos.WP;
