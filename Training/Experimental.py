@@ -12,7 +12,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*1024
+L1 =2*1024+512
 L2 =16
 L3 = 32
 
