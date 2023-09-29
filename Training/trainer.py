@@ -13,7 +13,7 @@ if __name__ == "__main__":
     model = Experimental.Network2()
     data_loader = Experimental.LitDataModule(train_data="TrainData/shuffled.train.raw.rescored",
                                       val_data="TrainData/val.train.raw.rescored",
-                                       batch_size=batch_size, buffer_size=5000000)
+                                       batch_size=batch_size, buffer_size=50000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
     #print(provider.num_samples)
 
@@ -28,6 +28,6 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.fit(model, data_loader)
+    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v114.ckpt")
 
 

@@ -42,8 +42,6 @@ int main(int argl, const char **argc) {
   Board board;
   Statistics::mPicker.init();
 
-  load_tablebase(6, 2000);
-
   int time, depth, hash_size;
   std::string net_file;
 
@@ -51,7 +49,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "simple.quant";
+    net_file = "simple2.quant";
   }
 
   network.load_bucket(net_file);
@@ -182,6 +180,4 @@ int main(int argl, const char **argc) {
       break;
     }
   }
-
-  close_tablebase();
 }

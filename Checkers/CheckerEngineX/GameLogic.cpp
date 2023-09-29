@@ -7,73 +7,8 @@ uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
 Value last_eval = -INFINITE;
 
-EGDB_DRIVER *handle;
-
-#define DB_PATH "D:\\kr_english_wld"
 SearchGlobal glob;
 Network network;
-
-void print_msgs(char *msg) { printf("%s", msg); }
-
-void load_tablebase(int num_pieces, int db_hash) {
-
-  int i, status, max_pieces, nerrors;
-  EGDB_TYPE egdb_type;
-
-  /* Check that db files are present, get db type and size. */
-  status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
-  std::cout << "MAX_PIECES: " << max_pieces << std::endl;
-
-  if (status) {
-    printf("No database found at %s\n", DB_PATH);
-    std::exit(-1);
-  }
-  printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
-
-  if (max_pieces < num_pieces) {
-    printf("Could not load tablebase \n");
-    std::exit(-1);
-  }
-
-  /* Open database for probing. */
-  handle = egdb_open(EGDB_NORMAL, num_pieces, db_hash, DB_PATH, print_msgs);
-  if (!handle) {
-    printf("Error returned from egdb_open()\n");
-    std::exit(-1);
-  }
-}
-
-void close_tablebase() { handle->close(handle); }
-
-std::optional<Value> get_tb_result(Position pos, int max_pieces,
-                                   EGDB_DRIVER *handle) {
-  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-    return std::nullopt;
-
-  EGDB_NORMAL_BITBOARD board;
-  board.white = pos.WP;
-  board.black = pos.BP;
-  board.king = pos.K;
-
-  EGDB_BITBOARD normal;
-  normal.normal = board;
-  auto val = handle->lookup(
-      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
-
-  if (val == EGDB_UNKNOWN)
-    return std::nullopt;
-
-  if (val == EGDB_WIN)
-    return std::make_optional(TB_WIN);
-
-  if (val == EGDB_LOSS)
-    return std::make_optional(TB_LOSS);
-
-  if (val == EGDB_DRAW)
-    return std::make_optional(0);
-
-  return std::nullopt;
-}
 
 ////////
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
@@ -232,31 +167,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     return alpha;
   }
 
-  // probing tablebase if we have them
-
-  if (!is_root) {
-    auto wdl = get_tb_result(board.get_position(), 6, handle);
-    // if we have a valid tb_result we continue
-    if (wdl.has_value()) {
-
-      auto value = wdl.value() < 0   ? TB_LOSS + ply
-                   : wdl.value() > 0 ? TB_WIN - ply
-                                     : 0;
-
-      auto b = value < 0 ? TT_UPPER : value > 0 ? TT_LOWER : TT_EXACT;
-
-      if (b == TT_EXACT || (b == TT_LOWER ? value >= beta : value <= alpha)) {
-        return value;
-      }
-      if (in_pv && b == TT_LOWER) {
-        best_score = value;
-        alpha = std::max(alpha, best_score);
-      } else if (in_pv) {
-        max_value = value;
-      }
-    }
-  }
-
   bool found_hash = TT.find_hash(board.get_current_key(), info);
   // At root we can still use the tt_move for move_ordering
   if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
@@ -374,11 +284,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
-
-  if (in_pv) {
-    best_score = std::min(max_value, best_score);
-  }
-
   if (!is_root) {
     Value tt_value = value_to_tt(best_score, ply);
     Flag flag;
