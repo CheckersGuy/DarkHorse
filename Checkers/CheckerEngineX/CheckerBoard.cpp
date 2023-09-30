@@ -59,14 +59,12 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   if (!engine_initialized) {
-    network.load_bucket("simple.quant");
+    network.load_bucket("simple2.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
-
-    load_tablebase(6, 2000);
   }
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
   Move best;
@@ -131,7 +129,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
   if (strcmp(command, "staticevaluation") == 0) {
     if (!engine_initialized) {
-      network.load_bucket("buckets.quant");
+      network.load_bucket("simple2.quant");
       TT.resize(21);
       Statistics::mPicker.init();
       engine_initialized = true;
