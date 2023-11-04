@@ -23,12 +23,10 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  /*
   if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
   }
-  */
 
   Value eval = -INFINITE;
   Local local;
