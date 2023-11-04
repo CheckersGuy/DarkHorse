@@ -12,8 +12,8 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*1024+512
-L2 =16
+L1 =2*2048
+L2 =32
 L3 = 32
 
 class Network(pl.LightningModule):
@@ -24,10 +24,10 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.97
+        self.gamma = 0.98
 
 
-        self.num_buckets =6
+        self.num_buckets =16
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
@@ -40,7 +40,8 @@ class Network(pl.LightningModule):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
         indices = buckets.flatten()+offset
 
-        ac = self.accu.forward(x)
+        ac_rest,rest= self.accu.forward(x).split(L1-1,dim=1)
+        ac = torch.cat([ac_rest,rest],dim=1)
         ac = torch.clamp(ac,0.0,1.0)
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
@@ -57,7 +58,7 @@ class Network(pl.LightningModule):
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
-        out = torch.sigmoid(l3c)
+        out = torch.sigmoid(l3c+rest)
 
         return out
 
@@ -105,11 +106,11 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=0,use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=1e-3,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
-        #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
+        #scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
         return [optimizer],[scheduler]
 
 
@@ -118,7 +119,7 @@ class Network(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.6).mean()
+        loss =torch.pow(torch.abs(out-result),2.0).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -126,13 +127,13 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.6).mean()
+        loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("cycle.quant")
+        self.save_quantized_bucket("bigbug8.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -215,7 +216,7 @@ class Network2(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.99
 
 
         self.accu = nn.Linear(120,L1)
@@ -226,8 +227,8 @@ class Network2(pl.LightningModule):
         self.val_outputs =[]
 
     def forward(self, x,buckets):
-        ac = self.accu.forward(x)
-
+        ac_rest,rest= self.accu.forward(x).split(L1-1,dim=1)
+        ac = torch.cat([ac_rest,rest],dim=1)
         ac = torch.clamp(ac,0.0,1.0)
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
@@ -239,7 +240,7 @@ class Network2(pl.LightningModule):
         l2c = (127.0/128.0)*torch.clamp(l2s,0.0,1.0)**2
 
         l3s = self.output(l2c)
-        out = torch.sigmoid(l3s)
+        out = torch.sigmoid(l3s+rest)
 
         return out
 
@@ -268,7 +269,7 @@ class Network2(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.6).mean()
+        loss =torch.pow(torch.abs(out-result),2.0).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss,prog_bar=True)
         return {"loss": loss, "log": tensorboard_logs}
@@ -276,13 +277,13 @@ class Network2(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.6).mean()
+        loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantizedtest2("simple2.quant")
+        self.save_quantizedtest2("bigbug8.quant")
         torch.save(self.state_dict(),"data6.pt")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
@@ -294,7 +295,6 @@ class Network2(pl.LightningModule):
 
     def save_quantizedtest2(self, output):
         self.step()
-               #write the header file
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
 
@@ -362,7 +362,7 @@ class ConvNet(pl.LightningModule):
       
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.99
 
         self.val_outputs =[]
 

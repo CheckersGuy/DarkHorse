@@ -219,7 +219,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY &&
         board.get_position().piece_count() > 6) {
       Line line;
-      Depth newDepth = std::max(depth - 4, 1);
+      Depth newDepth = std::max(depth - 6, 1);
       Value board_val = -qs(in_pv, board, line, -prob_beta, -prob_beta + 1,
                             ply + 1, 0, last_rev);
       if (board_val >= prob_beta) {

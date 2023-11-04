@@ -50,6 +50,18 @@ void Selfplay::parse_command(std::string command) {
       set_adjudication(adj);
       TT.resize(hash_size);
     }
+
+    if (split[0] == "evaluate") {
+      // evaluate the position
+      auto position = Position::pos_from_fen(split[1]);
+      Board board;
+      board = position;
+      Move best;
+      auto value =
+          searchValue(board, best, MAX_PLY, time_per_move, false, std::cout);
+      std::cout << "Eval:" << value << "\n";
+      std::cout << std::flush;
+    }
   }
   std::cout << std::flush;
 }
