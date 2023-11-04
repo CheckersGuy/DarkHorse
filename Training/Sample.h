@@ -5,10 +5,10 @@
 #ifndef READING_SAMPLE_H
 #define READING_SAMPLE_H
 
+#include "MGenerator.h"
 #include "Position.h"
 #include <fstream>
 #include <random>
-
 std::string result_to_string(Result result);
 
 constexpr Result operator~(Result one) {

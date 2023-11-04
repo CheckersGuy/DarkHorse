@@ -13,7 +13,7 @@ MovePicker mPicker;
 void MovePicker::init() {}
 
 int MovePicker::get_move_encoding(Move move) {
-  int dir;
+  int dir = 0;
 
   if ((((move.from & MASK_L3) << 3) == move.to) ||
       (((move.from & MASK_L5) << 5) == move.to)) {
@@ -135,7 +135,7 @@ void update_history_score(int &score, int delta) { score += delta; }
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * depth, 20 * 20);
+  const int delta = std::min(depth * 10, 20 * 20);
   update_history_score(history[index], delta);
   Move *top = &liste[0];
   while (*top != move) {
