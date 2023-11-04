@@ -11,10 +11,6 @@
 #include <cstring>
 #include <immintrin.h>
 
-// Note:: Should look at the accumulator because it's using the input variable
-// as well
-//
-
 void Accumulator::refresh() {
   for (auto i = 0; i < OutDim; ++i) {
     white_acc[i] = ft_biases[i];
@@ -167,15 +163,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
       _mm256_store_si256(accu + i + k * num_regs, regs[i]);
     }
   }
-  /*
-    for (auto i = 0; i < num_active; ++i) {
-      add_feature(input, active_features[i]);
-    }
-
-    for (auto i = 0; i < num_removed; ++i) {
-      remove_feature(input, removed_features[i]);
-    }
-    */
 }
 
 void Accumulator::update(Color perp, Position after) {
@@ -196,7 +183,9 @@ uint8_t *Accumulator::forward(uint8_t *in, const Position &next) {
     z_previous = white_acc;
   }
   update(next.color, next);
+  psqt = z_previous[OutDim - 1];
   Simd::accum_activation8<OutDim>(z_previous, in);
+
   return in;
 }
 
@@ -232,6 +221,5 @@ int Network::evaluate(Position pos, int ply) {
   if (pos.WP == 0 && pos.get_color() == WHITE) {
     return loss(ply);
   }
-
-  return *compute_incre_forward_pass(pos);
+  return (*compute_incre_forward_pass(pos)) + accumulator.psqt;
 }

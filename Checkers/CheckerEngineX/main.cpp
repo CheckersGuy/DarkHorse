@@ -49,7 +49,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "simple2.quant";
+    net_file = "bigbug8.quant";
   }
 
   network.load_bucket(net_file);
@@ -100,12 +100,16 @@ int main(int argl, const char **argc) {
     if (parser.has_option("time")) {
       time = parser.as<int>("time");
     } else {
-      time = 65;
+      time = 10;
     }
 
     selfplay.start_loop();
 
     return 0;
+  }
+
+  //
+  if (parser.has_option("eval_loop")) {
   }
 
   std::string current;

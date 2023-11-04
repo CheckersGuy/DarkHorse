@@ -3,6 +3,7 @@
 //
 
 #include "Sample.h"
+#include "MGenerator.h"
 
 std::string result_to_string(Result result) {
   if (result == BLACK_WON)
@@ -38,5 +39,14 @@ std::ifstream &operator>>(std::ifstream &stream, const Sample &s) {
 }
 
 bool Sample::is_training_sample() const {
-  return !position.has_jumps(position.color) && result != UNKNOWN;
+  // excluding some positions
+  auto piece_count = position.piece_count();
+  MoveListe liste;
+  get_moves(position, liste);
+  if (liste.length() == 0) {
+    position.print_position();
+  }
+
+  return !position.has_jumps(position.color) && result != UNKNOWN &&
+         (piece_count > 1) && liste.length() > 0;
 }

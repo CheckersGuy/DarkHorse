@@ -157,24 +157,6 @@ int main(int argl, const char **argc) {
   std::cout << "TotalCounter: " << total_counter << std::endl;
   std::cout << "WrongCounter: " << wrong_counter << std::endl;
 
-  {
-    SampleData test;
-    test.fen_string = "B:WK29:BK4";
-    std::ofstream out_stream("test.data", std::ios::binary);
-    if (!out_stream.good()) {
-      std::exit(-1);
-    }
-    out_stream << test;
-  }
-  {
-    std::ifstream in_stream("test.data", std::ios::binary);
-    if (!in_stream.good()) {
-      std::exit(-1);
-    }
-    SampleData other;
-    in_stream >> other;
-    std::cout << "OtherFenString: " << other.fen_string << std::endl;
-  }
   return 0;
 }
 /*
