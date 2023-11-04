@@ -123,8 +123,11 @@ int main(int argl, const char **argc) {
   int wrong_counter = 0;
   while (stream >> test) {
 
-    // std::cout << test << std::endl;
     if (!test.is_training_sample()) {
+      if (!test.position.has_any_move()) {
+        test.position.print_position();
+        std::cout << std::endl;
+      }
       continue;
     }
 
