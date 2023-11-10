@@ -12,6 +12,11 @@ MovePicker mPicker;
 
 void MovePicker::init() {}
 
+void MovePicker::apply_bonus(int index, int bonus) {
+
+  history[index] += bonus - (history[index] * std::abs(bonus)) / MAX_HISTORY;
+}
+
 int MovePicker::get_move_encoding(Move move) {
   int dir = 0;
 
@@ -102,11 +107,8 @@ void MovePicker::decay_scores() {
 }
 
 int MovePicker::get_move_score(Position pos, Move move, Depth depth) {
-  // const int index = get_move_encoding(pos.get_color(),move);
   const int index = get_history_index(pos, move);
-  int score = history[index];
-
-  return score;
+  return history[index];
 }
 
 int MovePicker::get_move_score(Position current, Depth depth, int ply,
@@ -130,17 +132,15 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
   return get_move_score(current, move, depth);
 }
 
-void update_history_score(int &score, int delta) { score += delta; }
-
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * 10, 20 * 20);
-  update_history_score(history[index], delta);
+  const int delta = std::min(depth * depth, 23 * 23);
+  apply_bonus(index, delta);
   Move *top = &liste[0];
   while (*top != move) {
-    int &score = history[get_history_index(pos, *top)];
-    update_history_score(score, -delta);
+    auto t_index = get_history_index(pos, *top);
+    apply_bonus(t_index, -delta);
     top++;
   }
 }
