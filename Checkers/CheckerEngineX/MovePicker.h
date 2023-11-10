@@ -13,8 +13,12 @@
 
 namespace Statistics {
 class MovePicker {
+  static constexpr int MAX_HISTORY = 16 * 65536;
+
 private:
   std::array<int, 32 * 16> history{0};
+
+  void apply_bonus(int index, int bonus);
 
 public:
   std::array<std::array<Move, MAX_KILLERS>, MAX_PLY> killer_moves;

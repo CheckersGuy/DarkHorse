@@ -10,7 +10,7 @@ import torch
 if __name__ == "__main__":
     batch_size = 2*8192 
     epochs = 420
-    model = Experimental.Network2()
+    model = Experimental.Network()
     data_loader = Experimental.LitDataModule(train_data="TrainData/shuffled.train.raw.rescored",
                                       val_data="TrainData/val.train.raw.rescored",
                                        batch_size=batch_size, buffer_size=70000000)
@@ -28,6 +28,6 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v149.ckpt")
+    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v155.ckpt")
 
 

@@ -12,9 +12,9 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*2048
-L2 =32
-L3 = 32
+L1 =2*1024
+L2 =64
+L3 = 64
 
 class Network(pl.LightningModule):
 
@@ -24,10 +24,10 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.99
 
 
-        self.num_buckets =16
+        self.num_buckets =4
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
@@ -106,7 +106,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=1e-3,use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),weight_decay=3e-4,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -119,7 +119,7 @@ class Network(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.6).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -127,13 +127,13 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2.6).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("bigbug8.quant")
+        self.save_quantized_bucket("bigbug9.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -256,8 +256,8 @@ class Network2(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),weight_decay=1e-3,use_gc=False,gc_loc=False)
+        #optimizer = torch.optim.AdamW(self.parameters(),lr=2e-3,weight_decay=1e-3)
+        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),weight_decay=3e-4,use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -269,7 +269,7 @@ class Network2(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.6).mean()
         tensorboard_logs = {"avg_val_loss": loss}
         self.log('train_loss', loss,prog_bar=True)
         return {"loss": loss, "log": tensorboard_logs}
@@ -277,7 +277,7 @@ class Network2(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2.6).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}

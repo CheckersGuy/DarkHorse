@@ -49,7 +49,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "bigbug8.quant";
+    net_file = "bigbug9.quant";
   }
 
   network.load_bucket(net_file);
@@ -155,6 +155,7 @@ int main(int argl, const char **argc) {
       std::cout << "update_ready"
                 << "\n";
     } else if (current == "search") {
+      Statistics::mPicker.clear_scores();
       std::string time_string;
       std::cin >> time_string;
       Move bestMove;
