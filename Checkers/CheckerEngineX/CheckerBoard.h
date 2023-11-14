@@ -1,5 +1,4 @@
 #include "GameLogic.h"
-#include "egdb.h"
 #include "types.h"
 #include <fstream>
 #include <iostream>
