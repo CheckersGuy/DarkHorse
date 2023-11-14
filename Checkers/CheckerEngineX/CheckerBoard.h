@@ -153,5 +153,3 @@ inline int coorstonumber(int x, int y, int gametype) {
 
   return number;
 }
-
-void load_tablebase(EGDB_DRIVER *handle, int num_pieces);
