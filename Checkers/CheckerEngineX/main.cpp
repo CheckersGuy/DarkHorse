@@ -49,7 +49,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "bigbug9.quant";
+    net_file = "bigbug10.quant";
   }
 
   network.load_bucket(net_file);
