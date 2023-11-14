@@ -28,6 +28,5 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v155.ckpt")
-
+    trainer.fit(model, data_loader,ckpt_path="Networks/medium=0-v162.ckpt")
 

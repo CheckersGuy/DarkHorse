@@ -1,5 +1,6 @@
 #include "CheckerBoard.h"
 #include "GameLogic.h"
+#include "MovePicker.h"
 bool engine_initialized = false;
 Board game_board;
 
@@ -13,6 +14,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   if ((info & CB_RESET_MOVES)) {
     game_board = Board{};
     TT.age_counter = 0;
+    Statistics::mPicker.clear_scores();
     TT.clear();
     num_draw_scores = 0;
   }
@@ -52,6 +54,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   } else if (!m.has_value() ||
              (temp.piece_count() > game_board.get_position().piece_count())) {
     TT.clear();
+    Statistics::mPicker.clear_scores();
     game_board = Board{};
     game_board = temp;
     TT.age_counter = 0;
@@ -59,7 +62,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   if (!engine_initialized) {
-    network.load_bucket("simple2.quant");
+    network.load_bucket("bigbug10.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;
