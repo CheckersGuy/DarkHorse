@@ -117,7 +117,6 @@ Depth reduce(int move_index, Depth depth, Board &board, Move move, bool in_pv) {
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
 
     auto red = (!in_pv && move_index >= 4) ? 2 : 1;
-
     return red;
   }
   return 0;
