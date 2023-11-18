@@ -60,9 +60,9 @@ struct Network {
   constexpr static size_t ALIGNMENT = 64;
   int max_units{0};
   Accumulator accumulator;
-  QLayer<1024, 64, Activation::SqRelu> first;
-  QLayer<64, 64, Activation ::SqRelu> second;
-  QLayer<64, 1> output;
+  QLayer<1024, 16, Activation::SqRelu> first;
+  QLayer<16, 32, Activation ::SqRelu> second;
+  QLayer<32, 1> output;
   alignas(64) uint8_t input[1024 + 2 * 32 + 2 * 32 + 2 * 32 + 1] = {0};
 
   void load_bucket(std::string file);

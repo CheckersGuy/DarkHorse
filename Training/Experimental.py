@@ -12,9 +12,9 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*1024
-L2 =64
-L3 = 64
+L1 =2*128
+L2 =32
+L3 = 32
 
 class Network(pl.LightningModule):
 
@@ -24,7 +24,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.99
+        self.gamma = 0.98
 
 
         self.num_buckets =10
@@ -119,7 +119,7 @@ class Network(pl.LightningModule):
         self.step()
         result, move,buckets, x = train_batch
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.6).mean()
+        loss =torch.pow(torch.abs(out-result),2.5).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -127,13 +127,13 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result, move,buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.6).mean()
+        loss = torch.pow(torch.abs(out - result), 2.5).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("bigbug10.quant")
+        self.save_quantized_bucket("endgame.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
