@@ -156,6 +156,14 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     return board.get_mover() * network.evaluate(board.get_position(), ply);
   }
 
+  if (!is_root) {
+    alpha = std::max(loss(ply), alpha);
+    beta = std::min(-loss(ply + 1), beta);
+    if (alpha >= beta) {
+      return alpha;
+    }
+  }
+
   MoveListe liste;
 
   get_moves(board.get_position(), liste);
@@ -164,11 +172,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   }
 
   // mate distance pruning
-  alpha = std::max(loss(ply), alpha);
-  beta = std::min(-loss(ply + 1), beta);
-  if (alpha >= beta) {
-    return alpha;
-  }
 
   bool found_hash = TT.find_hash(board.get_current_key(), info);
   // At root we can still use the tt_move for move_ordering
@@ -222,7 +225,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if (!in_pv && depth >= 3 && std::abs(beta) < MATE_IN_MAX_PLY &&
         board.get_position().piece_count() > 6) {
       Line line;
-      Depth newDepth = std::max(depth - 6, 1);
+      Depth newDepth = std::max(depth - 4, 1);
       Value board_val = -qs(in_pv, board, line, -prob_beta, -prob_beta + 1,
                             ply + 1, 0, last_rev);
       if (board_val >= prob_beta) {

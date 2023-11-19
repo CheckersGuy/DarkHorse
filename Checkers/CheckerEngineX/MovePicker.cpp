@@ -135,7 +135,7 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  const int delta = std::min(depth * depth * 5, 30 * 30);
+  const int delta = std::min(depth * 10, 30 * 30);
   apply_bonus(index, delta);
   Move *top = &liste[0];
   while (*top != move) {
