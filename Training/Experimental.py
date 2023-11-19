@@ -12,8 +12,8 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*128
-L2 =32
+L1 =2*1024
+L2 =16
 L3 = 32
 
 class Network(pl.LightningModule):
@@ -23,7 +23,7 @@ class Network(pl.LightningModule):
         self.layers = []
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
-        self.min_weight_hidden = -127.0 / 64.0
+        self.min_weight_hidden = -127.0/ 64.0
         self.gamma = 0.98
 
 
@@ -106,7 +106,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),weight_decay=3e-4,use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -133,7 +133,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("endgame.quant")
+        self.save_quantized_bucket("bigbug12.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
