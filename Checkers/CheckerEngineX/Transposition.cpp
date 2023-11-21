@@ -103,20 +103,26 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
       return;
     }
     const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
+  }
+  int replace_index = 0;
+  int min_score = 1000000;
+  for (auto i = 0; i < bucket_size; ++i) {
+    const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
+    const auto score = 7 * cluster.ent[i].depth - 5 * std::max(age_entry, 0);
 
-    if (cluster.ent[i].flag == Flag::None ||
-        (cluster.ent[i].depth - 5 * std::max(age_entry, 0) < depth)) {
-      cluster.ent[i].depth = depth;
-      cluster.ent[i].flag = flag;
-      if (!tt_move.is_empty()) {
-        cluster.ent[i].best_move = MoveEncoding(tt_move);
-      }
-      cluster.ent[i].value = value;
-      cluster.ent[i].key = lock;
-      cluster.ent[i].age = age_counter;
-      return;
+    if (score < min_score) {
+      min_score = score;
+      replace_index = i;
     }
   }
+
+  cluster.ent[replace_index].depth = depth;
+  cluster.ent[replace_index].flag = flag;
+  cluster.ent[replace_index].best_move = MoveEncoding(tt_move);
+  cluster.ent[replace_index].value = value;
+  cluster.ent[replace_index].key = lock;
+  cluster.ent[replace_index].age = age_counter;
+  return;
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
