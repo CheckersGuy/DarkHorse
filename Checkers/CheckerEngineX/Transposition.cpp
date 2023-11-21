@@ -4,6 +4,7 @@
 
 #include "Transposition.h"
 #include "types.h"
+#include <cstdint>
 
 Transposition TT;
 
@@ -83,24 +84,20 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
 
-  for (auto i = 1; i < bucket_size; ++i) {
+  for (auto i = 0; i < bucket_size; ++i) {
     if (cluster.ent[i].key == lock) {
-
-      if (cluster.ent[i].depth < depth || flag == TT_EXACT) {
+      if (cluster.ent[i].depth < depth ||
+          (flag == TT_EXACT && cluster.ent[i].flag != TT_EXACT)) {
         cluster.ent[i].depth = depth;
         cluster.ent[i].flag = flag;
-        // if (!tt_move.is_empty()) {
-        cluster.ent[i].best_move = MoveEncoding(tt_move);
-        //}
+        if (!tt_move.is_empty()) {
+          cluster.ent[i].best_move = MoveEncoding(tt_move);
+        }
 
         cluster.ent[i].value = value;
         cluster.ent[i].age = age_counter;
-      } else {
+      } else if (cluster.ent[i].depth < depth) {
         cluster.ent[i].age = age_counter;
-        // if (cluster.ent[i].best_move.from_index == 32) {
-        // cluster.ent[i].best_move = MoveEncoding(tt_move);
-        //}
-        // something wrong here
       }
 
       return;
@@ -108,23 +105,18 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
     const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
 
     if (cluster.ent[i].flag == Flag::None ||
-        (cluster.ent[i].depth - 3 * std::max(age_entry, 0) < depth)) {
+        (cluster.ent[i].depth - 5 * std::max(age_entry, 0) < depth)) {
       cluster.ent[i].depth = depth;
       cluster.ent[i].flag = flag;
-      cluster.ent[i].best_move = MoveEncoding(tt_move);
+      if (!tt_move.is_empty()) {
+        cluster.ent[i].best_move = MoveEncoding(tt_move);
+      }
       cluster.ent[i].value = value;
       cluster.ent[i].key = lock;
       cluster.ent[i].age = age_counter;
       return;
     }
   }
-
-  cluster.ent[0].depth = depth;
-  cluster.ent[0].flag = flag;
-  cluster.ent[0].best_move = MoveEncoding(tt_move);
-  cluster.ent[0].value = value;
-  cluster.ent[0].key = lock;
-  cluster.ent[0].age = age_counter;
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
@@ -140,4 +132,13 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
     }
   }
   return false;
+}
+
+void Transposition::prefetch(uint64_t key) {
+  const auto index = key & (capacity - 1);
+#if defined(_MSC_VER)
+  _mm_prefetch((char *)&entries[index(key)], _MM_HINT_T0);
+#else
+  __builtin_prefetch(&entries[index]);
+#endif
 }

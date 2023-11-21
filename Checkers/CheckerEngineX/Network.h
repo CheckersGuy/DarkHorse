@@ -19,7 +19,7 @@
 
 class Network;
 
-struct Accumulator {
+struct alignas(64) Accumulator {
   static constexpr int OutDim = 2 * 1024;
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
@@ -37,15 +37,7 @@ struct Accumulator {
 
   void update(Color per, Position after);
 
-  inline void add_feature(int16_t *in, int index) {
-    // adding the index-th column to our feature vector
-    Simd::vec_add<OutDim>(ft_weights + index * OutDim, in);
-  }
-
-  inline void remove_feature(int16_t *in, int index) {
-    // adding the index-th column to our feature vector
-    Simd::vec_diff<OutDim>(ft_weights + index * OutDim, in);
-  }
+  void update(Position after);
 
   void apply(Color color, Position before, Position after);
 
@@ -54,6 +46,18 @@ struct Accumulator {
   void load_weights(std::ifstream &stream);
 
   uint8_t *forward(uint8_t *in, const Position &next);
+
+  Accumulator &operator=(const Accumulator &other) {
+    size = other.size;
+    psqt = other.psqt;
+    ft_biases = other.ft_biases;
+    ft_weights = other.ft_weights;
+    std::memcpy(black_acc, other.black_acc, sizeof(int16_t) * OutDim);
+    std::memcpy(white_acc, other.white_acc, sizeof(int16_t) * OutDim);
+    previous_black = other.previous_black;
+    previous_white = other.previous_white;
+    return *this;
+  }
 };
 
 struct Network {
@@ -63,7 +67,7 @@ struct Network {
   QLayer<1024, 16, Activation::SqRelu> first;
   QLayer<16, 32, Activation ::SqRelu> second;
   QLayer<32, 1> output;
-  alignas(64) uint8_t input[1024 + 2 * 32 + 2 * 32 + 2 * 32 + 1] = {0};
+  alignas(64) uint8_t input[1024 + 32 + 32 + 32 + 1] = {0};
 
   void load_bucket(std::string file);
 
