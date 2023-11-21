@@ -51,6 +51,8 @@ public:
   // difference between make-move and play move is that
   // play move is not being used for the tree search
   void play_move(Move move);
+
+  Board &operator=(const Board &other);
 };
 
 #endif // CHECKERSTEST_BOARD_H

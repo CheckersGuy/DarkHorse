@@ -66,7 +66,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (WP_O) {
     auto index = Bits::bitscan_foward(WP_O) - 4 + offset;
     active_features[num_active++] = index;
-    // add_feature(input, index);
     WP_O &= WP_O - 1;
   }
   offset += 28;
@@ -74,7 +73,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (BP_O) {
     auto index = Bits::bitscan_foward(BP_O) + offset;
     active_features[num_active++] = index;
-    // add_feature(input, index);
     BP_O &= BP_O - 1;
   }
   offset += 28;
@@ -82,7 +80,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (WK_O) {
     auto index = Bits::bitscan_foward(WK_O) + offset;
     active_features[num_active++] = index;
-    //    add_feature(input, index);
     WK_O &= WK_O - 1;
   }
   offset += 32;
@@ -90,7 +87,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (BK_O) {
     auto index = Bits::bitscan_foward(BK_O) + offset;
     active_features[num_active++] = index;
-    //    add_feature(input, index);
     BK_O &= BK_O - 1;
   }
 
@@ -99,7 +95,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (WP_Z) {
     auto index = Bits::bitscan_foward(WP_Z) - 4 + offset;
     removed_features[num_removed++] = index;
-    //  remove_feature(input, index);
     WP_Z &= WP_Z - 1;
   }
   offset += 28;
@@ -107,7 +102,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (BP_Z) {
     auto index = Bits::bitscan_foward(BP_Z) + offset;
     removed_features[num_removed++] = index;
-    // remove_feature(input, index);
     BP_Z &= BP_Z - 1;
   }
   offset += 28;
@@ -115,7 +109,6 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (WK_Z) {
     auto index = Bits::bitscan_foward(WK_Z) + offset;
     removed_features[num_removed++] = index;
-    // remove_feature(input, index);
     WK_Z &= WK_Z - 1;
   }
   offset += 32;
@@ -123,12 +116,9 @@ void Accumulator::apply(Color perp, Position before, Position after) {
   while (BK_Z) {
     auto index = Bits::bitscan_foward(BK_Z) + offset;
     removed_features[num_removed++] = index;
-    // remove_feature(input, index);
     BK_Z &= BK_Z - 1;
   }
-  // std::cout << (num_removed + num_active) << std::endl;
 
-  // testing some stuff
   auto *accu = reinterpret_cast<__m256i *>(input);
   constexpr int num_regs = 16; // number of available avx2 registers
   constexpr int OutRegisters = OutDim / 16; // each register can hold 16 int16_t
@@ -173,6 +163,11 @@ void Accumulator::update(Color perp, Position after) {
     apply(perp, previous_white, after);
     previous_white = after;
   }
+}
+
+void Accumulator::update(Position after) {
+  update(BLACK, after);
+  update(WHITE, after);
 }
 
 uint8_t *Accumulator::forward(uint8_t *in, const Position &next) {

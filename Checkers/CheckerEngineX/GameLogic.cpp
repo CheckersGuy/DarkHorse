@@ -117,8 +117,8 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Board &board, Move move, bool in_pv) {
 
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
-
     auto red = (!in_pv && move_index >= 4) ? 2 : 1;
+
     return red;
   }
   return 0;
@@ -171,9 +171,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     return loss(ply);
   }
 
-  // mate distance pruning
-
-  bool found_hash = TT.find_hash(board.get_current_key(), info);
+  const auto key = board.get_current_key();
+  bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
   if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
@@ -191,6 +190,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
+
   int start_index = 0;
   if (in_pv && ply < mainPV.length()) {
     const Move mv = mainPV[ply];
@@ -210,14 +210,16 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   const Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
     // moveLoop starts here
-    Move move = liste[i];
 
+    Move move = liste[i];
+    TT.prefetch(board.get_current_key());
+    const auto kings = board.get_position().K;
     Line local_pv;
     Depth reduction = Search::reduce(i, depth, board, move, in_pv);
 
     Value val = -INFINITE;
 
-    if (move.is_capture() || move.is_pawn_move(board.get_position().K)) {
+    if (move.is_capture() || move.is_pawn_move(kings)) {
       last_rev = board.pCounter;
     }
     board.make_move(move);
@@ -234,7 +236,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
                                    -prob_beta + 1, ply + 1, newDepth, last_rev);
         if (value >= prob_beta) {
           board.undo_move();
-          // try updating history scores here as well+killers
           if (!board.get_position().has_jumps(board.get_mover()) &&
               liste.length() > 1) {
             Statistics::mPicker.update_scores(
@@ -246,7 +247,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
             }
             killers[ply][0] = move;
           }
-          TT.store_hash(value, board.get_current_key(), TT_LOWER, newDepth + 1,
+
+          TT.store_hash(value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return value;
         }
@@ -257,7 +259,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<false>(false, board, local_pv, -alpha - 1, -alpha,
                                    ply + 1, new_depth - reduction, last_rev);
-      if (val > alpha) {
+      if (val > alpha && val < beta) {
         val = -Search::search<false>(in_pv, board, local_pv, -beta, -alpha,
                                      ply + 1, new_depth, last_rev);
       }
@@ -267,7 +269,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     }
     board.undo_move();
     if (val > best_score) {
-      best_move = move;
       best_score = val;
       if (best_score >= beta &&
           !board.get_position().has_jumps(board.get_mover()) &&
@@ -283,6 +284,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
       if (val > alpha) {
         pv.concat(move, local_pv);
+        best_move = move;
         alpha = val;
       }
       if (best_score >= beta) {
@@ -290,7 +292,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
-  if (!is_root) {
+  {
     Value tt_value = value_to_tt(best_score, ply);
     Flag flag;
     if (best_score <= old_alpha) {
@@ -341,6 +343,8 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
   if (in_pv && ply < mainPV.length()) {
     moves.put_front(mainPV[ply]);
   }
+  // add move ordering
+  moves.sort(board.get_position(), depth, ply, Move{}, 1);
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
     Line localPV;

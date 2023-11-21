@@ -86,6 +86,11 @@ int MovePicker::get_history_index(Position pos, Move move) {
   return index;
 }
 
+int MovePicker::get_history(Position pos, Move move) {
+  auto index = get_history_index(pos, move);
+  return history[index];
+}
+
 void MovePicker::clear_scores() {
   std::fill(history.begin(), history.end(), 0);
   for (auto i = 0; i < killer_moves.size(); ++i) {
@@ -97,7 +102,7 @@ void MovePicker::clear_scores() {
 
 void MovePicker::decay_scores() {
   for (auto i = 0; i < history.size(); ++i) {
-    history[i] /= 10;
+    history[i] /= 5;
   }
   for (auto i = 0; i < killer_moves.size(); ++i) {
     for (auto k = 0; k < MAX_KILLERS; ++k) {

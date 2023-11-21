@@ -4,6 +4,7 @@
 //
 
 #include "Board.h"
+#include "types.h"
 #include <cstdint>
 Position &Board::get_position() { return pStack[pCounter]; }
 
@@ -15,6 +16,15 @@ Board::Board(const Board &other) {
   this->rep_size = other.rep_size;
   std::copy(other.rep_history.begin(), other.rep_history.end(),
             rep_history.begin());
+}
+
+Board &Board::operator=(const Board &other) {
+  std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
+  this->pCounter = other.pCounter;
+  this->rep_size = other.rep_size;
+  std::copy(other.rep_history.begin(), other.rep_history.end(),
+            rep_history.begin());
+  return *this;
 }
 
 void Board::print_board() const {

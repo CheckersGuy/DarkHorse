@@ -8,6 +8,7 @@
 #include "Move.h"
 #include "MoveListe.h"
 #include "types.h"
+#include <cstdint>
 #include <iostream>
 #include <string>
 
@@ -67,6 +68,8 @@ public:
                   Move tt_move);
 
   bool find_hash(uint64_t key, NodeInfo &info) const;
+
+  void prefetch(uint64_t key);
 };
 
 extern Transposition TT;
