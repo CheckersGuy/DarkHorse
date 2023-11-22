@@ -259,7 +259,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<false>(false, board, local_pv, -alpha - 1, -alpha,
                                    ply + 1, new_depth - reduction, last_rev);
-      if (val > alpha && val < beta) {
+      if (val > alpha) {
         val = -Search::search<false>(in_pv, board, local_pv, -beta, -alpha,
                                      ply + 1, new_depth, last_rev);
       }
@@ -292,7 +292,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
-  {
+  if (!is_root) {
     Value tt_value = value_to_tt(best_score, ply);
     Flag flag;
     if (best_score <= old_alpha) {
@@ -339,12 +339,11 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
 
     return network.evaluate(board.get_position(), ply);
   }
-
+  bool sucess;
   if (in_pv && ply < mainPV.length()) {
-    moves.put_front(mainPV[ply]);
+    sucess = moves.put_front(mainPV[ply]);
   }
-  // add move ordering
-  moves.sort(board.get_position(), depth, ply, Move{}, 1);
+  moves.sort(board.get_position(), depth, ply, Move{}, sucess);
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
     Line localPV;
@@ -370,22 +369,21 @@ Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
 
 Value search_asp(Board &board, Value last_score, Depth depth) {
   Value best_score = -INFINITE;
-  if (depth >= 3 && isEval(last_score)) {
+  if (depth >= 5 && isEval(last_score)) {
     Value margin = asp_wind;
-    Value alpha_margin = margin;
-    Value beta_margin = margin;
-
-    while (std::max(alpha_margin, beta_margin) < MAX_ASP) {
+    Value alpha = last_score - margin;
+    Value beta = last_score + margin;
+    while (margin < MAX_ASP) {
       Line line;
-      Value alpha = last_score - alpha_margin;
-      Value beta = last_score + beta_margin;
+
       auto score = search<true>(true, board, line, alpha, beta, 0, depth, 0);
-      best_score = score;
       if (score <= alpha) {
-        alpha_margin += alpha_margin / 2;
+        beta = (alpha + beta) / 2;
+        alpha = score - margin;
       } else if (score >= beta) {
-        beta_margin += beta_margin / 2;
+        beta = score + margin;
       } else {
+        best_score = score;
         mainPV = line;
         return best_score;
       }

@@ -347,29 +347,31 @@ int Position::bucket_index() { // return (piece_count() - 1) / 6;
   const auto has_kings = K != 0;
   auto pieces = piece_count();
   if (pieces == 24 || pieces == 23 || pieces == 22) {
-    return 12;
-  } else if (pieces == 21 || pieces == 20 || pieces == 19) {
-    return 13;
-  } else if (pieces == 18 || pieces == 17 || pieces == 16) {
-    return 14;
-  } else if (pieces == 15 || pieces == 14 || pieces == 13) {
-    return 15;
-  } else if (pieces == 12 || pieces == 11 || pieces == 10) {
-    return 16;
-  } else if (pieces == 9) {
-    return 6 + 5 * has_kings;
-  } else if (pieces == 8) {
-    return 5 + 5 * has_kings;
-  } else if (pieces == 7) {
-    return 4 + 5 * has_kings;
-  } else if (pieces == 6) {
-    return 3 + 5 * has_kings;
-  } else if (pieces == 5) {
-    return 2 + 5 * has_kings;
-  } else if (pieces == 4) {
-    return 1;
-  } else if (pieces == 3 || pieces == 2 || pieces == 1) {
     return 0;
+  } else if (pieces == 21 || pieces == 20 || pieces == 19) {
+    return 1;
+  } else if (pieces == 18 || pieces == 17 || pieces == 16) {
+    return 2;
+  } else if (pieces == 15 || pieces == 14 || pieces == 13) {
+    return 3;
+  } else if (pieces == 12 || pieces == 11) {
+    return 4;
+  } else if (pieces == 10) {
+    return 5;
+  } else if (pieces == 9) {
+    return 6;
+  } else if (pieces == 8) {
+    return 7;
+  } else if (pieces == 7) {
+    return 8;
+  } else if (pieces == 6) {
+    return 9;
+  } else if (pieces == 5) {
+    return 10;
+  } else if (pieces == 4) {
+    return 11;
+  } else if (pieces == 3 || pieces == 2 || pieces == 1) {
+    return 12;
   } else {
     return 0;
   }
