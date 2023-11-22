@@ -62,7 +62,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   if (!engine_initialized) {
-    network.load_bucket("bigbug13.quant");
+    network.load_bucket("bigbug14.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;
@@ -132,7 +132,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
   if (strcmp(command, "staticevaluation") == 0) {
     if (!engine_initialized) {
-      network.load_bucket("bigbug13.quant");
+      network.load_bucket("bigbug14.quant");
       TT.resize(21);
       Statistics::mPicker.init();
       engine_initialized = true;
