@@ -102,7 +102,7 @@ void MovePicker::clear_scores() {
 
 void MovePicker::decay_scores() {
   for (auto i = 0; i < history.size(); ++i) {
-    history[i] /= 5;
+    history[i] /= 10;
   }
   for (auto i = 0; i < killer_moves.size(); ++i) {
     for (auto k = 0; k < MAX_KILLERS; ++k) {

@@ -64,7 +64,7 @@ constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 
 constexpr int prob_cut = 35; // 30;
 constexpr int asp_wind = 15; // 15;
-constexpr int NUM_BUCKETS = 17;
+constexpr int NUM_BUCKETS = 13;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 

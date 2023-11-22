@@ -46,26 +46,14 @@ struct alignas(64) Accumulator {
   void load_weights(std::ifstream &stream);
 
   uint8_t *forward(uint8_t *in, const Position &next);
-
-  Accumulator &operator=(const Accumulator &other) {
-    size = other.size;
-    psqt = other.psqt;
-    ft_biases = other.ft_biases;
-    ft_weights = other.ft_weights;
-    std::memcpy(black_acc, other.black_acc, sizeof(int16_t) * OutDim);
-    std::memcpy(white_acc, other.white_acc, sizeof(int16_t) * OutDim);
-    previous_black = other.previous_black;
-    previous_white = other.previous_white;
-    return *this;
-  }
 };
 
 struct Network {
   constexpr static size_t ALIGNMENT = 64;
   int max_units{0};
   Accumulator accumulator;
-  QLayer<1024, 16, Activation::SqRelu> first;
-  QLayer<16, 32, Activation ::SqRelu> second;
+  QLayer<1024, 32, Activation::SqRelu> first;
+  QLayer<32, 32, Activation ::SqRelu> second;
   QLayer<32, 1> output;
   alignas(64) uint8_t input[1024 + 32 + 32 + 32 + 1] = {0};
 

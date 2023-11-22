@@ -84,8 +84,9 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
 
-  for (auto i = 0; i < bucket_size; ++i) {
+  for (auto i = 1; i < bucket_size; ++i) {
     if (cluster.ent[i].key == lock) {
+
       if (cluster.ent[i].depth < depth ||
           (flag == TT_EXACT && cluster.ent[i].flag != TT_EXACT)) {
         cluster.ent[i].depth = depth;
@@ -103,26 +104,27 @@ void Transposition::store_hash(Value value, uint64_t key, Flag flag,
       return;
     }
     const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
-  }
-  int replace_index = 0;
-  int min_score = 1000000;
-  for (auto i = 0; i < bucket_size; ++i) {
-    const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
-    const auto score = 7 * cluster.ent[i].depth - 5 * std::max(age_entry, 0);
 
-    if (score < min_score) {
-      min_score = score;
-      replace_index = i;
+    if (cluster.ent[i].flag == Flag::None ||
+        (7 * cluster.ent[i].depth - 5 * std::max(age_entry, 0) < depth)) {
+      cluster.ent[i].depth = depth;
+      cluster.ent[i].flag = flag;
+      if (!tt_move.is_empty()) {
+        cluster.ent[i].best_move = MoveEncoding(tt_move);
+      }
+      cluster.ent[i].value = value;
+      cluster.ent[i].key = lock;
+      cluster.ent[i].age = age_counter;
+      return;
     }
   }
 
-  cluster.ent[replace_index].depth = depth;
-  cluster.ent[replace_index].flag = flag;
-  cluster.ent[replace_index].best_move = MoveEncoding(tt_move);
-  cluster.ent[replace_index].value = value;
-  cluster.ent[replace_index].key = lock;
-  cluster.ent[replace_index].age = age_counter;
-  return;
+  cluster.ent[0].depth = depth;
+  cluster.ent[0].flag = flag;
+  cluster.ent[0].best_move = MoveEncoding(tt_move);
+  cluster.ent[0].value = value;
+  cluster.ent[0].key = lock;
+  cluster.ent[0].age = age_counter;
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
@@ -141,7 +143,7 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
 }
 
 void Transposition::prefetch(uint64_t key) {
-  const auto index = key & (capacity - 1);
+  auto index = key & (capacity - 1);
 #if defined(_MSC_VER)
   _mm_prefetch((char *)&entries[index(key)], _MM_HINT_T0);
 #else

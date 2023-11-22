@@ -210,11 +210,13 @@ int Network::operator[](int index) { return input[index]; }
 
 int Network::evaluate(Position pos, int ply) {
 
-  if (pos.BP == 0 && pos.get_color() == BLACK) {
-    return -loss(ply);
-  }
-  if (pos.WP == 0 && pos.get_color() == WHITE) {
+  if (pos.BP == 0 && pos.color == BLACK) {
     return loss(ply);
   }
+
+  if (pos.WP == 0 && pos.color == WHITE) {
+    return loss(ply);
+  }
+
   return (*compute_incre_forward_pass(pos)) + accumulator.psqt;
 }
