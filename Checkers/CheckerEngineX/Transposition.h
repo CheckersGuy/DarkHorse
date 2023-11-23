@@ -64,8 +64,8 @@ public:
 
   void resize(size_t capa);
 
-  void store_hash(Value value, uint64_t key, Flag flag, uint8_t depth,
-                  Move tt_move);
+  void store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
+                  uint8_t depth, Move tt_move);
 
   bool find_hash(uint64_t key, NodeInfo &info) const;
 
