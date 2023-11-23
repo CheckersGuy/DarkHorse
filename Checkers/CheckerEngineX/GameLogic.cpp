@@ -114,12 +114,14 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 
 namespace Search {
 
-Depth reduce(int move_index, Depth depth, Board &board, Move move, bool in_pv) {
+Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
+             bool in_pv) {
 
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
+    auto index = std::min(ply, 30);
     auto red = (!in_pv && move_index >= 4) ? 2 : 1;
-
     return red;
+    ;
   }
   return 0;
 }
@@ -215,7 +217,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
     TT.prefetch(board.get_current_key());
     const auto kings = board.get_position().K;
     Line local_pv;
-    Depth reduction = Search::reduce(i, depth, board, move, in_pv);
+    Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
 
     Value val = -INFINITE;
 
