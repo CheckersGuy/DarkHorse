@@ -248,7 +248,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
             killers[ply][0] = move;
           }
 
-          TT.store_hash(value, key, TT_LOWER, newDepth + 1,
+          TT.store_hash(in_pv, value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return value;
         }
@@ -303,7 +303,8 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       flag = TT_EXACT;
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
-    TT.store_hash(tt_value, board.get_current_key(), flag, depth, store_move);
+    TT.store_hash(in_pv, tt_value, board.get_current_key(), flag, depth,
+                  store_move);
   }
   return best_score;
 }
