@@ -210,6 +210,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   const Value old_alpha = alpha;
 
   const Value prob_beta = beta + prob_cut;
+
   for (auto i = 0; i < liste.length(); ++i) {
     // moveLoop starts here
 
@@ -382,9 +383,11 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
       auto score = search<true>(true, board, line, alpha, beta, 0, depth, 0);
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
-        alpha = score - margin;
+        margin += margin / 3;
+        alpha = last_score - margin;
       } else if (score >= beta) {
-        beta = score + margin;
+        margin += margin / 3;
+        beta = last_score + margin;
       } else {
         best_score = score;
         mainPV = line;
