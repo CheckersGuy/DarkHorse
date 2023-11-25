@@ -151,7 +151,6 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
   Move best_move;
   Value tt_value = -INFINITE;
   Value sing_score = -INFINITE;
-  Value max_value = INFINITE;
 
   if (ply >= MAX_PLY) {
     return board.get_mover() * network.evaluate(board.get_position(), ply);
@@ -294,7 +293,7 @@ Value search(bool in_pv, Board &board, Line &pv, Value alpha, Value beta,
       }
     }
   }
-  if (!is_root) {
+  {
     Value tt_value = value_to_tt(best_score, ply);
     Flag flag;
     if (best_score <= old_alpha) {

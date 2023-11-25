@@ -87,16 +87,12 @@ void Transposition::store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
 
   for (auto i = 0; i < bucket_size; ++i) {
     auto &entry = cluster.ent[i];
-    if (entry.flag == Flag::None) {
-      replace = entry;
-      break;
-    }
-    if (entry.key == lock) {
+    if (entry.flag == Flag::None || entry.key == lock) {
       replace = entry;
       break;
     }
     const int age_entry = age_counter - entry.age;
-    int score = 3 * entry.depth - 7 * std::max(age_entry, 0);
+    int score = 5 * entry.depth - 7 * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
       replace = entry;

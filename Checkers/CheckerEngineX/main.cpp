@@ -4,6 +4,8 @@
 #include "Perft.h"
 #include "Selfplay.h"
 #include "Transposition.h"
+#include <cstdint>
+#include <random>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -37,6 +39,7 @@ inline Position posFromString(const std::string &pos) {
 #include "Network.h"
 #include "types.h"
 int main(int argl, const char **argc) {
+
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -166,6 +169,9 @@ int main(int argl, const char **argc) {
       move.to = 1u << squares[1];
       for (auto i = 2; i < squares.size(); ++i) {
         move.captures |= 1u << squares[i];
+      }
+      if (move.is_capture() || move.is_pawn_move(board.get_position().K)) {
+        board.rep_size = 0;
       }
       board.play_move(move);
       std::cout << "update_ready"

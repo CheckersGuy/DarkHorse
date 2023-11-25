@@ -75,22 +75,18 @@ uint64_t hash(uint64_t x) {
 }
 uint64_t Board::get_current_key() const {
   const Position p = pStack[pCounter];
+  const uint64_t color_hash = (p.color == BLACK) ? BLACK_RANDOM : 0;
   uint64_t first =
       static_cast<uint64_t>(p.BP) | (static_cast<uint64_t>(p.WP) << 32);
-  uint64_t second =
-      static_cast<uint64_t>(p.K) | (static_cast<uint64_t>(p.color) << 32);
+  uint64_t second = static_cast<uint64_t>(p.K) | (color_hash << 32);
   return hash_combine(hash(first), hash(second));
 }
 
 bool Board::is_repetition(int last_rev) const {
-  auto end = std::max(last_rev - 1, 0);
-  auto current = pStack[pCounter];
-  int counter = 0;
-  for (int i = pCounter; i >= end; i -= 2) {
+  const auto end = std::max(last_rev - 1, 0);
+  const auto current = pStack[pCounter];
+  for (int i = pCounter - 2; i >= end; i -= 2) {
     if (pStack[i] == current) {
-      counter++;
-    }
-    if (counter >= 2) {
       return true;
     }
   }
