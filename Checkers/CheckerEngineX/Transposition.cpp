@@ -52,7 +52,6 @@ Move MoveEncoding::get_move() {
   } else if (direction == 1) {
     to = from << 4;
   } else if (direction == 0) {
-
     to = ((from & MASK_L3) << 3) | ((from & MASK_L5) << 5);
   };
   move.from = from;
@@ -83,42 +82,44 @@ void Transposition::store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
   const auto index = (key) & (get_capacity() - 1u);
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
+  auto &replace = cluster.ent[0];
+  int best_score = 100000;
 
   for (auto i = 0; i < bucket_size; ++i) {
-    if (cluster.ent[i].key == lock) {
-
-      if (cluster.ent[i].depth < 4 + depth + 2 * in_pv ||
-          (flag == TT_EXACT && cluster.ent[i].flag != TT_EXACT)) {
-        cluster.ent[i].depth = depth;
-        cluster.ent[i].flag = flag;
-        if (!tt_move.is_empty()) {
-          cluster.ent[i].best_move = MoveEncoding(tt_move);
-        }
-        cluster.ent[i].value = value;
-        cluster.ent[i].age = age_counter;
-      } else if (cluster.ent[i].depth < depth) {
-        cluster.ent[i].age = age_counter;
-      }
-
-      return;
+    auto &entry = cluster.ent[i];
+    if (entry.flag == Flag::None) {
+      replace = entry;
+      break;
     }
-  }
-  int top = 0;
-  int best_score = 1000000;
-  for (auto i = 0; i < bucket_size; ++i) {
-    const auto age_entry = (int)age_counter - (int)cluster.ent[i].age;
-    const auto score = 7 * cluster.ent[i].depth - 5 * std::max(age_entry, 0);
+    if (entry.key == lock) {
+      replace = entry;
+      break;
+    }
+    const int age_entry = age_counter - entry.age;
+    int score = 3 * entry.depth - 7 * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
-      top = i;
+      replace = entry;
     }
   }
-  cluster.ent[top].depth = depth;
-  cluster.ent[top].flag = flag;
-  cluster.ent[top].best_move = MoveEncoding(tt_move);
-  cluster.ent[top].value = value;
-  cluster.ent[top].key = lock;
-  cluster.ent[top].age = age_counter;
+  // the move we are storing
+  MoveEncoding store_move = replace.best_move;
+  if (replace.key != lock || !tt_move.is_empty()) {
+    store_move = MoveEncoding(tt_move);
+  }
+  if (flag == TT_EXACT || replace.key != lock ||
+      depth + 4 + 2 * in_pv > replace.depth) {
+    replace.key = lock;
+    replace.best_move = store_move;
+    replace.flag = flag;
+    replace.depth = depth;
+    replace.age = age_counter;
+    replace.value = value;
+    return;
+  }
+  if (replace.key == lock) {
+    replace.age = age_counter;
+  }
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {

@@ -118,7 +118,6 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv) {
 
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture()) {
-    auto index = std::min(ply, 30);
     auto red = (!in_pv && move_index >= 4) ? 2 : 1;
     return red;
     ;
@@ -383,10 +382,10 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
       auto score = search<true>(true, board, line, alpha, beta, 0, depth, 0);
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
-        margin += margin / 3;
+        margin *= 2;
         alpha = last_score - margin;
       } else if (score >= beta) {
-        margin += margin / 3;
+        margin *= 2;
         beta = last_score + margin;
       } else {
         best_score = score;
