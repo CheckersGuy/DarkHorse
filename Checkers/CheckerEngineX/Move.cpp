@@ -3,7 +3,9 @@
 //
 #include "Move.h"
 
-bool Move::is_pawn_move(const uint32_t kings) { return (from & kings) == 0; }
+bool Move::is_pawn_move(const uint32_t kings) const {
+  return (from & kings) == 0;
+}
 
 bool Move::is_capture() const { return captures != 0u; }
 
@@ -22,7 +24,7 @@ bool Move::operator==(const Move &other) const {
 
 bool Move::operator!=(const Move &other) const { return !((*this) == other); }
 
-bool Move::is_promotion(const uint32_t kings) {
+bool Move::is_promotion(const uint32_t kings) const {
   constexpr uint32_t promo_squares = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
   return (((from & kings) == 0u) && ((to & promo_squares) != 0u));
 }

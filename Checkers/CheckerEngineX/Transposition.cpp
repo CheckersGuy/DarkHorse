@@ -115,6 +115,9 @@ void Transposition::store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
   }
   if (replace.key == lock) {
     replace.age = age_counter;
+    if (replace.best_move.from_index == 0 && !tt_move.is_empty()) {
+      replace.best_move = store_move;
+    }
   }
 }
 

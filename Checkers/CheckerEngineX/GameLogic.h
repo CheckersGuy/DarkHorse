@@ -16,6 +16,21 @@
 #include <algorithm>
 #include <chrono>
 #include <types.h>
+
+enum NodeType {
+  ROOT,
+  PV,
+  NONPV,
+};
+
+// Searchstack
+struct Stack {
+  Ply ply;
+  Move previous;
+  Color us;
+  bool tt_hit;
+};
+
 struct SearchGlobal {
   uint32_t sel_depth;
 #ifdef CHECKERBOARD
@@ -40,12 +55,12 @@ namespace Search {
 
 Value search_asp(Board &board, Value last_score, Depth depth);
 
-template <bool is_root>
-Value search(bool in_pv, Board &board, Line &line, Value alpha, Value beta,
-             Ply ply, Depth depth, int last_rev);
-
-Value qs(bool in_pv, Board &board, Line &pv, Value alpha, Value beta, Ply ply,
-         Depth depth, int last_rev);
+template <NodeType type>
+Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply,
+             Depth depth, int last_rev);
+template <NodeType type>
+Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth,
+         int last_rev);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
