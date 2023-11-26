@@ -10,6 +10,7 @@
 #include <optional>
 #include <random>
 #include <sstream>
+
 const uint32_t temp_mask = 0xf;
 
 inline constexpr uint32_t getHorizontalFlip(uint32_t b) {

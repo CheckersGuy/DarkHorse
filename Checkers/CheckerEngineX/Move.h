@@ -24,9 +24,9 @@ struct Move {
 
   uint32_t get_to_index() const;
 
-  bool is_promotion(const uint32_t kings);
+  bool is_promotion(const uint32_t kings) const;
 
-  bool is_pawn_move(const uint32_t kings);
+  bool is_pawn_move(const uint32_t kings) const;
 
   friend std::ostream &operator<<(std::ostream &, Move other);
 };
