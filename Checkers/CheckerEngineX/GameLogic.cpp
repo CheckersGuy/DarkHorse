@@ -10,8 +10,8 @@ Value last_eval = -INFINITE;
 
 SearchGlobal glob;
 Network network;
-
 ////////
+
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {
 
@@ -22,21 +22,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   network.accumulator.refresh();
   nodeCounter = 0;
   mainPV.clear();
-  std::unique_ptr<Stack[]> search_stack =
-      std::make_unique<Stack[]>(MAX_PLY + 7);
-
-  std::memset(search_stack.get(), 0, sizeof(Stack) * (MAX_PLY + 7));
   const Color us = board.get_position().get_color();
-
-  // init the entire search_stack
-  for (auto i = 0; i < MAX_PLY; ++i) {
-    search_stack[i + 7].ply = i;
-  }
-  for (auto i = 0; i < MAX_PLY + 7; ++i) {
-    search_stack[i].us = us;
-    search_stack[i].tt_hit = false;
-    search_stack[i].previous = Move{};
-  }
 
   MoveListe liste;
   get_moves(board.get_position(), liste);
@@ -52,7 +38,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 
   if (depth == 0) {
     // returning q-search
-    return Search::qs<NONPV>(board, mainPV, -INFINITE, INFINITE, 0, 0,
+    return Search::qs<NONPV>(board, 0, mainPV, -INFINITE, INFINITE, 0,
                              board.pCounter);
   }
 
@@ -141,12 +127,11 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 }
 
 template <NodeType type>
-Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
+Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
              Depth depth, int last_rev) {
 
   constexpr bool is_root = (type == ROOT);
-  constexpr bool in_pv = (type == PV || type == ROOT);
-
+  constexpr bool in_pv = (type != NONPV);
   pv.clear();
   nodeCounter++;
   // checking time-used
@@ -158,7 +143,7 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
     return 0;
   }
   if (depth <= 0) {
-    return Search::qs<NONPV>(board, pv, alpha, beta, ply, depth, last_rev);
+    return Search::qs<NONPV>(board, ply, pv, alpha, beta, depth, last_rev);
   }
 
   Value best_score = -INFINITE;
@@ -219,7 +204,7 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
   int extension = 0;
   if (liste.length() == 1) {
     extension = 1;
-  } else if (in_pv && board.previous().has_jumps() && liste[0].is_capture()) {
+  } else if (in_pv && liste[0].is_capture()) {
     extension = 1;
   }
   const Value old_alpha = alpha;
@@ -227,11 +212,9 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
   const Value prob_beta = beta + prob_cut;
 
   for (auto i = 0; i < liste.length(); ++i) {
-    // moveLoop starts here
     const Move move = liste[i];
     TT.prefetch(board.get_current_key());
     const auto kings = board.get_position().K;
-    Line local_pv;
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
 
     Value val = -INFINITE;
@@ -244,14 +227,15 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
     if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Depth newDepth = depth - 4;
-      Value board_val = -qs<NONPV>(board, line, -prob_beta, -prob_beta + 1,
-                                   ply + 1, 0, last_rev);
+      Value board_val = -qs<NONPV>(board, ply + 1, line, -prob_beta,
+                                   -prob_beta + 1, 0, last_rev);
       if (board_val >= prob_beta) {
         Value value =
-            -Search::search<NONPV>(board, local_pv, -prob_beta, -prob_beta + 1,
-                                   ply + 1, newDepth, last_rev);
+            -Search::search<NONPV>(board, ply + 1, line, -prob_beta,
+                                   -prob_beta + 1, newDepth, last_rev);
         if (value >= prob_beta) {
           board.undo_move();
+
           TT.store_hash(in_pv, value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return value;
@@ -259,31 +243,24 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
       }
     }
 
-    const Depth new_depth = depth - 1 + extension;
-
-    if (reduction != 0) {
-      val = -Search::search<NONPV>(board, local_pv, -(alpha + 1), -alpha,
-                                   ply + 1, new_depth - reduction, last_rev);
+    Line local_pv;
+    Depth new_depth = depth - 1 + extension;
+    if ((in_pv && i != 0) || reduction != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth - reduction, last_rev);
       if (val > alpha) {
-        val = -Search::search<NONPV>(board, local_pv, -(alpha + 1), -alpha,
-                                     ply + 1, new_depth, last_rev);
+        val = -Search::search<NONPV>(board, ply + 1, local_pv, -beta, -alpha,
+                                     new_depth, last_rev);
       }
-    } else if (!in_pv || i > 0) {
-      val = -Search::search<NONPV>(board, local_pv, -(alpha + 1), -alpha,
-                                   ply + 1, new_depth, last_rev);
-    }
-
-    if (in_pv && (i == 0 || val > alpha)) {
-      val = -Search::search<PV>(board, local_pv, -beta, -alpha, ply + 1,
-                                new_depth, last_rev);
+    } else {
+      val = -Search::search<type>(board, ply + 1, local_pv, -beta, -alpha,
+                                  new_depth, last_rev);
     }
 
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      if (best_score >= beta &&
-          !board.get_position().has_jumps(board.get_mover()) &&
-          liste.length() > 1) {
+      if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
         Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
                                           move, depth);
         // updating killer moves
@@ -319,7 +296,7 @@ Value search(Board &board, Line &pv, Value alpha, Value beta, Ply ply,
   return best_score;
 }
 template <NodeType type>
-Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth,
+Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          int last_rev) {
   constexpr bool in_pv = (type == PV || type == ROOT);
   pv.clear();
@@ -345,7 +322,7 @@ Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth,
     }
 
     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-      return Search::search<type>(board, pv, alpha, beta, ply, 1, last_rev);
+      return Search::search<type>(board, ply, pv, alpha, beta, 1, last_rev);
     }
     return network.evaluate(board.get_position(), ply);
   }
@@ -357,17 +334,19 @@ Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth,
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
     Line localPV;
+    int last_rev = board.pCounter;
     board.make_move(move);
     Value value;
     if (i == 0) {
-      value = -Search::qs<type>(board, localPV, -beta, -alpha, ply + 1,
-                                depth - 1, board.pCounter - 2);
+      value = -Search::qs<type>(board, ply + 1, localPV, -beta, -alpha,
+                                depth - 1, last_rev);
     } else {
-      value = -Search::qs<NONPV>(board, localPV, -beta, -alpha, ply + 1,
-                                 depth - 1, board.pCounter - 2);
+      value = -Search::qs<NONPV>(board, ply + 1, localPV, -beta, -alpha,
+                                 depth - 1, last_rev);
     }
 
     board.undo_move();
+
     if (value > bestValue) {
       bestValue = value;
       if (value > alpha) {
@@ -393,7 +372,7 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
     while (margin < MAX_ASP) {
       Line line;
 
-      auto score = search<ROOT>(board, line, alpha, beta, 0, depth, 0);
+      auto score = search<ROOT>(board, 0, line, alpha, beta, depth, 0);
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
         margin *= 2;
@@ -409,7 +388,7 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
     }
   }
   Line line;
-  auto value = search<ROOT>(board, line, -INFINITE, INFINITE, 0, depth, 0);
+  auto value = search<ROOT>(board, 0, line, -INFINITE, INFINITE, depth, 0);
   best_score = value;
   mainPV = line;
   return best_score;

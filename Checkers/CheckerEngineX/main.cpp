@@ -56,7 +56,7 @@ int main(int argl, const char **argc) {
   }
 
   network.load_bucket(net_file);
-  if (parser.has_option("search"))
+  if (parser.has_option("search") || parser.has_option("bench"))
 
   {
     if (parser.has_option("time")) {
@@ -68,7 +68,7 @@ int main(int argl, const char **argc) {
     if (parser.has_option("depth")) {
       depth = parser.as<int>("depth");
     } else {
-      depth = MAX_PLY;
+      depth = parser.has_option("bench") ? 27 : MAX_PLY;
     }
     if (parser.has_option("hash_size")) {
       hash_size = parser.as<int>("hash_size");
@@ -85,7 +85,12 @@ int main(int argl, const char **argc) {
 
     TT.resize(hash_size);
     Move best;
-    searchValue(board, best, depth, time, true, std::cout);
+    if (parser.has_option("bench")) {
+      searchValue(board, best, depth, time, false, std::cout);
+    } else {
+      searchValue(board, best, depth, time, true, std::cout);
+    }
+    std::cout << "NodeCounter: " << nodeCounter << std::endl;
     return 0;
   }
 

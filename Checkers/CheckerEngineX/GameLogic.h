@@ -17,18 +17,12 @@
 #include <chrono>
 #include <types.h>
 
+extern uint64_t nodeCounter;
+
 enum NodeType {
   ROOT,
   PV,
   NONPV,
-};
-
-// Searchstack
-struct Stack {
-  Ply ply;
-  Move previous;
-  Color us;
-  bool tt_hit;
 };
 
 struct SearchGlobal {
@@ -56,10 +50,10 @@ namespace Search {
 Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <NodeType type>
-Value search(Board &board, Line &line, Value alpha, Value beta, Ply ply,
+Value search(Board &board, Ply ply, Line &line, Value alpha, Value beta,
              Depth depth, int last_rev);
 template <NodeType type>
-Value qs(Board &board, Line &pv, Value alpha, Value beta, Ply ply, Depth depth,
+Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          int last_rev);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
