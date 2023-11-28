@@ -132,6 +132,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
   constexpr bool is_root = (type == ROOT);
   constexpr bool in_pv = (type != NONPV);
+  constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
   // checking time-used
@@ -143,7 +144,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     return 0;
   }
   if (depth <= 0) {
-    return Search::qs<NONPV>(board, ply, pv, alpha, beta, depth, last_rev);
+    return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, last_rev);
   }
 
   Value best_score = -INFINITE;
@@ -152,7 +153,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   Move sing_move;
   Move best_move;
   Value tt_value = -INFINITE;
-  Value sing_score = -INFINITE;
 
   if (ply >= MAX_PLY) {
     return board.get_mover() * network.evaluate(board.get_position(), ply);
@@ -176,11 +176,11 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   const auto key = board.get_current_key();
   bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
-  if ((is_root || in_pv) && found_hash && info.flag != Flag::None) {
+  if (in_pv && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
   }
-  if (!in_pv && !is_root && found_hash && info.flag != Flag::None) {
+  if (!in_pv && found_hash && info.flag != Flag::None) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
 
@@ -194,11 +194,12 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
 
   int start_index = 0;
-  if (in_pv && ply < mainPV.length()) {
+  /*if (in_pv && ply < mainPV.length()) {
     const Move mv = mainPV[ply];
     bool sucess = liste.put_front(mv);
     start_index += sucess;
   }
+  */
   liste.sort(board.get_position(), depth, ply, tt_move, start_index);
 
   int extension = 0;
@@ -215,6 +216,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     const Move move = liste[i];
     TT.prefetch(board.get_current_key());
     const auto kings = board.get_position().K;
+    Line local_pv;
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
 
     Value val = -INFINITE;
@@ -231,31 +233,51 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                                    -prob_beta + 1, 0, last_rev);
       if (board_val >= prob_beta) {
         Value value =
-            -Search::search<NONPV>(board, ply + 1, line, -prob_beta,
+            -Search::search<NONPV>(board, ply + 1, local_pv, -prob_beta,
                                    -prob_beta + 1, newDepth, last_rev);
         if (value >= prob_beta) {
           board.undo_move();
 
           TT.store_hash(in_pv, value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
-          return value;
+          return value - prob_cut;
         }
       }
     }
 
-    Line local_pv;
     Depth new_depth = depth - 1 + extension;
+
+    if (reduction != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth - reduction, last_rev);
+
+      if (val > alpha) {
+        val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1,
+                                     -alpha, new_depth, last_rev);
+      }
+    } else if (!in_pv || i != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth, last_rev);
+    }
+
+    if (in_pv && (i == 0 || val > alpha)) {
+      val = -Search::search<PV>(board, ply + 1, local_pv, -beta, -alpha,
+                                new_depth, last_rev);
+    }
+
+    /*
     if ((in_pv && i != 0) || reduction != 0) {
       val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
                                    new_depth - reduction, last_rev);
       if (val > alpha) {
-        val = -Search::search<NONPV>(board, ply + 1, local_pv, -beta, -alpha,
-                                     new_depth, last_rev);
+        val = -Search::search<next_type>(board, ply + 1, local_pv, -beta,
+                                         -alpha, new_depth, last_rev);
       }
     } else {
-      val = -Search::search<type>(board, ply + 1, local_pv, -beta, -alpha,
-                                  new_depth, last_rev);
+      val = -Search::search<next_type>(board, ply + 1, local_pv, -beta, -alpha,
+                                       new_depth, last_rev);
     }
+    */
 
     board.undo_move();
     if (val > best_score) {
@@ -298,7 +320,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          int last_rev) {
-  constexpr bool in_pv = (type == PV || type == ROOT);
+  constexpr bool in_pv = (type != NONPV);
+  constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
   if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
@@ -322,14 +345,16 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     }
 
     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-      return Search::search<type>(board, ply, pv, alpha, beta, 1, last_rev);
+      return Search::search<next_type>(board, ply, pv, alpha, beta, 1,
+                                       last_rev);
     }
     return network.evaluate(board.get_position(), ply);
   }
-  bool sucess;
-  if (in_pv && ply < mainPV.length()) {
+  bool sucess = false;
+  /*if (in_pv && ply < mainPV.length()) {
     sucess = moves.put_front(mainPV[ply]);
   }
+  */
   moves.sort(board.get_position(), depth, ply, Move{}, sucess);
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
@@ -337,14 +362,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     int last_rev = board.pCounter;
     board.make_move(move);
     Value value;
-    if (i == 0) {
-      value = -Search::qs<type>(board, ply + 1, localPV, -beta, -alpha,
-                                depth - 1, last_rev);
-    } else {
-      value = -Search::qs<NONPV>(board, ply + 1, localPV, -beta, -alpha,
-                                 depth - 1, last_rev);
-    }
-
+    value = -Search::qs<next_type>(board, ply + 1, localPV, -beta, -alpha,
+                                   depth - 1, last_rev);
     board.undo_move();
 
     if (value > bestValue) {

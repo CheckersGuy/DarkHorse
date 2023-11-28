@@ -142,7 +142,7 @@ int MovePicker::get_move_score(Position current, Depth depth, int ply,
 void MovePicker::update_scores(Position pos, Move *liste, Move move,
                                int depth) {
   const int index = get_history_index(pos, move);
-  int delta = std::min(depth * depth * 5, 35 * 35);
+  int delta = std::min(depth * 10, 35 * 35);
 
   apply_bonus(history[index], delta);
 
