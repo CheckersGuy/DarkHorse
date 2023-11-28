@@ -18,7 +18,6 @@ public:
   int rep_size = 0;
 
 public:
-  int last_non_rev{0};
   int pCounter = 0;
 
   Board() = default;
@@ -48,8 +47,7 @@ public:
   size_t history_length() const;
 
   Position history_at(size_t idx) const;
-  // difference between make-move and play move is that
-  // play move is not being used for the tree search
+
   void play_move(Move move);
 
   Board &operator=(const Board &other);
