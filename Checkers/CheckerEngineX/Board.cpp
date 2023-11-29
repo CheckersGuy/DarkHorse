@@ -6,6 +6,7 @@
 #include "Board.h"
 #include "types.h"
 #include <cstdint>
+#include <optional>
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
@@ -16,6 +17,18 @@ Board::Board(const Board &other) {
   this->rep_size = other.rep_size;
   std::copy(other.rep_history.begin(), other.rep_history.end(),
             rep_history.begin());
+}
+
+// constructs a new board with the given starting position
+
+Board::Board(Position pos) {
+  this->pCounter = 0;
+  get_position().BP = pos.BP;
+  get_position().WP = pos.WP;
+  get_position().K = pos.K;
+  get_position().color = pos.color;
+  rep_size = 0;
+  // color_us will be set in search;
 }
 
 Board &Board::operator=(const Board &other) {
@@ -34,7 +47,15 @@ void Board::print_board() const {
 
 void Board::play_move(Move move) {
   Position copy = get_position();
+
+  const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
   copy.make_move(move);
+  if (is_not_rev) {
+    rep_size = 0;
+  }
+  if (copy.color == color_us) {
+    rep_history[rep_size++] = copy;
+  }
   (*this) = copy;
 }
 
@@ -92,14 +113,15 @@ bool Board::is_repetition(int last_rev) const {
   }
   // if we reached the end without encountering an inreversible position
   // we keep looking through the repetition history for 'our ' side
-  if (end == 0 && rep_size > 0 &&
-      rep_history[0].get_color() == current.get_color()) {
+
+  if (end == 0 && color_us == current.color) {
     for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i] == current) {
         return true;
       }
     }
   }
+
   return false;
 }
 

@@ -41,10 +41,6 @@ struct SearchGlobal {
 
 extern SearchGlobal glob;
 
-Value qsSearch(Board &board, Line &line, Ply ply, Value alpha, Value beta);
-
-Value search(Board board, Move &best, Depth depth, uint32_t time, bool print);
-
 namespace Search {
 
 Value search_asp(Board &board, Value last_score, Depth depth);

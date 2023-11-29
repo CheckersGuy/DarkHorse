@@ -10,20 +10,20 @@ Value last_eval = -INFINITE;
 
 SearchGlobal glob;
 Network network;
-////////
 
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {
 
   // Statistics::mPicker.clear_scores();
+
+  // setting the color of us
+  board.color_us = board.get_mover();
   Statistics::mPicker.decay_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
   nodeCounter = 0;
   mainPV.clear();
-  const Color us = board.get_position().get_color();
-
   MoveListe liste;
   get_moves(board.get_position(), liste);
   /*
@@ -37,7 +37,6 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   Local local;
 
   if (depth == 0) {
-    // returning q-search
     return Search::qs<NONPV>(board, 0, mainPV, -INFINITE, INFINITE, 0,
                              board.pCounter, Move{}, false);
   }
@@ -263,8 +262,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       // std::cout << "----------------------" << std::endl;
       if (val <= sing_beta) {
         extension = 1;
-      } else if (sing_beta >= beta) {
-        return sing_beta;
       }
     }
     if (extension != 0)
