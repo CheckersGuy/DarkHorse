@@ -185,7 +185,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     tt_value = value_from_tt(info.score, ply);
 
     if (liste.length() > 1 && !is_sing_search && info.depth >= depth - 4 &&
-        info.flag != TT_UPPER) {
+        info.flag != TT_UPPER && std::abs(info.score) < MATE_IN_MAX_PLY) {
       sing_move = tt_move;
       sing_value = tt_value;
     }
@@ -263,6 +263,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       // std::cout << "----------------------" << std::endl;
       if (val <= sing_beta) {
         extension = 1;
+      } else if (sing_beta >= beta) {
+        return sing_beta;
       }
     }
     if (extension != 0)
