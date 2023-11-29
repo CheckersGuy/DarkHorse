@@ -51,10 +51,10 @@ Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <NodeType type>
 Value search(Board &board, Ply ply, Line &line, Value alpha, Value beta,
-             Depth depth, int last_rev);
+             Depth depth, int last_rev, Move excluded, bool is_sing_search);
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
-         int last_rev);
+         int last_rev, Move excluded, bool is_sing_search);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
