@@ -12,7 +12,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // to be implemented
 
   if ((info & CB_RESET_MOVES)) {
-    game_board = Board{};
+    game_board = Board(Position::get_start_position());
     TT.age_counter = 0;
     Statistics::mPicker.clear_scores();
     TT.clear();
@@ -47,28 +47,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
-  // CheckerBoard Bug
-  auto m = Position::get_move(game_board.get_position(), temp);
-  if (m.has_value()) {
-    Move move = m.value();
-    bool not_rev =
-        move.is_capture() || move.is_pawn_move(game_board.get_position().K);
-    if (not_rev) {
-      game_board.rep_size = 1;
-    }
-    game_board.play_move(m.value());
-    if (not_rev) {
-      game_board.rep_history[0] = game_board.get_position();
-    }
-  } else if (!m.has_value() ||
-             (temp.piece_count() > game_board.get_position().piece_count())) {
-    TT.clear();
-    Statistics::mPicker.clear_scores();
-    game_board = Board{};
-    game_board = temp;
-    TT.age_counter = 0;
-    num_draw_scores = 0;
-  }
 
   if (!engine_initialized) {
     network.load_bucket("bigbug14.quant");
@@ -78,16 +56,26 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     glob.reply = str;
     num_draw_scores = 0;
   }
+
+  // CheckerBoard Bug
+  auto m = Position::get_move(game_board.get_position(), temp);
+  if (!m.has_value() ||
+      (temp.piece_count() > game_board.get_position().piece_count())) {
+    TT.clear();
+    Statistics::mPicker.clear_scores();
+    game_board = Board(temp);
+    TT.age_counter = 0;
+    num_draw_scores = 0;
+  } else if (m.has_value()) {
+    Move move = m.value();
+    game_board.play_move(m.value());
+  }
+
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
   Move best;
   auto value =
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
-  bool is_not_rev =
-      best.is_pawn_move(game_board.get_position().K) || best.is_capture();
-  if (is_not_rev) {
-    game_board.rep_size = 0;
-  }
-  game_board.rep_history[game_board.rep_size++] = game_board.get_position();
+
   game_board.play_move(best);
   Position c = game_board.get_position();
   for (auto i = 0; i < 32; ++i) {

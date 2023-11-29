@@ -151,11 +151,10 @@ int main(int argl, const char **argc) {
       TT.clear();
       Statistics::mPicker.clear_scores();
       TT.age_counter = 0u;
-      board = Board{};
       std::string position;
       std::cin >> position;
       Position pos = posFromString(position);
-      board = pos;
+      board = Board(pos);
       std::cout << "game_ready"
                 << "\n";
     } else if (current == "new_move") {
@@ -175,16 +174,8 @@ int main(int argl, const char **argc) {
       for (auto i = 2; i < squares.size(); ++i) {
         move.captures |= 1u << squares[i];
       }
-      bool is_not_rev =
-          move.is_capture() || move.is_pawn_move(board.get_position().K);
-      if (is_not_rev) {
-        board.rep_size = 1;
-      }
-      board.play_move(move);
-      if (is_not_rev) {
-        board.rep_history[0] = board.get_position();
-      }
 
+      board.play_move(move);
       std::cout << "update_ready"
                 << "\n";
     } else if (current == "search") {
@@ -205,12 +196,7 @@ int main(int argl, const char **argc) {
       }
       std::cout << "end_move"
                 << "\n";
-      bool is_not_rev = bestMove.is_pawn_move(board.get_position().K) ||
-                        bestMove.is_capture();
-      if (is_not_rev) {
-        board.rep_size = 0;
-      }
-      board.rep_history[board.rep_size++] = board.get_position();
+
       board.play_move(bestMove);
       // adding the move to the repetition history for our side
     } else if (current == "terminate") {
