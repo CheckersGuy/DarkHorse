@@ -245,7 +245,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     } else {
       last_rev = parent_rev_move;
     }
-    if (in_pv && move == sing_move && depth > 4 && !is_sing_search &&
+    if (false && in_pv && move == sing_move && depth > 4 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
       // std::cout << liste.length() << std::endl;
       //  search every move but the singular move from the tt
