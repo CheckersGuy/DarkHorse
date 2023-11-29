@@ -1,181 +1,460 @@
-#include "Sample.h"
-#include "egdb.h"
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#define DB_PATH "D:\\kr_english_wld"
+#include "GameLogic.h"
+#include "MovePicker.h"
+#include "types.h"
+#include <optional>
 
-void print_msgs(char *msg) { printf("%s", msg); }
+Line mainPV;
+uint64_t endTime = 1000000000;
+uint64_t nodeCounter = 0u;
+Value last_eval = -INFINITE;
 
-enum class SampleResult : int { DRAW = 1, WIN = 2, LOSS = 3, UNKNOWN = 0 };
-struct SampleData {
-  std::string fen_string;
-  Position pos;
-  int16_t eval;
-  int8_t result;
+SearchGlobal glob;
+Network network;
+////////
 
-  friend std::ifstream &operator>>(std::ifstream &stream, SampleData &other) {
-    uint16_t size;
-    stream.read((char *)&size, sizeof(uint16_t));
-    std::cout << "Size: " << (int)size << std::endl;
-    other.fen_string.resize(size);
-    stream.read((char *)other.fen_string.c_str(), sizeof(char) * size);
-    stream.read((char *)&other.eval, sizeof(int16_t));
-    stream.read((char *)&other.result, sizeof(int8_t));
-    return stream;
-  }
-  friend std::ofstream &operator<<(std::ofstream &stream, SampleData other) {
-    uint16_t size = other.fen_string.size();
-    std::cout << "Writing: " << (int)size << std::endl;
-    std::cout << "TheStringIs: " << other.fen_string << std::endl;
-    stream.write((char *)&size, sizeof(uint16_t));
-    stream.write((char *)other.fen_string.c_str(), sizeof(char) * size);
-    stream.write((char *)&other.eval, sizeof(int16_t));
-    stream.write((char *)&other.result, sizeof(int8_t));
-    return stream;
-  }
-};
+Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
+                  std::ostream &stream) {
 
-Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
-  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-    return UNKNOWN;
+  // Statistics::mPicker.clear_scores();
+  Statistics::mPicker.decay_scores();
+  glob.sel_depth = 0u;
+  TT.age_counter = (TT.age_counter + 1) & 63ull;
+  network.accumulator.refresh();
+  nodeCounter = 0;
+  mainPV.clear();
+  const Color us = board.get_position().get_color();
 
-  EGDB_NORMAL_BITBOARD board;
-  board.white = pos.WP;
-  board.black = pos.BP;
-  board.king = pos.K;
-
-  EGDB_BITBOARD normal;
-  normal.normal = board;
-  auto val = handle->lookup(
-      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
-
-  if (val == EGDB_UNKNOWN)
-    return UNKNOWN;
-
-  if (val == EGDB_WIN)
-    return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
-
-  if (val == EGDB_LOSS)
-    return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
-
-  if (val == EGDB_DRAW)
-    return DRAW;
-
-  return UNKNOWN;
-}
-// rescores data and outputs a new data format
-void rescore_data(int max_pieces, std::string input, std::string output) {
-  // to be continued
-}
-
-int main(int argl, const char **argc) {
-
-  int i, status, max_pieces, nerrors;
-  EGDB_TYPE egdb_type;
-  EGDB_DRIVER *handle;
-
-  /* Check that db files are present, get db type and size. */
-  status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
-  std::cout << "MAX_PIECES: " << max_pieces << std::endl;
-
-  if (status) {
-    printf("No database found at %s\n", DB_PATH);
-    return (1);
-  }
-  printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
-
-  /* Open database for probing. */
-  handle = egdb_open(EGDB_NORMAL, max_pieces, 2000, DB_PATH, print_msgs);
-  if (!handle) {
-    printf("Error returned from egdb_open()\n");
-    return (1);
-  }
-
-  std::cout << "Hello I am the rescorer" << std::endl;
-  std::string file_name = argc[1];
-  std::string path = "../Training/TrainData/" + file_name;
-  std::cout << "Path: " << path << std::endl;
-  std::ifstream stream(path.c_str(), std::ios::binary);
-  if (!stream.good()) {
-    std::cout << "Could not open the stream" << std::endl;
-  }
-  Sample test;
-  int total_counter = 0;
-  int wrong_counter = 0;
-  while (stream >> test) {
-    Sample copy = test;
-    if (copy.position.get_color() == BLACK) {
-      copy.position = copy.position.get_color_flip();
-      if (copy.result != DRAW && copy.result != UNKNOWN) {
-        copy.result = (copy.result == WHITE_WON) ? BLACK_WON : WHITE_WON;
-      }
-    }
-    auto result = get_tb_result(copy.position, 10, handle);
-
-    total_counter += (result != UNKNOWN);
-    if (result != UNKNOWN) {
-      copy.result = UNKNOWN;
-    }
-    /*
-    if (result != UNKNOWN && result != test.result) {
-      wrong_counter++;
-
-      auto result_string = (result == WHITE_WON) ? "WHITE_WON"
-                           : (result == DRAW)    ? "DRAW"
-                                                 : "BLACK_WON";
-
-      std::cout << test << "\n";
-      std::cout << "TableBaseResult : " << result_string << std::endl;
-
-      std::cout << "----------------------------" << std::endl;
-    }
-    */
-  }
-
-  handle->close(handle);
-  std::cout << "TotalCounter: " << total_counter << std::endl;
-  std::cout << "WrongCounter: " << wrong_counter << std::endl;
+  MoveListe liste;
+  get_moves(board.get_position(), liste);
   /*
-  {
-    SampleData test;
-    test.fen_string = "B:WK29:BK4";
-    std::ofstream out_stream("test.data", std::ios::binary);
-    if (!out_stream.good()) {
-      std::exit(-1);
-    }
-    out_stream << test;
-  }
-  {
-    std::ifstream in_stream("test.data", std::ios::binary);
-    if (!in_stream.good()) {
-      std::exit(-1);
-    }
-    SampleData other;
-    in_stream >> other;
-    std::cout << "OtherFenString: " << other.fen_string << std::endl;
+  if (liste.length() == 1) {
+    best = liste[0];
+    return last_eval;
   }
   */
+
+  Value eval = -INFINITE;
+  Local local;
+
+  if (depth == 0) {
+    // returning q-search
+    return Search::qs<NONPV>(board, 0, mainPV, -INFINITE, INFINITE, 0,
+                             board.pCounter, Move{}, false);
+  }
+
+  endTime = getSystemTime() + time;
+  size_t total_nodes = 0;
+  size_t total_time = 0;
+  int i;
+  double speed = 0;
+  Value best_score = -INFINITE;
+  for (i = 1; i <= depth; i += 2) {
+    network.accumulator.refresh();
+    auto start_time = std::chrono::high_resolution_clock::now();
+    std::stringstream ss;
+    nodeCounter = 0;
+    try {
+      best_score = Search::search_asp(board, eval, i);
+    } catch (std::string &msg) {
+      break;
+    }
+    total_nodes += nodeCounter;
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                        end_time - start_time)
+                        .count();
+    if (duration > 0)
+      speed = (double)nodeCounter / (double)duration;
+    total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
+                      end_time - start_time)
+                      .count();
+    eval = best_score;
+    last_eval = eval;
+    best = mainPV.getFirstMove();
+
+    double time_seconds = (double)total_time / 1000.0;
+    if (print) {
+      std::string temp = std::to_string(eval) + " ";
+      ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
+      ss << "Nodes: " << total_nodes << " | ";
+      ss << "Time: " << time_seconds << "\n";
+      ss << "Speed: " << (int)(1000000.0 * speed) << " " << mainPV.toString()
+         << "\n\n";
+      stream << ss.str();
+    }
+#ifdef CHECKERBOARD
+    if (i >= 7) {
+      std::stringstream reply_stream;
+      reply_stream << "depth " << i << "/" << glob.sel_depth;
+      reply_stream << " eval " << eval;
+      reply_stream << " time " << time_seconds;
+      reply_stream << " speed " << (int)(1000000.0 * speed);
+      reply_stream << " pv " << mainPV.toString();
+      strcpy(glob.reply, reply_stream.str().c_str());
+    }
+#endif
+
+    if (isMateVal(best_score)) {
+      break;
+    }
+  }
+#ifdef CHECKERBOARD
+  double time_seconds = (double)total_time / 1000.0;
+  std::stringstream reply_stream;
+  reply_stream << "depth " << i << "/" << glob.sel_depth;
+  reply_stream << " eval " << eval;
+  reply_stream << " time " << time_seconds;
+  reply_stream << " speed " << (int)(1000000.0 * speed);
+  reply_stream << " pv " << mainPV.toString();
+  strcpy(glob.reply, reply_stream.str().c_str());
+#endif
+
+  return eval;
+}
+
+namespace Search {
+
+Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
+             bool in_pv) {
+
+  if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture() &&
+      !move.is_promotion(board.get_position().K)) {
+    auto red = (!in_pv && move_index >= 4) ? 2 : 1;
+    return red;
+  }
   return 0;
 }
-/*
-int main(int argl, const char **argc) {
-  std::cout << "Hello I am the rescorer" << std::endl;
 
-  std::string file_name = argc[1];
-  std::string path = "../Training/TrainData/" + file_name;
-  std::cout << "Path: " << path << std::endl;
-  std::ifstream stream(path.c_str());
-  if (!stream.good()) {
-    std::cout << "Could not open the stream" << std::endl;
+template <NodeType type>
+Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
+             Depth depth, int last_rev, Move excluded, bool is_sing_search) {
+
+  constexpr bool is_root = (type == ROOT);
+  constexpr bool in_pv = (type != NONPV);
+  constexpr NodeType next_type = (type == ROOT) ? PV : type;
+  pv.clear();
+  nodeCounter++;
+  // checking time-used
+
+  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
+    throw std::string{"Time_out"};
+  }
+  if (!is_root && board.is_repetition(last_rev)) {
+    return 0;
+  }
+  if (depth <= 0) {
+    return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, last_rev,
+                                 Move{}, is_sing_search);
   }
 
-  Sample test;
+  Value best_score = -INFINITE;
+  NodeInfo info;
+  Move tt_move;
+  Move sing_move;
+  Move best_move;
+  Value tt_value = -INFINITE;
+  Value sing_value = -INFINITE;
 
-  while (stream >> test) {
-    std::cout << test << std::endl;
-    std::cout << "----------------------------" << std::endl;
+  if (ply >= MAX_PLY) {
+    return board.get_mover() * network.evaluate(board.get_position(), ply);
   }
+
+  if (!is_root) {
+    alpha = std::max(loss(ply), alpha);
+    beta = std::min(-loss(ply + 1), beta);
+    if (alpha >= beta) {
+      return alpha;
+    }
+  }
+
+  MoveListe liste;
+
+  get_moves(board.get_position(), liste);
+  if (liste.length() == 0) {
+    return loss(ply);
+  }
+
+  const auto key = board.get_current_key();
+  bool found_hash = TT.find_hash(key, info);
+  // At root we can still use the tt_move for move_ordering
+  if (in_pv && found_hash && info.flag != Flag::None) {
+    tt_move = info.tt_move;
+    tt_value = value_from_tt(info.score, ply);
+
+    if (liste.length() > 1 && !is_sing_search && info.depth >= depth - 4 &&
+        info.flag != TT_UPPER) {
+      sing_move = tt_move;
+      sing_value = tt_value;
+    }
+  }
+  if (!in_pv && found_hash && info.flag != Flag::None) {
+    tt_move = info.tt_move;
+    tt_value = value_from_tt(info.score, ply);
+
+    if (info.depth >= depth && info.flag != Flag::None) {
+      if ((info.flag == TT_LOWER && tt_value >= beta) ||
+          (info.flag == TT_UPPER && tt_value <= alpha) ||
+          info.flag == TT_EXACT) {
+        return tt_value;
+      }
+    }
+  }
+
+  // singular move extensions goes here e
+
+  // do not do recursive singular searches
+
+  int start_index = 0;
+  /*if (in_pv && ply < mainPV.length()) {
+    const Move mv = mainPV[ply];
+    bool sucess = liste.put_front(mv);
+    start_index += sucess;
+  }
+  */
+
+  int extension = 0;
+  if (liste.length() == 1) {
+    extension = 1;
+  } else if (in_pv && liste[0].is_capture()) {
+    extension = 1;
+  }
+
+  if (in_pv && depth >= 6 && !is_sing_search && !sing_move.is_empty() &&
+      extension == 0) {
+    // std::cout << liste.length() << std::endl;
+    //  search every move but the singular move from the tt
+    //  if the search fails low, the move is likely the only best move in the
+    //  position and we extend the search by 1
+    Line local_pv;
+    Value sing_beta = sing_value - 60;
+    Value sing_depth = depth - 4;
+
+    auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta,
+                                     sing_beta + 1, sing_depth, last_rev,
+                                     sing_move, true);
+    // std::cout << val << std::endl;
+    // std::cout << "SingBeta: " << sing_beta << std::endl;
+    // std::cout << "----------------------" << std::endl;
+    if (val <= sing_beta) {
+      // extend the singular move
+      extension = 1;
+    }
+  }
+
+  liste.sort(board.get_position(), depth, ply, tt_move, start_index);
+
+  const Value old_alpha = alpha;
+
+  const Value prob_beta = beta + prob_cut;
+
+  for (auto i = 0; i < liste.length(); ++i) {
+    const Move move = liste[i];
+
+    if (is_sing_search && move == excluded) {
+      continue;
+    }
+    TT.prefetch(board.get_current_key());
+    const auto kings = board.get_position().K;
+    Line local_pv;
+    Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
+
+    Value val = -INFINITE;
+
+    if (move.is_capture() || move.is_pawn_move(kings)) {
+      last_rev = board.pCounter;
+    }
+    board.make_move(move);
+
+    if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
+      Line line;
+      Depth newDepth = depth - 4;
+      Value board_val =
+          -qs<NONPV>(board, ply + 1, line, -prob_beta, -prob_beta + 1, 0,
+                     last_rev, Move{}, is_sing_search);
+      if (board_val >= prob_beta) {
+        Value value = -Search::search<NONPV>(
+            board, ply + 1, local_pv, -prob_beta, -prob_beta + 1, newDepth,
+            last_rev, Move{}, is_sing_search);
+        if (value >= prob_beta) {
+          board.undo_move();
+
+          TT.store_hash(in_pv, value, key, TT_LOWER, newDepth + 1,
+                        (!move.is_capture()) ? move : Move{});
+          return value - prob_cut;
+        }
+      }
+    }
+
+    Depth new_depth = depth - 1 + extension;
+
+    if (reduction != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth - reduction, last_rev, Move{},
+                                   is_sing_search);
+
+      if (val > alpha) {
+        val =
+            -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth, last_rev, Move{}, is_sing_search);
+      }
+    } else if (!in_pv || i != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth, last_rev, Move{}, is_sing_search);
+    }
+
+    if (in_pv && (i == 0 || val > alpha)) {
+      val = -Search::search<PV>(board, ply + 1, local_pv, -beta, -alpha,
+                                new_depth, last_rev, Move{}, is_sing_search);
+    }
+
+    /*
+    if ((in_pv && i != 0) || reduction != 0) {
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   new_depth - reduction, last_rev);
+      if (val > alpha) {
+        val = -Search::search<next_type>(board, ply + 1, local_pv, -beta,
+                                         -alpha, new_depth, last_rev);
+      }
+    } else {
+      val = -Search::search<next_type>(board, ply + 1, local_pv, -beta, -alpha,
+                                       new_depth, last_rev);
+    }
+    */
+
+    board.undo_move();
+    if (val > best_score) {
+      best_score = val;
+      if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
+        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
+                                          move, depth);
+        // updating killer moves
+        auto &killers = Statistics::mPicker.killer_moves;
+        for (auto i = 1; i < MAX_KILLERS; ++i) {
+          killers[ply][i] = killers[ply][i - 1];
+        }
+        killers[ply][0] = move;
+      }
+      if (val > alpha) {
+        pv.concat(move, local_pv);
+        best_move = move;
+        alpha = val;
+      }
+      if (best_score >= beta) {
+        break;
+      }
+    }
+  }
+  {
+    Value tt_value = value_to_tt(best_score, ply);
+    Flag flag;
+    if (best_score <= old_alpha) {
+      flag = TT_UPPER;
+    } else if (best_score >= beta) {
+      flag = TT_LOWER;
+    } else {
+      flag = TT_EXACT;
+    }
+    Move store_move = (best_move.is_capture()) ? Move{} : best_move;
+    TT.store_hash(in_pv, tt_value, key, flag, depth, store_move);
+  }
+  return best_score;
 }
-*/
+template <NodeType type>
+Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
+         int last_rev, Move excluded, bool is_sing_search) {
+  constexpr bool in_pv = (type != NONPV);
+  constexpr NodeType next_type = (type == ROOT) ? PV : type;
+  pv.clear();
+  nodeCounter++;
+  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
+    throw std::string{"Time_out"};
+  }
+
+  if (ply >= MAX_PLY) {
+    return board.get_mover() * network.evaluate(board.get_position(), ply);
+  }
+
+  if (ply > glob.sel_depth)
+    glob.sel_depth = ply;
+
+  MoveListe moves;
+  get_captures(board.get_position(), moves);
+  Value bestValue = -INFINITE;
+
+  if (moves.is_empty()) {
+    if (board.get_position().is_end()) {
+      return loss(ply);
+    }
+
+    if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
+      return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
+                                       Move{}, is_sing_search);
+    }
+    return network.evaluate(board.get_position(), ply);
+  }
+  bool sucess = false;
+  /*if (in_pv && ply < mainPV.length()) {
+    sucess = moves.put_front(mainPV[ply]);
+  }
+  */
+  moves.sort(board.get_position(), depth, ply, Move{}, sucess);
+  for (int i = 0; i < moves.length(); ++i) {
+    Move move = moves[i];
+    Line localPV;
+    int last_rev = board.pCounter;
+    board.make_move(move);
+    Value value;
+    value = -Search::qs<next_type>(board, ply + 1, localPV, -beta, -alpha,
+                                   depth - 1, last_rev, Move{}, is_sing_search);
+    board.undo_move();
+
+    if (value > bestValue) {
+      bestValue = value;
+      if (value > alpha) {
+        pv.concat(move, localPV);
+      }
+      if (value >= beta)
+        break;
+      else {
+        alpha = value;
+      }
+    }
+  }
+
+  return bestValue;
+}
+
+Value search_asp(Board &board, Value last_score, Depth depth) {
+  Value best_score = -INFINITE;
+  if (depth >= 5 && isEval(last_score)) {
+    Value margin = asp_wind;
+    Value alpha = last_score - margin;
+    Value beta = last_score + margin;
+    while (margin < MAX_ASP) {
+      Line line;
+
+      auto score =
+          search<ROOT>(board, 0, line, alpha, beta, depth, 0, Move{}, false);
+      if (score <= alpha) {
+        beta = (alpha + beta) / 2;
+        margin *= 2;
+        alpha = last_score - margin;
+      } else if (score >= beta) {
+        margin *= 2;
+        beta = last_score + margin;
+      } else {
+        best_score = score;
+        mainPV = line;
+        return best_score;
+      }
+    }
+  }
+  Line line;
+  auto value = search<ROOT>(board, 0, line, -INFINITE, INFINITE, depth, 0,
+                            Move{}, false);
+  best_score = value;
+  mainPV = line;
+  return best_score;
+}
+} // namespace Search
