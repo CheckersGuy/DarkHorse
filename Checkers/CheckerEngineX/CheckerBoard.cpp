@@ -51,10 +51,15 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto m = Position::get_move(game_board.get_position(), temp);
   if (m.has_value()) {
     Move move = m.value();
-    if (move.is_capture() || move.is_pawn_move(game_board.get_position().K)) {
-      game_board.rep_size = 0;
+    bool not_rev =
+        move.is_capture() || move.is_pawn_move(game_board.get_position().K);
+    if (not_rev) {
+      game_board.rep_size = 1;
     }
     game_board.play_move(m.value());
+    if (not_rev) {
+      game_board.rep_history[0] = game_board.get_position();
+    }
   } else if (!m.has_value() ||
              (temp.piece_count() > game_board.get_position().piece_count())) {
     TT.clear();

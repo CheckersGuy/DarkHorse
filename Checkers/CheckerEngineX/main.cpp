@@ -175,10 +175,16 @@ int main(int argl, const char **argc) {
       for (auto i = 2; i < squares.size(); ++i) {
         move.captures |= 1u << squares[i];
       }
-      if (move.is_capture() || move.is_pawn_move(board.get_position().K)) {
-        board.rep_size = 0;
+      bool is_not_rev =
+          move.is_capture() || move.is_pawn_move(board.get_position().K);
+      if (is_not_rev) {
+        board.rep_size = 1;
       }
       board.play_move(move);
+      if (is_not_rev) {
+        board.rep_history[0] = board.get_position();
+      }
+
       std::cout << "update_ready"
                 << "\n";
     } else if (current == "search") {
