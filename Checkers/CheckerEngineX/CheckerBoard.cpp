@@ -6,6 +6,8 @@ Board game_board;
 
 int num_draw_scores = 0;
 
+std::ofstream debug("debug.txt");
+
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -77,6 +79,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
 
   game_board.play_move(best);
+  debug << "RepSize:" << game_board.rep_size << std::endl;
+  debug << std::endl;
   Position c = game_board.get_position();
   for (auto i = 0; i < 32; ++i) {
     const uint32_t mask = 1u << i;
