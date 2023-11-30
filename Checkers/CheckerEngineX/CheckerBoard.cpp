@@ -61,9 +61,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto m = Position::get_move(game_board.get_position(), temp);
 
   if (temp == game_board.get_position()) {
-    // debug << "Same Position didnt change" << std::endl;
+    debug << "Same Position didnt change" << std::endl;
   } else {
-    // debug << "Position changed" << std::endl;
+    debug << "Position changed" << std::endl;
   }
 
   if (!m.has_value() ||
@@ -75,7 +75,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.age_counter = 0;
     num_draw_scores = 0;
   } else if (m.has_value()) {
-    // debug << "Got a move from our opponent" << std::endl;
+    debug << "Got a move from our opponent" << std::endl;
     Move move = m.value();
     game_board.play_move(m.value());
   }
