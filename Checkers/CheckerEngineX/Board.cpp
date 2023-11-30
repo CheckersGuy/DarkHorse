@@ -48,15 +48,18 @@ void Board::print_board() const {
 
 void Board::play_move(Move move) {
   Position copy = get_position();
-  const Position temp = copy;
 
   const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
-  copy.make_move(move);
-  if (is_not_rev && temp.color == color_us) {
+  if (is_not_rev && copy.color == color_us) {
     rep_size = 0;
   }
-  rep_history[rep_size++] = temp;
-  (*this) = copy;
+  if (copy.color == color_us) {
+    rep_history[rep_size++] = temp;
+  }
+
+  copy.make_move(move);
+  pCounter = 0;
+  pStack[pCounter] = copy;
 }
 
 void Board::make_move(Move move) {
