@@ -5,7 +5,7 @@ bool engine_initialized = false;
 Board game_board;
 
 int num_draw_scores = 0;
-
+Position previous;
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -75,6 +75,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.age_counter = 0;
     num_draw_scores = 0;
   } else if (m.has_value()) {
+    debug << "Got a move from our opponent" << std::endl;
     Move move = m.value();
     game_board.play_move(m.value());
   }
