@@ -10,7 +10,6 @@ Value last_eval = -INFINITE;
 
 SearchGlobal glob;
 Network network;
-std::ofstream debug("debug.txt");
 
 Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
                   std::ostream &stream) {

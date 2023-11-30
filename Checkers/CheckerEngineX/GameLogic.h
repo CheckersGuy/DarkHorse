@@ -40,7 +40,6 @@ struct SearchGlobal {
 };
 
 extern SearchGlobal glob;
-extern std::ofstream debug;
 namespace Search {
 
 Value search_asp(Board &board, Value last_score, Depth depth);

@@ -61,6 +61,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto m = Position::get_move(game_board.get_position(), temp);
   if (!m.has_value() ||
       (temp.piece_count() > game_board.get_position().piece_count())) {
+    debug << "Didnt find a move in checkerboard" << std::endl;
+    // ISSUE PROBABLY HERE PAY ATTENTION
     TT.clear();
     Statistics::mPicker.clear_scores();
     game_board = Board(temp);
