@@ -51,7 +51,7 @@ void Board::play_move(Move move) {
 
   const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
   copy.make_move(move);
-  if (is_not_rev && copy.color == color_us) {
+  if (is_not_rev && temp.color == color_us) {
     rep_size = 0;
   }
   if (temp.color == color_us) {
