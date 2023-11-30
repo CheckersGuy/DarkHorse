@@ -7,7 +7,7 @@
 #include "types.h"
 #include <cstdint>
 #include <optional>
-std::ofstream debug("debug.txt");
+// std::ofstream debug("debug.txt");
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
