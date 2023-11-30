@@ -7,6 +7,7 @@
 #include "types.h"
 #include <cstdint>
 #include <optional>
+
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
@@ -54,9 +55,7 @@ void Board::play_move(Move move) {
   if (is_not_rev && temp.color == color_us) {
     rep_size = 0;
   }
-  if (temp.color == color_us) {
-    rep_history[rep_size++] = temp;
-  }
+  rep_history[rep_size++] = temp;
   (*this) = copy;
 }
 
