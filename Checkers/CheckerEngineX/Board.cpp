@@ -118,10 +118,13 @@ bool Board::is_repetition(int last_rev) const {
   // we keep looking through the repetition history for 'our ' side
 
   if (end == 0 && color_us == current.color) {
-    debug << "Checking repetition history" << std::endl;
+
     for (int i = rep_size - 1; i >= 0; i--) {
+      if (rep_history[i].color != current.color) {
+
+        debug << "There is something wrong" << std::endl;
+      }
       if (rep_history[i] == current) {
-        debug << "found repetition" << std::endl;
         return true;
       }
     }
