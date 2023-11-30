@@ -11,7 +11,7 @@
 #include "types.h"
 #include <string>
 
-extern std::ofstream debug;
+// extern std::ofstream debug;
 
 class Board {
 
