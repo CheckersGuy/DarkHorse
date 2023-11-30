@@ -63,7 +63,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   if (temp == game_board.get_position()) {
     debug << "Same Position didnt change" << std::endl;
   } else {
-    debug << "Position changed but we did not find our move" << std::endl;
+    debug << "Position changed" << std::endl;
   }
 
   if (!m.has_value() ||
