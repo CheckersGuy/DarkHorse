@@ -7,7 +7,7 @@
 #include "types.h"
 #include <cstdint>
 #include <optional>
-// std::ofstream debug("debug.txt");
+std::ofstream debug("debug.txt");
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
@@ -120,6 +120,7 @@ bool Board::is_repetition(int last_rev) const {
   if (end == 0 && color_us == current.color) {
     for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i] == current) {
+        debug << "found repetition" << std::endl;
         return true;
       }
     }

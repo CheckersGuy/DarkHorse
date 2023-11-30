@@ -17,8 +17,8 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   // Statistics::mPicker.clear_scores();
 
   // setting the color of us
-  // debug << board.get_position().get_pos_string() << std::endl;
-  // debug << "RepSize : " << board.rep_size << std::endl;
+  debug << board.get_position().get_pos_string() << std::endl;
+  debug << "RepSize : " << board.rep_size << std::endl;
   board.color_us = board.get_mover();
   Statistics::mPicker.decay_scores();
   glob.sel_depth = 0u;
