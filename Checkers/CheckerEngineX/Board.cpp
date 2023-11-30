@@ -54,7 +54,7 @@ void Board::play_move(Move move) {
     rep_size = 0;
   }
   if (copy.color == color_us) {
-    rep_history[rep_size++] = temp;
+    rep_history[rep_size++] = copy;
   }
 
   copy.make_move(move);
