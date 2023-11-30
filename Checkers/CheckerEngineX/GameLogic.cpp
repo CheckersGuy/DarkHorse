@@ -245,27 +245,25 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     } else {
       last_rev = parent_rev_move;
     }
-    if (false && in_pv && move == sing_move && depth > 4 && !is_sing_search &&
+    if (in_pv && move == sing_move && depth >= 4 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
       // std::cout << liste.length() << std::endl;
       //  search every move but the singular move from the tt
       //  if the search fails low, the move is likely the only best move in the
       //  position and we extend the search by 1
       Line local_pv;
-      Value sing_beta = sing_value - 40;
+      Value sing_beta = sing_value - 45;
       Value sing_depth = depth / 2;
-      auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta,
-                                       sing_beta + 1, sing_depth, last_rev,
+      auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta - 1,
+                                       sing_beta, sing_depth, last_rev,
                                        sing_move, true);
       // std::cout << val << std::endl;
       // std::cout << "SingBeta: " << sing_beta << std::endl;
       // std::cout << "----------------------" << std::endl;
-      if (val <= sing_beta) {
+      if (val < sing_beta) {
         extension = 1;
       }
     }
-    if (extension != 0)
-      reduction = 0;
 
     board.make_move(move);
 
