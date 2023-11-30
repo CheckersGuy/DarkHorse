@@ -10,6 +10,9 @@
 #include "Position.h"
 #include "types.h"
 #include <string>
+
+extern std::ofstream debug;
+
 class Board {
 
 public:
