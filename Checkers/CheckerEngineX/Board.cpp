@@ -120,7 +120,6 @@ bool Board::is_repetition(int last_rev) const {
   if (end == 0 && color_us == current.color) {
     for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i] == current) {
-        debug << "found game history repetition" << std::endl;
         return true;
       }
     }
