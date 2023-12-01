@@ -122,6 +122,12 @@ bool Board::is_repetition(int last_rev) const {
     for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i].color != color_us) {
         debug << "There is something wrong" << std::endl;
+        debug << "ColorUs: "
+              << ((color_us == BLACK)   ? "BLACK"
+                  : (color_us == WHITE) ? "WHITE"
+                                        : "NONE")
+              << std::endl;
+        debug << "Found Color : " << rep_history[i].color << std::endl;
       }
       if (rep_history[i] == current) {
         return true;
