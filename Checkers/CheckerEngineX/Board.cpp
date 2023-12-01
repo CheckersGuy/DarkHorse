@@ -54,12 +54,6 @@ void Board::play_move(Move move) {
     rep_size = 0;
   }
   if (copy.color == color_us) {
-    debug << "There is something wrong" << std::endl;
-    debug << "ColorUs: "
-          << ((copy.color == BLACK)   ? "BLACK"
-              : (copy.color == WHITE) ? "WHITE"
-                                      : "NONE")
-          << std::endl;
     rep_history[rep_size++] = copy;
   }
 
@@ -128,7 +122,8 @@ bool Board::is_repetition(int last_rev) const {
     for (int i = rep_size - 1; i >= 0; i--) {
       if (rep_history[i].color != color_us) {
 
-        debug << "Found Color : " << (int)rep_history[i].color << std::endl;
+        debug << "Found Color : " << (int)rep_history[i].color << "at index "
+              << i << std::endl;
       }
       if (rep_history[i] == current) {
         return true;
