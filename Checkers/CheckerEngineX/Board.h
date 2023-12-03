@@ -26,7 +26,6 @@ public:
 
   Board() = default;
 
-  Board(const Board &board);
   Board(Position pos);
 
   void print_board() const;
