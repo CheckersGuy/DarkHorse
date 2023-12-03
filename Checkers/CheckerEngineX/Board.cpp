@@ -90,19 +90,31 @@ uint64_t hash_combine(uint64_t lhs, uint64_t rhs) {
   lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
   return lhs;
 }
+
+uint64_t hash(uint64_t x) {
+  x *= 0xbf58476d1ce4e5b9ull;
+  x ^= x >> 32;
+  x *= 0x94d049bb133111ebull;
+  x ^= x >> 32;
+  x *= 0xff51afd7ed558ccdull;
+  x ^= x >> 32;
+  return x;
+}
+/*
 uint64_t hash(uint64_t x) {
   x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
   x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
   x = x ^ (x >> 31);
   return x;
 }
+*/
 uint64_t Board::get_current_key() const {
   const Position p = pStack[pCounter];
   const uint64_t color_hash = (p.color == BLACK) ? BLACK_RANDOM : 0;
   uint64_t first =
       static_cast<uint64_t>(p.BP) | (static_cast<uint64_t>(p.WP) << 32);
-  uint64_t second = static_cast<uint64_t>(p.K) | (color_hash << 32);
-  return hash_combine(hash(first), hash(second));
+  uint64_t second = static_cast<uint64_t>(p.K);
+  return hash_combine(hash(first), hash(second)) ^ color_hash;
 }
 
 bool Board::is_repetition(int last_rev) const {
@@ -113,17 +125,20 @@ bool Board::is_repetition(int last_rev) const {
       return true;
     }
   }
-  // if we reached the end without encountering an inreversible position
-  // we keep looking through the repetition history for 'our ' side
 
   if (end == 0 && color_us == current.color) {
+    debug << "Color_Us : "
+          << ((color_us == BLACK)   ? "BLACK"
+              : (color_us == WHITE) ? "WHITE"
+                                    : " NONE")
+          << std::endl;
 
     for (int i = rep_size - 1; i >= 0; i--) {
-      if (rep_history[i].color != color_us) {
-
-        debug << "Found Color : " << (int)rep_history[i].color << "at index "
-              << i << std::endl;
-      }
+      debug << "RepHistory : "
+            << ((rep_history[i].color == BLACK)   ? "BLACK"
+                : (rep_history[i].color == WHITE) ? "WHITE"
+                                                  : " NONE")
+            << std::endl;
       if (rep_history[i] == current) {
         return true;
       }

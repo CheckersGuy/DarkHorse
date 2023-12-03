@@ -67,7 +67,8 @@ constexpr int asp_wind = 15; // 15;
 constexpr int NUM_BUCKETS = 13;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
-constexpr uint64_t BLACK_RANDOM = 798571436;
+
+constexpr uint64_t BLACK_RANDOM = 798516234ull;
 constexpr uint64_t singular_key = 311234512ull;
 using Depth = int;
 using Ply = int;
