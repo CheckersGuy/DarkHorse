@@ -12,8 +12,6 @@ Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
 
-// constructs a new board with the given starting position
-
 Board::Board(Position pos) {
   this->pCounter = 0;
   get_position().BP = pos.BP;
