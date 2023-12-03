@@ -14,12 +14,14 @@ size_t Board::history_length() const { return pStack.size(); }
 
 Board::Board(Position pos) {
   this->pCounter = 0;
-  get_position().BP = pos.BP;
-  get_position().WP = pos.WP;
-  get_position().K = pos.K;
-  get_position().color = pos.color;
+  get_position() = pos;
   rep_size = 0;
   // color_us will be set in search;
+}
+
+void Board::reset(Position start_pos) {
+  pCounter = 0;
+  pStack[pCounter] = start_pos;
 }
 
 Board &Board::operator=(const Board &other) {
@@ -146,6 +148,7 @@ bool Board::is_repetition(int last_rev) const {
              << std::endl;
              */
       if (rep_history[i] == current) {
+        debug << "Found a repetition" << std::endl;
         return true;
       }
     }

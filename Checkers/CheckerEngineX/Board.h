@@ -30,6 +30,8 @@ public:
 
   void print_board() const;
 
+  void reset(Position pos);
+
   void make_move(Move move);
 
   void undo_move();

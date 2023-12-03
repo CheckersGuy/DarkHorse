@@ -11,21 +11,18 @@ Value last_eval = -INFINITE;
 SearchGlobal glob;
 Network network;
 
-Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
-                  std::ostream &stream) {
+Value searchValue(Board &board, Move &best, int depth, uint32_t time,
+                  bool print, std::ostream &stream) {
 
   // Statistics::mPicker.clear_scores();
 
   // setting the color of us
 
+  const Position start_pos = board.get_position();
+
   board.color_us = board.get_mover();
   debug << board.get_position().get_pos_string() << std::endl;
   debug << "RepSize : " << board.rep_size << std::endl;
-  debug << "ColorUs: "
-        << ((board.color_us == BLACK)   ? "BLACK"
-            : (board.color_us == WHITE) ? "WHITE"
-                                        : "NONE")
-        << std::endl;
   Statistics::mPicker.decay_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
@@ -116,6 +113,9 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
   reply_stream << " pv " << mainPV.toString();
   strcpy(glob.reply, reply_stream.str().c_str());
 #endif
+
+  // need to reset the board state;
+  board.reset(start_pos);
 
   return eval;
 }
