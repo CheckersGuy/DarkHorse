@@ -18,7 +18,7 @@ class Board {
 public:
   std::array<Position, MAX_PLY> pStack;
   std::array<Position, 400> rep_history;
-  Color color_us{BLACK}; // will be set whenever we start a search
+  std::optional<Color> color_us; // will be set whenever we start a search
   int rep_size = 0;
 
 public:

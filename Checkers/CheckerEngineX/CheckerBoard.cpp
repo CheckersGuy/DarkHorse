@@ -60,12 +60,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // CheckerBoard Bug
   auto m = Position::get_move(game_board.get_position(), temp);
 
-  if (temp == game_board.get_position()) {
-    debug << "Same Position didnt change" << std::endl;
-  } else {
-    debug << "Position changed" << std::endl;
-  }
-
   if (!m.has_value() ||
       (temp.piece_count() > game_board.get_position().piece_count())) {
     // ISSUE PROBABLY HERE PAY ATTENTION
