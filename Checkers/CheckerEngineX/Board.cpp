@@ -7,7 +7,7 @@
 #include "types.h"
 #include <cstdint>
 #include <optional>
-std::ofstream debug("debug.txt");
+// std::ofstream debug("debug.txt");
 Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
@@ -43,25 +43,26 @@ void Board::play_move(Move move) {
 
   const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
   if (is_not_rev && copy.color == color_us) {
-    debug << "Non Reversible move" << std::endl;
+    // debug << "Non Reversible move" << std::endl;
     rep_size = 0;
   } else if (copy.color == color_us) {
-    debug << "New entry in repetition history" << std::endl;
+    // debug << "New entry in repetition history" << std::endl;
     rep_history[rep_size++] = copy;
   }
 
-  debug << "Color_Us : "
+  /*debug << "Color_Us : "
         << ((color_us == BLACK)   ? "BLACK"
             : (color_us == WHITE) ? "WHITE"
                                   : " NONE")
         << std::endl;
-
-  debug << "CopyColor : "
-        << ((copy.color == BLACK)   ? "BLACK"
-            : (copy.color == WHITE) ? "WHITE"
-                                    : " NONE")
-        << std::endl;
-
+        */
+  /*
+    debug << "CopyColor : "
+          << ((copy.color == BLACK)   ? "BLACK"
+              : (copy.color == WHITE) ? "WHITE"
+                                      : " NONE")
+          << std::endl;
+  */
   copy.make_move(move);
   pCounter = 0;
   pStack[pCounter] = copy;
@@ -148,7 +149,7 @@ bool Board::is_repetition(int last_rev) const {
              << std::endl;
              */
       if (rep_history[i] == current) {
-        debug << "Found a repetition" << std::endl;
+        // debug << "Found a repetition" << std::endl;
         return true;
       }
     }
