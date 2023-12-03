@@ -51,8 +51,10 @@ void Board::play_move(Move move) {
 
   const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
   if (is_not_rev && copy.color == color_us) {
+    debug << "Non Reversible move" << std::endl;
     rep_size = 0;
   } else if (copy.color == color_us) {
+    debug << "New entry in repetition history" << std::endl;
     rep_history[rep_size++] = copy;
   }
 
@@ -127,18 +129,20 @@ bool Board::is_repetition(int last_rev) const {
   }
 
   if (end == 0 && color_us == current.color) {
-    debug << "Color_Us : "
-          << ((color_us == BLACK)   ? "BLACK"
-              : (color_us == WHITE) ? "WHITE"
-                                    : " NONE")
-          << std::endl;
+    /* debug << "Color_Us : "
+           << ((color_us == BLACK)   ? "BLACK"
+               : (color_us == WHITE) ? "WHITE"
+                                     : " NONE")
+           << std::endl;
+           */
 
     for (int i = rep_size - 1; i >= 0; i--) {
-      debug << "RepHistory : "
-            << ((rep_history[i].color == BLACK)   ? "BLACK"
-                : (rep_history[i].color == WHITE) ? "WHITE"
-                                                  : " NONE")
-            << std::endl;
+      /* debug << "RepHistory : "
+             << ((rep_history[i].color == BLACK)   ? "BLACK"
+                 : (rep_history[i].color == WHITE) ? "WHITE"
+                                                   : " NONE")
+             << std::endl;
+             */
       if (rep_history[i] == current) {
         return true;
       }
