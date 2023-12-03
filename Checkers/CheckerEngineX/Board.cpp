@@ -58,6 +58,18 @@ void Board::play_move(Move move) {
     rep_history[rep_size++] = copy;
   }
 
+  debug << "Color_Us : "
+        << ((color_us == BLACK)   ? "BLACK"
+            : (color_us == WHITE) ? "WHITE"
+                                  : " NONE")
+        << std::endl;
+
+  debug << "CopyColor : "
+        << ((color_us == BLACK)   ? "BLACK"
+            : (color_us == WHITE) ? "WHITE"
+                                  : " NONE")
+        << std::endl;
+
   copy.make_move(move);
   pCounter = 0;
   pStack[pCounter] = copy;
