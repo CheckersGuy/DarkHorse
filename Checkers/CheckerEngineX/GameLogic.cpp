@@ -20,7 +20,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
   const Position start_pos = board.get_position();
 
-  board.color_us = board.get_mover();
+  board.color_us = ~board.get_mover();
   // debug << board.get_position().get_pos_string() << std::endl;
   // debug << "RepSize : " << board.rep_size << std::endl;
   Statistics::mPicker.decay_scores();
@@ -330,6 +330,15 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                                        new_depth, last_rev);
     }
     */
+    const auto copy_root = board.get_position();
+
+    if (is_root) {
+      if (std::find(board.rep_history.begin(), board.rep_history.end(),
+                    copy_root) != board.rep_history.end()) {
+        // debug << "Lowered the score due to repetition" << std::endl;
+        val = (val) / 2;
+      }
+    }
 
     board.undo_move();
     if (val > best_score) {
@@ -354,7 +363,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       }
     }
   }
-  if (excluded.is_empty()) {
+  if (excluded.is_empty() && !is_root) {
     Value tt_value = value_to_tt(best_score, ply);
     Flag flag;
     if (best_score <= old_alpha) {

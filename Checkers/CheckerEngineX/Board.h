@@ -55,8 +55,6 @@ public:
   Position history_at(size_t idx) const;
 
   void play_move(Move move);
-
-  Board &operator=(const Board &other);
 };
 
 #endif // CHECKERSTEST_BOARD_H
