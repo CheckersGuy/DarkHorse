@@ -12,14 +12,6 @@ Position &Board::get_position() { return pStack[pCounter]; }
 
 size_t Board::history_length() const { return pStack.size(); }
 
-Board::Board(const Board &other) {
-  std::copy(other.pStack.begin(), other.pStack.end(), pStack.begin());
-  this->pCounter = other.pCounter;
-  this->rep_size = other.rep_size;
-  std::copy(other.rep_history.begin(), other.rep_history.end(),
-            rep_history.begin());
-}
-
 // constructs a new board with the given starting position
 
 Board::Board(Position pos) {
@@ -65,9 +57,9 @@ void Board::play_move(Move move) {
         << std::endl;
 
   debug << "CopyColor : "
-        << ((color_us == BLACK)   ? "BLACK"
-            : (color_us == WHITE) ? "WHITE"
-                                  : " NONE")
+        << ((copy.color == BLACK)   ? "BLACK"
+            : (copy.color == WHITE) ? "WHITE"
+                                    : " NONE")
         << std::endl;
 
   copy.make_move(move);
