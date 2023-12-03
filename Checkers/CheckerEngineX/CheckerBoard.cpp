@@ -62,15 +62,15 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!m.has_value() ||
       (temp.piece_count() > game_board.get_position().piece_count())) {
-    debug << "New Game or Bug" << std::endl;
-    // ISSUE PROBABLY HERE PAY ATTENTION
+    // debug << "New Game or Bug" << std::endl;
+    //  ISSUE PROBABLY HERE PAY ATTENTION
     TT.clear();
     Statistics::mPicker.clear_scores();
     game_board = Board(temp);
     TT.age_counter = 0;
     num_draw_scores = 0;
   } else if (m.has_value()) {
-    debug << "Got a move from our opponent" << std::endl;
+    // debug << "Got a move from our opponent" << std::endl;
     Move move = m.value();
     game_board.play_move(m.value());
   }
