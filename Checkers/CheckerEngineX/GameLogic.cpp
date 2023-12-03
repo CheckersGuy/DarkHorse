@@ -253,8 +253,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     } else {
       last_rev = parent_rev_move;
     }
-    if (in_pv && move == sing_move && depth >= 4 && !is_sing_search &&
-        !sing_move.is_empty() && extension == 0) {
+    if (in_pv && !is_root && move == sing_move && depth >= 4 &&
+        !is_sing_search && !sing_move.is_empty() && extension == 0) {
       // std::cout << liste.length() << std::endl;
       //  search every move but the singular move from the tt
       //  if the search fails low, the move is likely the only best move in the
@@ -270,6 +270,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       // std::cout << "----------------------" << std::endl;
       if (val < sing_beta) {
         extension = 1;
+      } else if (sing_beta >= beta) {
+        return sing_beta;
       }
     }
 
@@ -317,19 +319,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                                 new_depth, last_rev, Move{}, is_sing_search);
     }
 
-    /*
-    if ((in_pv && i != 0) || reduction != 0) {
-      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
-                                   new_depth - reduction, last_rev);
-      if (val > alpha) {
-        val = -Search::search<next_type>(board, ply + 1, local_pv, -beta,
-                                         -alpha, new_depth, last_rev);
-      }
-    } else {
-      val = -Search::search<next_type>(board, ply + 1, local_pv, -beta, -alpha,
-                                       new_depth, last_rev);
-    }
-    */
     const auto copy_root = board.get_position();
 
     if (is_root) {
