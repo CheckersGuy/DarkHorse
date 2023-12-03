@@ -62,6 +62,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!m.has_value() ||
       (temp.piece_count() > game_board.get_position().piece_count())) {
+    debug << "New Game or Bug" << std::endl;
     // ISSUE PROBABLY HERE PAY ATTENTION
     TT.clear();
     Statistics::mPicker.clear_scores();
