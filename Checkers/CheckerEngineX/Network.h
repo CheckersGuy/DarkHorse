@@ -20,7 +20,7 @@
 class Network;
 
 struct alignas(64) Accumulator {
-  static constexpr int OutDim = 2 * 1024;
+  static constexpr int OutDim = 2 * 512;
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
   int16_t psqt{0};
@@ -52,10 +52,10 @@ struct Network {
   constexpr static size_t ALIGNMENT = 64;
   int max_units{0};
   Accumulator accumulator;
-  QLayer<1024, 32, Activation::SqRelu> first;
+  QLayer<512, 32, Activation::SqRelu> first;
   QLayer<32, 32, Activation ::SqRelu> second;
   QLayer<32, 1> output;
-  alignas(64) uint8_t input[1024 + 32 + 32 + 32 + 1] = {0};
+  alignas(64) uint8_t input[512 + 32 + 32 + 32 + 1] = {0};
 
   void load_bucket(std::string file);
 

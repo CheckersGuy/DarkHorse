@@ -201,6 +201,7 @@ void Network::load_bucket(std::string file) {
 int32_t *Network::compute_incre_forward_pass(Position next) {
   auto bucket_index = next.bucket_index();
   auto *out = accumulator.forward(input, next);
+
   out = first.forward(out, bucket_index);
   out = second.forward(out, bucket_index);
   return output.forward(out, bucket_index);
