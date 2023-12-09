@@ -260,7 +260,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       //  if the search fails low, the move is likely the only best move in the
       //  position and we extend the search by 1
       Line local_pv;
-      Value sing_beta = sing_value - 45;
+      Value sing_beta = sing_value - 60;
       Value sing_depth = depth / 2;
       auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta - 1,
                                        sing_beta, sing_depth, last_rev,
