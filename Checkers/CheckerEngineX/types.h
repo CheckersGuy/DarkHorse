@@ -62,13 +62,13 @@ constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 
-constexpr int prob_cut = 35; // 30;
+constexpr int prob_cut = 25; // 30;
 constexpr int asp_wind = 15; // 15;
 constexpr int NUM_BUCKETS = 13;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 
-constexpr uint64_t BLACK_RANDOM = 798516234ull;
+constexpr uint64_t BLACK_RANDOM = 7985716234ull;
 constexpr uint64_t singular_key = 311234512ull;
 using Depth = int;
 using Ply = int;
