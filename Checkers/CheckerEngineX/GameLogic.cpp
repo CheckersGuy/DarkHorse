@@ -164,7 +164,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   Value sing_value = -INFINITE;
 
   if (ply >= MAX_PLY) {
-    return board.get_mover() * network.evaluate(board.get_position(), ply);
+    return board.get_mover() * network.evaluate(board.get_position(), ply,
+                                                board.pCounter - last_rev);
   }
 
   if (!is_root) {
@@ -238,21 +239,16 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   // singular extension to be continued
   for (auto i = 0; i < liste.length(); ++i) {
     const Move move = liste[i];
-    TT.prefetch(board.get_current_key());
     if (is_sing_search && move == excluded) {
       continue;
     }
+    TT.prefetch(board.get_current_key());
     const auto kings = board.get_position().K;
     Line local_pv;
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
 
     Value val = -INFINITE;
 
-    if (move.is_capture() || move.is_pawn_move(kings)) {
-      last_rev = board.pCounter;
-    } else {
-      last_rev = parent_rev_move;
-    }
     if (in_pv && !is_root && move == sing_move && depth >= 4 &&
         !is_sing_search && !sing_move.is_empty() && extension == 0) {
       // std::cout << liste.length() << std::endl;
@@ -276,8 +272,12 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
 
     board.make_move(move);
-
-    if (!in_pv && depth > 3 && std::abs(beta) < MATE_IN_MAX_PLY) {
+    if (move.is_capture() || move.is_pawn_move(kings)) {
+      last_rev = board.pCounter;
+    } else {
+      last_rev = parent_rev_move;
+    }
+    if (!in_pv && depth > 4 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
       Depth newDepth = depth - 4;
       Value board_val =
@@ -290,7 +290,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
         if (value >= prob_beta) {
           board.undo_move();
 
-          TT.store_hash(in_pv, value, key, TT_LOWER, newDepth + 1,
+          TT.store_hash(false, value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return value - prob_cut;
         }
@@ -379,7 +379,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
 
   if (ply >= MAX_PLY) {
-    return board.get_mover() * network.evaluate(board.get_position(), ply);
+    return board.get_mover() * network.evaluate(board.get_position(), ply,
+                                                board.pCounter - last_rev);
   }
 
   if (ply > glob.sel_depth)
@@ -398,7 +399,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
                                        Move{}, is_sing_search);
     }
-    return network.evaluate(board.get_position(), ply);
+    return network.evaluate(board.get_position(), ply,
+                            board.pCounter - last_rev);
   }
   bool sucess = false;
   /*if (in_pv && ply < mainPV.length()) {

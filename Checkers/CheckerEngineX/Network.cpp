@@ -209,7 +209,7 @@ int32_t *Network::compute_incre_forward_pass(Position next) {
 
 int Network::operator[](int index) { return input[index]; }
 
-int Network::evaluate(Position pos, int ply) {
+int Network::evaluate(Position pos, int ply, int shuffle) {
 
   if (pos.BP == 0 && pos.color == BLACK) {
     return loss(ply);
@@ -219,5 +219,10 @@ int Network::evaluate(Position pos, int ply) {
     return loss(ply);
   }
 
-  return (*compute_incre_forward_pass(pos)) + accumulator.psqt;
+  const auto nnue = *compute_incre_forward_pass(pos);
+  const auto psqt = accumulator.psqt;
+
+  auto eval = nnue + psqt;
+
+  return eval;
 }

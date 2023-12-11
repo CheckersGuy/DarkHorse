@@ -61,7 +61,8 @@ struct Network {
 
   int32_t *compute_incre_forward_pass(Position next);
 
-  int evaluate(Position pos, int ply);
+  // shuffle is the number of reversable /shuffle moves
+  int evaluate(Position pos, int ply, int shuffle);
 
   int operator[](int index);
 
