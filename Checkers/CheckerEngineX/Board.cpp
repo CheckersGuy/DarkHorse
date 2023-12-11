@@ -54,8 +54,9 @@ void Board::play_move(Move move) {
                                       : " NONE")
           << std::endl;
   */
-  rep_history[rep_size++] = copy;
+
   copy.make_move(move);
+  rep_history[rep_size++] = copy;
   pCounter = 0;
   pStack[pCounter] = copy;
 }
