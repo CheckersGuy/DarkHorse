@@ -383,6 +383,10 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
                                                 board.pCounter - last_rev);
   }
 
+  if (board.is_repetition(last_rev)) {
+    return 0;
+  }
+
   if (ply > glob.sel_depth)
     glob.sel_depth = ply;
 
@@ -403,10 +407,10 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
                             board.pCounter - last_rev);
   }
   bool sucess = false;
-  /*if (in_pv && ply < mainPV.length()) {
+  if (in_pv && ply < mainPV.length()) {
     sucess = moves.put_front(mainPV[ply]);
   }
-  */
+
   moves.sort(board.get_position(), depth, ply, Move{}, sucess);
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
@@ -425,9 +429,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       }
       if (value >= beta)
         break;
-      else {
-        alpha = value;
-      }
+      alpha = value;
     }
   }
 
