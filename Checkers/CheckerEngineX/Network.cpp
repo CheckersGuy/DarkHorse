@@ -225,7 +225,5 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
       ((psqt - nnue) > 0 && (nnue + psqt) > 0) ? psqt - nnue : 0;
 
   auto eval = (nnue + psqt);
-  eval += (eval * complexity) / 5000;
-
   return eval;
 }
