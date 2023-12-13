@@ -52,7 +52,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "bigbug14.quant";
+    net_file = "nopsqt.quant";
   }
 
   network.load_bucket(net_file);
@@ -120,15 +120,15 @@ int main(int argl, const char **argc) {
   if (parser.has_option("eval_loop")) {
     std::string next_line;
     TT.resize(16);
-    while (true) {
+    while (std::getline(std::cin, next_line)) {
       // need to clear statistics all the time
+
+      if (next_line == "terminate") {
+        std::exit(-1);
+      }
       Statistics::mPicker.clear_scores();
       TT.clear();
 
-      std::getline(std::cin, next_line);
-      if (next_line == "terminate") {
-        break;
-      }
       board.get_position() = Position::pos_from_fen(next_line);
       Move bestMove;
       auto s_val = searchValue(board, bestMove, MAX_PLY, 10, false, std::cout);
