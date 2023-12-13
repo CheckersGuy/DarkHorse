@@ -12,7 +12,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*256
+L1 =2*1024
 L2 =32
 L3 = 32
 
@@ -24,7 +24,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.97
+        self.gamma = 0.98
 
 
         self.num_buckets =13
@@ -40,8 +40,7 @@ class Network(pl.LightningModule):
         offset = torch.arange(0,x.shape[0]*self.num_buckets,self.num_buckets, device=buckets.device)
         indices = buckets.flatten()+offset
 
-        ac_rest,rest= self.accu.forward(x).split(L1-1,dim=1)
-        ac = torch.cat([ac_rest,rest],dim=1)
+        ac= self.accu.forward(x)
         ac = torch.clamp(ac,0.0,1.0)
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
@@ -58,7 +57,7 @@ class Network(pl.LightningModule):
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
-        out = torch.sigmoid(l3c+rest)
+        out = torch.sigmoid(l3c)
 
         return out
 
@@ -117,7 +116,7 @@ class Network(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result, move,buckets, x = train_batch
+        result, move,buckets,psqt_buckets, x = train_batch
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-result),2.0).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
@@ -125,7 +124,7 @@ class Network(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        result, move,buckets, x = val_batch
+        result, move,buckets,psqt_buckets, x = val_batch
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
@@ -133,7 +132,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("biggy2.quant")
+        self.save_quantized_bucket("nopsqt.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -267,7 +266,7 @@ class Network2(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result, move,buckets, x = train_batch
+        result, move,buckets,psqt_buckets, x = train_batch
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-result),2.6).mean()
         tensorboard_logs = {"avg_val_loss": loss}
@@ -275,7 +274,7 @@ class Network2(pl.LightningModule):
         return {"loss": loss, "log": tensorboard_logs}
 
     def validation_step(self, val_batch, batch_idx):
-        result, move,buckets, x = val_batch
+        result, move,buckets,psqt_buckets, x = val_batch
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.6).mean()
         self.log('val_loss', loss.detach())
@@ -434,10 +433,12 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         results = np.zeros(self.batch_size, dtype=np.float32)
         moves = np.zeros(self.batch_size, dtype=np.int64)
         buckets = np.zeros(self.batch_size, dtype=np.int64)
+        psqt_buckets = np.zeros(self.batch_size, dtype=np.int64)
         inputs = np.zeros(self.batch_size*input_size, dtype=np.float32)
-        self.loader.testing(inputs,results,buckets)
+        self.loader.testing(inputs,results,buckets,psqt_buckets)
+        psqt_buckets = np.zeros(self.batch_size, dtype=np.int64)
 
-        return results.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1), inputs.reshape(self.batch_size,input_size)
+        return results.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1), psqt_buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size)
 
 
 

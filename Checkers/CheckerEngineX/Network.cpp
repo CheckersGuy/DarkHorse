@@ -220,10 +220,6 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
   }
   shuffle = std::min(shuffle, 30);
   const auto nnue = *compute_incre_forward_pass(pos);
-  const auto psqt = accumulator.psqt;
-  const auto complexity =
-      ((psqt - nnue) > 0 && (nnue + psqt) > 0) ? psqt - nnue : 0;
-
-  auto eval = (nnue + psqt);
+  auto eval = (nnue);
   return eval;
 }
