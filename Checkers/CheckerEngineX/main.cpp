@@ -136,6 +136,43 @@ int main(int argl, const char **argc) {
     }
   }
 
+  if (parser.has_option("generate")) {
+    Statistics::mPicker.init();
+    std::string next_line;
+    TT.resize(16);
+    std::vector<Position> rep_history;
+    while (std::getline(std::cin, next_line)) {
+      // nextline should be a fen_string
+      TT.clear();
+      Statistics::mPicker.clear_scores();
+      Board game_board;
+      const auto start_pos = Position::pos_from_fen(next_line);
+      rep_history.clear();
+      for (auto i = 0; i < 600; ++i) {
+        // sending the current position
+
+        std::cout << game_board.get_position().get_fen_string() << std::endl;
+
+        Move best;
+        MoveListe liste;
+        get_moves(game_board.get_position(), liste);
+        if (liste.length() == 0) {
+          break;
+        }
+        int k;
+        searchValue(game_board, best, MAX_PLY, time, false, std::cout);
+        board.play_move(best);
+
+        const auto last_position = rep_history.back();
+        auto count =
+            std::count(rep_history.begin(), rep_history.end(), last_position);
+        if (count >= 3) {
+          break;
+        }
+      }
+    }
+  }
+
   std::string current;
   while (std::cin >> current) {
     if (current == "init") {
