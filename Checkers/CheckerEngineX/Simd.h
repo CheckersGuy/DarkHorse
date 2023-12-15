@@ -127,6 +127,42 @@ inline void square_clipped8(int32_t *input, uint8_t *output) {
 #endif
 }
 
+template <int length> inline void clipped8(int32_t *input, uint8_t *output) {
+
+#ifdef AVX256
+  constexpr int num_chunks = length / 8;
+  auto *in = reinterpret_cast<const __m256i *>(input);
+  auto *out = reinterpret_cast<__m256i *>(output);
+  const auto max_val = _mm256_set1_epi16(127);
+  const auto min_val = _mm256_set1_epi16(0);
+  const __m256i zero = _mm256_setzero_si256();
+  const __m256i control = _mm256_set_epi32(7, 3, 6, 2, 5, 1, 4, 0);
+  for (auto i = 0; i < num_chunks / 4; ++i) {
+    auto temp1 = _mm256_load_si256(in + 4 * i);
+    auto temp2 = _mm256_load_si256(in + 4 * i + 1);
+    auto temp3 = _mm256_load_si256(in + 4 * i + 2);
+    auto temp4 = _mm256_load_si256(in + 4 * i + 3);
+
+    auto packed1 = _mm256_packs_epi32(temp1, temp2);
+    auto packed2 = _mm256_packs_epi32(temp3, temp4);
+
+    auto result = _mm256_permutevar8x32_epi32(
+        _mm256_max_epi8(_mm256_packs_epi16(packed1, packed2), zero), control);
+    _mm256_store_si256(out + i, result);
+  }
+
+#endif
+
+#ifdef BASE
+  for (auto i = 0; i < length; ++i) {
+    int val = std::clamp(input[i], 0, 127);
+    val = val * val;
+    val = val / 128;
+    output[i] = val;
+  }
+#endif
+}
+
 template <int length> inline void vec_add(const int16_t *input, int16_t *out) {
 #ifdef AVX256
   // some experimental stuff

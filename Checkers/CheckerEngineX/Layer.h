@@ -139,7 +139,7 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     } else {
       // computing the activation
       auto *out = input + PadInDim;
-      Simd::square_clipped8<PadOutDim>(&buffer[0], out);
+      Simd::clipped8<PadOutDim>(&buffer[0], out);
       return out;
     }
   }

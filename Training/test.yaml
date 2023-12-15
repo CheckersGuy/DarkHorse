@@ -1,6 +1,0 @@
-name: "test"
-window_size: 40000
-num_epochs: 20
-num_networks: 200
-time_per_move: 50
-network: [120, 1024, 8, 32, 1]

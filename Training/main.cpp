@@ -1,11 +1,10 @@
 #include "CmdParser.h"
 #include "Match.h"
+#include "MovePicker.h"
 #include "Network.h"
 #include "Position.h"
-#include "Util/Book.h"
-#include "generator.pb.h"
-#include <BatchProvider.h>
-#include <BloomFilter.h>
+#include "Utilities.h"
+#include "types.h"
 #include <GameLogic.h>
 #include <algorithm>
 #include <fstream>
@@ -15,53 +14,29 @@
 #include <regex>
 #include <string>
 #include <sys/mman.h>
-
 int main(int argl, const char **argc) {
 
-  // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/windowmaster.train");
-  // sort_raw_data(
-  //     "/home/leagu/DarkHorse/Training/TrainData/windowmaster.train.raw",
-  //     "/home/leagu/DarkHorse/Training/TrainData/windowmasterremoved.train");
-  /*
-    Book::create_train_file(
-        "/home/leagu/DarkHorse/Training/Positions/11manballots.pos",
-        "/home/leagu/DarkHorse/Training/Positions/train12.book", 9);
+  // loading the openings I want to use for data generation
+  /* TT.resize(2);
+   Statistics::mPicker.init();
+   std::ofstream output("training.pos");
+   std::ifstream open("../Training/Positions/drawbook.book");
+   network.load_bucket("nopsqt.quant");
 
-  */
-  // return 0;
-  // GameStat stats;
-  // get_game_stats("/home/leagu/DarkHorse/Training/TrainData/ultimate.train",
-  //              stats);
-  // std::cout << stats << std::endl;
-  // return 0;
-  /*     std::ifstream
-    stream("/home/leagu/DarkHorse/Training/TrainData/reinf.train");
-     std::istream_iterator<Game>begin(stream);
-     std::istream_iterator<Game>end;
-     std::for_each(begin,end,[](Game g){
-         std::vector<Position>positions;
-         g.extract_positions(std::back_inserter(positions));
-         for(auto pos : positions){
-             pos.print_position();
-         }
-         std::cout<<"\n\n\n";
+   std::string opening;
+   while (std::getline(open, opening)) {
+     TT.clear();
+     Statistics::mPicker.clear_scores();
+     std::cout << opening << std::endl;
+     Board board(Position::pos_from_fen(opening));
+     board.get_position().print_position();
+     std::cout << "Test" << std::endl << std::endl;
+     ;
+     Utilities::createNMoveBook(output, 9, board, -120, 120);
+   }
 
-     });
-
-     return 0;  */
-  /*     for(auto i=0;i<50;++i){
-      Encoding test;
-      auto val = i%4;
-      test.set_result(static_cast<Result>(val));
-      std::cout<<val<<std::endl;
-      std::cout<<(int)test.get_result()<<std::endl;
-
-      }
-      return 0; */
-  // write_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train");
-  // sort_raw_data("/home/leagu/DarkHorse/Training/TrainData/testme.train.raw");
-  // return 0;
-
+   return 0;
+ */
   CmdParser parser(argl, argc);
   parser.parse_command_line();
 

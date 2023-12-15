@@ -31,29 +31,20 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 
 if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)
-    file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.h  )
-    file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cc ${CMAKE_CURRENT_SOURCE_DIR}/Training/Util/*.cpp)
-    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
-    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.cpp)
-    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.cpp)
-    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp)
-    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.cpp)
+    file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h)
+    file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cc)
+
+      file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.cpp)
 
 
 
 
-    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.h)
-    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/BatchProvider.h)
-    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PosStreamer.h)
-    file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h)
     file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.h)
 
 
 
     list(REMOVE_ITEM TSources  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h)
-    list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.cpp)
-    list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/PyHelper.h)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
 
 
