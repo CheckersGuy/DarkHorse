@@ -9,11 +9,11 @@ import torch
 
 if __name__ == "__main__":
     batch_size = 2*8192 
-    epochs = 10
+    epochs = 120
     model = Experimental.Network()
-    data_loader = Experimental.LitDataModule(train_data="TrainData/test.data",
+    data_loader = Experimental.LitDataModule(train_data="TrainData/out.samples",
                                       val_data="TrainData/val.train.raw.rescored",
-                                       batch_size=batch_size, buffer_size=70000000)
+                                       batch_size=batch_size, buffer_size=1000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
     #print(provider.num_samples)
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    
+  
     trainer.fit(model, data_loader)
 
 

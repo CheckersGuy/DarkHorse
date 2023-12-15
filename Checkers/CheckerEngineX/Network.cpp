@@ -218,6 +218,13 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
   if (pos.WP == 0 && pos.color == WHITE) {
     return loss(ply);
   }
+
+  auto material_only = 100 * Bits::pop_count(pos.WP & (~pos.K)) -
+                       100 * Bits::pop_count(pos.BP & (~pos.K));
+  material_only += 150 * Bits::pop_count(pos.WP & (pos.K)) -
+                   150 * Bits::pop_count(pos.BP & (pos.K));
+  ;
+  // return material_only;
   shuffle = std::min(shuffle, 30);
   const auto nnue = *compute_incre_forward_pass(pos);
   auto eval = (nnue);

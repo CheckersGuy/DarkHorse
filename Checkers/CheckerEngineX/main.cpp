@@ -55,25 +55,27 @@ int main(int argl, const char **argc) {
     net_file = "nopsqt.quant";
   }
 
+  if (parser.has_option("time")) {
+    time = parser.as<int>("time");
+  } else {
+    time = 100;
+  }
+
+  if (parser.has_option("hash_size")) {
+    hash_size = parser.as<int>("hash_size");
+  } else {
+    hash_size = 22;
+  }
+
   network.load_bucket(net_file);
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
-    if (parser.has_option("time")) {
-      time = parser.as<int>("time");
-    } else {
-      time = 100000000;
-    }
 
     if (parser.has_option("depth")) {
       depth = parser.as<int>("depth");
     } else {
       depth = parser.has_option("bench") ? 27 : MAX_PLY;
-    }
-    if (parser.has_option("hash_size")) {
-      hash_size = parser.as<int>("hash_size");
-    } else {
-      hash_size = 22;
     }
 
     if (parser.has_option("position")) {
@@ -137,39 +139,69 @@ int main(int argl, const char **argc) {
   }
 
   if (parser.has_option("generate")) {
+
     Statistics::mPicker.init();
     std::string next_line;
-    TT.resize(16);
+    TT.resize(20);
     std::vector<Position> rep_history;
+    Statistics::mPicker.clear_scores();
     while (std::getline(std::cin, next_line)) {
       // nextline should be a fen_string
+      if (next_line == "terminate") {
+        std::exit(-1);
+      }
       TT.clear();
       Statistics::mPicker.clear_scores();
-      Board game_board;
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
+
+      board = Board(start_pos);
+      Result result = UNKNOWN;
       for (auto i = 0; i < 600; ++i) {
-        // sending the current position
 
-        std::cout << game_board.get_position().get_fen_string() << std::endl;
-
+        rep_history.emplace_back(board.get_position());
         Move best;
         MoveListe liste;
-        get_moves(game_board.get_position(), liste);
+        get_moves(board.get_position(), liste);
         if (liste.length() == 0) {
+          result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
           break;
         }
-        int k;
-        searchValue(game_board, best, MAX_PLY, time, false, std::cout);
+
+        searchValue(board, best, MAX_PLY, time, false, std::cout);
         board.play_move(best);
 
         const auto last_position = rep_history.back();
         auto count =
             std::count(rep_history.begin(), rep_history.end(), last_position);
         if (count >= 3) {
+          result = DRAW;
           break;
         }
       }
+      // sending all the the results back
+      std::cout << "BEGIN" << std::endl;
+      for (auto position : rep_history) {
+        std::string result_string = "UNKNOWN";
+
+        if ((result == BLACK_WON && position.color == BLACK) ||
+            (result == WHITE_WON && position.color == WHITE)) {
+          result_string = "WON";
+        } else if ((result == BLACK_WON && position.color != BLACK) ||
+                   (result == WHITE_WON && position.color != WHITE)) {
+          result_string = "LOSS";
+        } else if (result == DRAW) {
+          result_string = "DRAW";
+        }
+
+        if (position.get_color() == BLACK) {
+          position = position.get_color_flip();
+        }
+
+        std::cout << position.get_fen_string() << "!" << result_string
+                  << std::endl;
+      }
+      std::cout << "END" << std::endl;
     }
   }
 

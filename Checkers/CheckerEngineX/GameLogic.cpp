@@ -6,6 +6,7 @@
 Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
+
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
@@ -13,10 +14,6 @@ Network network;
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream) {
-
-  // Statistics::mPicker.clear_scores();
-
-  // setting the color of us
 
   const Position start_pos = board.get_position();
 
@@ -31,12 +28,10 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  /*
   if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
   }
-  */
 
   Value eval = -INFINITE;
   Local local;

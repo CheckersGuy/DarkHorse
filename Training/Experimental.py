@@ -42,6 +42,7 @@ class Network(pl.LightningModule):
 
         ac= self.accu.forward(x)
         ac = torch.clamp(ac,0.0,1.0)
+
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
@@ -49,11 +50,11 @@ class Network(pl.LightningModule):
 
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
-        l1c = (127.0/128.0)*torch.clamp(l1c,0.0,1.0)**2
+        l1c = torch.clamp(l1c,0.0,1.0)
         
         l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,L3))
         l2c = l2s.view(-1,L3)[indices]
-        l2c = (127.0/128.0)*torch.clamp(l2c,0.0,1.0)**2
+        l2c = torch.clamp(l2c,0.0,1.0)
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
@@ -117,22 +118,20 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         self.step()
         result,evalu, move,buckets,psqt_buckets, x = train_batch
-        evalu = evalu.to(dtype=torch.float32)
-        evalu=evalu/128.0;
-        evalu = torch.sigmoid(evalu)
+        evalu = torch.sigmoid(evalu.to(dtype=torch.float32)/64.0)
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-evalu),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2.0).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
 
     def validation_step(self, val_batch, batch_idx):
         result,evalu, move,buckets,psqt_buckets, x = val_batch
-        evalu = evalu.to(dtype=torch.float32)
-        evalu=evalu/128.0;
-        evalu=torch.sigmoid(evalu)
+       # evalu = evalu.to(dtype=torch.float32)
+        #evalu=evalu/64.0;
+        #evalu=torch.sigmoid(evalu)
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - evalu), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
@@ -151,9 +150,6 @@ class Network(pl.LightningModule):
                #write the header file
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
-        min8 = np.iinfo(np.int8).min
-        max8 = np.iinfo(np.int8).max
-
 
 
         device = torch.device("cpu")
@@ -181,15 +177,11 @@ class Network(pl.LightningModule):
         bias = bias.astype(np.int16)
         ft_weights_buf.extend(weights.tobytes())
         ft_bias_buf.extend(bias.tobytes())
-        num_weights += len(weights)
-        num_bias += len(bias)
-
-
+ 
         for layer in self.layers[1:]:
             weights = layer.weight.detach()
-            weights = weights*64.0
+            weights = torch.clip(weights,self.min_weight_hidden,self.max_weight_hidden)*64.0
             weights = torch.round(weights)
-            weights = torch.clip(weights,min8,max8)
 
             bias = layer.bias.detach()
             bias = bias*(127.0 * 64.0)
