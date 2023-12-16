@@ -1,0 +1,2 @@
+*.pos filter=lfs diff=lfs merge=lfs -text
+*.book filter=lfs diff=lfs merge=lfs -text
