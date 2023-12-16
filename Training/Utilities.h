@@ -9,11 +9,15 @@
 #include "MGenerator.h"
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <istream>
 #include <iterator>
 #include <ostream>
+#include <string>
 #include <unordered_set>
 namespace Utilities {
+
+void fill_hash(std::string path);
 
 void createNMoveBook(std::ofstream &output, int N, Board &board,
                      Value lowerBound, Value upperBound);
