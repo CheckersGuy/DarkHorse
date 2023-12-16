@@ -178,6 +178,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     return loss(ply);
   }
   auto key = board.get_current_key();
+
   // this needs to be removed
   // and just do not probe tt at all when excluded is not empty
 
@@ -237,7 +238,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     if (is_sing_search && move == excluded) {
       continue;
     }
-    TT.prefetch(board.get_current_key());
     const auto kings = board.get_position().K;
     Line local_pv;
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
@@ -267,6 +267,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
 
     board.make_move(move);
+    TT.prefetch(board.get_current_key());
     if (move.is_capture() || move.is_pawn_move(kings)) {
       last_rev = board.pCounter;
     } else {

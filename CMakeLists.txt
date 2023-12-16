@@ -64,6 +64,8 @@ list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp)
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+add_executable(generator ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+target_compile_definitions(generator PUBLIC "GENERATOR")
 if (UNIX)
 add_executable(testing ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
@@ -82,10 +84,7 @@ if(WIN32)
   target_link_libraries(Dark PRIVATE Threads::Threads)
 endif()
 
-if(UNIX)
-  #no longer working
-  add_library(pyhelper SHARED ${CHeaders} ${CSources} ${PySources} ${PyHeaders})
-endif()
+
 
 if (UNIX)
     add_executable(Train ${CMAKE_CURRENT_SOURCE_DIR}/Training/main.cpp ${THeaders} ${TSources} ${CHeaders} ${CSources})
@@ -93,7 +92,7 @@ if (UNIX)
     set_target_properties(perft_check PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-
+set_target_properties(generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 if(UNIX)
 target_link_libraries(MainEngine PRIVATE Threads::Threads)
 endif()

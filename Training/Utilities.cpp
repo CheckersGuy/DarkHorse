@@ -9,6 +9,17 @@ namespace Utilities {
 
 std::unordered_set<Position> hashes;
 
+// filling the hash to continue searching for new start_positions
+
+void fill_hash(std::string path) {
+  std::ifstream stream(path);
+  std::string next_line;
+  while (std::getline(stream, next_line)) {
+    const auto pos = Position::pos_from_fen(next_line);
+    hashes.insert(pos);
+  }
+}
+
 void createNMoveBook(std::ofstream &output, int N, Board &board,
                      Value lowerBound, Value upperBound) {
   if (N == 0) {
@@ -27,11 +38,11 @@ void createNMoveBook(std::ofstream &output, int N, Board &board,
       auto value = searchValue(copy, best, 1, 1000, false, std::cout);
 
       if (value >= lowerBound && value <= upperBound) {
-        hashes.insert(board.get_position());
-        Position currentPos = board.get_position();
+        hashes.insert(copy.get_position());
+        Position currentPos = copy.get_position();
         output << currentPos.get_fen_string() << "\n";
-        std::cout << "Added position: " << hashes.size()
-                  << " with eval: " << value << "\n";
+        // std::cout << "Added position: " << hashes.size()
+        //           << " with eval: " << value << "\n";
       }
     }
     return;
