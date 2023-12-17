@@ -19,19 +19,18 @@ int main(int argl, const char **argc) {
   // to be continued later on
 
   // loading the openings I want to use for data generation
-  /*
-  Utilities::fill_hash("training.pos");
+  /*Utilities::fill_hash("training.pos");
   TT.resize(2);
   Statistics::mPicker.init();
   std::ofstream output("training.pos", std::ios::app);
   std::ifstream open("../Training/Positions/drawbook.book");
-  network.load_bucket("relulight.quant");
+  network.load_bucket("relu.quant");
 
   std::string opening;
   int index = 0;
   while (std::getline(open, opening)) {
     index++;
-    if (index < 561) {
+    if (index < 1040) {
       continue;
     }
     std::cout << "OpeningIndex: " << index << std::endl;
@@ -45,8 +44,7 @@ int main(int argl, const char **argc) {
   }
 
   return 0;
-  */
-
+*/
   CmdParser parser(argl, argc);
   parser.parse_command_line();
 
