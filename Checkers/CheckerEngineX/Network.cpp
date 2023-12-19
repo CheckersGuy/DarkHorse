@@ -220,6 +220,7 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
   }
 
   shuffle = std::min(shuffle, 30);
+
   const auto nnue = *compute_incre_forward_pass(pos);
   auto eval = (nnue);
   return eval;

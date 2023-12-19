@@ -40,9 +40,6 @@ if (UNIX)
 
 
     file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.h)
-
-
-
     list(REMOVE_ITEM TSources  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
@@ -55,7 +52,11 @@ file(GLOB CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.h)
 file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
 list(REMOVE_ITEM CHeaders "${CMAKE_//CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp")
+
+if(UNIX)
 list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h")
+endif()
+
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/test.cpp)
@@ -80,6 +81,7 @@ if(WIN32)
   set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
   target_compile_definitions(MainEngine PUBLIC "USEDB")
+  target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.lib Threads::Threads)
   target_link_libraries(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb64.lib Threads::Threads)
   target_link_libraries(Dark PRIVATE Threads::Threads)
 endif()

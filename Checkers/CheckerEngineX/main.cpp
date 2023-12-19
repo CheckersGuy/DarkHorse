@@ -5,6 +5,7 @@
 #include "Selfplay.h"
 #include "Transposition.h"
 #include <cstdint>
+#include <cstdlib>
 #include <random>
 #include <string>
 #include <unistd.h>
@@ -32,14 +33,25 @@ inline Position posFromString(const std::string &pos) {
   }
   return result;
 }
+std::vector<std::string> split(const std::string &s, char delim) {
+  std::vector<std::string> result;
+  std::stringstream ss(s);
+  std::string item;
 
+  while (getline(ss, item, delim)) {
+    result.push_back(item);
+  }
+
+  return result;
+}
 // game-generation
+
+// adding endgame table_bases for testing purposes
 
 #include "CmdParser.h"
 #include "Network.h"
 #include "types.h"
 int main(int argl, const char **argc) {
-
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -139,7 +151,7 @@ int main(int argl, const char **argc) {
   }
 
   if (parser.has_option("generate")) {
-
+    int child_id = -1;
     Statistics::mPicker.init();
     std::string next_line;
     TT.resize(20);
@@ -159,7 +171,6 @@ int main(int argl, const char **argc) {
       Result result = UNKNOWN;
       for (auto i = 0; i < 600; ++i) {
 
-        rep_history.emplace_back(board.get_position());
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
@@ -168,6 +179,7 @@ int main(int argl, const char **argc) {
           break;
         }
 
+        rep_history.emplace_back(board.get_position());
         searchValue(board, best, MAX_PLY, time, false, std::cout);
         board.play_move(best);
 
