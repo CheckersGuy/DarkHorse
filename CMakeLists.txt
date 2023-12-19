@@ -55,9 +55,9 @@ list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/C
 
 if(UNIX)
 list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb.h")
+list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egd64.lib")
 endif()
 
-list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egd64.lib")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp")
 list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/test.cpp)
@@ -77,8 +77,6 @@ endif()
 
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  add_executable(Rescorer ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp ${CHeaders} ${CSources} ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.h ${CMAKE_CURRENT_SOURCE_DIR}/Training/Sample.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
   set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
   target_compile_definitions(MainEngine PUBLIC "USEDB")
