@@ -274,16 +274,12 @@ int main(int argl, const char **argc) {
         }
 #endif
         result_string.append(res_to_string(result, position.color));
-        std::cout << "--------------------------------" << std::endl;
-        std::cout << "Before: " << position.get_fen_string() << std::endl;
 
-        position.print_position();
         if (position.get_color() == BLACK) {
           position = position.get_color_flip();
         }
         std::cout << position.get_fen_string() << "!" << result_string
                   << std::endl;
-        std::cout << "------------------------------------" << std::endl;
       }
       std::cout << "END" << std::endl;
     }
