@@ -49,6 +49,39 @@ std::vector<std::string> split(const std::string &s, char delim) {
 }
 void print_msgs(char *msg) { printf("%s", msg); }
 
+#ifdef USEDB
+
+Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
+  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
+    return UNKNOWN;
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = handle->lookup(
+      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == EGDB_UNKNOWN)
+    return UNKNOWN;
+
+  if (val == EGDB_WIN)
+    return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
+
+  if (val == EGDB_LOSS)
+    return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
+
+  if (val == EGDB_DRAW)
+    return DRAW;
+
+  return UNKNOWN;
+}
+
+#endif
+
 // game-generation
 
 // adding endgame table_bases for testing purposes
@@ -107,6 +140,20 @@ int main(int argl, const char **argc) {
   }
 
   network.load_bucket(net_file);
+
+#ifdef USEDB
+  if (parser.has_option("endgame")) {
+    Position pos;
+    if (parser.has_option("position")) {
+      auto pos_string = parser.as<std::string>("position");
+      pos = Position::pos_from_fen(pos_string);
+    } else {
+      pos = Position::get_start_position();
+    }
+    auto result = get_tb_result(pos, max_pieces, handle);
+  }
+#endif
+
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
