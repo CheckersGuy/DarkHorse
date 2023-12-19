@@ -47,6 +47,8 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
   return result;
 }
+void print_msgs(char *msg) { printf("%s", msg); }
+
 // game-generation
 
 // adding endgame table_bases for testing purposes
