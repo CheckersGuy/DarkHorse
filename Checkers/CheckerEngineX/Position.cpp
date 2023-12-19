@@ -151,7 +151,7 @@ std::string Position::get_fen_string() const {
   auto board_index = [](auto index) {
     auto row = index / 4;
     auto col = index % 4;
-    return 4 * row + 3 - col;
+    return 4 * row + col;
   };
 
   while (white_pieces) {

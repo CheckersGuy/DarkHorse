@@ -111,12 +111,7 @@ int main(int argl, const char **argc) {
     return (1);
   }
 #endif
-    Position test = Position::pos_from_fen("B:WK31:BK10");
-    std::cout << test.get_fen_string() << std::endl;
-    test.print_position();
-    std::cout << std::endl;
 
-  
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -279,8 +274,8 @@ int main(int argl, const char **argc) {
         }
 #endif
         result_string.append(res_to_string(result, position.color));
-        std::cout<<"--------------------------------"<<std::endl;
-        std::cout<<"Before: "<<position.get_fen_string()<<std::endl;
+        std::cout << "--------------------------------" << std::endl;
+        std::cout << "Before: " << position.get_fen_string() << std::endl;
 
         position.print_position();
         if (position.get_color() == BLACK) {
@@ -288,7 +283,7 @@ int main(int argl, const char **argc) {
         }
         std::cout << position.get_fen_string() << "!" << result_string
                   << std::endl;
-        std::cout<<"------------------------------------"<<std::endl;
+        std::cout << "------------------------------------" << std::endl;
       }
       std::cout << "END" << std::endl;
     }
