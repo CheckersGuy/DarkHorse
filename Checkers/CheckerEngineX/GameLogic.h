@@ -16,6 +16,9 @@
 #include <algorithm>
 #include <chrono>
 #include <types.h>
+#ifdef USEDB
+#include "egdb.h"
+#endif
 
 extern uint64_t nodeCounter;
 

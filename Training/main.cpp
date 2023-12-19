@@ -30,7 +30,7 @@ int main(int argl, const char **argc) {
   int index = 0;
   while (std::getline(open, opening)) {
     index++;
-    if (index < 1040) {
+    if (index < 1240) {
       continue;
     }
     std::cout << "OpeningIndex: " << index << std::endl;
@@ -44,7 +44,8 @@ int main(int argl, const char **argc) {
   }
 
   return 0;
-*/
+  */
+
   CmdParser parser(argl, argc);
   parser.parse_command_line();
 

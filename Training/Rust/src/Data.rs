@@ -70,6 +70,43 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn material_distrib(path: &str) -> std::io::Result<HashMap<u32, usize>> {
+    let mut my_map = HashMap::new();
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut buffer = String::new();
+    let num_samples = reader.read_u64::<LittleEndian>()?;
+    let bar = ProgressBar::new(num_samples);
+    bar.set_style(
+        ProgressStyle::with_template(
+            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
+    );
+
+    for _ in 0..num_samples {
+        let mut sample = Sample::Sample::default();
+        sample.read_into(&mut reader)?;
+        let pos: Position;
+
+        match sample.position {
+            SampleType::Fen(fen_string) => pos = Position::try_from(fen_string.as_str())?,
+            SampleType::Pos(_) => continue,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "didnt find a position in sample",
+                ))
+            }
+        }
+
+        let piece_count = pos.bp.count_ones() + pos.wp.count_ones();
+        *my_map.entry(piece_count).or_insert(0) += 1;
+        bar.inc(1);
+    }
+    Ok(my_map)
+}
+
 fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
     let tmp_path = Temp::new_file()?;
     let mut tmp = File::create(&tmp_path)?;
@@ -106,7 +143,22 @@ pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
     prepend_file(format!("{line_count}\n").as_str().as_bytes(), &output)?;
     Ok(())
 }
+//need interior mutability here, gonna work on that later
+/*
+pub fn create_unique(input: &str, output: &str) -> std::io::Result<()> {
+    let reader = BufReader::new(File::open(input)?);
+    let mut writer = File::create(&output)?;
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.1);
+    reader
+        .lines()
+        .map(|l_res| l_res.unwrap())
+        .filter(|line| filter.check(line))
+        .map(|line| filter.set(&line))
+        .count();
 
+    Ok(())
+}
+*/
 pub fn count_positions<F: Fn(Position) -> bool>(
     path: String,
     predicate: F,
@@ -141,31 +193,6 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 
-pub fn get_material_distrib(path: String) -> std::io::Result<HashMap<u32, usize>> {
-    let mut my_map = HashMap::new();
-
-    let mut reader = BufReader::new(File::open(path)?);
-    let mut buffer = String::new();
-    reader.read_line(&mut buffer).unwrap();
-    let bar = ProgressBar::new(buffer.replace("\n", "").parse::<u64>().unwrap());
-    bar.set_style(
-        ProgressStyle::with_template(
-            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )
-        .unwrap()
-        .progress_chars("##-"),
-    );
-
-    for line in reader.lines() {
-        let pos = Position::try_from(line.unwrap().as_str())?;
-        let piece_count = pos.bp.count_ones() + pos.wp.count_ones();
-        *my_map.entry(piece_count).or_insert(0) += 1;
-        bar.inc(1);
-    }
-    Ok(my_map)
-}
-
-//will be used to generate games/results
 impl Generator {
     pub fn new(book: String, output: String, num_workers: usize, max_samples: usize) -> Generator {
         Generator {
@@ -202,7 +229,7 @@ impl Generator {
         .progress_chars("##-"),
     );
 
-        for _ in 0..self.num_workers {
+        for id in 0..self.num_workers {
             let open = Arc::clone(&openings);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
@@ -217,7 +244,7 @@ impl Generator {
                 let stdout = command.stdout.take().unwrap();
                 let mut f = BufReader::new(stdout);
 
-                //get one random opening
+                //sending the child process id
 
                 'outer: loop {
                     let mut start_pos = String::new();
@@ -278,8 +305,9 @@ impl Generator {
                 if cfg!(debug_assertions) {
                     println!("{}", value);
                 }
-
-                if !filter.check(&position) {
+                let pos = Position::try_from(position.as_str())?;
+                let has_captures: bool = pos.get_jumpers::<1>() != 0;
+                if !filter.check(&position) && !has_captures {
                     unique_count += 1;
                     filter.set(&position);
                     bar.inc(1);
@@ -292,12 +320,13 @@ impl Generator {
                 }
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
-                sample.position = SampleType::Fen(position);
+                sample.position = SampleType::Fen(position.clone());
                 sample.result = Sample::Result::from(result_string.as_str());
                 if sample.result == Sample::Result::UNKNOWN {
                     println!("Error {result_string}");
                 }
-                if sample.result != Sample::Result::UNKNOWN {
+
+                if sample.result != Sample::Result::UNKNOWN && !has_captures {
                     sample.write_fen::<File>(&mut output)?;
                     total_count += 1;
                 }
