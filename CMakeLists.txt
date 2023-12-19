@@ -77,7 +77,6 @@ endif()
 
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  set_target_properties(Rescorer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
   target_compile_definitions(MainEngine PUBLIC "USEDB")
   target_link_libraries(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
