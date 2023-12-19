@@ -1,9 +1,12 @@
+#include "CmdParser.h"
 #include "GameLogic.h"
 #include "MGenerator.h"
 #include "MovePicker.h"
+#include "Network.h"
 #include "Perft.h"
 #include "Selfplay.h"
 #include "Transposition.h"
+#include "types.h"
 #include <cstdint>
 #include <cstdlib>
 #include <random>
@@ -48,10 +51,32 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 // adding endgame table_bases for testing purposes
 
-#include "CmdParser.h"
-#include "Network.h"
-#include "types.h"
+#define DB_PATH "D:\\kr_english_wld"
+
 int main(int argl, const char **argc) {
+#ifdef USEDB
+  int i, status, max_pieces, nerrors;
+  EGDB_TYPE egdb_type;
+  EGDB_DRIVER *handle;
+
+  /* Check that db files are present, get db type and size. */
+  status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
+  std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  if (status) {
+    printf("No database found at %s\n", DB_PATH);
+    return (1);
+  }
+  printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
+
+  /* Open database for probing. */
+  handle = egdb_open(EGDB_NORMAL, max_pieces, 1000, DB_PATH, print_msgs);
+  if (!handle) {
+    printf("Error returned from egdb_open()\n");
+    return (1);
+  }
+#endif
+
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
