@@ -88,6 +88,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 #define DB_PATH "D:\\kr_english_wld"
 
+
 int main(int argl, const char **argc) {
 #ifdef USEDB
   int i, status, max_pieces, nerrors;
@@ -143,14 +144,14 @@ int main(int argl, const char **argc) {
 
 #ifdef USEDB
   if (parser.has_option("endgame")) {
-    Position pos;
-    if (parser.has_option("position")) {
-      auto pos_string = parser.as<std::string>("position");
-      pos = Position::pos_from_fen(pos_string);
-    } else {
-      pos = Position::get_start_position();
-    }
+    std::cout<<"Testing"<<std::endl;
+    Position pos = Position::pos_from_fen("W:WK6:B4,3");
+ 
+    pos.print_position();
     auto result = get_tb_result(pos, max_pieces, handle);
+    auto result_string =(result ==WHITE_WON)?"WHITE_WON" :(result==BLACK_WON) ?"BLACK_WON" :(result ==DRAW)?"DRAW" : "UNKNOWN";
+    std::cout<<result_string<<std::endl;
+    return 0;
   }
 #endif
 
@@ -182,29 +183,6 @@ int main(int argl, const char **argc) {
     return 0;
   }
 
-  if (parser.has_option("selfplay")) {
-    Selfplay selfplay;
-    int hash_size;
-    if (parser.has_option("hash_size")) {
-      hash_size = parser.as<int>("hash_size");
-    } else {
-      hash_size = 22;
-    }
-    TT.resize(hash_size);
-
-    int time;
-    if (parser.has_option("time")) {
-      time = parser.as<int>("time");
-    } else {
-      time = 10;
-    }
-
-    selfplay.start_loop();
-
-    return 0;
-  }
-
-  //
   if (parser.has_option("eval_loop")) {
     std::string next_line;
     TT.resize(16);
@@ -234,6 +212,9 @@ int main(int argl, const char **argc) {
     while (std::getline(std::cin, next_line)) {
       // nextline should be a fen_string
       if (next_line == "terminate") {
+        #ifdef USEDB
+        	handle->close(handle);
+        #endif
         std::exit(-1);
       }
       TT.clear();
@@ -265,20 +246,32 @@ int main(int argl, const char **argc) {
           break;
         }
       }
-      // sending all the the results back
-      std::cout << "BEGIN" << std::endl;
-      for (auto position : rep_history) {
-        std::string result_string = "UNKNOWN";
 
-        if ((result == BLACK_WON && position.color == BLACK) ||
-            (result == WHITE_WON && position.color == WHITE)) {
-          result_string = "WON";
-        } else if ((result == BLACK_WON && position.color != BLACK) ||
-                   (result == WHITE_WON && position.color != WHITE)) {
-          result_string = "LOSS";
+      auto res_to_string =[](Result result,Color color){
+        if ((result == BLACK_WON && color == BLACK) ||
+            (result == WHITE_WON && color == WHITE)) {
+          return "WON";
+        } else if ((result == BLACK_WON && color != BLACK) ||
+                   (result == WHITE_WON && color != WHITE)) {
+          return "LOSS";
         } else if (result == DRAW) {
-          result_string = "DRAW";
+          return "DRAW";
         }
+      };
+
+      // sending all the the results back in reverse order
+      std::cout << "BEGIN" << std::endl;
+      for (int i=rep_history.size()-1;i>=0;--i) {
+        auto position = rep_history[i];
+        std::string result_string = "";
+        #ifdef USEDB
+        auto local_result = get_tb_result(position,max_pieces,handle);
+        if(local_result!=UNKNOWN){
+          result = local_result;
+          result_string="TB_";
+        }
+        #endif
+        result_string.append(res_to_string(result,position.color));
 
         if (position.get_color() == BLACK) {
           position = position.get_color_flip();
