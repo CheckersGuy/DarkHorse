@@ -88,7 +88,6 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 #define DB_PATH "D:\\kr_english_wld"
 
-
 int main(int argl, const char **argc) {
 #ifdef USEDB
   int i, status, max_pieces, nerrors;
@@ -112,7 +111,16 @@ int main(int argl, const char **argc) {
     return (1);
   }
 #endif
-
+  /*
+    Position test = Position::pos_from_fen("B:WK29:BK4");
+    std::cout << test.get_fen_string() << std::endl;
+    test.print_position();
+    std::cout << std::endl;
+    test = test.get_color_flip();
+    std::cout << test.get_fen_string() << std::endl;
+    test.print_position();
+    std::cout << std::endl;
+  */
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -144,13 +152,16 @@ int main(int argl, const char **argc) {
 
 #ifdef USEDB
   if (parser.has_option("endgame")) {
-    std::cout<<"Testing"<<std::endl;
+    std::cout << "Testing" << std::endl;
     Position pos = Position::pos_from_fen("W:WK6:B4,3");
- 
+
     pos.print_position();
     auto result = get_tb_result(pos, max_pieces, handle);
-    auto result_string =(result ==WHITE_WON)?"WHITE_WON" :(result==BLACK_WON) ?"BLACK_WON" :(result ==DRAW)?"DRAW" : "UNKNOWN";
-    std::cout<<result_string<<std::endl;
+    auto result_string = (result == WHITE_WON)   ? "WHITE_WON"
+                         : (result == BLACK_WON) ? "BLACK_WON"
+                         : (result == DRAW)      ? "DRAW"
+                                                 : "UNKNOWN";
+    std::cout << result_string << std::endl;
     return 0;
   }
 #endif
@@ -212,9 +223,9 @@ int main(int argl, const char **argc) {
     while (std::getline(std::cin, next_line)) {
       // nextline should be a fen_string
       if (next_line == "terminate") {
-        #ifdef USEDB
-        	handle->close(handle);
-        #endif
+#ifdef USEDB
+        handle->close(handle);
+#endif
         std::exit(-1);
       }
       TT.clear();
@@ -247,7 +258,7 @@ int main(int argl, const char **argc) {
         }
       }
 
-      auto res_to_string =[](Result result,Color color){
+      auto res_to_string = [](Result result, Color color) {
         if ((result == BLACK_WON && color == BLACK) ||
             (result == WHITE_WON && color == WHITE)) {
           return "WON";
@@ -261,22 +272,22 @@ int main(int argl, const char **argc) {
 
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
-      for (int i=rep_history.size()-1;i>=0;--i) {
+      for (int i = rep_history.size() - 1; i >= 0; --i) {
         auto position = rep_history[i];
         std::string result_string = "";
-        #ifdef USEDB
-        auto local_result = get_tb_result(position,max_pieces,handle);
-        if(local_result!=UNKNOWN){
+#ifdef USEDB
+        auto local_result = get_tb_result(position, max_pieces, handle);
+        if (local_result != UNKNOWN) {
           result = local_result;
-          result_string="TB_";
+          result_string = "TB_";
         }
-        #endif
-        result_string.append(res_to_string(result,position.color));
+#endif
+        result_string.append(res_to_string(result, position.color));
 
         if (position.get_color() == BLACK) {
           position = position.get_color_flip();
         }
-
+        position.print_position();
         std::cout << position.get_fen_string() << "!" << result_string
                   << std::endl;
       }
