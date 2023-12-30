@@ -1,9 +1,13 @@
 //move sample definition from dataloader here
 //should make stuff a little easier to handle :)
 use crate::Pos::Position;
+use crate::Pos::Square;
+use byteorder::LittleEndian;
+use byteorder::ReadBytesExt;
 use byteorder::WriteBytesExt;
-use byteorder::{LittleEndian, ReadBytesExt};
+use std::fs::File;
 use std::io::prelude::*;
+use std::io::BufReader;
 #[derive(Debug)]
 pub enum SampleType {
     Fen(String),   //a not yet converted FenString
@@ -17,6 +21,9 @@ pub enum Result {
     WIN,
     LOSS,
     DRAW,
+    TBWIN,
+    TBLOSS,
+    TBDRAW,
 }
 
 impl Default for Result {
@@ -37,6 +44,9 @@ impl From<i8> for Result {
             1 => Result::LOSS,
             2 => Result::WIN,
             3 => Result::DRAW,
+            4 => Result::TBLOSS,
+            5 => Result::TBWIN,
+            6 => Result::TBDRAW,
             _ => Result::UNKNOWN,
         }
     }
@@ -46,10 +56,111 @@ impl From<&str> for Result {
     fn from(item: &str) -> Self {
         match item {
             "loss" | "LOSS" | "LOST" | "lost" => Result::LOSS,
+            "TB_LOSS" | "TB_LOST" | "TBLOSS" | "TBLOST" => Result::TBLOSS,
+            "TB_WIN" | "TB_WON" | "TBWIN" | "TBWON" => Result::TBWIN,
+            "TBDRAW" | "TB_DREW" | "TBDREW" => Result::TBDRAW,
             "win" | "WIN" | "WON" | "won" => Result::WIN,
-            "DRAW" | "draw" => Result::DRAW,
+            "DRAW" | "draw" | "TB_DRAW" => Result::DRAW,
             _ => Result::UNKNOWN,
         }
+    }
+}
+
+impl SampleType {
+    pub fn get_squares(&self) -> std::io::Result<Vec<Square>> {
+        let mut squares = Vec::new();
+        let fen_string = match self {
+            SampleType::Fen(ref fen) => fen,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Error parsing color",
+                ))
+            }
+        };
+
+        let color = match fen_string.chars().next() {
+            Some('W') => 1,
+            Some('B') => -1,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "Error parsing color",
+                ))
+            }
+        };
+
+        //to be continued
+        //need to convert the option in next.unwrap() to a Result
+
+        for s in fen_string.split(":").skip(1) {
+            let mut color: i32 = 0;
+            let token_op = s.chars().next();
+            if token_op == None {
+                std::io::Error::new(std::io::ErrorKind::NotFound, "Error parsing color");
+            }
+            match token_op {
+                Some('W') => color = 1,
+                Some('B') => color = -1,
+                _ => (),
+            }
+            let splits = s.split(",");
+
+            for (i, val) in splits.enumerate() {
+                let mut sq_str = val.chars();
+                if i == 0 {
+                    sq_str.next();
+                }
+                let m = sq_str.clone().next().unwrap();
+                match m {
+                    'K' => {
+                        sq_str.next();
+                        let square: usize = match sq_str.as_str().parse() {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::NotFound,
+                                    "Error parsing squares",
+                                ))
+                            }
+                        };
+                        squares.push(match color {
+                            1 => Square::WKING(square - 1),
+                            -1 => Square::BKING(square - 1),
+                            _ => {
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::NotFound,
+                                    "Error parsing squares",
+                                ))
+                            }
+                        });
+                    }
+
+                    _ => {
+                        let square: usize = match sq_str.as_str().parse() {
+                            Ok(n) => n,
+                            Err(_) => {
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::NotFound,
+                                    "Error parsing squares",
+                                ))
+                            }
+                        };
+                        squares.push(match color {
+                            1 => Square::WPAWN(square - 1),
+                            -1 => Square::BPAWN(square - 1),
+                            _ => {
+                                return Err(std::io::Error::new(
+                                    std::io::ErrorKind::NotFound,
+                                    "Error parsing squares",
+                                ))
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        Ok(squares)
     }
 }
 
@@ -71,6 +182,9 @@ impl Sample {
                 Result::LOSS => 1,
                 Result::WIN => 2,
                 Result::DRAW => 3,
+                Result::TBLOSS => 4,
+                Result::TBWIN => 5,
+                Result::TBDRAW => 6,
                 Result::UNKNOWN => 0,
             };
             writer.write_i8(conv)?;
@@ -91,7 +205,9 @@ impl Sample {
             1 => Result::LOSS,
             2 => Result::WIN,
             3 => Result::DRAW,
-            0 => Result::UNKNOWN,
+            4 => Result::TBLOSS,
+            5 => Result::TBWIN,
+            6 => Result::TBDRAW,
             _ => Result::UNKNOWN,
         };
 
@@ -99,10 +215,53 @@ impl Sample {
     }
 }
 
+struct SampleIterator<'a> {
+    reader: &'a mut BufReader<File>,
+}
+//iterator needs to be tested
+trait SampleIteratorTrait<'a> {
+    //fn iterate_samples();
+    fn iter_samples(&'a mut self) -> SampleIterator<'a>;
+}
+
+impl<'a> Iterator for SampleIterator<'a> {
+    type Item = Sample;
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut sample = Sample::default();
+        let result = sample.read_into(&mut self.reader);
+        match result {
+            Ok(_) => Some(sample),
+            Err(_) => None,
+        }
+    }
+}
+//testing this one as well
+impl<'a> SampleIterator<'a> {
+    fn consume<W: Write>(&mut self, writer: &mut W) -> std::io::Result<()> {
+        while let Some(sample) = self.next() {
+            sample.write_fen(writer)?;
+        }
+        Ok(())
+    }
+}
+
+impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
+    fn iter_samples(&'a mut self) -> SampleIterator<'a> {
+        let num_samples = self
+            .read_u64::<LittleEndian>()
+            .expect("Could not read number of samples");
+        SampleIterator { reader: self }
+    }
+}
+
 impl From<(Position, Result)> for Sample {
     fn from(value: (Position, Result)) -> Self {
         //needs to be implemented
         //see Data.rs for code
-        Sample::default()
+        Sample {
+            result: value.1,
+            position: SampleType::Pos(value.0),
+            ..Sample::default()
+        }
     }
 }

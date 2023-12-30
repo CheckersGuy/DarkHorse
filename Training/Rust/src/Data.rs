@@ -21,7 +21,8 @@ use std::sync::atomic::AtomicUsize;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use Sample::SampleType;
+use std::thread;
+use Sample::{Result, SampleType};
 //Rescorer takes fen/pdn strings and scores them
 #[derive(Debug, Default)]
 pub struct Rescorer {
@@ -40,8 +41,80 @@ pub struct Generator {
     pub max_samples: usize,
 }
 
+pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Result<()> {
+    //create an opening book
+    let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
+    let open_reader = BufReader::new(File::open(input)?);
+    let mut writer = File::create(output)?;
+    let openings: Vec<String> = open_reader.lines().map(|value| value.unwrap()).collect();
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+
+    let bar = ProgressBar::new(openings.len() as u64);
+    bar.set_style(
+        ProgressStyle::with_template(
+            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
+    );
+
+    for chunk in openings.chunks(openings.len() / num_workers) {
+        let sender = tx.clone();
+        let my_chunk = chunk.to_owned();
+        thread::spawn(move || {
+            let mut command = Command::new("./generator2")
+                .args(["--book"])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .expect("Failed to start process");
+            let mut stdin = command.stdin.take().unwrap();
+            let stdout = command.stdout.take().unwrap();
+            let mut f = BufReader::new(stdout);
+
+            for pos in my_chunk {
+                stdin.write_all((pos.clone() + "\n").as_bytes()).unwrap();
+                'generate: loop {
+                    let mut buffer = String::new();
+                    match f.read_line(&mut buffer) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("{:?}", e)
+                        }
+                    }
+                    buffer = buffer.trim().replace("\n", "");
+                    sender.send(buffer.clone()).unwrap();
+                    if buffer == "done" {
+                        break 'generate;
+                    }
+                }
+            }
+            stdin
+                .write_all((String::from("terminate\n")).as_bytes())
+                .unwrap();
+
+            command.kill().unwrap();
+        });
+    }
+    let mut u_count: usize = 0;
+    for val in rx {
+        let trimmed = val.trim().replace("\n", "").to_lowercase();
+        if trimmed != "done" && !filter.check(&val) {
+            //println!("{val}");
+            writer.write_all((val.clone() + "\n").as_bytes()).unwrap();
+            u_count += 1;
+            filter.set(&val);
+        } else if trimmed == "done" {
+            bar.inc(1);
+        }
+    }
+    drop(writer);
+    prepend_file(format!("{u_count}\n").as_str().as_bytes(), &output)?;
+    Ok(())
+}
+
 pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.1);
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut writer = File::create(output)?;
     let mut unique_count: usize = 0;
     let mut total_count = 0;
@@ -53,13 +126,25 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
         for _ in 0..num_data {
             let mut sample = Sample::Sample::default();
             sample.read_into(&mut reader)?;
-            sample.write_fen(&mut writer)?;
-            if let Sample::SampleType::Fen(fen_string) = sample.position {
-                if !filter.check(&fen_string) {
+            //sample.write_fen(&mut writer)?;
+            if let Sample::SampleType::Fen(ref fen_string) = sample.position {
+                if !filter.check(fen_string) {
+                    match sample.result {
+                        Result::TBWIN | Result::TBLOSS | Result::TBDRAW => {
+                            sample.write_fen(&mut writer)?;
+                        }
+                        _ => (),
+                    }
                     unique_count += 1;
-                    filter.set(&fen_string);
+                    filter.set(fen_string);
                 }
                 total_count += 1;
+                match sample.result {
+                    Result::WIN | Result::LOSS | Result::DRAW => {
+                        sample.write_fen(&mut writer)?;
+                    }
+                    _ => (),
+                }
             }
         }
     }
@@ -206,6 +291,7 @@ impl Generator {
     pub fn generate_games(self) -> std::io::Result<()> {
         //need a bloomfilter here
         let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+        let mut end_filter = Bloom::new_for_fp_rate(1000000000, 0.01);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
         let mut reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
@@ -327,8 +413,16 @@ impl Generator {
                 }
 
                 if sample.result != Sample::Result::UNKNOWN && !has_captures {
-                    sample.write_fen::<File>(&mut output)?;
-                    total_count += 1;
+                    if result_string.starts_with("TB_") {
+                        if !end_filter.check(&pos) {
+                            sample.write_fen::<File>(&mut output)?;
+                            end_filter.set(&pos);
+                            total_count += 1;
+                        }
+                    } else {
+                        sample.write_fen::<File>(&mut output)?;
+                        total_count += 1;
+                    }
                 }
             }
         }

@@ -72,11 +72,12 @@ impl DataLoader {
             }
             //Need to convert all the samples
             let transform = Instant::now();
-            self.shuff_buf.par_iter_mut().for_each(|sample| {
-                if let SampleType::Fen(ref fen_string) = sample.position {
-                    sample.position = SampleType::Pos(Position::try_from(&fen_string[..]).unwrap());
-                }
-            });
+            /* self.shuff_buf.par_iter_mut().for_each(|sample| {
+                            if let SampleType::Fen(ref fen_string) = sample.position {
+                                sample.position = SampleType::Pos(Position::try_from(&fen_string[..]).unwrap());
+                            }
+                        });
+            */
             let elapsed = now.elapsed().as_millis();
             println!("Elapsed time {}", elapsed);
             println!("Transformation time {}", transform.elapsed().as_millis());

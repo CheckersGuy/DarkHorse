@@ -79,6 +79,12 @@ struct Scanner {
 Position &append_square(Position &pos, bool is_king, Color mover,
                         int num_square) {
   int index = num_square - 1;
+  auto board_index = [](auto index) {
+    auto row = index / 4;
+    auto col = index % 4;
+    return 4 * row + col;
+  };
+  index = board_index(index);
 
   if (mover == BLACK) {
     pos.BP |= 1u << index;
@@ -270,18 +276,17 @@ void Position::print_position() const {
 }
 
 std::string Position::get_pos_string() const {
+  // here and other functions, maybe including get_fen_string is wrong
   std::string out;
-  uint32_t counter = 32u;
-  for (int i = 0; i < 64; i++) {
-    int row = i / 8;
-    int col = i % 8;
-    if ((row + col) % 2 == 0) {
-      out += "[ ]";
-    } else {
-      if ((row + col + 1) % 2 == 0) {
-        counter--;
+  for (int row = 7; row >= 0; row--) {
+    for (int col = 3; col >= 0; col--) {
+      const auto bit_index = 4 * row + col;
+      uint32_t maske = 1u << bit_index;
+
+      if (row % 2 == 1) {
+        out += "[ ]";
       }
-      uint32_t maske = 1u << (counter);
+
       if (((BP & K) & maske) == maske) {
         out += "[B]";
       } else if (((BP)&maske) == maske) {
@@ -293,11 +298,13 @@ std::string Position::get_pos_string() const {
       } else {
         out += "[ ]";
       }
+      if (row % 2 == 0) {
+        out += "[ ]";
+      }
     }
-    if ((i + 1) % 8 == 0) {
-      out += "\n";
-    }
+    out += "\n";
   }
+
   return out;
 }
 
@@ -349,29 +356,29 @@ int Position::bucket_index() { // return (piece_count() - 1) / 6;
   if (pieces == 24 || pieces == 23 || pieces == 22) {
     return 0;
   } else if (pieces == 21 || pieces == 20 || pieces == 19) {
-    return 1;
+    return 0;
   } else if (pieces == 18 || pieces == 17 || pieces == 16) {
-    return 2;
+    return 1;
   } else if (pieces == 15 || pieces == 14 || pieces == 13) {
-    return 3;
+    return 2;
   } else if (pieces == 12 || pieces == 11) {
-    return 4;
+    return 3;
   } else if (pieces == 10) {
-    return 5;
+    return 4;
   } else if (pieces == 9) {
-    return 6;
+    return 5;
   } else if (pieces == 8) {
-    return 7;
+    return 6;
   } else if (pieces == 7) {
-    return 8;
+    return 7;
   } else if (pieces == 6) {
-    return 9;
+    return 8;
   } else if (pieces == 5) {
-    return 10;
+    return 9;
   } else if (pieces == 4) {
-    return 11;
+    return 10;
   } else if (pieces == 3 || pieces == 2 || pieces == 1) {
-    return 12;
+    return 11;
   } else {
     return 0;
   }

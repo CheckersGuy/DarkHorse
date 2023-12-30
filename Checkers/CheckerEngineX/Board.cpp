@@ -97,14 +97,19 @@ uint64_t hash(uint64_t x) {
   x ^= x >> 32;
   return x;
 }
-
 uint64_t Board::get_current_key() const {
   const Position p = pStack[pCounter];
-  const uint64_t color_hash = (p.color == BLACK) ? BLACK_RANDOM : 0;
   uint64_t first =
       static_cast<uint64_t>(p.BP) | (static_cast<uint64_t>(p.WP) << 32);
   uint64_t second = static_cast<uint64_t>(p.K);
-  return hash_combine(hash(first), hash(second)) ^ color_hash;
+  auto comb_hash = hash_combine(hash(first), hash(second));
+  if (get_mover() == BLACK) {
+    comb_hash ^= BLACK_RANDOM;
+  }
+  /*uint64_t pid = getpid();
+  comb_hash = hash_combine(pid, comb_hash);
+  */
+  return comb_hash;
 }
 
 bool Board::is_repetition(int last_rev) const {

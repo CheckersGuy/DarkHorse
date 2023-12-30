@@ -9,9 +9,11 @@
 #include "types.h"
 #include <cstdint>
 #include <cstdlib>
+#include <hash_set>
 #include <random>
 #include <string>
 #include <unistd.h>
+#include <unordered_set>
 #include <vector>
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -47,6 +49,51 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
   return result;
 }
+
+void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
+             Value min, Value max) {
+
+  if (depth == 0) {
+    Move bestMove;
+    Statistics::mPicker.clear_scores();
+    TT.clear();
+    Board copy = board;
+    auto it = hashset.find(board.get_position());
+    // if we havent evaluated the position before, evaluate it now
+    Value value = -INFINITE;
+    if (it == hashset.end()) {
+      value = searchValue(copy, bestMove, 1, 100000, false, std::cout);
+      hashset.insert(board.get_position());
+    }
+
+    if (value >= min && value <= max && !board.get_position().has_jumps()) {
+      std::cout << board.get_position().get_fen_string() << std::endl;
+      // std::cout << "After evaluation: " << value << std::endl << std::endl;
+      // board.get_position().print_position();
+    }
+    return;
+  }
+
+  MoveListe liste;
+  get_moves(board.get_position(), liste);
+
+  for (auto i = 0; i < liste.length(); ++i) {
+    const Move move = liste[i];
+    board.make_move(move);
+    recurse(board, hashset, depth - 1, min, max);
+    board.undo_move();
+  }
+
+  return;
+}
+
+void generate_book(int depth, Position pos, Value min_value, Value max_value) {
+
+  std::unordered_set<Position> hashset;
+  Board board(pos);
+  recurse(board, hashset, depth, min_value, max_value);
+}
+
 void print_msgs(char *msg) { printf("%s", msg); }
 
 #ifdef USEDB
@@ -86,7 +133,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 // adding endgame table_bases for testing purposes
 
-#define DB_PATH "D:\\kr_english_wld"
+#define DB_PATH "E:\\kr_english_wld"
 
 int main(int argl, const char **argc) {
 #ifdef USEDB
@@ -111,7 +158,14 @@ int main(int argl, const char **argc) {
     return (1);
   }
 #endif
+  /*Position pos = Position::pos_from_fen("B:W9,25:B2,K11,23");
+  pos.color = BLACK;
+  pos.print_position();
+  std::cout << (int)pos.get_jumpers<BLACK>() << std::endl;
+  //
 
+  return 0;
+*/
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -124,7 +178,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "relu.quant";
+    net_file = "newopen9.quant";
   }
 
   if (parser.has_option("time")) {
@@ -173,6 +227,7 @@ int main(int argl, const char **argc) {
     } else {
       board.get_position() = Position::get_start_position();
     }
+    board.get_position().print_position();
 
     TT.resize(hash_size);
     Move best;
@@ -185,30 +240,29 @@ int main(int argl, const char **argc) {
     return 0;
   }
 
-  if (parser.has_option("eval_loop")) {
+  if (parser.has_option("book")) {
     std::string next_line;
-    TT.resize(16);
+    TT.resize(2);
+    Statistics::mPicker.init();
     while (std::getline(std::cin, next_line)) {
       // need to clear statistics all the time
 
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      Statistics::mPicker.clear_scores();
-      TT.clear();
-
-      board.get_position() = Position::pos_from_fen(next_line);
-      Move bestMove;
-      auto s_val = searchValue(board, bestMove, MAX_PLY, 10, false, std::cout);
-      std::cout << next_line << "!" << s_val << std::endl;
+      const auto pos = Position::pos_from_fen(next_line);
+      generate_book(9, pos, -150, 150);
+      // sending a message, telling "master" to send us another position
+      std::cout << "done" << std::endl;
     }
+    return 0;
   }
 
   if (parser.has_option("generate")) {
     int child_id = -1;
     Statistics::mPicker.init();
     std::string next_line;
-    TT.resize(20);
+    TT.resize(19);
     std::vector<Position> rep_history;
     Statistics::mPicker.clear_scores();
     while (std::getline(std::cin, next_line)) {
@@ -258,6 +312,8 @@ int main(int argl, const char **argc) {
           return "LOSS";
         } else if (result == DRAW) {
           return "DRAW";
+        } else {
+          return "UNKNOWN";
         }
       };
 
@@ -274,7 +330,6 @@ int main(int argl, const char **argc) {
         }
 #endif
         result_string.append(res_to_string(result, position.color));
-
         if (position.get_color() == BLACK) {
           position = position.get_color_flip();
         }

@@ -11,6 +11,8 @@
 #include <random>
 #include <sstream>
 
+// Using the row reversed bitboard layout
+
 const uint32_t temp_mask = 0xf;
 
 inline constexpr uint32_t getHorizontalFlip(uint32_t b) {
