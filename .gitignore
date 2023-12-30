@@ -577,6 +577,9 @@ FodyWeavers.xsd
 
 **/*.so
 **/*.weights
+**/*.pos
+**/*.quant
+**/*.samples
 **/*.game
 **/*.data
 
@@ -691,5 +694,4 @@ fabric.properties
 **/CMakeScripts
 **/compile_commands.json
 build/**/*
-/Training/proto/*.h
-/Training/proto*.cpp
+
