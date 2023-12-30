@@ -49,6 +49,13 @@ constexpr auto get_lut(Generator &&generator) {
   return result;
 }
 
+constexpr std::array<int, 32> BIT_TO_BOARD = {
+    3,  2,  1,  0,  7,  6,  5,  4,  11, 10, 9,  8,  15, 14, 13, 12,
+    19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28};
+constexpr std::array<int, 32> BOARD_TO_BIT = {
+    3,  2,  1,  0,  7,  6,  5,  4,  11, 10, 9,  8,  15, 14, 13, 12,
+    19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28};
+
 constexpr uint32_t INNER_SQUARES = 132638688;
 constexpr uint32_t OUTER_SQUARES = 135796752;
 constexpr uint32_t MASK_L3 = 14737632u;
@@ -64,7 +71,7 @@ constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
 
 constexpr int prob_cut = 25; // 30;
 constexpr int asp_wind = 15; // 15;
-constexpr int NUM_BUCKETS = 13;
+constexpr int NUM_BUCKETS = 12;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
 
