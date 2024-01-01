@@ -72,6 +72,7 @@ void Board::undo_move() { this->pCounter--; }
 Board &Board::operator=(Position pos) {
   this->pCounter = 0;
   get_position() = pos;
+  rep_size = 0;
 
   return *this;
 }

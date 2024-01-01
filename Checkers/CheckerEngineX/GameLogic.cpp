@@ -315,13 +315,13 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                                 new_depth, last_rev, Move{}, is_sing_search);
     }
 
-    const auto copy_root = board.get_position();
-
     if (is_root) {
-      if (std::find(board.rep_history.begin(), board.rep_history.end(),
-                    copy_root) != board.rep_history.end()) {
-        // debug << "Lowered the score due to repetition" << std::endl;
-        val = (val) / 2;
+      auto last_position = board.get_position();
+      for (auto i = 0; i < board.rep_size; ++i) {
+        if (board.rep_history[i] == last_position) {
+          val = (val) / 2;
+          break;
+        }
       }
     }
 
