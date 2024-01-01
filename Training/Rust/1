@@ -10,7 +10,6 @@ use indicatif::{ProgressBar, ProgressStyle};
 use mktemp::Temp;
 use rand::seq::SliceRandom;
 use std::borrow::BorrowMut;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
@@ -114,7 +113,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     prepend_file(format!("{u_count}\n").as_str().as_bytes(), &output)?;
     Ok(())
 }
-//refactoring here somehow
+
 pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut writer = File::create(output)?;
@@ -157,7 +156,7 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
     println!("We processed {total_count} samples and found {unique_count} unique samples");
     Ok(())
 }
-//refactoring here
+
 pub fn material_distrib(path: &str) -> std::io::Result<HashMap<u32, usize>> {
     let mut my_map = HashMap::new();
     let mut reader = BufReader::new(File::open(path)?);
@@ -206,7 +205,7 @@ fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<(
 
     Ok(())
 }
-//Refactoring this as well
+
 pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
     //to be implemented
     let input = Path::new(in_str);
@@ -234,13 +233,17 @@ pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
 
 pub fn count_unique_samples(input: &str) -> std::io::Result<usize> {
     let mut reader = BufReader::new(File::open(input)?);
-    let filter: RefCell<Bloom<Sample::Sample>> =
-        RefCell::new(Bloom::new_for_fp_rate(1000000000, 0.01));
-    Ok(reader
-        .iter_samples()
-        .filter(|sample| !filter.borrow().check(&sample))
-        .map(|sample| filter.borrow_mut().set(&sample))
-        .count())
+    let mut filter: Bloom<Sample::Sample> = Bloom::new_for_fp_rate(1000000000, 0.01);
+
+    {
+        let mut filt = &filter;
+        reader
+            .iter_samples()
+            .filter(|sample| filt.check(&sample))
+            .map(|sample| (*filt).set(&sample))
+            .count();
+    }
+    Ok(3)
 }
 
 pub fn count_positions<F: Fn(Position) -> bool>(

@@ -16,15 +16,14 @@ use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::sync::{atomic::AtomicBool, atomic::Ordering, Arc, Mutex};
 use std::thread;
 use std::{io, path::Path};
-use Data::{create_unique_fens, Generator, Rescorer};
+use Data::{count_unique_samples, create_unique_fens, Generator, Rescorer};
 use Pos::Position;
-use Sample::Result;
 use Sample::SampleType;
-
+use Sample::{Result, SampleIteratorTrait};
 fn main() -> std::io::Result<()> {
-    let mut dataloader =
+    /*let mut dataloader =
         DataLoader::new(String::from("../TrainData/test.samples"), 1000000, false)?;
-    /*
+
     for _ in 0..3000 {
         let sample = dataloader.get_next()?;
         if let SampleType::Fen(ref position) = sample.position {
@@ -44,10 +43,13 @@ fn main() -> std::io::Result<()> {
     //which should be straight forward to add
     //
     /*
-    Data::merge_samples(
-        vec!["../TrainData/test2.samples", "../TrainData/test3.samples"],
-        "../TrainData/merged.samples",
-    )?;
+        Data::merge_samples(
+            vec![
+                "../TrainData/newopen12.samples",
+                "../TrainData/newopen13.samples",
+            ],
+            "../TrainData/merged2.samples",
+        )?;
     */
     //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
     //println!("{:?}", distribution);
@@ -78,7 +80,10 @@ fn main() -> std::io::Result<()> {
         pos.print_position();
     */
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
-    Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
+    // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
+    //
+    let num_samples = count_unique_samples("../TrainData/test.samples").unwrap();
+    println!("{}", num_samples);
 
     Ok(())
 }

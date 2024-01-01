@@ -8,14 +8,14 @@ use byteorder::WriteBytesExt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-#[derive(Debug)]
+#[derive(Debug, Hash, PartialEq)]
 pub enum SampleType {
     Fen(String),   //a not yet converted FenString
     Pos(Position), //already converted to a position
     None,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Hash)]
 pub enum Result {
     UNKNOWN,
     WIN,
@@ -164,7 +164,7 @@ impl SampleType {
     }
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Hash, PartialEq, Debug)]
 pub struct Sample {
     pub position: SampleType,
     pub eval: i16,
@@ -215,11 +215,11 @@ impl Sample {
     }
 }
 
-struct SampleIterator<'a> {
+pub struct SampleIterator<'a> {
     reader: &'a mut BufReader<File>,
 }
 //iterator needs to be tested
-trait SampleIteratorTrait<'a> {
+pub trait SampleIteratorTrait<'a> {
     //fn iterate_samples();
     fn iter_samples(&'a mut self) -> SampleIterator<'a>;
 }
