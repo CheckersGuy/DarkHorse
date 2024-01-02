@@ -1,4 +1,4 @@
-use crate::Pos;
+
 use crate::Pos::Position;
 use crate::Sample;
 use crate::Sample::SampleIteratorTrait;
@@ -15,10 +15,10 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::io::{BufRead, Seek, Write};
-use std::option;
+use std::io::{BufRead, Write};
+
 use std::path::Path;
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Command, Stdio};
 use std::sync::atomic::AtomicUsize;
 use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
@@ -161,7 +161,7 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
 pub fn material_distrib(path: &str) -> std::io::Result<HashMap<u32, usize>> {
     let mut my_map = HashMap::new();
     let mut reader = BufReader::new(File::open(path)?);
-    let mut buffer = String::new();
+    let _buffer = String::new();
     let num_samples = reader.read_u64::<LittleEndian>()?;
     let bar = ProgressBar::new(num_samples);
     bar.set_style(
@@ -293,9 +293,9 @@ impl Generator {
         let mut end_filter = Bloom::new_for_fp_rate(1000000000, 0.01);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
-        let mut reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
+        let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
         let mut output = File::create(self.output.clone())?;
-        let mut openings = Arc::new(Mutex::new(Vec::new()));
+        let openings = Arc::new(Mutex::new(Vec::new()));
         let (tx, rx): (Sender<Vec<String>>, Receiver<Vec<String>>) = mpsc::channel();
         for line in reader.lines().skip(1) {
             {
@@ -314,7 +314,7 @@ impl Generator {
         .progress_chars("##-"),
     );
 
-        for id in 0..self.num_workers {
+        for _id in 0..self.num_workers {
             let open = Arc::clone(&openings);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);

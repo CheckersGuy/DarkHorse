@@ -1,6 +1,6 @@
-use crate::Pos::Position;
+
 use crate::Sample;
-use byteorder::WriteBytesExt;
+
 use byteorder::{LittleEndian, ReadBytesExt};
 use rand::prelude::*;
 use rayon::prelude::*;
@@ -8,7 +8,7 @@ use rip_shuffle::RipShuffleParallel;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 use Sample::SampleType;
 #[derive(Debug)]
 

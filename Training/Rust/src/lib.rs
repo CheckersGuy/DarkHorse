@@ -1,12 +1,12 @@
 #![feature(buf_read_has_data_left)]
-use pyo3::{exceptions::PyValueError, prelude::*};
-use std::borrow::BorrowMut;
-use Pos::{Position, Square};
+use pyo3::{prelude::*};
+
+use Pos::{Square};
 pub mod Pos;
 pub mod Sample;
 pub mod dataloader;
 use dataloader::DataLoader;
-use numpy::{IntoPyArray, PyArray1, PyArrayDyn, PyReadonlyArrayDyn};
+use numpy::{PyArray1};
 //Wrapper for the dataloader
 #[pyclass]
 struct BatchProvider {
@@ -30,7 +30,7 @@ impl BatchProvider {
     }
     fn testing(
         &mut self,
-        py: Python<'_>,
+        _py: Python<'_>,
         input: &PyArray1<f32>,
         result: &PyArray1<f32>,
         evals: &PyArray1<i16>,

@@ -79,7 +79,7 @@ impl SampleType {
             }
         };
 
-        let color = match fen_string.chars().next() {
+        let _color = match fen_string.chars().next() {
             Some('W') => 1,
             Some('B') => -1,
             _ => {
@@ -247,7 +247,7 @@ impl<'a> SampleIterator<'a> {
 
 impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
     fn iter_samples(&'a mut self) -> SampleIterator<'a> {
-        let num_samples = self
+        let _num_samples = self
             .read_u64::<LittleEndian>()
             .expect("Could not read number of samples");
         SampleIterator { reader: self }
