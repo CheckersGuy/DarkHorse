@@ -6,7 +6,7 @@
 Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
-
+int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
@@ -53,6 +53,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
     std::stringstream ss;
     nodeCounter = 0;
     try {
+      rootDepth = i;
       best_score = Search::search_asp(board, eval, i);
     } catch (std::string &msg) {
       break;
@@ -133,7 +134,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
              Depth depth, int last_rev, Move excluded, bool is_sing_search) {
 
   constexpr bool is_root = (type == ROOT);
-  constexpr bool in_pv = (type != NONPV);
+  constexpr bool in_pv = (type == ROOT) || (type == PV);
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
@@ -243,22 +244,19 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
 
     Value val = -INFINITE;
-
+    //
+    // see google notes about last_rev
     if (in_pv && !is_root && move == sing_move && depth >= 4 &&
         !is_sing_search && !sing_move.is_empty() && extension == 0) {
-      // std::cout << liste.length() << std::endl;
-      //  search every move but the singular move from the tt
-      //  if the search fails low, the move is likely the only best move in the
-      //  position and we extend the search by 1
+
       Line local_pv;
       Value sing_beta = sing_value - 45;
       Value sing_depth = depth / 2;
+
       auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta - 1,
-                                       sing_beta, sing_depth, last_rev,
+                                       sing_beta, sing_depth, parent_rev_move,
                                        sing_move, true);
-      // std::cout << val << std::endl;
-      // std::cout << "SingBeta: " << sing_beta << std::endl;
-      // std::cout << "----------------------" << std::endl;
+
       if (val < sing_beta) {
         extension = 1;
       } else if (sing_beta >= beta) {
@@ -285,10 +283,9 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
             last_rev, Move{}, is_sing_search);
         if (value >= prob_beta) {
           board.undo_move();
-
           TT.store_hash(false, value, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
-          return value - prob_cut;
+          return !isMateVal(value) ? (value - prob_cut) : value;
         }
       }
     }

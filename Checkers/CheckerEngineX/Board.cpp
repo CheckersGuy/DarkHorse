@@ -107,9 +107,7 @@ uint64_t Board::get_current_key() const {
   if (get_mover() == BLACK) {
     comb_hash ^= BLACK_RANDOM;
   }
-  /*uint64_t pid = getpid();
-  comb_hash = hash_combine(pid, comb_hash);
-  */
+
   return comb_hash;
 }
 

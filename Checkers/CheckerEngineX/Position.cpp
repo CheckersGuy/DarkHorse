@@ -199,7 +199,6 @@ Position Position::get_color_flip() const {
   next.WP = getMirrored(BP);
   next.K = getMirrored(K);
   next.color = ~color;
-  // next.key = key ^ Zobrist::color_black;
   return next;
 }
 

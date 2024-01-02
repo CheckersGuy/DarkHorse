@@ -1,4 +1,4 @@
-use std::{io::ErrorKind, num::ParseIntError};
+use std::io::ErrorKind;
 
 const BLACK: i32 = -1;
 const WHITE: i32 = 1;
@@ -155,7 +155,7 @@ impl Position {
         if self.k != 0 {}
     }
 
-    pub fn undo_move(&mut self, m: &Move) {
+    pub fn undo_move(&mut self, _m: &Move) {
         //to be implemented
     }
 
@@ -164,6 +164,14 @@ impl Position {
         Position {
             color: BLACK,
             ..Position::default()
+        }
+    }
+
+    pub fn get_pieces<COLOR: i32>(&self) {
+        if COLOR == -1 {
+            self.bp
+        } else {
+            self.wp
         }
     }
 
@@ -351,13 +359,30 @@ impl MoveList {
         }
     }
 
-    fn try_capture<const COLOR: i32, const OPP: i32>(from: u32, pos: Position) {}
+    fn jump_left<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
+        let opp = pos.get_pieces::<COLOR>();
+        let nocc = !(pos.bp | pos.wp);
+        move_left::<COLOR>(move_left::<COLOR>(from) & opp) & nocc
+    }
+
+    fn jump_right<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
+        let opp = pos.get_pieces::<COLOR>();
+        let nocc = !(pos.bp | pos.wp);
+        move_right::<COLOR>(move_right::<COLOR>(from) & opp) & nocc
+    }
+
+    fn try_capture<const COLOR: i32, const OPP: i32>(_from: u32, _pos: Position) {
+        //need to handle jump loops 'jumps that end at the starting positions'
+        //by removing the captures from the position
+
+        //to be continued
+    }
     pub fn get_captures<const COLOR: i32, const OPP: i32>(&mut self, pos: Position) {
         let jumpers = pos.get_jumpers::<COLOR>();
         let mut pawns = jumpers & !pos.k;
-        let mut kings = jumpers & pos.k;
+        let _kings = jumpers & pos.k;
         while pawns != 0 {
-            let from = pawns & !(pawns - 1u32);
+            let _from = pawns & !(pawns - 1u32);
 
             pawns &= pawns - 1;
         }
