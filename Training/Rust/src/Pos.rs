@@ -167,7 +167,7 @@ impl Position {
         }
     }
 
-    pub fn get_pieces<COLOR: i32>(&self) {
+    pub fn get_pieces<const COLOR: i32>(&self) -> u32 {
         if COLOR == -1 {
             self.bp
         } else {
@@ -358,19 +358,19 @@ impl MoveList {
             kings &= kings - 1;
         }
     }
+    /*
+        fn jump_left<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
+            let opp = pos.get_pieces::<COLOR>();
+            let nocc = !(pos.bp | pos.wp);
+            move_left::<COLOR>(move_left::<COLOR>(from) & opp) & nocc
+        }
 
-    fn jump_left<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
-        let opp = pos.get_pieces::<COLOR>();
-        let nocc = !(pos.bp | pos.wp);
-        move_left::<COLOR>(move_left::<COLOR>(from) & opp) & nocc
-    }
-
-    fn jump_right<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
-        let opp = pos.get_pieces::<COLOR>();
-        let nocc = !(pos.bp | pos.wp);
-        move_right::<COLOR>(move_right::<COLOR>(from) & opp) & nocc
-    }
-
+        fn jump_right<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
+            let opp = pos.get_pieces::<COLOR>();
+            let nocc = !(pos.bp | pos.wp);
+            move_right::<COLOR>(move_right::<COLOR>(from) & opp) & nocc
+        }
+    */
     fn try_capture<const COLOR: i32, const OPP: i32>(_from: u32, _pos: Position) {
         //need to handle jump loops 'jumps that end at the starting positions'
         //by removing the captures from the position

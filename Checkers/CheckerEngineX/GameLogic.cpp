@@ -28,10 +28,11 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  if (liste.length() == 1) {
+  /*if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
   }
+  */
 
   Value eval = -INFINITE;
   Local local;
@@ -180,6 +181,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
   auto key = board.get_current_key();
 
+  Value static_eval = EVAL_INFINITE;
+
   // this needs to be removed
   // and just do not probe tt at all when excluded is not empty
 
@@ -207,18 +210,15 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       }
     }
   }
-
-  // singular move extensions goes here e
-
-  // do not do recursive singular searches
-
-  int start_index = 0;
-  /*if (in_pv && ply < mainPV.length()) {
-    const Move mv = mainPV[ply];
-    bool sucess = liste.put_front(mv);
-    start_index += sucess;
+  if (!board.get_position().has_jumps(board.get_mover())) {
+    // only store static evaluation in quiet positions
+    if (found_hash && info.flag != Flag::None &&
+        info.static_eval != EVAL_INFINITE) {
+      static_eval = info.static_eval;
+    } else {
+      static_eval = network.evaluate(board.get_position(), ply, 0);
+    }
   }
-  */
 
   int extension = 0;
   if (liste.length() == 1) {
@@ -227,7 +227,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     extension = 1;
   }
 
-  liste.sort(board.get_position(), depth, ply, tt_move, start_index);
+  liste.sort(board.get_position(), depth, ply, tt_move, 0);
 
   const Value old_alpha = alpha;
 
@@ -273,18 +273,24 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     if (!in_pv && depth > 4 && std::abs(beta) < MATE_IN_MAX_PLY) {
       Line line;
+      Value store_eval;
       Depth newDepth = depth - 4;
       Value board_val =
           -qs<NONPV>(board, ply + 1, line, -prob_beta, -prob_beta + 1, 0,
                      last_rev, Move{}, is_sing_search);
+
       if (board_val >= prob_beta) {
         Value value = -Search::search<NONPV>(
             board, ply + 1, local_pv, -prob_beta, -prob_beta + 1, newDepth,
             last_rev, Move{}, is_sing_search);
+
         if (value >= prob_beta) {
           board.undo_move();
-          TT.store_hash(false, value, key, TT_LOWER, newDepth + 1,
+          /*TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
+                        TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
+
+          */
           return !isMateVal(value) ? (value - prob_cut) : value;
         }
       }
@@ -356,7 +362,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       flag = TT_EXACT;
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
-    TT.store_hash(in_pv, tt_value, key, flag, depth, store_move);
+    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
   }
   return best_score;
 }
@@ -396,8 +402,25 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
                                        Move{}, is_sing_search);
     }
-    return network.evaluate(board.get_position(), ply,
-                            board.pCounter - last_rev);
+
+    NodeInfo info;
+    const auto key = board.get_current_key();
+    bool found_hash = TT.find_hash(key, info);
+    if (found_hash && info.flag != Flag::None &&
+        info.static_eval != EVAL_INFINITE) {
+      Value best_value = info.static_eval;
+      /*
+            if (info.depth > 0 && info.flag == TT_EXACT) {
+              return value_from_tt(info.score, ply);
+            }
+      */
+      return best_value;
+    }
+    // All of this is still experimental stuff and needs to be checked
+    Value net_val =
+        network.evaluate(board.get_position(), ply, board.pCounter - last_rev);
+    TT.store_hash(in_pv, -10000, net_val, key, TT_EXACT, 0, Move{});
+    return net_val;
   }
   bool sucess = false;
   if (in_pv && ply < mainPV.length()) {

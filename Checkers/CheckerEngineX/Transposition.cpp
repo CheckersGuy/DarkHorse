@@ -75,8 +75,9 @@ void Transposition::clear() {
   std::fill(entries.get(), entries.get() + capacity, Cluster{});
 }
 
-void Transposition::store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
-                               uint8_t depth, Move tt_move) {
+void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
+                               uint64_t key, Flag flag, uint8_t depth,
+                               Move tt_move) {
   assert(std::abs(value) <= EVAL_INFINITE);
   assert(!tt_move.is_capture());
   const auto index = (key) & (get_capacity() - 1u);
@@ -111,6 +112,7 @@ void Transposition::store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
     replace.depth = depth;
     replace.age = age_counter;
     replace.value = value;
+    replace.static_eval = static_eval;
     return;
   }
   if (replace.key == lock) {
@@ -130,6 +132,7 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
       info.depth = this->entries[index].ent[i].depth;
       info.flag = this->entries[index].ent[i].flag;
       info.score = this->entries[index].ent[i].value;
+      info.static_eval = this->entries[index].ent[i].static_eval;
       return true;
     }
   }
