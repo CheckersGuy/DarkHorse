@@ -1,4 +1,3 @@
-
 use crate::Pos::Position;
 use crate::Sample;
 use crate::Sample::SampleIteratorTrait;
@@ -127,7 +126,11 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
 
         for _ in 0..num_data {
             let mut sample = Sample::Sample::default();
-            sample.read_into(&mut reader)?;
+            match sample.read_into(&mut reader) {
+                Ok(_) => {}
+                Err(_) => break,
+            }
+
             //sample.write_fen(&mut writer)?;
             if let Sample::SampleType::Fen(ref fen_string) = sample.position {
                 if !filter.check(fen_string) {

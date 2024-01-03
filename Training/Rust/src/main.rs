@@ -27,15 +27,13 @@ fn main() -> std::io::Result<()> {
     //Need to write some code to combine 2 or more sample files
     //which should be straight forward to add
     //
-    /*
-        Data::merge_samples(
-            vec![
-                "../TrainData/newopen12.samples",
-                "../TrainData/newopen13.samples",
-            ],
-            "../TrainData/merged2.samples",
-        )?;
-    */
+    Data::merge_samples(
+        vec![
+            "../TrainData/newopen14.samples",
+            "../TrainData/merged.samples",
+        ],
+        "../TrainData/merged2.samples",
+    )?;
     //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
     //println!("{:?}", distribution);
 
@@ -67,8 +65,6 @@ fn main() -> std::io::Result<()> {
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
     //
-    let num_samples = count_unique_samples("../TrainData/test.samples").unwrap();
-    println!("{}", num_samples);
 
     Ok(())
 }

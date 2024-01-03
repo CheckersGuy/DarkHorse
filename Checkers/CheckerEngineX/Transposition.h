@@ -15,6 +15,7 @@
 struct NodeInfo {
   Move tt_move;
   Value score{0};
+  Value static_eval{0};
   uint8_t depth{0};
   uint8_t flag{Flag::None};
 };
@@ -32,10 +33,12 @@ struct MoveEncoding {
 struct Entry {
   uint32_t key{0u}; // 4 bytes
   int16_t value{0}; // 2 bytes
+  int16_t static_eval;
   MoveEncoding best_move;
   uint8_t age : 6 = 0;  // 1 bytes
   uint8_t flag : 2 = 0; // 1 byte
   uint8_t depth{0};     // 1 byte
+                        //
 };
 constexpr size_t bucket_size = 4;
 
@@ -64,8 +67,8 @@ public:
 
   void resize(size_t capa);
 
-  void store_hash(bool in_pv, Value value, uint64_t key, Flag flag,
-                  uint8_t depth, Move tt_move);
+  void store_hash(bool in_pv, Value value, Value static_eval, uint64_t key,
+                  Flag flag, uint8_t depth, Move tt_move);
 
   bool find_hash(uint64_t key, NodeInfo &info) const;
 
