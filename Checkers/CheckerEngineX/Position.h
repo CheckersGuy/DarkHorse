@@ -159,6 +159,8 @@ struct Position {
 
   Position get_color_flip() const;
 
+  uint32_t get_correction_index() const;
+
   static Position get_start_position();
 
   static Position pos_from_fen(std::string fen_string);

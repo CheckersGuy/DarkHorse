@@ -1,6 +1,7 @@
 #include "GameLogic.h"
 #include "MovePicker.h"
 #include "types.h"
+#include <cmath>
 #include <optional>
 
 Line mainPV;
@@ -28,11 +29,10 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  /*if (liste.length() == 1) {
+  if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
   }
-  */
 
   Value eval = -INFINITE;
   Local local;
@@ -133,7 +133,8 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 template <NodeType type>
 Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
              Depth depth, int last_rev, Move excluded, bool is_sing_search) {
-
+  // Note: Next I wanna try the eval correction idea as implemented by stockfish
+  // caissa/Seer
   constexpr bool is_root = (type == ROOT);
   constexpr bool in_pv = (type == ROOT) || (type == PV);
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
@@ -188,7 +189,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
   bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
-  if (in_pv && found_hash && info.flag != Flag::None) {
+  if (in_pv && found_hash && info.flag != Flag::None && info.depth > 0) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
 
@@ -198,7 +199,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       sing_value = tt_value;
     }
   }
-  if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None) {
+  if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
+      info.depth > 0) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
 
@@ -363,6 +365,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
     TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
+
+    // trying some weird correction idea by Seer/stockfish in checkers xD
   }
   return best_score;
 }
@@ -406,20 +410,23 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     NodeInfo info;
     const auto key = board.get_current_key();
     bool found_hash = TT.find_hash(key, info);
+    auto &stats = Statistics::mPicker.correction_stats;
+    Value net_val;
     if (found_hash && info.flag != Flag::None &&
         info.static_eval != EVAL_INFINITE) {
-      Value best_value = info.static_eval;
-      /*
-            if (info.depth > 0 && info.flag == TT_EXACT) {
-              return value_from_tt(info.score, ply);
-            }
-      */
-      return best_value;
+      net_val = info.static_eval;
+      if ((info.flag == TT_EXACT ||
+           info.flag == TT_UPPER && info.score >= net_val) &&
+          info.depth > 0 && std::abs(info.score) <= 3000) {
+        net_val = info.score;
+      }
+    } else {
+      net_val = network.evaluate(board.get_position(), ply,
+                                 board.pCounter - last_rev);
+      TT.store_hash(in_pv, net_val, net_val, key, TT_EXACT, 0, Move{});
     }
-    // All of this is still experimental stuff and needs to be checked
-    Value net_val =
-        network.evaluate(board.get_position(), ply, board.pCounter - last_rev);
-    TT.store_hash(in_pv, -10000, net_val, key, TT_EXACT, 0, Move{});
+
+    // return std::clamp(adjusted, -5500, 5500);
     return net_val;
   }
   bool sucess = false;

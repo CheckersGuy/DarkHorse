@@ -1,3 +1,4 @@
+#include "Bits.h"
 #include "CmdParser.h"
 #include "GameLogic.h"
 #include "MGenerator.h"
@@ -136,6 +137,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 #define DB_PATH "E:\\kr_english_wld"
 
 int main(int argl, const char **argc) {
+
 #ifdef USEDB
   int i, status, max_pieces, nerrors;
   EGDB_TYPE egdb_type;
@@ -158,14 +160,7 @@ int main(int argl, const char **argc) {
     return (1);
   }
 #endif
-  /*Position pos = Position::pos_from_fen("B:W9,25:B2,K11,23");
-  pos.color = BLACK;
-  pos.print_position();
-  std::cout << (int)pos.get_jumpers<BLACK>() << std::endl;
-  //
 
-  return 0;
-*/
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;

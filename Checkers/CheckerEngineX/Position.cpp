@@ -4,6 +4,7 @@
 #include "MGenerator.h"
 #include "MoveListe.h"
 #include "types.h"
+#include <cstdint>
 
 std::optional<Move> Position::get_move(Position orig, Position next) {
   // returns the move leading from position org to next
@@ -199,6 +200,7 @@ Position Position::get_color_flip() const {
   next.WP = getMirrored(BP);
   next.K = getMirrored(K);
   next.color = ~color;
+  // next.key = key ^ Zobrist::color_black;
   return next;
 }
 
@@ -347,6 +349,11 @@ std::ostream &operator<<(std::ostream &stream, const Position &pos) {
 std::istream &operator>>(std::istream &stream, Position &pos) {
   stream.read((char *)&pos, sizeof(Position));
   return stream;
+}
+
+uint32_t Position::get_correction_index() const {
+  auto maske = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
+  return Bits::pext(BP | WP, maske);
 }
 
 int Position::bucket_index() { // return (piece_count() - 1) / 6;

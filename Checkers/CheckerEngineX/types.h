@@ -68,12 +68,17 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
+constexpr uint32_t OUTER_RING = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
+                                (1 << 4) | (1 << 12) | (1 << 20) | (1 << 28) |
+                                (1 << 29) | (1 << 30) | (1 << 31) | (1 << 27) |
+                                (1 << 19) | (1 << 11);
 
 constexpr int prob_cut = 25; // 30;
 constexpr int asp_wind = 15; // 15;
 constexpr int NUM_BUCKETS = 12;
 constexpr int MAX_ASP = 200;
 constexpr int MAX_KILLERS = 2;
+constexpr int CORRECTION_SIZE = 512;
 
 constexpr uint64_t BLACK_RANDOM = 7985716234ull;
 constexpr uint64_t singular_key = 311234512ull;
