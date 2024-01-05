@@ -30,6 +30,6 @@ if __name__ == "__main__":
 
   
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/open11.ckpt");
+    trainer.fit(model, data_loader);
 
 

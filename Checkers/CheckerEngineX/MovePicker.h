@@ -21,7 +21,7 @@ private:
 
 public:
   std::array<std::array<Move, MAX_KILLERS>, MAX_PLY> killer_moves;
-
+  std::array<int16_t, CORRECTION_SIZE> correction_stats;
   int get_move_score(Position pos, Move move, Depth depth);
 
   int get_move_score(Position current, Depth depth, int ply, Move move,

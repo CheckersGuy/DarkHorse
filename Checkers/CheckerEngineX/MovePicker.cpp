@@ -97,6 +97,10 @@ void MovePicker::clear_scores() {
       killer_moves[i][k] = Move{};
     }
   }
+  // Should clear correction_stats as well
+  for (auto i = 0; i < CORRECTION_SIZE; ++i) {
+    correction_stats[i] = 0;
+  }
 }
 
 void MovePicker::decay_scores() {
