@@ -106,7 +106,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
-        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
         #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
@@ -137,7 +137,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("newopen11.quant")
+        self.save_quantized_bucket("newopen12.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
