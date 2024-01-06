@@ -65,11 +65,12 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                         end_time - start_time)
                         .count();
-    if (duration > 0)
+    if (duration > 0) {
       speed = (double)nodeCounter / (double)duration;
-    total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
-                      end_time - start_time)
-                      .count();
+      total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
+                        end_time - start_time)
+                        .count();
+    }
     eval = best_score;
     last_eval = eval;
     best = mainPV.getFirstMove();
@@ -288,11 +289,10 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
         if (value >= prob_beta) {
           board.undo_move();
-          /*TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
-                        TT_LOWER, newDepth + 1,
+          TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
+                        TT_LOWER, newDepth,
                         (!move.is_capture()) ? move : Move{});
 
-          */
           return !isMateVal(value) ? (value - prob_cut) : value;
         }
       }
@@ -355,6 +355,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
   if (excluded.is_empty() && !is_root) {
     Value tt_value = value_to_tt(best_score, ply);
+
     Flag flag;
     if (best_score <= old_alpha) {
       flag = TT_UPPER;
@@ -364,9 +365,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       flag = TT_EXACT;
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
-    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
 
-    // trying some weird correction idea by Seer/stockfish in checkers xD
+    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
   }
   return best_score;
 }
@@ -403,30 +403,26 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     }
 
     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
-      return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
-                                       Move{}, is_sing_search);
+      Value extend = Search::search<next_type>(
+          board, ply, pv, alpha, beta, 1, last_rev, Move{}, is_sing_search);
+
+      return extend;
     }
 
     NodeInfo info;
     const auto key = board.get_current_key();
     bool found_hash = TT.find_hash(key, info);
-    auto &stats = Statistics::mPicker.correction_stats;
     Value net_val;
     if (found_hash && info.flag != Flag::None &&
         info.static_eval != EVAL_INFINITE) {
       net_val = info.static_eval;
-      if ((info.flag == TT_EXACT ||
-           info.flag == TT_UPPER && info.score >= net_val) &&
-          info.depth > 0 && std::abs(info.score) <= 3000) {
-        net_val = info.score;
-      }
+
     } else {
       net_val = network.evaluate(board.get_position(), ply,
                                  board.pCounter - last_rev);
-      TT.store_hash(in_pv, net_val, net_val, key, TT_EXACT, 0, Move{});
+      TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{});
     }
 
-    // return std::clamp(adjusted, -5500, 5500);
     return net_val;
   }
   bool sucess = false;
