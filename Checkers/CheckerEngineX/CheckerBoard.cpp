@@ -49,7 +49,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
 
   if (!engine_initialized) {
-    network.load_bucket("bigbug14.quant");
+    network.load_bucket("newopen12.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;

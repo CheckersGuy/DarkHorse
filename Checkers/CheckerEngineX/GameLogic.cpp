@@ -166,19 +166,19 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                                                 board.pCounter - last_rev);
   }
 
+  MoveListe liste;
+
+  get_moves(board.get_position(), liste);
+  if (liste.length() == 0) {
+    return loss(ply);
+  }
+
   if (!is_root) {
     alpha = std::max(loss(ply), alpha);
     beta = std::min(-loss(ply + 1), beta);
     if (alpha >= beta) {
       return alpha;
     }
-  }
-
-  MoveListe liste;
-
-  get_moves(board.get_position(), liste);
-  if (liste.length() == 0) {
-    return loss(ply);
   }
   auto key = board.get_current_key();
 
@@ -237,7 +237,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     int extension = 0;
     if (liste.length() == 1) {
       extension = 1;
-    } else if (in_pv && liste[0].is_capture()) {
+    } else if (in_pv && move.is_capture()) {
       extension = 1;
     }
 
@@ -287,18 +287,16 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
         if (value >= prob_beta) {
           board.undo_move();
-          /*TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
+          TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
                         TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
 
-          */
           return !isMateVal(value) ? (value - prob_cut) : value;
         }
       }
     }
 
     Depth new_depth = depth - 1 + extension;
-
     if (reduction != 0) {
       val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
                                    new_depth - reduction, last_rev, Move{},
@@ -414,11 +412,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     if (found_hash && info.flag != Flag::None &&
         info.static_eval != EVAL_INFINITE) {
       net_val = info.static_eval;
-      if ((info.flag == TT_EXACT ||
-           info.flag == TT_UPPER && info.score >= net_val) &&
-          info.depth > 0 && std::abs(info.score) <= 3000) {
-        net_val = info.score;
-      }
+
     } else {
       net_val = network.evaluate(board.get_position(), ply,
                                  board.pCounter - last_rev);

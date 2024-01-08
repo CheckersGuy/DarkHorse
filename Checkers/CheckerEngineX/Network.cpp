@@ -219,7 +219,10 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
     return loss(ply);
   }
 
+  // trying some heuristic for endgames
+
   const auto nnue = *compute_incre_forward_pass(pos);
   auto eval = (nnue);
+
   return eval;
 }
