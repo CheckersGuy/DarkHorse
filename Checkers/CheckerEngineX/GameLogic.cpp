@@ -223,13 +223,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
 
-  int extension = 0;
-  if (liste.length() == 1) {
-    extension = 1;
-  } else if (in_pv && liste[0].is_capture()) {
-    extension = 1;
-  }
-
   liste.sort(board.get_position(), depth, ply, tt_move, 0);
 
   const Value old_alpha = alpha;
@@ -242,10 +235,15 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     if (is_sing_search && move == excluded) {
       continue;
     }
+    int extension = 0;
+    if (liste.length() == 1) {
+      extension = 1;
+    } else if (in_pv && liste[0].is_capture()) {
+      extension = 1;
+    }
+
     const auto kings = board.get_position().K;
     Line local_pv;
-    Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
-
     Value val = -INFINITE;
     //
     // see google notes about last_rev
@@ -266,7 +264,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
         return sing_beta;
       }
     }
-
+    Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
+    reduction = (extension != 0) ? 0 : reduction;
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     if (move.is_capture() || move.is_pawn_move(kings)) {
