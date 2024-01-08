@@ -95,7 +95,8 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
   recurse(board, hashset, depth, min_value, max_value);
 }
 
-void print_msgs(char *msg) { printf("%s", msg); }
+void print_msgs(char *msg) { /*printf("%s", msg); */
+}
 
 #ifdef USEDB
 
@@ -145,19 +146,20 @@ int main(int argl, const char **argc) {
 
   /* Check that db files are present, get db type and size. */
   status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
-  std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
 
   if (status) {
-    printf("No database found at %s\n", DB_PATH);
-    return (1);
+    // printf("No database found at %s\n", DB_PATH);
+    std::exit(-1);
   }
-  printf("Database type %d found with max pieces %d\n", egdb_type, max_pieces);
+  // printf("Database type %d found with max pieces %d\n", egdb_type,
+  // max_pieces);
 
   /* Open database for probing. */
   handle = egdb_open(EGDB_NORMAL, max_pieces, 1000, DB_PATH, print_msgs);
   if (!handle) {
     printf("Error returned from egdb_open()\n");
-    return (1);
+    std::exit(-1);
   }
 #endif
 
@@ -172,7 +174,6 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    // net_file = "int8test.quant";
     net_file = "newopen12.quant";
   }
 
