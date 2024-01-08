@@ -138,7 +138,7 @@ Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
 
 int main(int argl, const char **argc) {
 
-#if defined USEDB && not defined CHECKERBOARD
+#ifdef USEDB
   int i, status, max_pieces, nerrors;
   EGDB_TYPE egdb_type;
   EGDB_DRIVER *handle;
@@ -173,7 +173,7 @@ int main(int argl, const char **argc) {
     net_file = parser.as<std::string>("network");
   } else {
     // net_file = "int8test.quant";
-    net_file = "newopen12.quant";
+    net_file = "newopen11.quant";
   }
 
   if (parser.has_option("time")) {
@@ -190,7 +190,7 @@ int main(int argl, const char **argc) {
 
   network.load_bucket(net_file);
 
-#if defined USEDB && not defined CHECKERBOARD
+#ifdef USEDB
   if (parser.has_option("endgame")) {
     std::cout << "Testing" << std::endl;
     Position pos = Position::pos_from_fen("W:WK6:B4,3");
@@ -245,7 +245,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(10, pos, -150, 150);
+      generate_book(9, pos, -150, 150);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -262,7 +262,7 @@ int main(int argl, const char **argc) {
     while (std::getline(std::cin, next_line)) {
       // nextline should be a fen_string
       if (next_line == "terminate") {
-#if defined USEDB && not defined CHECKERBOARD
+#ifdef USEDB
         handle->close(handle);
 #endif
         std::exit(-1);
