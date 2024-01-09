@@ -246,8 +246,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     Value val = -INFINITE;
     //
     // see google notes about last_rev
-    if (in_pv && !is_root && move == sing_move && depth >= 4 &&
-        !is_sing_search && !sing_move.is_empty() && extension == 0) {
+    if (!is_root && move == sing_move && depth >= 6 && !is_sing_search &&
+        !sing_move.is_empty() && extension == 0) {
 
       Line local_pv;
       Value sing_beta = sing_value - 45;
@@ -264,7 +264,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       }
     }
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
-    reduction = (extension != 0) ? 0 : reduction;
+    reduction = (extension > 0) ? 0 : reduction;
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     if (move.is_capture() || move.is_pawn_move(kings)) {

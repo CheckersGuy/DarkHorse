@@ -82,6 +82,7 @@ constexpr int CORRECTION_SIZE = 512;
 
 constexpr uint64_t BLACK_RANDOM = 7985716234ull;
 constexpr uint64_t singular_key = 311234512ull;
+
 using Depth = int;
 using Ply = int;
 using Value = int;
