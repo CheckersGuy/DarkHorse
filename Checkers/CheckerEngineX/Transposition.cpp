@@ -93,7 +93,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
       break;
     }
     const int age_entry = age_counter - entry.age;
-    int score = 5 * entry.depth - 7 * std::max(age_entry, 0);
+    int score = entry.depth - 7 * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
       replace = entry;
@@ -115,17 +115,20 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     replace.static_eval = static_eval;
     return;
   }
-  if (replace.key == lock) {
-    replace.age = age_counter;
-    if (replace.best_move.from_index == 0 && !tt_move.is_empty()) {
-      replace.best_move = store_move;
-    }
+  if (replace.key == key && replace.best_move.get_move().is_empty()) {
+    replace.best_move = store_move;
   }
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
   const auto index = key & (get_capacity() - 1u);
   const uint32_t currKey = key >> 32u;
+
+  for (auto i = 0; i < bucket_size; ++i) {
+    if (this->entries[index].ent[i].key == key) {
+      this->entries[index].ent[i].age = age_counter;
+    }
+  }
   for (int i = 0; i < bucket_size; ++i) {
     if (this->entries[index].ent[i].key == currKey) {
       info.tt_move = this->entries[index].ent[i].best_move.get_move();
