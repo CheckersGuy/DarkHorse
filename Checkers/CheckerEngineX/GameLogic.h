@@ -5,6 +5,7 @@
 
 #include "Bits.h"
 #include "Board.h"
+#include "Endgame.h"
 #include "Line.h"
 #include "MGenerator.h"
 #include "Move.h"
@@ -21,6 +22,8 @@
 #endif
 
 extern uint64_t nodeCounter;
+
+inline TableBase tablebase;
 
 enum NodeType {
   ROOT,

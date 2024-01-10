@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "Bits.h"
 #include "MovePicker.h"
 #include "types.h"
 #include <cmath>
@@ -158,12 +159,11 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   Move tt_move;
   Move sing_move;
   Move best_move;
-  Value tt_value = -INFINITE;
-  Value sing_value = -INFINITE;
+  Value tt_value = -EVAL_INFINITE;
+  Value sing_value = -EVAL_INFINITE;
 
   if (ply >= MAX_PLY) {
-    return board.get_mover() * network.evaluate(board.get_position(), ply,
-                                                board.pCounter - last_rev);
+    network.evaluate(board.get_position(), ply, board.pCounter - last_rev);
   }
 
   MoveListe liste;
@@ -172,20 +172,23 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   if (liste.length() == 0) {
     return loss(ply);
   }
-
-  if (!is_root) {
-    alpha = std::max(loss(ply), alpha);
-    beta = std::min(-loss(ply + 1), beta);
-    if (alpha >= beta) {
-      return alpha;
+  /*
+    if (!is_root) {
+      alpha = std::max(loss(ply), alpha);
+      beta = std::min(-loss(ply + 1), beta);
+      if (alpha >= beta) {
+        return alpha;
+      }
     }
-  }
+    */
   auto key = board.get_current_key();
 
   Value static_eval = EVAL_INFINITE;
 
   // this needs to be removed
   // and just do not probe tt at all when excluded is not empty
+
+  // gonna put tablebase stuff here
 
   bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
@@ -221,7 +224,19 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       static_eval = network.evaluate(board.get_position(), ply, 0);
     }
   }
-
+  auto result = tablebase.probe(board.get_position());
+  if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
+    auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
+                    : (result == TB_RESULT::LOSS) ? TB_LOSS
+                                                  : 0;
+    if (tb_value == 0) {
+      return 0;
+    }
+    if ((tb_value > 0 && tb_value >= beta) ||
+        (tb_value < 0 && tb_value <= alpha)) {
+      return tb_value;
+    }
+  }
   liste.sort(board.get_position(), depth, ply, tt_move, 0);
 
   const Value old_alpha = alpha;
@@ -272,7 +287,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     } else {
       last_rev = parent_rev_move;
     }
-    if (!in_pv && depth > 4 && std::abs(beta) < MATE_IN_MAX_PLY) {
+    if (!in_pv && depth > 4 && std::abs(beta) < MATE_IN_MAX_PLY &&
+        board.get_position().piece_count() > tablebase.num_pieces) {
       Line line;
       Value store_eval;
       Depth newDepth = depth - 4;
@@ -291,7 +307,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
                         TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
 
-          return !isMateVal(value) ? (value - prob_cut) : value;
+          return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
         }
       }
     }
@@ -367,6 +383,23 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
   return best_score;
 }
+// can be applied to non tb positions as well, but thats for later
+// check constants later
+Value win_eval(TB_RESULT result, Value score, Position pos) {
+  // helper to encourage finishing the game
+  auto total_pieces = pos.piece_count();
+  auto eval = 40 * (Bits::pop_count(pos.WP) - Bits::pop_count(pos.BP));
+  eval +=
+      100 * (Bits::pop_count(pos.WP & pos.K) - Bits::pop_count(pos.BP & pos.K));
+
+  eval += (Bits::pop_count(pos.WP) -
+           Bits::pop_count(pos.BP) * (200 - total_pieces * 20));
+  // now need masks for single cornes
+  // double cornes and center squares
+
+  return score + eval * pos.color;
+}
+
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          int last_rev, Move excluded, bool is_sing_search) {
@@ -379,8 +412,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
 
   if (ply >= MAX_PLY) {
-    return board.get_mover() * network.evaluate(board.get_position(), ply,
-                                                board.pCounter - last_rev);
+    return network.evaluate(board.get_position(), ply,
+                            board.pCounter - last_rev);
   }
 
   if (board.is_repetition(last_rev)) {
@@ -403,7 +436,13 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
                                        Move{}, is_sing_search);
     }
-
+    auto result = tablebase.probe(board.get_position());
+    if (result != TB_RESULT::UNKNOWN) {
+      auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
+                      : (result == TB_RESULT::LOSS) ? TB_LOSS
+                                                    : 0;
+      return tb_value;
+    }
     NodeInfo info;
     const auto key = board.get_current_key();
     bool found_hash = TT.find_hash(key, info);

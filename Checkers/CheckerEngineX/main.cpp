@@ -95,74 +95,11 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
   recurse(board, hashset, depth, min_value, max_value);
 }
 
-void print_msgs(char *msg) { /*printf("%s", msg); */
-}
-
-#ifdef USEDB
-
-Result get_tb_result(Position pos, int max_pieces, EGDB_DRIVER *handle) {
-  if (pos.has_jumps() || Bits::pop_count(pos.BP | pos.WP) > max_pieces)
-    return UNKNOWN;
-
-  EGDB_NORMAL_BITBOARD board;
-  board.white = pos.WP;
-  board.black = pos.BP;
-  board.king = pos.K;
-
-  EGDB_BITBOARD normal;
-  normal.normal = board;
-  auto val = handle->lookup(
-      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
-
-  if (val == EGDB_UNKNOWN)
-    return UNKNOWN;
-
-  if (val == EGDB_WIN)
-    return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
-
-  if (val == EGDB_LOSS)
-    return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
-
-  if (val == EGDB_DRAW)
-    return DRAW;
-
-  return UNKNOWN;
-}
-
-#endif
-
-// game-generation
-
-// adding endgame table_bases for testing purposes
-
 #define DB_PATH "E:\\kr_english_wld"
 
 int main(int argl, const char **argc) {
 
-#ifdef USEDB
-  int i, status, max_pieces, nerrors;
-  EGDB_TYPE egdb_type;
-  EGDB_DRIVER *handle;
-
-  /* Check that db files are present, get db type and size. */
-  status = egdb_identify(DB_PATH, &egdb_type, &max_pieces);
-  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
-
-  if (status) {
-    // printf("No database found at %s\n", DB_PATH);
-    std::exit(-1);
-  }
-  // printf("Database type %d found with max pieces %d\n", egdb_type,
-  // max_pieces);
-
-  /* Open database for probing. */
-  handle = egdb_open(EGDB_NORMAL, max_pieces, 1000, DB_PATH, print_msgs);
-  if (!handle) {
-    printf("Error returned from egdb_open()\n");
-    std::exit(-1);
-  }
-#endif
-
+  tablebase.load_table_base(DB_PATH);
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -192,19 +129,20 @@ int main(int argl, const char **argc) {
   network.load_bucket(net_file);
 
 #ifdef USEDB
-  if (parser.has_option("endgame")) {
-    std::cout << "Testing" << std::endl;
-    Position pos = Position::pos_from_fen("W:WK6:B4,3");
+  /* if (parser.has_option("endgame")) {
+     std::cout << "Testing" << std::endl;
+     Position pos = Position::pos_from_fen("W:WK6:B4,3");
 
-    pos.print_position();
-    auto result = get_tb_result(pos, max_pieces, handle);
-    auto result_string = (result == WHITE_WON)   ? "WHITE_WON"
-                         : (result == BLACK_WON) ? "BLACK_WON"
-                         : (result == DRAW)      ? "DRAW"
-                                                 : "UNKNOWN";
-    std::cout << result_string << std::endl;
-    return 0;
-  }
+     pos.print_position();
+     auto result = get_tb_result(pos, max_pieces, handle);
+     auto result_string = (result == WHITE_WON)   ? "WHITE_WON"
+                          : (result == BLACK_WON) ? "BLACK_WON"
+                          : (result == DRAW)      ? "DRAW"
+                                                  : "UNKNOWN";
+     std::cout << result_string << std::endl;
+     return 0;
+   }
+   */
 #endif
 
   if (parser.has_option("search") || parser.has_option("bench"))
@@ -221,7 +159,7 @@ int main(int argl, const char **argc) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
     } else {
-      board.get_position() = Position::get_start_position();
+      board.get_position() = Position::pos_from_fen("W:W5,29:BK3,K12");
     }
     board.get_position().print_position();
 
@@ -252,88 +190,88 @@ int main(int argl, const char **argc) {
     }
     return 0;
   }
-
-  if (parser.has_option("generate")) {
-    int child_id = -1;
-    Statistics::mPicker.init();
-    std::string next_line;
-    TT.resize(19);
-    std::vector<Position> rep_history;
-    Statistics::mPicker.clear_scores();
-    while (std::getline(std::cin, next_line)) {
-      // nextline should be a fen_string
-      if (next_line == "terminate") {
-#ifdef USEDB
-        handle->close(handle);
-#endif
-        std::exit(-1);
-      }
-      TT.clear();
+  /*
+    if (parser.has_option("generate")) {
+      int child_id = -1;
+      Statistics::mPicker.init();
+      std::string next_line;
+      TT.resize(19);
+      std::vector<Position> rep_history;
       Statistics::mPicker.clear_scores();
-      const auto start_pos = Position::pos_from_fen(next_line);
-      rep_history.clear();
+      while (std::getline(std::cin, next_line)) {
+        if (next_line == "terminate") {
+  #ifdef USEDB
+          handle->close(handle);
+  #endif
+          std::exit(-1);
+        }
+        TT.clear();
+        Statistics::mPicker.clear_scores();
+        const auto start_pos = Position::pos_from_fen(next_line);
+        rep_history.clear();
 
-      board = Board(start_pos);
-      Result result = UNKNOWN;
-      for (auto i = 0; i < 600; ++i) {
+        board = Board(start_pos);
+        Result result = UNKNOWN;
+        for (auto i = 0; i < 600; ++i) {
 
-        Move best;
-        MoveListe liste;
-        get_moves(board.get_position(), liste);
-        if (liste.length() == 0) {
-          result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
-          break;
+          Move best;
+          MoveListe liste;
+          get_moves(board.get_position(), liste);
+          if (liste.length() == 0) {
+            result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
+            break;
+          }
+
+          rep_history.emplace_back(board.get_position());
+          searchValue(board, best, MAX_PLY, time, false, std::cout);
+          board.play_move(best);
+
+          const auto last_position = rep_history.back();
+          auto count =
+              std::count(rep_history.begin(), rep_history.end(), last_position);
+          if (count >= 3) {
+            result = DRAW;
+            break;
+          }
         }
 
-        rep_history.emplace_back(board.get_position());
-        searchValue(board, best, MAX_PLY, time, false, std::cout);
-        board.play_move(best);
+        auto res_to_string = [](Result result, Color color) {
+          if ((result == BLACK_WON && color == BLACK) ||
+              (result == WHITE_WON && color == WHITE)) {
+            return "WON";
+          } else if ((result == BLACK_WON && color != BLACK) ||
+                     (result == WHITE_WON && color != WHITE)) {
+            return "LOSS";
+          } else if (result == DRAW) {
+            return "DRAW";
+          } else {
+            return "UNKNOWN";
+          }
+        };
 
-        const auto last_position = rep_history.back();
-        auto count =
-            std::count(rep_history.begin(), rep_history.end(), last_position);
-        if (count >= 3) {
-          result = DRAW;
-          break;
+        // sending all the the results back in reverse order
+        std::cout << "BEGIN" << std::endl;
+        for (int i = rep_history.size() - 1; i >= 0; --i) {
+          auto position = rep_history[i];
+          std::string result_string = "";
+  #ifdef USEDB
+          auto local_result = get_tb_result(position, max_pieces, handle);
+          if (local_result != UNKNOWN) {
+            result = local_result;
+            result_string = "TB_";
+          }
+  #endif
+          result_string.append(res_to_string(result, position.color));
+          if (position.get_color() == BLACK) {
+            position = position.get_color_flip();
+          }
+          std::cout << position.get_fen_string() << "!" << result_string
+                    << std::endl;
         }
+        std::cout << "END" << std::endl;
       }
-
-      auto res_to_string = [](Result result, Color color) {
-        if ((result == BLACK_WON && color == BLACK) ||
-            (result == WHITE_WON && color == WHITE)) {
-          return "WON";
-        } else if ((result == BLACK_WON && color != BLACK) ||
-                   (result == WHITE_WON && color != WHITE)) {
-          return "LOSS";
-        } else if (result == DRAW) {
-          return "DRAW";
-        } else {
-          return "UNKNOWN";
-        }
-      };
-
-      // sending all the the results back in reverse order
-      std::cout << "BEGIN" << std::endl;
-      for (int i = rep_history.size() - 1; i >= 0; --i) {
-        auto position = rep_history[i];
-        std::string result_string = "";
-#ifdef USEDB
-        auto local_result = get_tb_result(position, max_pieces, handle);
-        if (local_result != UNKNOWN) {
-          result = local_result;
-          result_string = "TB_";
-        }
-#endif
-        result_string.append(res_to_string(result, position.color));
-        if (position.get_color() == BLACK) {
-          position = position.get_color_flip();
-        }
-        std::cout << position.get_fen_string() << "!" << result_string
-                  << std::endl;
-      }
-      std::cout << "END" << std::endl;
     }
-  }
+  */
 
   std::string current;
   while (std::cin >> current) {
