@@ -6,6 +6,8 @@ Board game_board;
 
 int num_draw_scores = 0;
 Position previous;
+#define DB_PATH "E:\\kr_english_wld"
+
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -49,6 +51,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
 
   if (!engine_initialized) {
+    tablebase.load_table_base(DB_PATH);
     network.load_bucket("newopen12.quant");
     TT.resize(21);
     Statistics::mPicker.init();

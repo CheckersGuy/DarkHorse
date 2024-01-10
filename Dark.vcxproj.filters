@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\CheckerBoard.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Board.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\CmdParser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Endgame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\GameLogic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Line.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Move.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\MoveListe.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\MovePicker.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Network.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Perft.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Position.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Selfplay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Transposition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\CheckerBoard.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Bits.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Board.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\CmdParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Endgame.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\GameLogic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Layer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Line.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\LinearSparse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\MGenerator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Move.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\MoveListe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\MovePicker.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Network.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Perft.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Selfplay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Simd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\Transposition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\egdb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\leagu\DarkHorse\Checkers\CheckerEngineX\types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\leagu\DarkHorse\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93BB48BF-A770-35EB-8A62-7D404DC00C1A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{BDFA33A7-7A15-3BED-A6E1-DD78DD4ECD15}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

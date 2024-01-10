@@ -80,7 +80,7 @@ if(WIN32)
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
   target_compile_definitions(MainEngine PUBLIC "USEDB")
   target_link_libraries(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
-  target_link_libraries(Dark PRIVATE Threads::Threads)
+  target_link_libraries(Dark ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
 endif()
 
 
