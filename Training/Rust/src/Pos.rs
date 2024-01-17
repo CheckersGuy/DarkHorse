@@ -29,12 +29,12 @@ pub const BOARD_BIT: [usize; 32] = [
     11, 15, 18, 22, 25, 29,
 ];
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub enum Square {
-    BPAWN(usize),
-    WPAWN(usize),
-    BKING(usize),
-    WKING(usize),
+    BPAWN(u8),
+    WPAWN(u8),
+    BKING(u8),
+    WKING(u8),
 }
 
 const BRANK_BLACK: u32 = (1 << 18) | (1 << 12) | (1 << 6) | (1 << 0);
@@ -67,7 +67,7 @@ impl Iterator for PosIterator {
         }
         let trailing = occ.trailing_zeros();
         let lsb = 1u32 << trailing;
-        let index = trailing as usize;
+        let index = trailing as u8;
         //removing the lsb from partial
 
         let value: i32 = ((lsb & self.partial.bp) != 0) as i32
@@ -256,7 +256,7 @@ impl TryFrom<&str> for Position {
             _ => {
                 return Err(std::io::Error::new(
                     ErrorKind::NotFound,
-                    "Error parsing color",
+                    format!("Error parsing color when fen_string is {}", test),
                 ))
             }
         };
@@ -268,7 +268,10 @@ impl TryFrom<&str> for Position {
             let mut color: i32 = 0;
             let token_op = s.chars().next();
             if token_op == None {
-                std::io::Error::new(ErrorKind::NotFound, "Error parsing color");
+                std::io::Error::new(
+                    ErrorKind::NotFound,
+                    format!("Error parsing color when fen_string is {}", test),
+                );
             }
             match token_op {
                 Some('W') => color = 1,

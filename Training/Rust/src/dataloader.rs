@@ -1,4 +1,3 @@
-
 use crate::Sample;
 
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -8,7 +7,7 @@ use rip_shuffle::RipShuffleParallel;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::time::{Instant};
+use std::time::Instant;
 use Sample::SampleType;
 #[derive(Debug)]
 
@@ -72,12 +71,12 @@ impl DataLoader {
             }
             //Need to convert all the samples
             let transform = Instant::now();
-            /* self.shuff_buf.par_iter_mut().for_each(|sample| {
-                            if let SampleType::Fen(ref fen_string) = sample.position {
-                                sample.position = SampleType::Pos(Position::try_from(&fen_string[..]).unwrap());
-                            }
-                        });
-            */
+            self.shuff_buf.par_iter_mut().for_each(|sample| {
+                if let SampleType::Fen(ref fen_string) = sample.position {
+                    sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
+                }
+            });
+
             let elapsed = now.elapsed().as_millis();
             println!("Elapsed time {}", elapsed);
             println!("Transformation time {}", transform.elapsed().as_millis());
@@ -97,7 +96,7 @@ impl DataLoader {
                     writer.write_all((fen_string + "\n").as_bytes())?;
                 }
                 SampleType::Pos(_) => (),
-                SampleType::None => (),
+                _ => (),
             }
         }
 

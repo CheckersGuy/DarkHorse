@@ -10,8 +10,9 @@ use std::io::prelude::*;
 use std::io::BufReader;
 #[derive(Debug, Hash, PartialEq)]
 pub enum SampleType {
-    Fen(String),   //a not yet converted FenString
-    Pos(Position), //already converted to a position
+    Fen(String), //a not yet converted FenString
+    Pos(Position),
+    Squares(Vec<Square>),
     None,
 }
 
@@ -115,7 +116,7 @@ impl SampleType {
                 match m {
                     'K' => {
                         sq_str.next();
-                        let square: usize = match sq_str.as_str().parse() {
+                        let square: u8 = match sq_str.as_str().parse() {
                             Ok(n) => n,
                             Err(_) => {
                                 return Err(std::io::Error::new(
@@ -137,7 +138,7 @@ impl SampleType {
                     }
 
                     _ => {
-                        let square: usize = match sq_str.as_str().parse() {
+                        let square: u8 = match sq_str.as_str().parse() {
                             Ok(n) => n,
                             Err(_) => {
                                 return Err(std::io::Error::new(
