@@ -7,6 +7,7 @@
 
 #include "Layer.h"
 #include "Position.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstring>
@@ -16,9 +17,10 @@
 #include <memory>
 #include <ranges>
 #include <vector>
-
 class Network;
-
+Value win_eval(TB_RESULT result, Value score, Position pos);
+Value tempo_white(Position pos);
+Value tempo_black(Position pos);
 struct alignas(64) Accumulator {
   static constexpr int OutDim = 2 * 1024;
   alignas(64) int16_t black_acc[OutDim] = {0};
@@ -63,6 +65,8 @@ struct Network {
 
   // shuffle is the number of reversable /shuffle moves
   int evaluate(Position pos, int ply, int shuffle);
+
+  int get_raw_eval(Position pos);
 
   int operator[](int index);
 

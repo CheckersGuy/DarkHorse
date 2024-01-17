@@ -1,13 +1,20 @@
+#include "MGenerator.h"
+#include "Move.h"
 #include "Position.h"
 #include "egdb.h"
+#include "types.h"
+#include <cstdint>
+#include <optional>
 #include <stdio.h>
 #include <string>
-enum class TB_RESULT { WIN, LOSS, DRAW, UNKNOWN };
-
 struct TableBase {
-  EGDB_TYPE egdb_type;
   EGDB_DRIVER *handle;
-  int num_pieces{6};
+  EGDB_DRIVER *mtc_handle;
+  int num_pieces{8}; // only used for the wdl-tablebase
+  uint64_t cache_size{500};
+
+  ~TableBase();
+
   void load_table_base(std::string path);
 
   TB_RESULT probe(Position pos);

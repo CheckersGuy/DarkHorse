@@ -1,34 +1,42 @@
 #include "Endgame.h"
+#include "MGenerator.h"
+#include "egdb.h"
+#include "types.h"
+
+TableBase::~TableBase() {}
 
 void TableBase::load_table_base(std::string path) {
   int i, status, nerrors;
   int max_pieces;
+
+  EGDB_TYPE egdb_type;
   /* Check that db files are present, get db type and size. */
 
   status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
   // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
   if (max_pieces < num_pieces) {
-    std::cout << "Can not handle that many pieces" << std::endl;
+    std::cerr << "Can not handle that many pieces" << std::endl;
     std::exit(-1);
   }
   if (status) {
-    // printf("No database found at %s\n", DB_PATH);
+    printf("No database found at %s\n", path.c_str());
     std::exit(-1);
   }
-  // printf("Database type %d found with max pieces %d\n", egdb_type,
-  // max_pieces);
 
-  /* Open database for probing. */
-  handle =
-      egdb_open(EGDB_NORMAL, num_pieces, 1000, path.c_str(), [](char *msg) {});
+  handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                     [](char *msg) {});
   if (!handle) {
-    printf("Error returned from egdb_open()\n");
+    std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
   }
 }
 
 TB_RESULT TableBase::probe(Position pos) {
-  if (pos.has_jumps() || pos.piece_count() > num_pieces) {
+  // the kingsrow wld database does not have a valid value for any positions
+  // where side-to-move can capture the kingsrow database only has valid
+  // values for positions with atmost 5 pieces on one side
+  if (pos.has_jumps() || pos.piece_count() > num_pieces ||
+      Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
     return TB_RESULT::UNKNOWN;
   }
 

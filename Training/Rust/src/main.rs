@@ -4,7 +4,7 @@ pub mod Pos;
 pub mod Sample;
 pub mod dataloader;
 use Data::count_unique_samples;
-
+use Data::Generator;
 fn main() -> std::io::Result<()> {
     /*let mut dataloader =
         DataLoader::new(String::from("../TrainData/test.samples"), 1000000, false)?;
@@ -27,26 +27,27 @@ fn main() -> std::io::Result<()> {
     //Need to write some code to combine 2 or more sample files
     //which should be straight forward to add
     //
-    Data::merge_samples(
+    /* Data::merge_samples(
         vec![
             "../TrainData/newopen14.samples",
             "../TrainData/merged.samples",
         ],
         "../TrainData/merged2.samples",
     )?;
+    */
     //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
     //println!("{:?}", distribution);
 
-    //need a new opening book tomorrow
-    //soooo much not fun....
-    /*let generator = Generator::new(
+    let mut generator = Generator::new(
         String::from("../Positions/newopen2.pos"),
-        String::from("../TrainData/newopen8.samples"),
+        String::from("../TrainData/usetablebase5.samples"),
         14,
-        4000000,
+        160000000,
     );
-    */
+    generator.time = 10;
+    generator.prev_file = Some("../TrainData/usetablebase4.samples");
 
+    generator.generate_games()?;
     /*
         let squares = SampleType::Fen(String::from("B:WK19:BK15,K18"))
             .get_squares()
@@ -56,7 +57,6 @@ fn main() -> std::io::Result<()> {
             println!("{:?}", square);
         }
     */
-    //generator.generate_games()?;
 
     /* let pos = Pos::Position::try_from("B:W20,21,22,24,25,26,27,30,31,32:B2,3,4,7,8,10,11,12,14,15")
             .unwrap();

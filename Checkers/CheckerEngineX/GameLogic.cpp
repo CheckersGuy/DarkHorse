@@ -20,8 +20,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   const Position start_pos = board.get_position();
 
   board.color_us = ~board.get_mover();
-  // debug << board.get_position().get_pos_string() << std::endl;
-  // debug << "RepSize : " << board.rep_size << std::endl;
   Statistics::mPicker.decay_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
@@ -172,15 +170,13 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   if (liste.length() == 0) {
     return loss(ply);
   }
-  /*
-    if (!is_root) {
-      alpha = std::max(loss(ply), alpha);
-      beta = std::min(-loss(ply + 1), beta);
-      if (alpha >= beta) {
-        return alpha;
-      }
+  if (!is_root) {
+    alpha = std::max(loss(ply), alpha);
+    beta = std::min(-loss(ply + 1), beta);
+    if (alpha >= beta) {
+      return alpha;
     }
-    */
+  }
   auto key = board.get_current_key();
 
   Value static_eval = EVAL_INFINITE;
@@ -192,7 +188,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
   bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
-  if (in_pv && found_hash && info.flag != Flag::None && info.depth > 0) {
+  if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
 
@@ -203,7 +199,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
   if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
-      info.depth > 0) {
+      isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply);
 
@@ -234,7 +230,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     if ((tb_value > 0 && tb_value >= beta) ||
         (tb_value < 0 && tb_value <= alpha)) {
-      return tb_value;
+      // return tb_value;
+      return win_eval(result, tb_value, board.get_position());
     }
   }
   liste.sort(board.get_position(), depth, ply, tt_move, 0);
@@ -383,23 +380,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
   return best_score;
 }
-// can be applied to non tb positions as well, but thats for later
-// check constants later
-Value win_eval(TB_RESULT result, Value score, Position pos) {
-  // helper to encourage finishing the game
-  auto total_pieces = pos.piece_count();
-  auto eval = 40 * (Bits::pop_count(pos.WP) - Bits::pop_count(pos.BP));
-  eval +=
-      100 * (Bits::pop_count(pos.WP & pos.K) - Bits::pop_count(pos.BP & pos.K));
-
-  eval += (Bits::pop_count(pos.WP) -
-           Bits::pop_count(pos.BP) * (200 - total_pieces * 20));
-  // now need masks for single cornes
-  // double cornes and center squares
-
-  return score + eval * pos.color;
-}
-
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          int last_rev, Move excluded, bool is_sing_search) {
@@ -411,15 +391,14 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     throw std::string{"Time_out"};
   }
 
-  if (ply >= MAX_PLY) {
-    return network.evaluate(board.get_position(), ply,
-                            board.pCounter - last_rev);
-  }
-
   if (board.is_repetition(last_rev)) {
     return 0;
   }
 
+  if (ply >= MAX_PLY) {
+    return network.evaluate(board.get_position(), ply,
+                            board.pCounter - last_rev);
+  }
   if (ply > glob.sel_depth)
     glob.sel_depth = ply;
 
@@ -436,13 +415,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return Search::search<next_type>(board, ply, pv, alpha, beta, 1, last_rev,
                                        Move{}, is_sing_search);
     }
-    auto result = tablebase.probe(board.get_position());
-    if (result != TB_RESULT::UNKNOWN) {
-      auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
-                      : (result == TB_RESULT::LOSS) ? TB_LOSS
-                                                    : 0;
-      return tb_value;
-    }
+
     NodeInfo info;
     const auto key = board.get_current_key();
     bool found_hash = TT.find_hash(key, info);
@@ -455,7 +428,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     } else {
       net_val = network.evaluate(board.get_position(), ply,
                                  board.pCounter - last_rev);
-      TT.store_hash(in_pv, net_val, net_val, key, TT_EXACT, 0, Move{});
+
+      TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_EXACT, 0, Move{});
     }
 
     // return std::clamp(adjusted, -5500, 5500);
