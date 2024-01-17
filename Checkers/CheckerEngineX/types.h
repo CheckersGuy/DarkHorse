@@ -72,6 +72,12 @@ constexpr uint32_t OUTER_RING = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
                                 (1 << 4) | (1 << 12) | (1 << 20) | (1 << 28) |
                                 (1 << 29) | (1 << 30) | (1 << 31) | (1 << 27) |
                                 (1 << 19) | (1 << 11);
+constexpr uint32_t CENTER = (1 << 9) | (1 << 10) | (1 << 13) | (1 << 14) |
+                            (1 << 17) | (1 << 18) | (1 << 22) | (1 << 21);
+constexpr uint32_t SINGLE_CORNER = (1 << 28) | (1 << 3);
+constexpr uint32_t DOUBLE_CORNER = (1 << 0) | (1 << 4) | (1 << 31) | (1 << 27);
+constexpr std::array<uint32_t, 8> MASK_ROWS = {
+    0xf, 0xf << 4, 0xf << 8, 0xf << 12, 0xf << 16, 0xf << 20, 0xf << 24};
 
 constexpr int prob_cut = 25; // 30;
 constexpr int asp_wind = 15; // 15;
@@ -117,6 +123,8 @@ enum MoveType {
   PawnCapture,
   PromoCapture
 };
+enum class TB_RESULT { WIN = 0, LOSS = 1, DRAW = 2, UNKNOWN = 3 };
+
 inline void *std_aligned_alloc(size_t alignment, size_t size) {
 #if defined(POSIXALIGNEDALLOC)
   void *mem;
@@ -181,7 +189,6 @@ template <Color color> constexpr uint32_t forwardMask(const uint32_t maske) {
 
 template <Color color, PieceType type>
 constexpr uint32_t get_neighbour_squares(uint32_t maske) {
-
   if constexpr (type == KING) {
     uint32_t squares = defaultShift<color>(maske) | forwardMask<color>(maske);
     squares |= forwardMask<~color>(maske) | defaultShift<~color>(maske);

@@ -96,11 +96,16 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 }
 
 #define DB_PATH "E:\\kr_english_wld"
-
 int main(int argl, const char **argc) {
 
   tablebase.load_table_base(DB_PATH);
+  TableBase rescore_base;
+  rescore_base.cache_size = 100;
+  rescore_base.num_pieces = 10;
+  rescore_base.load_table_base(DB_PATH);
+
   CmdParser parser(argl, argc);
+
   parser.parse_command_line();
   Board board;
   Statistics::mPicker.init();
@@ -127,23 +132,6 @@ int main(int argl, const char **argc) {
   }
 
   network.load_bucket(net_file);
-
-#ifdef USEDB
-  /* if (parser.has_option("endgame")) {
-     std::cout << "Testing" << std::endl;
-     Position pos = Position::pos_from_fen("W:WK6:B4,3");
-
-     pos.print_position();
-     auto result = get_tb_result(pos, max_pieces, handle);
-     auto result_string = (result == WHITE_WON)   ? "WHITE_WON"
-                          : (result == BLACK_WON) ? "BLACK_WON"
-                          : (result == DRAW)      ? "DRAW"
-                                                  : "UNKNOWN";
-     std::cout << result_string << std::endl;
-     return 0;
-   }
-   */
-#endif
 
   if (parser.has_option("search") || parser.has_option("bench"))
 
@@ -190,88 +178,103 @@ int main(int argl, const char **argc) {
     }
     return 0;
   }
-  /*
-    if (parser.has_option("generate")) {
-      int child_id = -1;
-      Statistics::mPicker.init();
-      std::string next_line;
-      TT.resize(19);
-      std::vector<Position> rep_history;
-      Statistics::mPicker.clear_scores();
-      while (std::getline(std::cin, next_line)) {
-        if (next_line == "terminate") {
-  #ifdef USEDB
-          handle->close(handle);
-  #endif
-          std::exit(-1);
-        }
-        TT.clear();
-        Statistics::mPicker.clear_scores();
-        const auto start_pos = Position::pos_from_fen(next_line);
-        rep_history.clear();
-
-        board = Board(start_pos);
-        Result result = UNKNOWN;
-        for (auto i = 0; i < 600; ++i) {
-
-          Move best;
-          MoveListe liste;
-          get_moves(board.get_position(), liste);
-          if (liste.length() == 0) {
-            result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
-            break;
-          }
-
-          rep_history.emplace_back(board.get_position());
-          searchValue(board, best, MAX_PLY, time, false, std::cout);
-          board.play_move(best);
-
-          const auto last_position = rep_history.back();
-          auto count =
-              std::count(rep_history.begin(), rep_history.end(), last_position);
-          if (count >= 3) {
-            result = DRAW;
-            break;
-          }
-        }
-
-        auto res_to_string = [](Result result, Color color) {
-          if ((result == BLACK_WON && color == BLACK) ||
-              (result == WHITE_WON && color == WHITE)) {
-            return "WON";
-          } else if ((result == BLACK_WON && color != BLACK) ||
-                     (result == WHITE_WON && color != WHITE)) {
-            return "LOSS";
-          } else if (result == DRAW) {
-            return "DRAW";
-          } else {
-            return "UNKNOWN";
-          }
-        };
-
-        // sending all the the results back in reverse order
-        std::cout << "BEGIN" << std::endl;
-        for (int i = rep_history.size() - 1; i >= 0; --i) {
-          auto position = rep_history[i];
-          std::string result_string = "";
-  #ifdef USEDB
-          auto local_result = get_tb_result(position, max_pieces, handle);
-          if (local_result != UNKNOWN) {
-            result = local_result;
-            result_string = "TB_";
-          }
-  #endif
-          result_string.append(res_to_string(result, position.color));
-          if (position.get_color() == BLACK) {
-            position = position.get_color_flip();
-          }
-          std::cout << position.get_fen_string() << "!" << result_string
-                    << std::endl;
-        }
-        std::cout << "END" << std::endl;
+  if (parser.has_option("generate")) {
+    int child_id = -1;
+    Statistics::mPicker.init();
+    std::string next_line;
+    TT.resize(18);
+    std::vector<Position> rep_history;
+    Statistics::mPicker.clear_scores();
+    while (std::getline(std::cin, next_line)) {
+      if (next_line == "terminate") {
+        std::exit(-1);
       }
+      TT.clear();
+      Statistics::mPicker.clear_scores();
+      const auto start_pos = Position::pos_from_fen(next_line);
+      rep_history.clear();
+
+      board = Board(start_pos);
+      Result result = UNKNOWN;
+      for (auto i = 0; i < 600; ++i) {
+        Move best;
+        MoveListe liste;
+        get_moves(board.get_position(), liste);
+        if (liste.length() == 0) {
+          result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
+          break;
+        }
+
+        rep_history.emplace_back(board.get_position());
+        searchValue(board, best, MAX_PLY, time, false, std::cout);
+        board.play_move(best);
+
+        const auto last_position = rep_history.back();
+        auto count =
+            std::count(rep_history.begin(), rep_history.end(), last_position);
+        if (count >= 3) {
+          result = DRAW;
+          break;
+        }
+        auto local_result = rescore_base.probe(board.get_position());
+        auto raw_eval = network.get_raw_eval(board.get_position());
+        if (local_result == TB_RESULT::DRAW && i >= 60 &&
+            std::abs(raw_eval) <= 30) {
+          result = DRAW;
+          break;
+        }
+      }
+
+      auto res_to_string = [](Result result, Color color) {
+        if ((result == BLACK_WON && color == BLACK) ||
+            (result == WHITE_WON && color == WHITE)) {
+          return "WON";
+        } else if ((result == BLACK_WON && color != BLACK) ||
+                   (result == WHITE_WON && color != WHITE)) {
+          return "LOSS";
+        } else if (result == DRAW) {
+          return "DRAW";
+        } else {
+          return "UNKNOWN";
+        }
+      };
+
+      auto tb_to_result = [](Position pos, TB_RESULT tb_result) {
+        // code goes here
+        if (tb_result == TB_RESULT::DRAW) {
+          return DRAW;
+        }
+        if (tb_result == TB_RESULT::WIN) {
+          return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
+        }
+        if (tb_result == TB_RESULT::LOSS) {
+          return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
+        }
+
+        return UNKNOWN;
+      };
+
+      // sending all the the results back in reverse order
+      std::cout << "BEGIN" << std::endl;
+      for (int i = rep_history.size() - 1; i >= 0; --i) {
+        auto position = rep_history[i];
+        std::string result_string = "";
+        auto local_result =
+            tb_to_result(position, rescore_base.probe(position));
+        if (local_result != UNKNOWN) {
+          result = local_result;
+          result_string = "TB_";
+        }
+        result_string.append(res_to_string(result, position.color));
+        if (position.get_color() == BLACK) {
+          position = position.get_color_flip();
+        }
+        std::cout << position.get_fen_string() << "!" << result_string
+                  << std::endl;
+      }
+      std::cout << "END" << std::endl;
     }
-  */
+  }
 
   std::string current;
   while (std::cin >> current) {

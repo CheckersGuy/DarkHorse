@@ -46,6 +46,7 @@ struct SearchGlobal {
 };
 
 extern SearchGlobal glob;
+
 namespace Search {
 
 Value search_asp(Board &board, Value last_score, Depth depth);

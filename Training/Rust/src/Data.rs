@@ -12,10 +12,11 @@ use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs::File;
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::io::{BufRead, Write};
-
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::atomic::AtomicUsize;
@@ -34,12 +35,14 @@ pub struct Rescorer {
 }
 
 //Generator produces fen_strings
-#[derive(Debug, Default)]
-pub struct Generator {
+#[derive(Debug)]
+pub struct Generator<'a> {
     book: String,
     output: String,
     num_workers: usize,
     pub max_samples: usize,
+    pub time: usize,
+    pub prev_file: Option<&'a str>,
 }
 
 pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Result<()> {
@@ -131,7 +134,6 @@ pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
                 Err(_) => break,
             }
 
-            //sample.write_fen(&mut writer)?;
             if let Sample::SampleType::Fen(ref fen_string) = sample.position {
                 if !filter.check(fen_string) {
                     match sample.result {
@@ -280,24 +282,90 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 
-impl Generator {
-    pub fn new(book: String, output: String, num_workers: usize, max_samples: usize) -> Generator {
+impl<'a> Generator<'a> {
+    pub fn new(
+        book: String,
+        output: String,
+        num_workers: usize,
+        max_samples: usize,
+    ) -> Generator<'a> {
         Generator {
             book,
-            output,
-            num_workers,
-            max_samples,
+            output: output,
+            num_workers: num_workers,
+            max_samples: max_samples,
+            time: 10,
+            prev_file: None,
         }
     }
 
-    pub fn generate_games(self) -> std::io::Result<()> {
-        //need a bloomfilter here
-        let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<String>, Bloom<String>)> {
         let mut end_filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+        let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+
+        let mut unique_count = 0;
+        let mut total_count = 0;
+        let mut writer = File::create(self.output.clone()).unwrap();
+        if self.prev_file == None {
+            return Ok((unique_count, total_count, filter, end_filter));
+        }
+
+        //we iterate over all samples and build up the filters from there
+
+        let mut reader = BufReader::new(File::open(self.prev_file.unwrap())?);
+
+        for sample in reader.iter_samples() {
+            let pos_string = match sample.position {
+                Sample::SampleType::Fen(ref fen_string) => fen_string,
+                _ => {
+                    return Err(std::io::Error::new(
+                        std::io::ErrorKind::NotFound,
+                        "No previous file",
+                    ))
+                }
+            };
+            if !filter.check(&pos_string) {
+                unique_count += 1;
+                filter.set(&pos_string);
+            }
+            match sample.result {
+                Result::TBWIN | Result::TBLOSS | Result::TBDRAW => {
+                    if !end_filter.check(&pos_string) {
+                        end_filter.set(&pos_string);
+                        sample.write_fen(&mut writer)?;
+                    }
+                }
+                _ => {
+                    sample.write_fen(&mut writer)?;
+                }
+            }
+            total_count += 1;
+        }
+
+        println!(
+            "Read a previous file with {} unique samples and {} total samples",
+            unique_count, total_count
+        );
+        //checking and testing this stuff
+        Ok((unique_count, total_count, filter, end_filter))
+    }
+
+    pub fn generate_games(&self) -> std::io::Result<()> {
+        //need a bloomfilter here
+        //load a previous file if present
+        let (mut unique_count, mut total_count, mut filter, mut end_filter) =
+            self.load_previous_file()?;
+        let output_file = self.output.clone();
+        let time = self.time;
+        let mut writer = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(self.output.clone())
+            .unwrap();
+
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
-        let mut output = File::create(self.output.clone())?;
         let openings = Arc::new(Mutex::new(Vec::new()));
         let (tx, rx): (Sender<Vec<String>>, Receiver<Vec<String>>) = mpsc::channel();
         for line in reader.lines().skip(1) {
@@ -316,14 +384,14 @@ impl Generator {
         .unwrap()
         .progress_chars("##-"),
     );
-
+        let max_samples = self.max_samples;
         for _id in 0..self.num_workers {
             let open = Arc::clone(&openings);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
                 let mut command = Command::new("./generator2")
-                    .args(["--generate --time 10"])
+                    .args([format!("--generate --time {}", time)])
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .spawn()
@@ -371,7 +439,7 @@ impl Generator {
                     if let Err(_) = is_send {
                         break;
                     }
-                    if counter.load(std::sync::atomic::Ordering::SeqCst) >= self.max_samples {
+                    if counter.load(std::sync::atomic::Ordering::SeqCst) >= max_samples {
                         break;
                     }
                 }
@@ -383,8 +451,6 @@ impl Generator {
             });
             handles.push(handle);
         }
-        let mut unique_count = 0;
-        let mut total_count = 0;
         'game: for game in rx {
             for value in game {
                 let splits: Vec<&str> = value.split("!").collect();
@@ -416,13 +482,13 @@ impl Generator {
 
                 if sample.result != Sample::Result::UNKNOWN && !has_captures {
                     if result_string.starts_with("TB_") {
-                        if !end_filter.check(&pos) {
-                            sample.write_fen::<File>(&mut output)?;
-                            end_filter.set(&pos);
+                        if !end_filter.check(&position) {
+                            sample.write_fen::<File>(&mut writer)?;
+                            end_filter.set(&position);
                             total_count += 1;
                         }
                     } else {
-                        sample.write_fen::<File>(&mut output)?;
+                        sample.write_fen::<File>(&mut writer)?;
                         total_count += 1;
                     }
                 }
@@ -432,10 +498,12 @@ impl Generator {
         for handle in handles {
             handle.join().unwrap();
         }
-        println!("We got back {unique_count} unique samples and a total of {total_count} ");
-        //writing the file
-        drop(output);
-        let path = Path::new(self.output.as_str());
+        println!(
+            "We got back {} unique samples and a total of {} ",
+            unique_count, total_count
+        );
+        drop(writer);
+        let path = Path::new(output_file.as_str());
         prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
         Ok(())
     }
