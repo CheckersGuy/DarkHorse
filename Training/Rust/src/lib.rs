@@ -1,12 +1,12 @@
 #![feature(buf_read_has_data_left)]
-use pyo3::{prelude::*};
+use pyo3::prelude::*;
 
-use Pos::{Square};
+use Pos::Square;
 pub mod Pos;
 pub mod Sample;
 pub mod dataloader;
 use dataloader::DataLoader;
-use numpy::{PyArray1};
+use numpy::PyArray1;
 //Wrapper for the dataloader
 #[pyclass]
 struct BatchProvider {
@@ -46,59 +46,28 @@ impl BatchProvider {
             for i in 0..self.batch_size {
                 //need to add continue for not valid samples
                 let sample = self.loader.get_next().expect("Error loading sample");
-                //below seriously needs to be checked
-                /*let board_index = |index: usize| {
-                    let temp = Pos::BOARD_BIT[index];
-                    let row = temp / 4;
-                    let col = temp % 4;
-                    4 * row + 3 - col
-                    //4 * row + col
+                let squares = match sample.position {
+                    Sample::SampleType::Squares(our_squares) => our_squares,
+                    Sample::SampleType::Fen(_) => sample.position.get_squares().unwrap(),
+                    _ => Vec::new(),
                 };
-                */
-                //above changed from 4*row+3-col
-                /*let mut position = String::new();
-                if let Sample::SampleType::Fen(ref fen_string) = sample.position {
-                    position = fen_string.clone();
-                } else {
-                    println!("I suck at error handling");
-                }
-                */
-                /*
-                for square in position.iter() {
-                    match square {
-                        Square::WPAWN(index) => {
-                            in_array[120 * i + board_index(index) - 4] = 1.0;
-                        }
-                        Square::BPAWN(index) => {
-                            in_array[120 * i + board_index(index) + 28] = 1.0;
-                        }
-                        Square::WKING(index) => {
-                            in_array[120 * i + board_index(index) + 28 + 28] = 1.0;
-                        }
-                        Square::BKING(index) => {
-                            in_array[120 * i + board_index(index) + 28 + 28 + 32] = 1.0;
-                        }
-                    }
-                }
-                */
-                let mut piece_count: usize = 0;
-                let squares = sample.position.get_squares().unwrap();
+                let piece_count = squares.len();
+
                 for square in squares {
                     match square {
                         Square::WPAWN(index) => {
-                            in_array[120 * i + index - 4] = 1.0;
+                            in_array[120 * i + index as usize - 4] = 1.0;
                         }
                         Square::BPAWN(index) => {
-                            in_array[120 * i + index + 28] = 1.0;
+                            in_array[120 * i + index as usize + 28] = 1.0;
                         }
                         Square::WKING(index) => {
-                            in_array[120 * i + index + 28 + 28] = 1.0;
+                            in_array[120 * i + index as usize + 28 + 28] = 1.0;
                         }
                         Square::BKING(index) => {
-                            in_array[120 * i + index + 28 + 28 + 32] = 1.0;
+                            in_array[120 * i + index as usize + 28 + 28 + 32] = 1.0;
                         }
                     }
-                    piece_count += 1;
                 }
 
                 match sample.result {
