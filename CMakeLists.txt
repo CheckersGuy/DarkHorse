@@ -33,23 +33,22 @@ if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)
     file(GLOB THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.h)
     file(GLOB TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Training/*.cc)
-
-      file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.cpp)
-
-
-
-
+    file(GLOB PySources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.cpp)
     file(GLOB PyHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Position.h)
     list(REMOVE_ITEM TSources  ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h)
     list(REMOVE_ITEM THeaders ${CMAKE_CURRENT_SOURCE_DIR}/Training/egdb.h)
-
-
 endif ()
 
 
 file(GLOB CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.h)
 file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
+
+if (UNIX)
+  list(REMOVE_ITEM CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Endgame.h)
+  list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Endgame.cpp)
+endif()
+
 list(REMOVE_ITEM CHeaders "${CMAKE_//CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp")
 
