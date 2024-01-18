@@ -8,7 +8,7 @@ use byteorder::WriteBytesExt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-#[derive(Debug, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 pub enum SampleType {
     Fen(String), //a not yet converted FenString
     Pos(Position),
@@ -16,7 +16,7 @@ pub enum SampleType {
     None,
 }
 
-#[derive(Debug, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Hash)]
 pub enum Result {
     UNKNOWN,
     WIN,
@@ -165,7 +165,7 @@ impl SampleType {
     }
 }
 
-#[derive(Default, Hash, PartialEq, Debug)]
+#[derive(Default, Clone, Hash, PartialEq, Debug)]
 pub struct Sample {
     pub position: SampleType,
     pub eval: i16,
@@ -219,10 +219,17 @@ impl Sample {
 pub struct SampleIterator<'a> {
     reader: &'a mut BufReader<File>,
 }
+
+pub struct GameIterator<'a> {
+    reader: &'a mut BufReader<File>,
+    game: Vec<Sample>,
+}
+
 //iterator needs to be tested
 pub trait SampleIteratorTrait<'a> {
     //fn iterate_samples();
     fn iter_samples(&'a mut self) -> SampleIterator<'a>;
+    fn iter_games(&'a mut self) -> GameIterator<'a>;
 }
 
 impl<'a> Iterator for SampleIterator<'a> {
@@ -236,6 +243,35 @@ impl<'a> Iterator for SampleIterator<'a> {
         }
     }
 }
+
+impl<'a> Iterator for GameIterator<'a> {
+    type Item = Vec<Sample>;
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut prev_count = 0;
+        loop {
+            let mut sample = Sample::default();
+
+            match sample.read_into(&mut self.reader) {
+                Ok(_) => {}
+                Err(_) => break,
+            };
+
+            let squares = sample.position.get_squares().unwrap();
+            let piece_count = squares.len();
+            if piece_count >= prev_count {
+                self.game.push(sample);
+            } else {
+                let ret_val = Some(self.game.clone());
+                self.game.clear();
+                self.game.push(sample);
+                return ret_val;
+            }
+            prev_count = piece_count;
+        }
+        return None;
+    }
+}
+
 //testing this one as well
 impl<'a> SampleIterator<'a> {
     fn consume<W: Write>(&mut self, writer: &mut W) -> std::io::Result<()> {
@@ -253,12 +289,20 @@ impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
             .expect("Could not read number of samples");
         SampleIterator { reader: self }
     }
+
+    fn iter_games(&'a mut self) -> GameIterator<'a> {
+        let _num_samples = self
+            .read_u64::<LittleEndian>()
+            .expect("Could not read number of samples");
+        GameIterator {
+            reader: self,
+            game: Vec::new(),
+        }
+    }
 }
 
 impl From<(Position, Result)> for Sample {
     fn from(value: (Position, Result)) -> Self {
-        //needs to be implemented
-        //see Data.rs for code
         Sample {
             result: value.1,
             position: SampleType::Pos(value.0),
