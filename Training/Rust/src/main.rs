@@ -2,9 +2,14 @@
 pub mod Data;
 pub mod Pos;
 pub mod Sample;
+pub mod TableBase;
 pub mod dataloader;
+use std::fs::File;
+use std::io::BufReader;
 use Data::count_unique_samples;
 use Data::Generator;
+use Sample::SampleIteratorTrait;
+use TableBase::Base;
 fn main() -> std::io::Result<()> {
     /*let mut dataloader =
         DataLoader::new(String::from("../TrainData/test.samples"), 1000000, false)?;
@@ -37,17 +42,27 @@ fn main() -> std::io::Result<()> {
     */
     //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
     //println!("{:?}", distribution);
-
+    /*
     let mut generator = Generator::new(
-        String::from("../Positions/newopen2.pos"),
-        String::from("../TrainData/usetablebase5.samples"),
+        String::from("../Positions/newopen3.pos"),
+        String::from("../TrainData/usetablebase6.samples"),
         14,
         160000000,
     );
     generator.time = 10;
-    generator.prev_file = Some("../TrainData/usetablebase4.samples");
+    //generator.prev_file = Some("../TrainData/usetablebase4.samples");
 
     generator.generate_games()?;
+    */
+    /*
+        let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
+
+        let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
+        base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
+        println!("{:?}", result);
+
+    */
+
     /*
         let squares = SampleType::Fen(String::from("B:WK19:BK15,K18"))
             .get_squares()

@@ -81,6 +81,9 @@ if(WIN32)
   target_compile_definitions(MainEngine PUBLIC "USEDB")
   target_link_libraries(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
   target_link_libraries(Dark ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
+
+  add_library(RustDll SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.h ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.cpp ${CHeaders} ${CSources})
+  target_link_libraries(RustDll ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib Threads::Threads)
 endif()
 
 
