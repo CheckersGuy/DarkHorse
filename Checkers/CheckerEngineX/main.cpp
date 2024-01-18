@@ -69,8 +69,6 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
 
     if (value >= min && value <= max && !board.get_position().has_jumps()) {
       std::cout << board.get_position().get_fen_string() << std::endl;
-      // std::cout << "After evaluation: " << value << std::endl << std::endl;
-      // board.get_position().print_position();
     }
     return;
   }
@@ -97,12 +95,9 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 
 #define DB_PATH "E:\\kr_english_wld"
 int main(int argl, const char **argc) {
-
+#ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
-  TableBase rescore_base;
-  rescore_base.cache_size = 100;
-  rescore_base.num_pieces = 10;
-  rescore_base.load_table_base(DB_PATH);
+#endif
 
   CmdParser parser(argl, argc);
 
@@ -216,13 +211,6 @@ int main(int argl, const char **argc) {
           result = DRAW;
           break;
         }
-        auto local_result = rescore_base.probe(board.get_position());
-        auto raw_eval = network.get_raw_eval(board.get_position());
-        if (local_result == TB_RESULT::DRAW && i >= 60 &&
-            std::abs(raw_eval) <= 30) {
-          result = DRAW;
-          break;
-        }
       }
 
       auto res_to_string = [](Result result, Color color) {
@@ -259,12 +247,6 @@ int main(int argl, const char **argc) {
       for (int i = rep_history.size() - 1; i >= 0; --i) {
         auto position = rep_history[i];
         std::string result_string = "";
-        auto local_result =
-            tb_to_result(position, rescore_base.probe(position));
-        if (local_result != UNKNOWN) {
-          result = local_result;
-          result_string = "TB_";
-        }
         result_string.append(res_to_string(result, position.color));
         if (position.get_color() == BLACK) {
           position = position.get_color_flip();

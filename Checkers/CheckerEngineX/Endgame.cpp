@@ -1,7 +1,4 @@
 #include "Endgame.h"
-#include "MGenerator.h"
-#include "egdb.h"
-#include "types.h"
 
 TableBase::~TableBase() {}
 

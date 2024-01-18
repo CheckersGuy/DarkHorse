@@ -181,11 +181,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
   Value static_eval = EVAL_INFINITE;
 
-  // this needs to be removed
-  // and just do not probe tt at all when excluded is not empty
-
-  // gonna put tablebase stuff here
-
   bool found_hash = TT.find_hash(key, info);
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
@@ -220,6 +215,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       static_eval = network.evaluate(board.get_position(), ply, 0);
     }
   }
+
   auto result = tablebase.probe(board.get_position());
   if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
     auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
