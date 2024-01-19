@@ -5,7 +5,6 @@
 
 #include "Bits.h"
 #include "Board.h"
-#include "Endgame.h"
 #include "Line.h"
 #include "MGenerator.h"
 #include "Move.h"
@@ -17,13 +16,14 @@
 #include <algorithm>
 #include <chrono>
 #include <types.h>
-#ifdef USEDB
+
+#ifdef _WIN32
+#include "Endgame.h"
 #include "egdb.h"
+inline TableBase tablebase;
 #endif
 
 extern uint64_t nodeCounter;
-
-inline TableBase tablebase;
 
 enum NodeType {
   ROOT,

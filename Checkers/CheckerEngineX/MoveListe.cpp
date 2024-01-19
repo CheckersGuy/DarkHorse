@@ -47,19 +47,11 @@ void MoveListe::remove(Move move) {
   moveCounter = moveCounter - 1;
 }
 
-bool MoveListe::put_front(Move other) { return put_front(0, other); }
-
-bool MoveListe::put_front(int start_index, Move other) {
-  if (moveCounter <= 1)
-    return false;
-
-  auto tmp = liste[start_index];
-  for (auto i = start_index; i < moveCounter; ++i) {
-    if (liste[i] == other) {
-      liste[start_index] = other;
-      liste[i] = tmp;
-      return true;
-    }
+bool MoveListe::put_front(Move other) {
+  auto it = std::find(begin(), end(), other);
+  if (it != end()) {
+    std::swap(liste[0], *it);
+    return true;
   }
   return false;
 }

@@ -353,7 +353,7 @@ std::istream &operator>>(std::istream &stream, Position &pos) {
 
 uint32_t Position::get_correction_index() const {
   auto maske = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
-  return Bits::pext(BP | WP, maske);
+  return 2 * Bits::pext(BP | WP, maske) + (color == BLACK);
 }
 
 int Position::bucket_index() { // return (piece_count() - 1) / 6;

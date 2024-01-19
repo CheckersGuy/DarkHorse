@@ -11,7 +11,7 @@ if __name__ == "__main__":
     batch_size = 2*8192 
     epochs = 200
     model = Experimental.Network()
-    data_loader = Experimental.LitDataModule(train_data="TrainData/usetablebase5.samples",
+    data_loader = Experimental.LitDataModule(train_data="TrainData/merged2.samples",
                                       val_data="TrainData/val.train.raw.rescored",
                                        batch_size=batch_size, buffer_size=50000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
@@ -30,6 +30,6 @@ if __name__ == "__main__":
 
   
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/tablebase.ckpt");
+    trainer.fit(model, data_loader);
 
 

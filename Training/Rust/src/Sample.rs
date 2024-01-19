@@ -16,7 +16,7 @@ pub enum SampleType {
     None,
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub enum Result {
     UNKNOWN,
     WIN,
@@ -243,7 +243,7 @@ impl<'a> Iterator for SampleIterator<'a> {
         }
     }
 }
-
+//refactoring idea: GameIterator should have a member next_game and return & instead
 impl<'a> Iterator for GameIterator<'a> {
     type Item = Vec<Sample>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -272,7 +272,6 @@ impl<'a> Iterator for GameIterator<'a> {
     }
 }
 
-//testing this one as well
 impl<'a> SampleIterator<'a> {
     fn consume<W: Write>(&mut self, writer: &mut W) -> std::io::Result<()> {
         while let Some(sample) = self.next() {

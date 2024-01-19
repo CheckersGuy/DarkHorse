@@ -111,7 +111,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "newopen12.quant";
+    net_file = "newopen17.quant";
   }
 
   if (parser.has_option("time")) {

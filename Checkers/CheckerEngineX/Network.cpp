@@ -263,6 +263,8 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
   if (pos.WP == 0 && pos.color == WHITE) {
     return loss(ply);
   }
+
+#ifdef _WIN32
   auto result = tablebase.probe(pos);
   if (result != TB_RESULT::UNKNOWN) {
     auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
@@ -271,11 +273,18 @@ int Network::evaluate(Position pos, int ply, int shuffle) {
     // return tb_value;
     return win_eval(result, tb_value, pos);
   }
+
+#endif
   // trying some heuristic for endgames
 
-  const auto nnue = *compute_incre_forward_pass(pos);
-  auto eval = (nnue);
-  return eval;
+  auto nnue = *compute_incre_forward_pass(pos);
+  const int max_score = 620;
+  nnue = std::clamp(nnue, -max_score, max_score);
+  if (std::abs(nnue) >= max_score && Bits::pop_count(pos.BP | pos.WP) <= 10) {
+    return win_eval((nnue > 0) ? TB_RESULT::WIN : TB_RESULT::LOSS, nnue, pos);
+  }
+
+  return nnue;
 }
 
 int Network::get_raw_eval(Position pos) {

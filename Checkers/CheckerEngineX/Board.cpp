@@ -100,9 +100,11 @@ uint64_t hash(uint64_t x) {
 }
 uint64_t Board::get_current_key() const {
   const Position p = pStack[pCounter];
-  uint64_t first =
-      static_cast<uint64_t>(p.BP) | (static_cast<uint64_t>(p.WP) << 32);
-  uint64_t second = static_cast<uint64_t>(p.K);
+  uint64_t first = static_cast<uint64_t>(p.BP & (~p.K)) |
+                   (static_cast<uint64_t>(p.WP & (~p.K)) << 32);
+  uint64_t second = static_cast<uint64_t>(p.BP & (p.K)) |
+                    (static_cast<uint64_t>(p.WP & (p.K)) << 32);
+
   auto comb_hash = hash_combine(hash(first), hash(second));
   if (get_mover() == BLACK) {
     comb_hash ^= BLACK_RANDOM;
