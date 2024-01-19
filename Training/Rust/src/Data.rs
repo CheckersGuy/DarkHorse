@@ -284,20 +284,18 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 }
 
 #[cfg(target_os = "windows")]
-pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) -> usize {
+pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     let last = game.last().unwrap().clone();
-    let mut tb_hits = 0;
     let mut local_result = last.result;
     for sample in game {
         //probing tablebase
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
-            _ => return tb_hits,
+            _ => return,
         };
         let result = base.probe(fen_string).unwrap();
         if result != Result::UNKNOWN {
             local_result = result;
-            tb_hits += 1;
         }
         let piece_count = sample.position.get_squares().unwrap().len();
         if piece_count > 10 {
@@ -311,17 +309,30 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) -> u
             sample.result = local_result;
         }
     }
-    tb_hits
 }
-//#[cfg(target_os = "windows")]
+#[cfg(target_os = "windows")]
 pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.1);
+    let mut writer = File::create(output)?;
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     for game in reader.iter_games() {
         let mut borrow_game = game.clone();
         rescore_game(&mut borrow_game, base);
 
-        //and so on
+        for sample in game {
+            match sample.result {
+                Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
+                    if !filter.check(&sample.position) {
+                        filter.set(&sample.position);
+                        sample.write_fen(&mut writer)?;
+                    }
+                }
+                Result::UNKNOWN => {}
+                _ => {
+                    sample.write_fen(&mut writer)?;
+                }
+            }
+        }
     }
 
     Ok(())

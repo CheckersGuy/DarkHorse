@@ -42,18 +42,17 @@ fn main() -> std::io::Result<()> {
     */
     //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
     //println!("{:?}", distribution);
-    /*
+
     let mut generator = Generator::new(
-        String::from("../Positions/newopen3.pos"),
-        String::from("../TrainData/usetablebase6.samples"),
+        String::from("../Positions/newopen4.pos"),
+        String::from("../TrainData/newtry.samples"),
         14,
-        160000000,
+        1000000,
     );
     generator.time = 10;
     //generator.prev_file = Some("../TrainData/usetablebase4.samples");
-
     generator.generate_games()?;
-    */
+
     /*
         let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
 
