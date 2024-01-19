@@ -496,7 +496,16 @@ impl<'a> Generator<'a> {
                 }
                 let pos = Position::try_from(position.as_str())?;
                 let has_captures: bool = pos.get_jumpers::<1>() != 0;
-                if !filter.check(&position) && !has_captures {
+
+                //writing the samples to our file
+                let mut sample = Sample::Sample::default();
+                sample.position = SampleType::Fen(position.clone());
+                sample.result = Sample::Result::from(result_string.as_str());
+
+                if !filter.check(&position)
+                    && !has_captures
+                    && sample.result != Sample::Result::UNKNOWN
+                {
                     unique_count += 1;
                     filter.set(&position);
                     bar.inc(1);
@@ -507,10 +516,6 @@ impl<'a> Generator<'a> {
                         break 'game;
                     }
                 }
-                //writing the samples to our file
-                let mut sample = Sample::Sample::default();
-                sample.position = SampleType::Fen(position.clone());
-                sample.result = Sample::Result::from(result_string.as_str());
 
                 if cfg!(debug_assertions) {
                     if sample.result == Sample::Result::UNKNOWN {
