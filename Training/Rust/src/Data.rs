@@ -542,10 +542,12 @@ impl<'a> Generator<'a> {
                 let mut sample = Sample::Sample::default();
                 sample.position = SampleType::Fen(position.clone());
                 sample.result = Sample::Result::from(result_string.as_str());
-                if sample.result == Sample::Result::UNKNOWN {
-                    println!("Error {result_string}");
-                }
 
+                if cfg!(debug_assertions) {
+                    if sample.result == Sample::Result::UNKNOWN {
+                        println!("Error {result_string}");
+                    }
+                }
                 if sample.result != Sample::Result::UNKNOWN && !has_captures {
                     if result_string.starts_with("TB_") {
                         if !end_filter.check(&position) {

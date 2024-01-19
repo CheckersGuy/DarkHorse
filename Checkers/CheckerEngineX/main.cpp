@@ -174,16 +174,22 @@ int main(int argl, const char **argc) {
     return 0;
   }
   if (parser.has_option("generate")) {
+    int adj_threshhold = 20;
     int child_id = -1;
     Statistics::mPicker.init();
     std::string next_line;
     TT.resize(18);
     std::vector<Position> rep_history;
     Statistics::mPicker.clear_scores();
+    std::vector<Value> values;
+    values.reserve(adj_threshhold);
     while (std::getline(std::cin, next_line)) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
+      values.clear();
+      Value last_adj = EVAL_INFINITE;
+      int adj_count = 0;
       TT.clear();
       Statistics::mPicker.clear_scores();
       const auto start_pos = Position::pos_from_fen(next_line);
@@ -191,6 +197,7 @@ int main(int argl, const char **argc) {
 
       board = Board(start_pos);
       Result result = UNKNOWN;
+
       for (auto i = 0; i < 600; ++i) {
         Move best;
         MoveListe liste;
@@ -201,7 +208,8 @@ int main(int argl, const char **argc) {
         }
 
         rep_history.emplace_back(board.get_position());
-        searchValue(board, best, MAX_PLY, time, false, std::cout);
+        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
+        const auto kings = board.get_position().K;
         board.play_move(best);
 
         const auto last_position = rep_history.back();
@@ -210,6 +218,25 @@ int main(int argl, const char **argc) {
         if (count >= 3) {
           result = DRAW;
           break;
+        }
+        const auto pos = board.get_position();
+        if (Bits::pop_count(pos.BP | pos.WP) <= 10) {
+          // any advancing moves resets the adj-values
+          if (best.is_capture() || best.is_pawn_move(kings)) {
+            values.clear();
+          }
+          values.emplace_back(value);
+
+          if (values.size() >= adj_threshhold) {
+            Value average = 0;
+            for (auto v : values) {
+              average += std::abs(v);
+            }
+            average = average / values.size();
+            if (average <= 5) {
+              break;
+            }
+          }
         }
       }
 
