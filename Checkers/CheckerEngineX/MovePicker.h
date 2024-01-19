@@ -13,7 +13,7 @@
 
 namespace Statistics {
 class MovePicker {
-  static constexpr int MAX_HISTORY = 32 * 65536;
+  static constexpr int MAX_HISTORY = 64 * 65536;
 
 private:
   std::array<int, 32 * 16> history{0};

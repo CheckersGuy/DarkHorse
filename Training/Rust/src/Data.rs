@@ -1,6 +1,7 @@
 use crate::Pos::Position;
 use crate::Sample;
 use crate::Sample::SampleIteratorTrait;
+use crate::TableBase;
 use bloomfilter::reexports::bit_vec::BitBlock;
 use bloomfilter::Bloom;
 use byteorder::LittleEndian;
@@ -280,6 +281,50 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     count_positions(path, |pos| {
         (pos.bp.count_ones() + pos.wp.count_ones()) as usize <= count
     })
+}
+
+#[cfg(target_os = "windows")]
+pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) -> usize {
+    let last = game.last().unwrap().clone();
+    let mut tb_hits = 0;
+    let mut local_result = last.result;
+    for sample in game {
+        //probing tablebase
+        let fen_string = match sample.position {
+            Sample::SampleType::Fen(ref fen) => fen,
+            _ => return tb_hits,
+        };
+        let result = base.probe(fen_string).unwrap();
+        if result != Result::UNKNOWN {
+            local_result = result;
+            tb_hits += 1;
+        }
+        let piece_count = sample.position.get_squares().unwrap().len();
+        if piece_count > 10 {
+            sample.result = match local_result {
+                Result::TBWIN => Result::WIN,
+                Result::TBLOSS => Result::LOSS,
+                Result::TBDRAW => Result::DRAW,
+                _ => local_result,
+            }
+        } else {
+            sample.result = local_result;
+        }
+    }
+    tb_hits
+}
+//#[cfg(target_os = "windows")]
+pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.1);
+    for game in reader.iter_games() {
+        let mut borrow_game = game.clone();
+        rescore_game(&mut borrow_game, base);
+
+        //and so on
+    }
+
+    Ok(())
 }
 
 impl<'a> Generator<'a> {

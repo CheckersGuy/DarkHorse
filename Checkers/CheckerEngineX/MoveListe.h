@@ -35,8 +35,6 @@ public:
 
   bool put_front(Move other);
 
-  bool put_front(int start_index, Move other);
-
   void remove(Move move);
 
   void reset();

@@ -93,7 +93,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
       break;
     }
     const int age_entry = age_counter - entry.age;
-    int score = entry.depth - 7 * std::max(age_entry, 0);
+    int score = 5 * entry.depth - 7 * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
       replace = entry;
