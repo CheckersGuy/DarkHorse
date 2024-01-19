@@ -142,7 +142,7 @@ int main(int argl, const char **argc) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
     } else {
-      board.get_position() = Position::pos_from_fen("W:W5,29:BK3,K12");
+      board.get_position() = Position::get_start_position();
     }
     board.get_position().print_position();
 
@@ -234,6 +234,7 @@ int main(int argl, const char **argc) {
             }
             average = average / values.size();
             if (average <= 5) {
+              result = DRAW; // all still experimental
               break;
             }
           }
@@ -275,9 +276,6 @@ int main(int argl, const char **argc) {
         auto position = rep_history[i];
         std::string result_string = "";
         result_string.append(res_to_string(result, position.color));
-        if (position.get_color() == BLACK) {
-          position = position.get_color_flip();
-        }
         std::cout << position.get_fen_string() << "!" << result_string
                   << std::endl;
       }

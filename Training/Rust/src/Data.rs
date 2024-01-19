@@ -26,14 +26,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use Sample::{Result, SampleType};
-//Rescorer takes fen/pdn strings and scores them
-#[derive(Debug, Default)]
-pub struct Rescorer {
-    path: String,
-    output: String,
-    num_workers: usize,
-    pub max_rescores: Option<usize>,
-}
 
 //Generator produces fen_strings
 #[derive(Debug)]
@@ -117,53 +109,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     prepend_file(format!("{u_count}\n").as_str().as_bytes(), &output)?;
     Ok(())
 }
-//refactoring here somehow
-pub fn merge_samples(samples: Vec<&str>, output: &str) -> std::io::Result<()> {
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
-    let mut writer = File::create(output)?;
-    let mut unique_count: usize = 0;
-    let mut total_count = 0;
-    for file in samples {
-        let mut reader = File::open(file)?;
-        //first read the number of positions in the file
-        let num_data = reader.read_u64::<LittleEndian>()?;
 
-        for _ in 0..num_data {
-            let mut sample = Sample::Sample::default();
-            match sample.read_into(&mut reader) {
-                Ok(_) => {}
-                Err(_) => break,
-            }
-
-            if let Sample::SampleType::Fen(ref fen_string) = sample.position {
-                if !filter.check(fen_string) {
-                    match sample.result {
-                        Result::TBWIN | Result::TBLOSS | Result::TBDRAW => {
-                            sample.write_fen(&mut writer)?;
-                            total_count += 1;
-                        }
-                        _ => (),
-                    }
-                    unique_count += 1;
-                    filter.set(fen_string);
-                }
-                match sample.result {
-                    Result::WIN | Result::LOSS | Result::DRAW => {
-                        sample.write_fen(&mut writer)?;
-                        total_count += 1;
-                    }
-                    _ => (),
-                }
-            }
-        }
-    }
-    drop(writer);
-    let path = Path::new(output);
-    prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
-    println!("We processed {total_count} samples and found {unique_count} unique samples");
-    Ok(())
-}
-//refactoring here
 pub fn material_distrib(path: &str) -> std::io::Result<HashMap<u32, usize>> {
     let mut my_map = HashMap::new();
     let mut reader = BufReader::new(File::open(path)?);
@@ -285,29 +231,52 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 
 #[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
+    let get_mover = |fen: &str| -> i32 {
+        match fen.chars().next() {
+            Some('W') => 1,
+            Some('B') => -1,
+            _ => 0,
+        }
+    };
+
     let last = game.last().unwrap().clone();
-    let mut local_result = last.result;
+    let fen_string = match last.position {
+        Sample::SampleType::Fen(ref fen) => fen,
+        _ => return,
+    };
+    let mut local_result = (get_mover(fen_string), last.result);
+
     for sample in game {
         //probing tablebase
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
             _ => return,
         };
-        let result = base.probe(fen_string).unwrap();
-        if result != Result::UNKNOWN {
+        let mover = get_mover(fen_string);
+        let result = (mover, base.probe(fen_string).unwrap());
+        if result.1 != Result::UNKNOWN {
             local_result = result;
         }
+
         let piece_count = sample.position.get_squares().unwrap().len();
+        let mut adj_result;
         if piece_count > 10 {
-            sample.result = match local_result {
+            adj_result = match local_result.1 {
                 Result::TBWIN => Result::WIN,
                 Result::TBLOSS => Result::LOSS,
                 Result::TBDRAW => Result::DRAW,
-                _ => local_result,
+                _ => local_result.1,
             }
         } else {
-            sample.result = local_result;
+            adj_result = local_result.1;
         }
+        if mover != local_result.0 {
+            adj_result = !adj_result;
+        }
+        if mover == -1 {
+            sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
+        }
+        sample.result = adj_result;
     }
 }
 #[cfg(target_os = "windows")]
