@@ -30,6 +30,7 @@ pub const BOARD_BIT: [usize; 32] = [
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
+//squares should be 0-index (where fen_strings are 1-index)
 pub enum Square {
     BPAWN(u8),
     WPAWN(u8),
@@ -83,6 +84,22 @@ impl Iterator for PosIterator {
             4 => Some(Square::BKING(index)),
             5 => Some(Square::WKING(index)),
             _ => None,
+        }
+    }
+}
+
+impl Square {
+    pub fn invert(&self) -> Square {
+        let inv_sq = |sq: &u8| -> u8 {
+            let row = sq / 4;
+            let col = sq % 4;
+            4 * (7 - row) + 3 - col
+        };
+        match self {
+            Square::BPAWN(ind) => Square::WPAWN(inv_sq(ind)),
+            Square::WPAWN(ind) => Square::BPAWN(inv_sq(ind)),
+            Square::BKING(ind) => Square::WKING(inv_sq(ind)),
+            Square::WKING(ind) => Square::BKING(inv_sq(ind)),
         }
     }
 }

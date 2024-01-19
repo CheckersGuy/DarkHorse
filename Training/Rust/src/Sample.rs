@@ -53,6 +53,21 @@ impl From<i8> for Result {
     }
 }
 
+impl std::ops::Not for Result {
+    type Output = Self;
+    fn not(self) -> Self::Output {
+        match self {
+            Result::WIN => Result::LOSS,
+            Result::LOSS => Result::WIN,
+            Result::DRAW => Result::DRAW,
+            Result::TBLOSS => Result::TBWIN,
+            Result::TBWIN => Result::TBLOSS,
+            Result::TBDRAW => Result::TBDRAW,
+            _ => self,
+        }
+    }
+}
+
 impl From<&str> for Result {
     fn from(item: &str) -> Self {
         match item {
@@ -162,6 +177,43 @@ impl SampleType {
             }
         }
         Ok(squares)
+    }
+
+    pub fn invert_fen_string(fen_string: &str) -> Option<String> {
+        //some workaround
+        let position = SampleType::Fen(String::from(fen_string));
+        let squares = position.get_squares().unwrap();
+        let mut white_fen = String::from("W");
+        let mut black_fen = String::from("B");
+
+        let color = match fen_string.chars().next() {
+            Some('B') => 'W',
+            Some('W') => 'B',
+            _ => {
+                return None;
+            }
+        };
+
+        for square in squares.iter() {
+            let inv_square = square.invert();
+            match inv_square {
+                Square::WPAWN(ind) => {
+                    white_fen.push_str(format!("{},", ind + 1).as_str());
+                }
+                Square::BPAWN(ind) => {
+                    black_fen.push_str(format!("{},", ind + 1).as_str());
+                }
+                Square::WKING(ind) => {
+                    white_fen.push_str(format!("K{},", ind + 1).as_str());
+                }
+                Square::BKING(ind) => {
+                    black_fen.push_str(format!("K{},", ind + 1).as_str());
+                }
+            }
+        }
+        white_fen.pop();
+        black_fen.pop();
+        Some(format!("{}:{}:{}", color, white_fen, black_fen))
     }
 }
 

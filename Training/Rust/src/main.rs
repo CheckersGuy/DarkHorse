@@ -8,6 +8,7 @@ use std::fs::File;
 use std::io::BufReader;
 use Data::count_unique_samples;
 use Data::Generator;
+use Pos::Square;
 use Sample::SampleIteratorTrait;
 use TableBase::Base;
 fn main() -> std::io::Result<()> {
@@ -44,13 +45,19 @@ fn main() -> std::io::Result<()> {
     //println!("{:?}", distribution);
     let mut generator = Generator::new(
         String::from("../Positions/newopen4.pos"),
-        String::from("../TrainData/newtry2.samples"),
+        String::from("../TrainData/newtry3.samples"),
         14,
-        4000000,
+        1000000,
     );
     generator.time = 10;
     //generator.prev_file = Some("../TrainData/usetablebase4.samples");
     generator.generate_games()?;
+    /*
+        println!(
+            "{}",
+            Sample::SampleType::invert_fen_string("B:W22,K26,K27:B6,7,K15").unwrap()
+        );
+    */
     //let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
     /*
         let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
