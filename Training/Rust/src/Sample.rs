@@ -218,11 +218,13 @@ impl Sample {
 
 pub struct SampleIterator<'a> {
     reader: &'a mut BufReader<File>,
+    pub num_samples: u64,
 }
 
 pub struct GameIterator<'a> {
     reader: &'a mut BufReader<File>,
     game: Vec<Sample>,
+    pub num_samples: u64,
 }
 
 //iterator needs to be tested
@@ -271,7 +273,7 @@ impl<'a> Iterator for GameIterator<'a> {
         return None;
     }
 }
-
+//to be implemented
 impl<'a> SampleIterator<'a> {
     fn consume<W: Write>(&mut self, writer: &mut W) -> std::io::Result<()> {
         while let Some(sample) = self.next() {
@@ -283,19 +285,23 @@ impl<'a> SampleIterator<'a> {
 
 impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
     fn iter_samples(&'a mut self) -> SampleIterator<'a> {
-        let _num_samples = self
+        let num = self
             .read_u64::<LittleEndian>()
             .expect("Could not read number of samples");
-        SampleIterator { reader: self }
+        SampleIterator {
+            reader: self,
+            num_samples: num,
+        }
     }
 
     fn iter_games(&'a mut self) -> GameIterator<'a> {
-        let _num_samples = self
+        let num = self
             .read_u64::<LittleEndian>()
             .expect("Could not read number of samples");
         GameIterator {
             reader: self,
             game: Vec::new(),
+            num_samples: num,
         }
     }
 }

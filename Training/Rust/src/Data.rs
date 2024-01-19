@@ -315,26 +315,36 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = File::create(output)?;
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let mut total_count = 0;
+    let mut written_count: u64 = 0;
     for game in reader.iter_games() {
         let mut borrow_game = game.clone();
         rescore_game(&mut borrow_game, base);
-
-        for sample in game {
+        for sample in borrow_game {
+            total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
                     if !filter.check(&sample.position) {
                         filter.set(&sample.position);
                         sample.write_fen(&mut writer)?;
+                        written_count += 1;
                     }
                 }
                 Result::UNKNOWN => {}
                 _ => {
                     sample.write_fen(&mut writer)?;
+                    written_count += 1;
                 }
             }
         }
     }
-
+    drop(writer);
+    let path = Path::new(output);
+    prepend_file((written_count as u64).to_le_bytes().as_slice(), &path)?;
+    println!(
+        "Got back a total of {} while processing {} samples",
+        written_count, total_count
+    );
     Ok(())
 }
 
