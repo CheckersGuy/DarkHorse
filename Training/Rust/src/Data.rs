@@ -150,9 +150,10 @@ pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
     }
     Ok(my_map)
 }
-
+#[cfg(target_os = "linux")]
 fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
     //let tmp_path = Temp::new_file()?;
+
     let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
     let mut tmp = File::create(&tmp_path)?;
     let mut src = File::open(&file_path)?;
@@ -163,6 +164,21 @@ fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<(
 
     Ok(())
 }
+
+#[cfg(target_os = "windows")]
+fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
+    //let tmp_path = Temp::new_file()?;
+    let tmp_path = Path::new("E:/tempsamples.samples"); //temporary fix
+    let mut tmp = File::create(&tmp_path)?;
+    let mut src = File::open(&file_path)?;
+    tmp.write_all(&data)?;
+    std::io::copy(&mut src, &mut tmp)?;
+    std::fs::remove_file(file_path)?;
+    std::fs::rename(&tmp_path, file_path)?;
+
+    Ok(())
+}
+
 //Refactoring this as well
 pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
     //to be implemented
