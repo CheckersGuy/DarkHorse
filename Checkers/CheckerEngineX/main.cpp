@@ -87,7 +87,6 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
 }
 
 void generate_book(int depth, Position pos, Value min_value, Value max_value) {
-
   std::unordered_set<Position> hashset;
   Board board(pos);
   recurse(board, hashset, depth, min_value, max_value);
@@ -111,7 +110,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "newopen17.quant";
+    net_file = "final1.quant";
   }
 
   if (parser.has_option("time")) {
@@ -174,7 +173,7 @@ int main(int argl, const char **argc) {
     return 0;
   }
   if (parser.has_option("generate")) {
-    int adj_threshhold = 20;
+    int adj_threshold = 25;
     int child_id = -1;
     Statistics::mPicker.init();
     std::string next_line;
@@ -182,7 +181,7 @@ int main(int argl, const char **argc) {
     std::vector<Position> rep_history;
     Statistics::mPicker.clear_scores();
     std::vector<Value> values;
-    values.reserve(adj_threshhold);
+    values.reserve(adj_threshold);
     while (std::getline(std::cin, next_line)) {
       if (next_line == "terminate") {
         std::exit(-1);
@@ -227,7 +226,7 @@ int main(int argl, const char **argc) {
           }
           values.emplace_back(value);
 
-          if (values.size() >= adj_threshhold) {
+          if (values.size() >= adj_threshold) {
             Value average = 0;
             for (auto v : values) {
               average += std::abs(v);
@@ -253,21 +252,6 @@ int main(int argl, const char **argc) {
         } else {
           return "UNKNOWN";
         }
-      };
-
-      auto tb_to_result = [](Position pos, TB_RESULT tb_result) {
-        // code goes here
-        if (tb_result == TB_RESULT::DRAW) {
-          return DRAW;
-        }
-        if (tb_result == TB_RESULT::WIN) {
-          return (pos.color == BLACK) ? BLACK_WON : WHITE_WON;
-        }
-        if (tb_result == TB_RESULT::LOSS) {
-          return (pos.color == BLACK) ? WHITE_WON : BLACK_WON;
-        }
-
-        return UNKNOWN;
       };
 
       // sending all the the results back in reverse order

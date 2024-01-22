@@ -41,16 +41,14 @@ fn main() -> std::io::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    //let distribution = Data::material_distrib("../TrainData/testing2.samples")?;
-    //println!("{:?}", distribution);
     let mut generator = Generator::new(
         String::from("../Positions/newopen4.pos"),
-        String::from("../TrainData/newtry3.samples"),
+        String::from("/mnt/e/newtry9.samples"),
         14,
         1000000,
     );
     generator.time = 10;
-    //generator.prev_file = Some("../TrainData/usetablebase4.samples");
+    //generator.prev_file = Some("/mnt/e/newtry7rescored.samples");
     generator.generate_games()?;
     /*
         println!(
@@ -71,20 +69,6 @@ fn main() -> std::io::Result<()> {
         &base,
     )
     .unwrap();
-    */
-    /*
-        let squares = SampleType::Fen(String::from("B:WK19:BK15,K18"))
-            .get_squares()
-            .unwrap();
-
-        for square in squares {
-            println!("{:?}", square);
-        }
-    */
-
-    /* let pos = Pos::Position::try_from("B:W20,21,22,24,25,26,27,30,31,32:B2,3,4,7,8,10,11,12,14,15")
-            .unwrap();
-        pos.print_position();
     */
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
