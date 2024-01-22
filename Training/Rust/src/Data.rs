@@ -153,7 +153,7 @@ pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
 
 fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
     //let tmp_path = Temp::new_file()?;
-    let tmp_path = Path::new("/mnt/e"); //temporary fix
+    let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
     let mut tmp = File::create(&tmp_path)?;
     let mut src = File::open(&file_path)?;
     tmp.write_all(&data)?;
