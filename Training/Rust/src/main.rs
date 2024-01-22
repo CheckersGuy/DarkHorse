@@ -41,7 +41,7 @@ fn main() -> std::io::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
+    /*let mut generator = Generator::new(
         String::from("../Positions/newopen4.pos"),
         String::from("/mnt/e/newtry9.samples"),
         14,
@@ -50,26 +50,22 @@ fn main() -> std::io::Result<()> {
     generator.time = 10;
     //generator.prev_file = Some("/mnt/e/newtry7rescored.samples");
     generator.generate_games()?;
+    */
     /*
         println!(
             "{}",
             Sample::SampleType::invert_fen_string("B:W22,K26,K27:B6,7,K15").unwrap()
         );
     */
-    //let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
     /*
         let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-    /*
-    Data::rescore_games(
-        "../TrainData/newtry.samples",
-        "../TrainData/newtryrescored.samples",
-        &base,
-    )
-    .unwrap();
-    */
+
+    Data::rescore_games("E:/newtry9.samples", "E:/newtry9rescored.samples", &base).unwrap();
+
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
     //
