@@ -46,8 +46,6 @@ class Network(pl.LightningModule):
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
 
-
-
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
         l1c = torch.clamp(l1c,0.0,1.0)
@@ -59,7 +57,6 @@ class Network(pl.LightningModule):
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
         out = torch.sigmoid(l3c)
-
         return out
 
 
@@ -105,12 +102,8 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = torch.optim.AdamW(self.parameters(),lr=1e-3,weight_decay=0)
         optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
-        #optimizer = RangerAdaBelief(self.parameters(),lr=1e-3)
-        #optimizer = adabelief_pytorch.AdaBelief(self.parameters(),lr=1e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
-        #scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer,steps_per_epoch=60000,epochs=120,max_lr=3e-3,cycle_momentum=False)
         return [optimizer],[scheduler]
 
 
@@ -127,9 +120,6 @@ class Network(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         result,evalu, move,buckets,psqt_buckets, x = val_batch
-       # evalu = evalu.to(dtype=torch.float32)
-        #evalu=evalu/64.0;
-        #evalu=torch.sigmoid(evalu)
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2.0).mean()
         self.log('val_loss', loss.detach())
@@ -137,7 +127,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("final0.quant")
+        self.save_quantized_bucket("final3.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -150,8 +140,6 @@ class Network(pl.LightningModule):
                #write the header file
         min16 = np.iinfo(np.int16).min
         max16 = np.iinfo(np.int16).max
-
-
         device = torch.device("cpu")
         device_gpu = torch.device("cuda")
         self.to(device)

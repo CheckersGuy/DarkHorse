@@ -31,30 +31,6 @@ void Board::print_board() const {
 
 void Board::play_move(Move move) {
   Position copy = get_position();
-  /*
-    const bool is_not_rev = move.is_capture() || move.is_pawn_move(copy.K);
-    if (is_not_rev && copy.color == color_us) {
-      // debug << "Non Reversible move" << std::endl;
-      rep_size = 0;
-    } else if (copy.color == color_us) {
-      // debug << "New entry in repetition history" << std::endl;
-      rep_history[rep_size++] = copy;
-    }
-  */
-  /*debug << "Color_Us : "
-        << ((color_us == BLACK)   ? "BLACK"
-            : (color_us == WHITE) ? "WHITE"
-                                  : " NONE")
-        << std::endl;
-        */
-  /*
-    debug << "CopyColor : "
-          << ((copy.color == BLACK)   ? "BLACK"
-              : (copy.color == WHITE) ? "WHITE"
-                                      : " NONE")
-          << std::endl;
-  */
-
   copy.make_move(move);
   rep_history[rep_size++] = copy;
   pCounter = 0;
