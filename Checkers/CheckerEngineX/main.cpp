@@ -110,7 +110,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
   } else {
-    net_file = "final1.quant";
+    net_file = "final4check.quant";
   }
 
   if (parser.has_option("time")) {
