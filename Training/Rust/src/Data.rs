@@ -250,7 +250,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 
-#[cfg(target_os = "windows")]
+//#[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     let get_mover = |fen: &str| -> i32 {
         match fen.chars().next() {
@@ -259,6 +259,21 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             _ => 0,
         }
     };
+
+    let mut counter = 0;
+    for sample in game.iter() {
+        let fen_string = match sample.position {
+            Sample::SampleType::Fen(ref fen) => fen,
+            _ => return,
+        };
+        if get_mover(fen_string) == 1 {
+            counter += 1;
+        }
+    }
+    if counter == game.len() {
+        //game has previously been rescored
+        return;
+    }
 
     let last = game.last().unwrap().clone();
     let fen_string = match last.position {
@@ -416,7 +431,7 @@ impl<'a> Generator<'a> {
             total_count += 1;
             bar.inc(1)
         }
-        writer.flush();
+        writer.flush().expect("Flush Error");
         println!(
             "Read a previous file with {} unique samples and {} total samples",
             unique_count, total_count
@@ -513,7 +528,7 @@ impl<'a> Generator<'a> {
                     if let Err(_) = is_send {
                         break;
                     }
-                    if counter.load(std::sync::atomic::Ordering::SeqCst) >= max_samples {
+                    if counter.load(std::sync::atomic::Ordering::Relaxed) >= max_samples {
                         break;
                     }
                 }
@@ -577,7 +592,7 @@ impl<'a> Generator<'a> {
             "We got back {} unique samples and a total of {} ",
             unique_count, total_count
         );
-        writer.flush();
+        writer.flush().expect("Could not flush writer");
         drop(writer);
         let path = Path::new(output_file.as_str());
         prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
