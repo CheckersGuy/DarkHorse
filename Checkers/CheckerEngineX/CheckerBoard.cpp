@@ -52,7 +52,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     tablebase.load_table_base(DB_PATH);
-    network.load_bucket("newopen12.quant");
+    network.load_bucket("final5.quant");
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;
