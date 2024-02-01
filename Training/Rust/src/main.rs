@@ -44,27 +44,6 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
 
-    let mut distribution = Data::material_distrib("/mnt/e/newtry11rescored.samples")
-        .with_context(|| "Error loading file")?;
-
-    for ind in 1..24 {
-        println!(
-            "Count {} and value {}",
-            ind,
-            *distribution.entry(ind).or_insert(0)
-        );
-    }
-
-    let mut distribution = Data::material_distrib("/mnt/e/newtry10rescored.samples")
-        .with_context(|| "Error loading file")?;
-
-    for ind in 1..24 {
-        println!(
-            "Count {} and value {}",
-            ind,
-            *distribution.entry(ind).or_insert(0)
-        );
-    }
     /*
         let mut generator = Generator::new(
             String::from("../Positions/newopen4.pos"),

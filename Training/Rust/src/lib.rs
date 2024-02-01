@@ -33,7 +33,7 @@ impl BatchProvider {
         _py: Python<'_>,
         input: &PyArray1<f32>,
         result: &PyArray1<f32>,
-        evals: &PyArray1<i16>,
+        mlh: &PyArray1<i16>,
         bucket: &PyArray1<i64>,
         psqt_buckets: &PyArray1<i64>,
     ) -> PyResult<()> {
@@ -42,7 +42,7 @@ impl BatchProvider {
             let mut res_array = result.as_array_mut();
             let mut bucket_array = bucket.as_array_mut();
             let mut psqt_array = psqt_buckets.as_array_mut();
-            let mut eval_array = evals.as_array_mut();
+            let mut mlh_array = mlh.as_array_mut();
             for i in 0..self.batch_size {
                 //need to add continue for not valid samples
                 let sample = self.loader.get_next().expect("Error loading sample");
@@ -77,7 +77,7 @@ impl BatchProvider {
                     _ => (), //need to add error handling just go to the nex sample in that case
                 }
 
-                eval_array[i] = sample.eval;
+                mlh_array[i] = sample.mlh;
 
                 let psqt_index = (piece_count - 1) / 4;
                 psqt_array[i] = psqt_index as i64;
