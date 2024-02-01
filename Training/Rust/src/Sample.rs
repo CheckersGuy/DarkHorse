@@ -84,7 +84,7 @@ impl FromStr for Result {
             "tbwin" | "tbwon" => Ok(Result::TBWIN),
             "tbdraw" | "tbdrew" => Ok(Result::TBDRAW),
             "win" | "won" => Ok(Result::WIN),
-            "draw" | "tbdraw" => Ok(Result::DRAW),
+            "draw" | "drew" => Ok(Result::DRAW),
             _ => Err(anyhow::anyhow!("Could not parse sample")),
         }
     }
@@ -240,9 +240,11 @@ impl SampleType {
 }
 
 #[derive(Default, Clone, Hash, PartialEq, Debug)]
+//there always should be a mlh-value for every sample <- sounds like I need to add an assert
+//somewhere
 pub struct Sample {
     pub position: SampleType,
-    pub eval: i16,
+    pub mlh: i16,
     pub result: Result,
 }
 
@@ -252,7 +254,7 @@ impl Sample {
             let length: u16 = fen_string.len() as u16;
             writer.write_u16::<LittleEndian>(length)?;
             writer.write_all(fen_string.as_bytes())?;
-            writer.write_i16::<LittleEndian>(self.eval)?;
+            writer.write_i16::<LittleEndian>(self.mlh)?;
             let conv = match self.result {
                 Result::LOSS => 1,
                 Result::WIN => 2,
@@ -274,7 +276,7 @@ impl Sample {
         let mut buffer = vec![0; length as usize];
         reader.read_exact(&mut buffer)?;
         self.position = SampleType::Fen(String::from_utf8(buffer).unwrap());
-        self.eval = reader.read_i16::<LittleEndian>()?;
+        self.mlh = reader.read_i16::<LittleEndian>()?;
         let conv = reader.read_i8()?;
         self.result = match conv {
             1 => Result::LOSS,
