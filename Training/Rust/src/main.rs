@@ -14,22 +14,23 @@ use Pos::Square;
 use Sample::SampleIteratorTrait;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    /*let mut dataloader =
-        DataLoader::new(String::from("../TrainData/test.samples"), 1000000, false)?;
+    /* let mut dataloader = dataloader::DataLoader::new(
+            String::from("E:/newtry11rescoredmlh.samples"),
+            1000000,
+            false,
+        )?;
 
-    for _ in 0..3000 {
-        let sample = dataloader.get_next()?;
-        if let SampleType::Fen(ref position) = sample.position {
-            let pos = Position::try_from(position.as_str())?;
-            pos.print_position();
-
-            println!("Result is is: {:?} and fen: {}", sample.result, position);
+        for _ in 0..3000 {
+            let sample = dataloader.get_next()?;
+            println!("{:?}", sample);
+            if let Sample::SampleType::Fen(ref position) = sample.position {
+                let pos = Pos::Position::try_from(position.as_str())?;
+                pos.print_position();
+            }
+            println!();
+            println!();
         }
-        println!();
-        println!();
-    }
     */
-
     //Data::create_unique_fens("training.pos", "unique.pos")?;
 
     //Need to write some code to combine 2 or more sample files
@@ -67,9 +68,14 @@ fn main() -> anyhow::Result<()> {
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-
-    // Data::rescore_games("E:/newtry9.samples", "E:/newtry9rescored.samples", &base).unwrap();
-
+    /*
+        Data::rescore_games(
+            "E:/newtry11rescored.samples",
+            "E:/newtry11rescoredmlh.samples",
+            &base,
+        )
+        .unwrap();
+    */
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
     //
