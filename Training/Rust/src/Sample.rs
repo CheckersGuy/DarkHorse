@@ -8,6 +8,7 @@ use byteorder::WriteBytesExt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::str::FromStr;
 #[derive(Debug, Clone, Hash, PartialEq)]
 pub enum SampleType {
     Fen(String), //a not yet converted FenString
@@ -64,6 +65,27 @@ impl std::ops::Not for Result {
             Result::TBWIN => Result::TBLOSS,
             Result::TBDRAW => Result::TBDRAW,
             _ => self,
+        }
+    }
+}
+//below needs to be tested
+impl FromStr for Result {
+    type Err = anyhow::Error;
+    fn from_str(item: &str) -> std::prelude::v1::Result<Self, Self::Err> {
+        match item
+            .to_lowercase()
+            .trim()
+            .replace("\n", "")
+            .replace("_", "")
+            .as_str()
+        {
+            "loss" | "lost" => Ok(Result::LOSS),
+            "tbloss" | "tblost" => Ok(Result::TBLOSS),
+            "tbwin" | "tbwon" => Ok(Result::TBWIN),
+            "tbdraw" | "tbdrew" => Ok(Result::TBDRAW),
+            "win" | "won" => Ok(Result::WIN),
+            "draw" | "tbdraw" => Ok(Result::DRAW),
+            _ => Err(anyhow::anyhow!("Could not parse sample")),
         }
     }
 }
