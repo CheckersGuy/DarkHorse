@@ -307,7 +307,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
           TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
                         TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
-
           return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
         }
       }

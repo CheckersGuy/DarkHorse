@@ -4,14 +4,16 @@ pub mod Pos;
 pub mod Sample;
 pub mod TableBase;
 pub mod dataloader;
+use anyhow::Context;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::Path;
 use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
 use Sample::SampleIteratorTrait;
 use TableBase::Base;
-fn main() -> std::io::Result<()> {
+fn main() -> anyhow::Result<()> {
     /*let mut dataloader =
         DataLoader::new(String::from("../TrainData/test.samples"), 1000000, false)?;
 
@@ -41,16 +43,39 @@ fn main() -> std::io::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/newopen4.pos"),
-        String::from("/mnt/e/newtry10.samples"),
-        14,
-        40000000,
-    );
-    generator.time = 10;
-    generator.prev_file = Some("/mnt/e/newtry7rescored.samples");
-    generator.generate_games()?;
 
+    let mut distribution = Data::material_distrib("/mnt/e/newtry11rescored.samples")
+        .with_context(|| "Error loading file")?;
+
+    for ind in 1..24 {
+        println!(
+            "Count {} and value {}",
+            ind,
+            *distribution.entry(ind).or_insert(0)
+        );
+    }
+
+    let mut distribution = Data::material_distrib("/mnt/e/newtry10rescored.samples")
+        .with_context(|| "Error loading file")?;
+
+    for ind in 1..24 {
+        println!(
+            "Count {} and value {}",
+            ind,
+            *distribution.entry(ind).or_insert(0)
+        );
+    }
+    /*
+        let mut generator = Generator::new(
+            String::from("../Positions/newopen4.pos"),
+            String::from("/mnt/e/newtry10.samples"),
+            14,
+            40000000,
+        );
+        generator.time = 10;
+        generator.prev_file = Some("/mnt/e/newtry7rescored.samples");
+        generator.generate_games()?;
+    */
     /*
         println!(
             "{}",
