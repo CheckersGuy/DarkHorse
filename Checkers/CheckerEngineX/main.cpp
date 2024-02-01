@@ -141,7 +141,7 @@ int main(int argl, const char **argc) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
     } else {
-      board.get_position() = Position::get_start_position();
+      board.get_position() = Position::pos_from_fen("B:WK21,25:BK3,K2");
     }
     board.get_position().print_position();
 
