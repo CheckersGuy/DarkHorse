@@ -155,7 +155,7 @@ fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<(
     //let tmp_path = Temp::new_file()?;
 
     //let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
-    let tmp_path = Path::new("../TrainData/tempsamples.samples"); //temporary fix
+    let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
     let mut tmp = File::create(&tmp_path)?;
     let mut src = File::open(&file_path)?;
     tmp.write_all(&data)?;
@@ -176,6 +176,44 @@ fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<(
     std::io::copy(&mut src, &mut tmp)?;
     std::fs::remove_file(file_path)?;
     std::fs::rename(&tmp_path, file_path)?;
+
+    Ok(())
+}
+
+pub fn dump_winning_samples(input: &str, output: &str) -> std::io::Result<()> {
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut total_counter: u64 = 0;
+    let mut reader = BufReader::new(File::open(input)?);
+
+    for sample in reader.iter_samples() {
+        let fen_string = match sample.position.clone() {
+            Sample::SampleType::Fen(fen_string) => fen_string,
+            _ => {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Wrong data format",
+                ));
+            }
+        };
+
+        if !filter.check(&fen_string) {
+            match sample.result {
+                Sample::Result::WIN | Sample::Result::LOSS => {
+                    let squares = sample.position.get_squares().unwrap();
+                    if squares.len() <= 10 {
+                        sample.write_fen(&mut writer)?;
+                        total_counter += 1;
+                    }
+                }
+                _ => {}
+            };
+            filter.set(&fen_string);
+        }
+    }
+    drop(writer);
+    let path = Path::new(output);
+    prepend_file(total_counter.to_le_bytes().as_slice(), &path)?;
 
     Ok(())
 }

@@ -93,6 +93,7 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 }
 
 #define DB_PATH "E:\\kr_english_wld"
+#define DTW_PATH "E:\\kr_english_dtw"
 int main(int argl, const char **argc) {
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
