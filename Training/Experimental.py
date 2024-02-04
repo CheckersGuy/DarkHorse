@@ -12,7 +12,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*128
+L1 =2*64
 L2 =32
 L3 = 32
 
@@ -233,7 +233,7 @@ class MLHNetwork(pl.LightningModule):
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
-        out = torch.sigmoid(l3c)
+        out = l3c
         return out
 
 
@@ -279,7 +279,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=3e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
