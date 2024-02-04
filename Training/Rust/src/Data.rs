@@ -261,7 +261,6 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         }
     };
     //300 is just some value I have come up with, nothing special could change in the future
-    let mlh_target = std::cmp::min(300, game.len());
 
     let mut counter = 0;
     for sample in game.iter_mut() {
@@ -273,7 +272,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             counter += 1;
         }
         //workaround for old-data that did not have the mlh-target
-        sample.mlh = mlh_target as i16;
+        sample.mlh = counter as i16;
     }
     if counter == game.len() {
         //game has previously been rescored
@@ -286,7 +285,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         _ => return,
     };
     let mut local_result = (get_mover(fen_string), last.result);
-
+    counter = 0;
     for sample in game.iter_mut() {
         //probing tablebase
         let fen_string = match sample.position {
@@ -318,7 +317,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
         }
         sample.result = adj_result;
-        sample.mlh = mlh_target as i16;
+        sample.mlh = counter as i16;
     }
 }
 #[cfg(target_os = "windows")]
