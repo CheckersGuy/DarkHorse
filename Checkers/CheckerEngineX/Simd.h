@@ -81,6 +81,71 @@ inline void accum_activation8(int16_t *acc, uint8_t *out) {
 #endif // DEBUG
 }
 
+template <int input_size>
+inline void square_accum_activation8(int16_t *acc, uint8_t *out) {
+
+#ifdef AVX256
+
+  constexpr int num_chunks = input_size / 16;
+  constexpr int control = 0b11011000;
+
+  auto *in_a = reinterpret_cast<const __m256i *>(acc);
+  auto *output = reinterpret_cast<__m256i *>(out);
+  const auto max_val = _mm256_set1_epi16(127);
+  const auto min_val = _mm256_setzero_si256();
+  for (auto i = 0; i < num_chunks / 4; ++i) {
+    auto temp0 = _mm256_load_si256(in_a + 2 * i);
+    auto temp1 = _mm256_load_si256(in_a + num_chunks / 2 + 2 * i);
+
+    auto temp2 = _mm256_load_si256(in_a + 2 * i + 1);
+    auto temp3 = _mm256_load_si256(in_a + num_chunks / 2 + 2 * i + 1);
+
+    temp0 = _mm256_max_epi16(temp0, min_val);
+    temp0 = _mm256_min_epi16(temp0, max_val);
+    temp0 = _mm256_mullo_epi16(temp0, temp0);
+    temp0 = _mm256_srai_epi16(temp0, 7);
+
+    temp1 = _mm256_max_epi16(temp1, min_val);
+    temp1 = _mm256_min_epi16(temp1, max_val);
+    temp1 = _mm256_mullo_epi16(temp1, temp1);
+    temp1 = _mm256_srai_epi16(temp1, 7);
+
+    temp2 = _mm256_max_epi16(temp2, min_val);
+    temp2 = _mm256_min_epi16(temp2, max_val);
+    temp2 = _mm256_mullo_epi16(temp2, temp2);
+    temp2 = _mm256_srai_epi16(temp2, 7);
+
+    temp3 = _mm256_max_epi16(temp3, min_val);
+    temp3 = _mm256_min_epi16(temp3, max_val);
+    temp3 = _mm256_mullo_epi16(temp3, temp3);
+    temp3 = _mm256_srai_epi16(temp3, 7);
+
+    auto result0 = _mm256_srai_epi16(_mm256_mullo_epi16(temp0, temp1), 7);
+    auto result1 = _mm256_srai_epi16(_mm256_mullo_epi16(temp2, temp3), 7);
+    auto packed =
+        _mm256_permute4x64_epi64(_mm256_packs_epi16(result0, result1), control);
+
+    _mm256_store_si256(output + i, packed);
+  }
+#endif
+
+#ifdef BASE
+
+  for (auto i = 0; i < input_size / 2; ++i) {
+    int16_t val = acc[i];
+    val = std::clamp(val, int16_t{0}, int16_t{127});
+    val = (val * val) / 128;
+
+    int16_t val2 = acc[i + input_size / 2];
+    val2 = std::clamp(val2, int16_t{0}, int16_t{127});
+    val2 = (val2 * val2) / 128;
+
+    out[i] = (val * val2) / 128;
+  }
+
+#endif // DEBUG
+}
+
 template <int length>
 inline void square_clipped8(int32_t *input, uint8_t *output) {
 

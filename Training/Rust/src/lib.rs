@@ -14,6 +14,75 @@ struct BatchProvider {
     batch_size: usize,
 }
 
+//need to add a helper function which generates network input given a fen_string
+//to be continued
+
+#[pyfunction]
+fn print_fen_string(fen_string: &str) -> PyResult<()> {
+    let position = Pos::Position::try_from(fen_string)?;
+    position.print_position();
+
+    Ok(())
+}
+
+#[pyfunction]
+fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
+    let mut fen = Sample::SampleType::Fen(String::from(fen_string));
+
+    //need to invert to the correct color
+    let get_mover = |fen: &str| -> i32 {
+        match fen.chars().next() {
+            Some('W') => 1,
+            Some('B') => -1,
+            _ => 0,
+        }
+    };
+    if get_mover(fen_string) == -1 {
+        fen = Sample::SampleType::Fen(String::from(
+            Sample::SampleType::invert_fen_string(fen_string).unwrap(),
+        ));
+    }
+    let squares = fen.get_squares()?;
+    let piece_count = squares.len();
+    unsafe {
+        let mut in_array = input.as_array_mut();
+        for square in squares {
+            match square {
+                Square::WPAWN(index) => {
+                    in_array[index as usize - 4] = 1.0;
+                }
+                Square::BPAWN(index) => {
+                    in_array[index as usize + 28] = 1.0;
+                }
+                Square::WKING(index) => {
+                    in_array[index as usize + 28 + 28] = 1.0;
+                }
+                Square::BKING(index) => {
+                    in_array[index as usize + 28 + 28 + 32] = 1.0;
+                }
+            }
+        }
+        let sub_two;
+        match piece_count {
+            24 | 23 | 22 | 21 | 20 | 19 => sub_two = 0,
+            18 | 17 | 16 => sub_two = 1,
+            15 | 14 | 13 => sub_two = 2,
+            12 | 11 => sub_two = 3,
+            10 => sub_two = 4,
+            9 => sub_two = 5,
+            8 => sub_two = 6,
+            7 => sub_two = 7,
+            6 => sub_two = 8,
+            5 => sub_two = 9,
+            4 => sub_two = 10,
+            3 | 2 | 1 | 0 => sub_two = 11,
+            _ => sub_two = 0,
+        }
+
+        Ok(sub_two)
+    }
+}
+
 #[pymethods]
 impl BatchProvider {
     #[new]
@@ -98,7 +167,6 @@ impl BatchProvider {
                     _ => sub_two = 0,
                 }
                 bucket_array[i] = sub_two;
-                //testing
             }
         }
         Ok(())
@@ -111,5 +179,7 @@ impl BatchProvider {
 #[pymodule]
 fn string_sum(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<BatchProvider>()?;
+    m.add_function(wrap_pyfunction!(print_fen_string, m)?)?;
+    m.add_function(wrap_pyfunction!(input_from_fen, m)?)?;
     Ok(())
 }
