@@ -263,7 +263,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     //300 is just some value I have come up with, nothing special could change in the future
 
     let mut counter = 0;
-    for sample in game.iter_mut() {
+    for (mlh_counter, sample) in game.iter_mut().enumerate() {
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
             _ => return,
@@ -272,7 +272,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             counter += 1;
         }
         //workaround for old-data that did not have the mlh-target
-        sample.mlh = counter as i16;
+        sample.mlh = mlh_counter as i16;
     }
     if counter == game.len() {
         //game has previously been rescored
@@ -285,8 +285,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         _ => return,
     };
     let mut local_result = (get_mover(fen_string), last.result);
-    counter = 0;
-    for sample in game.iter_mut() {
+    for (mlh_counter, sample) in game.iter_mut().enumerate() {
         //probing tablebase
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
@@ -317,7 +316,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
         }
         sample.result = adj_result;
-        sample.mlh = counter as i16;
+        sample.mlh = mlh_counter as i16;
     }
 }
 #[cfg(target_os = "windows")]
