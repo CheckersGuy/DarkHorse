@@ -9,7 +9,7 @@
 #include <string>
 struct TableBase {
   EGDB_DRIVER *handle;
-  EGDB_DRIVER *mtc_handle;
+  EGDB_DRIVER *dtw_handle;
   int num_pieces{6}; // only used for the wdl-tablebase
   uint64_t cache_size{500};
 
@@ -17,7 +17,11 @@ struct TableBase {
 
   void load_table_base(std::string path);
 
+  void load_dtw_base(std::string path);
+
   TB_RESULT probe(Position pos);
+
+  std::optional<int> probe_dtw(Position pos);
 
   int get_num_pieces();
 

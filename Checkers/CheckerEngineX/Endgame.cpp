@@ -1,4 +1,5 @@
 #include "Endgame.h"
+#include "egdb.h"
 
 TableBase::~TableBase() {}
 
@@ -23,6 +24,32 @@ void TableBase::load_table_base(std::string path) {
   handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
                      [](char *msg) {});
   if (!handle) {
+    std::cerr << "Error returned from egdb_open()" << std::endl;
+    std::exit(-1);
+  }
+}
+
+void TableBase::load_dtw_base(std::string path) {
+  int i, status, nerrors;
+  int max_pieces;
+
+  EGDB_TYPE egdb_type;
+  /* Check that db files are present, get db type and size. */
+
+  status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+  if (max_pieces < num_pieces) {
+    std::cerr << "Can not handle that many pieces" << std::endl;
+    std::exit(-1);
+  }
+  if (status) {
+    printf("No database found at %s\n", path.c_str());
+    std::exit(-1);
+  }
+
+  dtw_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                         [](char *msg) {});
+  if (!dtw_handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
   }
@@ -58,4 +85,34 @@ TB_RESULT TableBase::probe(Position pos) {
 
   if (val == EGDB_DRAW)
     return TB_RESULT::DRAW;
+}
+
+std::optional<int> TableBase::probe_dtw(Position pos) {
+
+  // probing the wdl first, to check if we have a winning/losing position
+
+  auto wdl = probe(pos);
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
+    return std::nullopt;
+  }
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = dtw_handle->lookup(
+      dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == EGDB_UNKNOWN) {
+    return std::nullopt;
+  }
+
+  if (wdl == TB_RESULT::WIN) {
+    return 2 * val + 1;
+  } else {
+    return 2 * val;
+  }
 }

@@ -114,7 +114,8 @@ impl BatchProvider {
             let mut mlh_array = mlh.as_array_mut();
             for i in 0..self.batch_size {
                 //need to add continue for not valid samples
-                let sample = self.loader.get_next().expect("Error loading sample");
+                let mut sample = self.loader.get_next().expect("Error loading sample");
+
                 let squares = match sample.position {
                     Sample::SampleType::Squares(our_squares) => our_squares,
                     Sample::SampleType::Fen(_) => sample.position.get_squares().unwrap(),
