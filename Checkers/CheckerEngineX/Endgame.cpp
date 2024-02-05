@@ -2,7 +2,8 @@
 #include "egdb.h"
 
 TableBase::~TableBase() {}
-
+// change how loading works when num_pieces > max_pieces
+// just default to max_pieces in that case !
 void TableBase::load_table_base(std::string path) {
   int i, status, nerrors;
   int max_pieces;
@@ -12,10 +13,9 @@ void TableBase::load_table_base(std::string path) {
 
   status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
   // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
-  if (max_pieces < num_pieces) {
-    std::cerr << "Can not handle that many pieces" << std::endl;
-    std::exit(-1);
-  }
+
+  num_pieces = std::min(num_pieces, max_pieces);
+
   if (status) {
     printf("No database found at %s\n", path.c_str());
     std::exit(-1);
@@ -23,6 +23,9 @@ void TableBase::load_table_base(std::string path) {
 
   handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
                      [](char *msg) {});
+
+  std::cout << "Loaded WDL with" << num_pieces << " pieces" << std::endl;
+
   if (!handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
@@ -38,10 +41,9 @@ void TableBase::load_dtw_base(std::string path) {
 
   status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
   // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
-  if (max_pieces < num_pieces) {
-    std::cerr << "Can not handle that many pieces" << std::endl;
-    std::exit(-1);
-  }
+
+  num_pieces = std::min(num_pieces, max_pieces);
+
   if (status) {
     printf("No database found at %s\n", path.c_str());
     std::exit(-1);
@@ -49,6 +51,7 @@ void TableBase::load_dtw_base(std::string path) {
 
   dtw_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
                          [](char *msg) {});
+  std::cout << "Loaded DTW with" << num_pieces << " pieces" << std::endl;
   if (!dtw_handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);

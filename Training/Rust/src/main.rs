@@ -62,7 +62,15 @@ fn main() -> anyhow::Result<()> {
             Sample::SampleType::invert_fen_string("B:W22,K26,K27:B6,7,K15").unwrap()
         );
     */
-    //let base = Base::new("E:\\kr_english_wld", 100, 10).unwrap();
+    let fen_string = "B:W30,29:B4,24";
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 100, 10).unwrap();
+
+    let result = base.probe_dtw(fen_string).expect("Could not call function");
+
+    if let Some(mlh_counter) = result {
+        println!("{mlh_counter}");
+    }
+
     /*
         let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
@@ -79,10 +87,10 @@ fn main() -> anyhow::Result<()> {
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
     //
-    Data::dump_winning_samples(
-        "/mnt/e/newtry11rescoredmlhfixed.samples",
-        "/mnt/e/newtry11rescoredwinning.samples",
-    )?;
-
+    /* Data::dump_winning_samples(
+            "/mnt/e/newtry11rescoredmlhfixed.samples",
+            "/mnt/e/newtry11rescoredwinning.samples",
+        )?;
+    */
     Ok(())
 }

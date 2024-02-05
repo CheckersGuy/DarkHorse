@@ -95,9 +95,24 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 #define DB_PATH "E:\\kr_english_wld"
 #define DTW_PATH "E:\\kr_english_dtw"
 int main(int argl, const char **argc) {
+  tablebase.num_pieces = 10;
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
+
+  tablebase.load_dtw_base(DTW_PATH);
+
+  Position test = Position::pos_from_fen("W:WK3,K12,K10,30:BK1,K9,K18,K24");
+
+  auto dtw = tablebase.probe_dtw(test);
+
+  if (dtw.has_value()) {
+    std::cout << dtw.value() << std::endl;
+  } else {
+    std::cout << "no value found" << std::endl;
+  }
+  test.print_position();
+  return 0;
 
   CmdParser parser(argl, argc);
 
