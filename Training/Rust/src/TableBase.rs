@@ -3,8 +3,7 @@ use libc;
 use libloading;
 use std::ffi::CString;
 use std::os::raw::c_char;
-pub struct Base<'a> {
-    path: &'a str,
+pub struct Base {
     cache_size: i32,
     num_pieces: i32,
     library: libloading::Library,
@@ -21,15 +20,14 @@ fn foo(fen_string: &str) -> Result<u32, Box<dyn std::error::Error>> {
     }
 }
 
-impl<'a> Base<'a> {
+impl Base {
     pub fn new(
         path: &str,
         cache_size: i32,
         num_pieces: i32,
-    ) -> Result<Base<'_>, Box<dyn std::error::Error>> {
+    ) -> Result<Base, Box<dyn std::error::Error>> {
         unsafe {
             let base = Base {
-                path,
                 cache_size,
                 num_pieces,
                 library: libloading::Library::new("libRustDll.dll")?,
@@ -37,8 +35,36 @@ impl<'a> Base<'a> {
             let func: libloading::Symbol<
                 unsafe extern "C" fn(*const libc::c_char, libc::c_int, libc::c_int),
             > = base.library.get(b"load")?;
-            let c_to_print = CString::new(base.path).expect("CString failed");
+            let c_to_print = CString::new(path).expect("CString failed");
             func(c_to_print.as_ptr(), base.cache_size, base.num_pieces);
+            Ok(base)
+        }
+    }
+
+    pub fn new_dtw(
+        wdl_path: &str,
+        dtw_path: &str,
+        cache_size: i32,
+        num_pieces: i32,
+    ) -> Result<Base, Box<dyn std::error::Error>> {
+        unsafe {
+            let base = Base {
+                cache_size,
+                num_pieces,
+                library: libloading::Library::new("libRustDll.dll")?,
+            };
+            let func_dtw: libloading::Symbol<
+                unsafe extern "C" fn(*const libc::c_char, libc::c_int, libc::c_int),
+            > = base.library.get(b"load_dtw")?;
+
+            let func_wdl: libloading::Symbol<
+                unsafe extern "C" fn(*const libc::c_char, libc::c_int, libc::c_int),
+            > = base.library.get(b"load")?;
+
+            let wdl_to_print = CString::new(wdl_path).expect("CString failed");
+            let dtw_to_print = CString::new(dtw_path).expect("CString failed");
+            func_wdl(wdl_to_print.as_ptr(), base.cache_size, base.num_pieces);
+            func_dtw(dtw_to_print.as_ptr(), base.cache_size, base.num_pieces);
             Ok(base)
         }
     }
@@ -56,6 +82,19 @@ impl<'a> Base<'a> {
                 3 => Sample::Result::UNKNOWN,
                 _ => Sample::Result::UNKNOWN,
             })
+        }
+    }
+
+    pub fn probe_dtw(&self, fen_string: &str) -> Result<Option<i32>, Box<dyn std::error::Error>> {
+        unsafe {
+            let func: libloading::Symbol<unsafe extern "C" fn(*const libc::c_char) -> i32> =
+                self.library.get(b"probe_dtw")?;
+            let c_to_print = CString::new(fen_string).expect("CString failed");
+            let tb_result = func(c_to_print.as_ptr());
+            if tb_result > 0 {
+                return Ok(Some(tb_result));
+            }
+            Ok(None)
         }
     }
 
