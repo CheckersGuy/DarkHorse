@@ -180,7 +180,7 @@ fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<(
     Ok(())
 }
 
-pub fn dump_winning_samples(input: &str, output: &str) -> std::io::Result<()> {
+pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut writer = BufWriter::new(File::create(output)?);
     let mut total_counter: u64 = 0;
@@ -198,16 +198,18 @@ pub fn dump_winning_samples(input: &str, output: &str) -> std::io::Result<()> {
         };
 
         if !filter.check(&fen_string) {
-            match sample.result {
-                Sample::Result::WIN | Sample::Result::LOSS => {
-                    let squares = sample.position.get_squares().unwrap();
-                    if squares.len() <= 10 {
+            if sample.mlh > 0 {
+                match sample.result {
+                    Sample::Result::TBWIN
+                    | Sample::Result::WIN
+                    | Sample::Result::TBLOSS
+                    | Sample::Result::LOSS => {
                         sample.write_fen(&mut writer)?;
                         total_counter += 1;
                     }
+                    _ => {}
                 }
-                _ => {}
-            };
+            }
             filter.set(&fen_string);
         }
     }
@@ -299,18 +301,31 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         }
     };
     //300 is just some value I have come up with, nothing special could change in the future
-
     let mut counter = 0;
-    for (mlh_counter, sample) in game.iter_mut().enumerate() {
+    let mut mlh_counter: Option<i32> = None;
+    for sample in game.iter_mut() {
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
             _ => return,
         };
+        let probe = base.probe_dtw(fen_string);
+        if let Ok(Some(counter)) = probe {
+            mlh_counter = Some(counter);
+        } else {
+            //if the mlh_counter was set previously, we can
+            //increment the counter
+            if let Some(counter) = mlh_counter {
+                mlh_counter = Some(counter + 1);
+            }
+        }
         if get_mover(fen_string) == 1 {
             counter += 1;
         }
-        //workaround for old-data that did not have the mlh-target
-        sample.mlh = std::cmp::min(mlh_counter, 300) as i16;
+        if let Some(counter) = mlh_counter {
+            sample.mlh = counter as i16;
+        } else {
+            sample.mlh = -1000;
+        }
     }
     if counter == game.len() {
         //game has previously been rescored
@@ -322,13 +337,14 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         Sample::SampleType::Fen(ref fen) => fen,
         _ => return,
     };
+
     let mut local_result = (get_mover(fen_string), last.result);
-    for (mlh_counter, sample) in game.iter_mut().enumerate() {
-        //probing tablebase
+    for sample in game.iter_mut() {
         let fen_string = match sample.position {
             Sample::SampleType::Fen(ref fen) => fen,
             _ => return,
         };
+
         let mover = get_mover(fen_string);
         let result = (mover, base.probe(fen_string).unwrap());
         if result.1 != Result::UNKNOWN {
@@ -354,7 +370,6 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
         }
         sample.result = adj_result;
-        sample.mlh = std::cmp::min(mlh_counter, 300) as i16;
     }
 }
 #[cfg(target_os = "windows")]
