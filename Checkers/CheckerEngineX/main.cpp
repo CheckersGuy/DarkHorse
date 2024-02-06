@@ -7,6 +7,7 @@
 #include "Perft.h"
 #include "Selfplay.h"
 #include "Transposition.h"
+#include "incbin.h"
 #include "types.h"
 #include <cmath>
 #include <cstdint>
@@ -17,6 +18,8 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
+INCBIN(mlh_net, "mlh2.quant");
+
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -95,14 +98,15 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 
 #define DB_PATH "E:\\kr_english_wld"
 #define DTW_PATH "E:\\kr_english_dtw"
+
 int main(int argl, const char **argc) {
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
 
-  mlh_net.load_bucket("mlh2.quant");
+  // mlh_net.load_bucket("mlh2.quant");
   CmdParser parser(argl, argc);
-
+  mlh_net.load_from_array(&gmlh_netData[0]);
   parser.parse_command_line();
   Board board;
   Statistics::mPicker.init();

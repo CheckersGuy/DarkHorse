@@ -9,17 +9,13 @@
 #include "Layer.h"
 #include "Position.h"
 #include "types.h"
-#include <algorithm>
-#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <immintrin.h>
 #include <iostream>
-#include <memory>
-#include <ranges>
-#include <vector>
+#include <sys/types.h>
 
 Value win_eval(TB_RESULT result, Value score, Position pos);
 Value tempo_white(Position pos);
@@ -52,6 +48,8 @@ template <int OutDim> struct alignas(64) Accumulator {
 
   void load_weights(std::ifstream &stream);
 
+  void load_from_array(const unsigned char *array);
+
   uint8_t *forward(uint8_t *in, const Position &next);
 };
 
@@ -61,9 +59,11 @@ template <int L1, int L2, int L3> struct Network {
   QLayer<L1, L2, Activation::SqRelu> first;
   QLayer<L2, L3, Activation ::SqRelu> second;
   QLayer<L3, 1> output;
-  alignas(64) uint8_t input[L1 + L2 + L3 + 32 + 1] = {0};
+  alignas(64) uint8_t input[L1 + L2 + L3 + 1] = {0};
 
   void load_bucket(std::string file);
+
+  void load_from_array(const unsigned char *array);
 
   int32_t *compute_incre_forward_pass(Position next);
 
@@ -92,6 +92,22 @@ void Accumulator<OutDim>::load_weights(std::ifstream &stream) {
   ft_biases = (int16_t *)std_aligned_alloc(ALIGNMENT, OutDim * sizeof(int16_t));
   stream.read((char *)ft_weights, sizeof(int16_t) * (OutDim * 120));
   stream.read((char *)ft_biases, sizeof(int16_t) * (OutDim));
+
+  for (auto i = 0; i < OutDim; ++i) {
+    black_acc[i] = ft_biases[i];
+    white_acc[i] = ft_biases[i];
+  }
+}
+
+template <int OutDim>
+void Accumulator<OutDim>::load_from_array(const unsigned char *array) {
+  ft_weights =
+      (int16_t *)std_aligned_alloc(ALIGNMENT, (120 * OutDim) * sizeof(int16_t));
+  ft_biases = (int16_t *)std_aligned_alloc(ALIGNMENT, OutDim * sizeof(int16_t));
+  std::memcpy((char *)&ft_weights, array, sizeof(int16_t) * OutDim * 120);
+  array += sizeof(int16_t) * OutDim * 120;
+  std::memcpy((char *)&ft_biases, array, sizeof(int16_t) * OutDim);
+  array += sizeof(int16_t) * OutDim;
 
   for (auto i = 0; i < OutDim; ++i) {
     black_acc[i] = ft_biases[i];
@@ -265,6 +281,14 @@ void Network<L1, L2, L3>::load_bucket(std::string file) {
   first.load_params(stream);
   second.load_params(stream);
   output.load_params(stream);
+}
+
+template <int L1, int L2, int L3>
+void Network<L1, L2, L3>::load_from_array(const unsigned char *array) {
+  accumulator.load_from_array(array);
+  first.load_from_array(array);
+  second.load_from_array(array);
+  output.load_from_array(array);
 }
 
 template <int L1, int L2, int L3>
