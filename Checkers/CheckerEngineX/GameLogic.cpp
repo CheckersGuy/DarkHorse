@@ -42,25 +42,17 @@ Value evaluate(Position pos, Ply ply, int shuffle) {
     eval = tb_value;
   } else {
     eval = network.evaluate(pos, ply, shuffle);
-    eval = std::clamp(eval, -600, 600);
+    eval = std::clamp(eval, -450, 450);
   }
 #endif
 
 #ifdef __linux__
   eval = network.evaluate(pos, ply, shuffle);
-  eval = std::clamp(eval, -600, 600);
-  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
-    const auto mlh_score = (300 - get_mlh_estimate(pos));
-    if (eval >= 600) {
-      eval += mlh_score;
-    } else {
-      eval -= mlh_score;
-    }
-  }
+  eval = std::clamp(eval, -450, 450);
 #endif
-  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
+  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 450) {
     const auto mlh_score = (300 - get_mlh_estimate(pos));
-    if (eval >= 600) {
+    if (eval >= 450) {
       eval += mlh_score;
     } else {
       eval -= mlh_score;
