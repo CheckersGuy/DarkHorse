@@ -42,17 +42,17 @@ Value evaluate(Position pos, Ply ply, int shuffle) {
     eval = tb_value;
   } else {
     eval = network.evaluate(pos, ply, shuffle);
-    eval = std::clamp(eval, -450, 450);
+    eval = std::clamp(eval, -600, 600);
   }
 #endif
 
 #ifdef __linux__
   eval = network.evaluate(pos, ply, shuffle);
-  eval = std::clamp(eval, -450, 450);
+  eval = std::clamp(eval, -600, 600);
 #endif
-  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 450) {
+  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
     const auto mlh_score = (300 - get_mlh_estimate(pos));
-    if (eval >= 450) {
+    if (eval >= 600) {
       eval += mlh_score;
     } else {
       eval -= mlh_score;
@@ -72,14 +72,15 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
+  mlh_net.accumulator.refresh();
   nodeCounter = 0;
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  /*if (liste.length() == 1) {
+  if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
-  }*/
+  }
 
   Value eval = -INFINITE;
   Local local;
