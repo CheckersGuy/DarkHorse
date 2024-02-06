@@ -19,7 +19,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh2.quant");
-
+INCBIN(network, "final5.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -105,8 +105,9 @@ int main(int argl, const char **argc) {
 #endif
 
   // mlh_net.load_bucket("mlh2.quant");
+  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
+  network.load_from_array(gnetworkData, gnetworkSize);
   CmdParser parser(argl, argc);
-  mlh_net.load_from_array(&gmlh_netData[0]);
   parser.parse_command_line();
   Board board;
   Statistics::mPicker.init();
@@ -116,8 +117,7 @@ int main(int argl, const char **argc) {
 
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
-  } else {
-    net_file = "final5.quant";
+    network.load_bucket(net_file);
   }
 
   if (parser.has_option("time")) {
@@ -131,8 +131,6 @@ int main(int argl, const char **argc) {
   } else {
     hash_size = 22;
   }
-
-  network.load_bucket(net_file);
 
   if (parser.has_option("search") || parser.has_option("bench"))
 

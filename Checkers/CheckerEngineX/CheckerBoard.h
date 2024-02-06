@@ -1,10 +1,10 @@
 #include "GameLogic.h"
+#include "incbin.h"
 #include "types.h"
 #include <fstream>
 #include <iostream>
 #include <stdint.h>
 #include <string>
-
 // Everything related to the checkerboard interface
 #define CB_WHITE 1
 #define CB_BLACK 2
