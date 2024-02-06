@@ -23,7 +23,31 @@ int get_mlh_estimate(Position pos) {
 }
 
 Value evaluate(Position pos, Ply ply, int shuffle) {
-  auto eval = network.evaluate(pos, ply, shuffle);
+
+  if (pos.BP == 0 && pos.color == BLACK) {
+    return loss(ply);
+  }
+
+  if (pos.WP == 0 && pos.color == WHITE) {
+    return loss(ply);
+  }
+
+  Value eval;
+#ifdef _WIN32
+  auto result = tablebase.probe(pos);
+  if (result != TB_RESULT::UNKNOWN) {
+    auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
+                    : (result == TB_RESULT::LOSS) ? TB_LOSS
+                                                  : 0;
+    eval = tb_value;
+  } else {
+    eval = network.evaluate(pos, ply, shuffle);
+    eval = std::clamp(eval, -600, 600);
+  }
+#endif
+
+#ifdef __linux__
+  eval = network.evaluate(pos, ply, shuffle);
   eval = std::clamp(eval, -600, 600);
   if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
     const auto mlh_score = (300 - get_mlh_estimate(pos));
@@ -33,6 +57,16 @@ Value evaluate(Position pos, Ply ply, int shuffle) {
       eval -= mlh_score;
     }
   }
+#endif
+  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
+    const auto mlh_score = (300 - get_mlh_estimate(pos));
+    if (eval >= 600) {
+      eval += mlh_score;
+    } else {
+      eval -= mlh_score;
+    }
+  }
+
   return eval;
 }
 

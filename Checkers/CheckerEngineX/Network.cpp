@@ -3,14 +3,6 @@
 //
 
 #include "Network.h"
-#include "Bits.h"
-#include "GameLogic.h"
-#include "types.h"
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
-#include <immintrin.h>
-
 Value tempo_white(Position pos) {
   Value score = 0;
   for (auto i = 0; i < 7; ++i) {

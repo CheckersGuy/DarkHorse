@@ -5,11 +5,14 @@
 #ifndef READING_NETWORK_H
 #define READING_NETWORK_H
 
+#include "Bits.h"
 #include "Layer.h"
 #include "Position.h"
+#include "types.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <immintrin.h>
@@ -17,6 +20,7 @@
 #include <memory>
 #include <ranges>
 #include <vector>
+
 Value win_eval(TB_RESULT result, Value score, Position pos);
 Value tempo_white(Position pos);
 Value tempo_black(Position pos);
@@ -281,26 +285,8 @@ int Network<L1, L2, L3>::operator[](int index) {
 template <int L1, int L2, int L3>
 int Network<L1, L2, L3>::evaluate(Position pos, int ply, int shuffle) {
 
-  if (pos.BP == 0 && pos.color == BLACK) {
-    return loss(ply);
-  }
-
-  if (pos.WP == 0 && pos.color == WHITE) {
-    return loss(ply);
-  }
-
-#ifdef _WIN32
-  auto result = tablebase.probe(pos);
-  if (result != TB_RESULT::UNKNOWN) {
-    auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
-                    : (result == TB_RESULT::LOSS) ? TB_LOSS
-                                                  : 0;
-    return tb_value;
-  }
-
-#endif
-
   auto nnue = *compute_incre_forward_pass(pos);
+
   return nnue;
 }
 
