@@ -12,7 +12,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*64
+L1 =2*512
 L2 =32
 L3 = 32
 
@@ -233,7 +233,7 @@ class MLHNetwork(pl.LightningModule):
 
         l3s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l3c = l3s.view(-1,1)[indices]
-        out = torch.sigmoid(l3c)
+        out = l3c
         return out
 
 
@@ -279,7 +279,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=9e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=3e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -288,7 +288,7 @@ class MLHNetwork(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         self.step()
         result,mlh_target, move,buckets,psqt_buckets, x = train_batch
-        mlh_target = mlh_target.to(dtype=torch.float32)
+        mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0 #value range from 0 to 60
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-mlh_target),2.0).mean()
@@ -299,7 +299,7 @@ class MLHNetwork(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         torch.save(self.state_dict(),"mlh.pt")
         result,mlh_target, move,buckets,psqt_buckets, x = val_batch
-        mlh_target = mlh_target.to(dtype=torch.float32)
+        mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - mlh_target), 2.0).mean()

@@ -65,5 +65,8 @@ Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream);
 
-extern Network network;
+int get_mlh_estimate(Position pos);
+
+extern Network<1024, 32, 32> network;
+extern Network<512, 32, 32> mlh_net;
 #endif // CHECKERSTEST_GAMELOGIC_H

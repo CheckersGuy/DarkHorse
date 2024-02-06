@@ -8,11 +8,11 @@ import torch
 
 
 
-if __name__ == "__main__d":
+if __name__ == "__main__":
     batch_size = 2*8192 
     epochs = 200
     model = Experimental.MLHNetwork()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/newtry11rescoredwinning.samples",
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/newtry11rescoredmlhwinning.samples",
                                       val_data="TrainData/val.train.raw.rescored",
                                        batch_size=batch_size, buffer_size=50000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
@@ -31,10 +31,10 @@ if __name__ == "__main__d":
 
   
 
-    trainer.fit(model, data_loader);
+    trainer.fit(model, data_loader,ckpt_path="Networks/mlh.ckpt");
 
 
-fen_string ="W:WK3:B4,K32"
+fen_string ="W:W23,K32,K31:B4,2,1,9,24"
 string_sum.print_fen_string(fen_string)
 
 model = Experimental.MLHNetwork()

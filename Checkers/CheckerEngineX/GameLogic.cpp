@@ -12,7 +12,29 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network network;
+Network<1024, 32, 32> network;
+Network<512, 32, 32> mlh_net;
+
+int get_mlh_estimate(Position pos) {
+  auto out = mlh_net.get_raw_eval(pos);
+  auto scaled = static_cast<float>(out) / 127.0;
+  scaled = std::max(0, (int)std::round(scaled * 300));
+  return scaled;
+}
+
+Value evaluate(Position pos, Ply ply, int shuffle) {
+  auto eval = network.evaluate(pos, ply, shuffle);
+  eval = std::clamp(eval, -600, 600);
+  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
+    const auto mlh_score = (300 - get_mlh_estimate(pos));
+    if (eval >= 600) {
+      eval += mlh_score;
+    } else {
+      eval -= mlh_score;
+    }
+  }
+  return eval;
+}
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream) {
@@ -28,10 +50,10 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  if (liste.length() == 1) {
+  /*if (liste.length() == 1) {
     best = liste[0];
     return last_eval;
-  }
+  }*/
 
   Value eval = -INFINITE;
   Local local;
@@ -163,7 +185,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   Value sing_value = -EVAL_INFINITE;
 
   if (ply >= MAX_PLY) {
-    network.evaluate(board.get_position(), ply, board.pCounter - last_rev);
+    evaluate(board.get_position(), ply, board.pCounter - last_rev);
   }
 
   MoveListe liste;
@@ -214,7 +236,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
         info.static_eval != EVAL_INFINITE) {
       static_eval = info.static_eval;
     } else {
-      static_eval = network.evaluate(board.get_position(), ply, 0);
+      static_eval = evaluate(board.get_position(), ply, 0);
     }
   }
 #ifdef _WIN32
@@ -398,8 +420,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
 
   if (ply >= MAX_PLY) {
-    return network.evaluate(board.get_position(), ply,
-                            board.pCounter - last_rev);
+    return evaluate(board.get_position(), ply, board.pCounter - last_rev);
   }
   if (ply > glob.sel_depth)
     glob.sel_depth = ply;
@@ -428,8 +449,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       net_val = info.static_eval;
 
     } else {
-      net_val = network.evaluate(board.get_position(), ply,
-                                 board.pCounter - last_rev);
+      net_val = evaluate(board.get_position(), ply, board.pCounter - last_rev);
 
       TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{});
     }

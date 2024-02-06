@@ -8,6 +8,7 @@
 #include "Selfplay.h"
 #include "Transposition.h"
 #include "types.h"
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <hash_set>
@@ -95,25 +96,11 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 #define DB_PATH "E:\\kr_english_wld"
 #define DTW_PATH "E:\\kr_english_dtw"
 int main(int argl, const char **argc) {
-  tablebase.num_pieces = 10;
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
 
-  tablebase.load_dtw_base(DTW_PATH);
-
-  Position test = Position::pos_from_fen("W:WK3,K12,K10,30:BK1,K9,K18,K24");
-
-  auto dtw = tablebase.probe_dtw(test);
-
-  if (dtw.has_value()) {
-    std::cout << dtw.value() << std::endl;
-  } else {
-    std::cout << "no value found" << std::endl;
-  }
-  test.print_position();
-  return 0;
-
+  mlh_net.load_bucket("mlh2.quant");
   CmdParser parser(argl, argc);
 
   parser.parse_command_line();
@@ -146,7 +133,6 @@ int main(int argl, const char **argc) {
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
-
     if (parser.has_option("depth")) {
       depth = parser.as<int>("depth");
     } else {
@@ -157,7 +143,7 @@ int main(int argl, const char **argc) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
     } else {
-      board.get_position() = Position::pos_from_fen("B:WK21,25:BK3,K2");
+      board.get_position() = Position::get_start_position();
     }
     board.get_position().print_position();
 

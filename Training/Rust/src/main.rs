@@ -87,10 +87,11 @@ fn main() -> anyhow::Result<()> {
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
     //
-    Data::dump_mlh_samples(
-        "E:/newtry11rescoredmlh.samples",
-        "E:/newtry11rescoredmlhwinning.samples",
-    )?;
+    /*Data::dump_mlh_samples(
+            "E:/newtry11rescoredmlh.samples",
+            "E:/newtry11rescoredmlhwinning.samples",
+        )?;
+    */
 
     Ok(())
 }
