@@ -3,6 +3,7 @@
 #include "types.h"
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
 #include <emmintrin.h>
 #include <fstream>
 #include <immintrin.h>
@@ -56,6 +57,51 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     int out = (PadInDim / BLOCK_COLS) * row * BLOCK_SIZE + col * BLOCK_SIZE +
               block_row * BLOCK_COLS + block_col;
     return out;
+  }
+
+  void load_from_array(const unsigned char *array) {
+
+    for (auto k = 0; k < NUM_BUCKETS; ++k) {
+      if constexpr ((OutDim % 4) == 0) {
+        int8_t temp_weights[PadInDim * OutDim] = {0};
+        for (auto i = 0; i < OutDim; ++i) {
+          for (auto j = 0; j < PadInDim; ++j) {
+            int8_t weight;
+            if (j < InDim) {
+              weight = *(array++);
+            } else {
+              weight = 0;
+            }
+
+            temp_weights[i * PadInDim + j] = weight;
+          }
+        }
+        for (int i = 0; i < PadInDim * OutDim; ++i) {
+          auto index = get_weight_index(i);
+          weights[index + k * PadInDim * OutDim] = temp_weights[i];
+        }
+
+        std::memcpy((char *)&biases[0 + k * OutDim], array,
+                    sizeof(int32_t) * OutDim);
+        array += sizeof(int32_t) * OutDim;
+      } else {
+        for (auto i = 0; i < OutDim; ++i) {
+          for (auto j = 0; j < PadInDim; ++j) {
+            int8_t weight;
+            if (j < InDim) {
+              weight = *(array++);
+            } else {
+              weight = 0;
+            }
+
+            weights[i * PadInDim + j + k * PadInDim * OutDim] = weight;
+          }
+        }
+        std::memcpy((char *)&biases[0 + k * OutDim], array,
+                    sizeof(int32_t) * OutDim);
+        array += sizeof(int32_t) * OutDim;
+      }
+    }
   }
 
   void load_params(std::ifstream &stream) {

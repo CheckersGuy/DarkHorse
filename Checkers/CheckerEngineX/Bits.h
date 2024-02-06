@@ -25,7 +25,7 @@ inline uint32_t bitscan_foward(uint32_t bits) {
 
 inline uint32_t pop_count(uint32_t val) {
 #ifndef _WIN32
-  return __builtin_popcount(val);
+  return __builtin_popcountll(val);
 #else
   return __popcntq(val);
 #endif
