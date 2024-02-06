@@ -7,7 +7,8 @@ Board game_board;
 int num_draw_scores = 0;
 Position previous;
 #define DB_PATH "E:\\kr_english_wld"
-
+INCBIN(mlh_net, "mlh2.quant");
+INCBIN(network, "final5.quant");
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -52,8 +53,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     tablebase.load_table_base(DB_PATH);
-    network.load_bucket("final5.quant");
-    mlh_net.load_bucket("mlh2.quant");
+    mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
+    network.load_from_array(gnetworkData, gnetworkSize);
     TT.resize(21);
     Statistics::mPicker.init();
     engine_initialized = true;

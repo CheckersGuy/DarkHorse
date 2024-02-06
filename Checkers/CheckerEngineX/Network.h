@@ -17,6 +17,24 @@
 #include <iostream>
 #include <sys/types.h>
 
+class membuf : public std::basic_streambuf<char> {
+public:
+  membuf(const uint8_t *p, size_t l) {
+    setg((char *)p, (char *)p, (char *)p + l);
+  }
+};
+
+class memstream : public std::istream {
+public:
+  memstream(const uint8_t *p, size_t l)
+      : std::istream(&_buffer), _buffer(p, l) {
+    rdbuf(&_buffer);
+  }
+
+private:
+  membuf _buffer;
+};
+
 Value win_eval(TB_RESULT result, Value score, Position pos);
 Value tempo_white(Position pos);
 Value tempo_black(Position pos);
@@ -46,9 +64,7 @@ template <int OutDim> struct alignas(64) Accumulator {
 
   void refresh();
 
-  void load_weights(std::ifstream &stream);
-
-  void load_from_array(const unsigned char *array);
+  void load_weights(std::istream &stream);
 
   uint8_t *forward(uint8_t *in, const Position &next);
 };
@@ -63,7 +79,7 @@ template <int L1, int L2, int L3> struct Network {
 
   void load_bucket(std::string file);
 
-  void load_from_array(const unsigned char *array);
+  void load_from_array(const unsigned char *, size_t size);
 
   int32_t *compute_incre_forward_pass(Position next);
 
@@ -86,28 +102,12 @@ template <int OutDim> void Accumulator<OutDim>::refresh() {
 }
 
 template <int OutDim>
-void Accumulator<OutDim>::load_weights(std::ifstream &stream) {
+void Accumulator<OutDim>::load_weights(std::istream &stream) {
   ft_weights =
       (int16_t *)std_aligned_alloc(ALIGNMENT, (120 * OutDim) * sizeof(int16_t));
   ft_biases = (int16_t *)std_aligned_alloc(ALIGNMENT, OutDim * sizeof(int16_t));
   stream.read((char *)ft_weights, sizeof(int16_t) * (OutDim * 120));
   stream.read((char *)ft_biases, sizeof(int16_t) * (OutDim));
-
-  for (auto i = 0; i < OutDim; ++i) {
-    black_acc[i] = ft_biases[i];
-    white_acc[i] = ft_biases[i];
-  }
-}
-
-template <int OutDim>
-void Accumulator<OutDim>::load_from_array(const unsigned char *array) {
-  ft_weights =
-      (int16_t *)std_aligned_alloc(ALIGNMENT, (120 * OutDim) * sizeof(int16_t));
-  ft_biases = (int16_t *)std_aligned_alloc(ALIGNMENT, OutDim * sizeof(int16_t));
-  std::memcpy((char *)&ft_weights, array, sizeof(int16_t) * OutDim * 120);
-  array += sizeof(int16_t) * OutDim * 120;
-  std::memcpy((char *)&ft_biases, array, sizeof(int16_t) * OutDim);
-  array += sizeof(int16_t) * OutDim;
 
   for (auto i = 0; i < OutDim; ++i) {
     black_acc[i] = ft_biases[i];
@@ -282,13 +282,14 @@ void Network<L1, L2, L3>::load_bucket(std::string file) {
   second.load_params(stream);
   output.load_params(stream);
 }
-
 template <int L1, int L2, int L3>
-void Network<L1, L2, L3>::load_from_array(const unsigned char *array) {
-  accumulator.load_from_array(array);
-  first.load_from_array(array);
-  second.load_from_array(array);
-  output.load_from_array(array);
+void Network<L1, L2, L3>::load_from_array(const unsigned char *data,
+                                          size_t size) {
+  memstream stream(data, size);
+  accumulator.load_weights(stream);
+  first.load_params(stream);
+  second.load_params(stream);
+  output.load_params(stream);
 }
 
 template <int L1, int L2, int L3>

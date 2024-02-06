@@ -13,7 +13,7 @@ INCBIN(mlh_net, "mlh2.quant");
 
 int main() {
 
-  std::cout << (int)gmlh_netData[303] << std::endl;
+  memstream test(gmlh_netData, gmlh_netSize);
 
   return 0;
 }
