@@ -20,16 +20,6 @@ struct NodeInfo {
   uint8_t flag{Flag::None};
 };
 
-struct MoveEncoding {
-  // How to encode empty moves ?
-  MoveEncoding(Move move);
-  MoveEncoding() = default;
-  uint8_t from_index : 6;
-  uint8_t direction : 2;
-  Move get_move();
-  void encode_move(Move move);
-};
-
 struct Entry {
   uint32_t key{0u};       // 4 bytes
   int16_t value{0};       // 2 bytes

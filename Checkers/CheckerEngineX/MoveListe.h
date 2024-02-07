@@ -24,8 +24,9 @@ public:
 
   void add_move(Move next);
 
+  template <typename Oracle>
   void sort(Position current, Depth depth, Ply ply, Move ttMove,
-            int start_index);
+            int start_index, Oracle func);
 
   bool is_empty() const;
 
@@ -34,8 +35,6 @@ public:
   Move &operator[](int index);
 
   bool put_front(Move other);
-
-  void remove(Move move);
 
   void reset();
 
@@ -73,4 +72,34 @@ inline void MoveListe::add_move(Move next) {
 
 inline int MoveListe::length() const { return moveCounter; }
 
+template <typename Oracle>
+void MoveListe::sort(Position current, Depth depth, Ply ply, Move ttMove,
+                     int start_index, Oracle oracle) {
+
+  if (moveCounter - start_index <= 1)
+    return;
+  std::array<int, 40> scores;
+  /*
+    for (auto i = start_index; i < moveCounter; ++i) {
+      Move m = liste[i];
+      scores[i] =
+          Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
+    }
+    */
+  for (auto i = start_index; i < moveCounter; ++i) {
+    Move m = liste[i];
+    scores[i] = oracle(m);
+  }
+  for (int i = start_index + 1; i < moveCounter; ++i) {
+    const int tmp = scores[i];
+    Move tmpMove = liste[i];
+    int j;
+    for (j = i; j > (start_index) && scores[j - 1] < tmp; --j) {
+      liste[j] = liste[j - 1];
+      scores[j] = scores[j - 1];
+    }
+    liste[j] = tmpMove;
+    scores[j] = tmp;
+  }
+}
 #endif // CHECKERSTEST_MOVELISTE_H

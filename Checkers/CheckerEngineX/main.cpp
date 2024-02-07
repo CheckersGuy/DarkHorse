@@ -9,6 +9,7 @@
 #include "Transposition.h"
 #include "incbin.h"
 #include "types.h"
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -20,6 +21,7 @@
 #include <vector>
 INCBIN(mlh_net, "mlh2.quant");
 INCBIN(network, "final5.quant");
+INCBIN(policy, "policy.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -107,6 +109,25 @@ int main(int argl, const char **argc) {
   // mlh_net.load_bucket("mlh2.quant");
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
+  policy.load_from_array(gpolicyData, gpolicySize);
+
+  /*Position pos = Position::pos_from_fen("B:WK5,K26:B4,3,1");
+  pos.print_position();
+  auto *out = policy.compute_incre_forward_pass(pos);
+
+  for (auto i = 0; i < policy.Out; ++i) {
+    // std::cout << out[i] << std::endl;
+  }
+  // getting the maximum_value
+
+  auto max = std::max_element(out, out + policy.Out);
+  auto arg_max = std::distance(out, max);
+  std::cout << "MaxValue: " << *max << std::endl;
+  std::cout << "ArgMax: " << arg_max << std::endl;
+  std::cout << Move::from_encoding(arg_max).flipped() << std::endl;
+  return 0;
+    */
+
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
@@ -145,7 +166,7 @@ int main(int argl, const char **argc) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
     } else {
-      board.get_position() = Position::pos_from_fen("W:W5,29:BK3,K12");
+      board.get_position() = Position::get_start_position();
     }
     board.get_position().print_position();
 

@@ -69,13 +69,17 @@ template <int OutDim> struct alignas(64) Accumulator {
   uint8_t *forward(uint8_t *in, const Position &next);
 };
 
-template <int L1, int L2, int L3> struct Network {
+template <int l1, int l2, int l3, int out> struct Network {
   int max_units{0};
+  static constexpr int L1 = l1;
+  static constexpr int L2 = l2;
+  static constexpr int L3 = l3;
+  static constexpr int Out = out;
   Accumulator<2 * L1> accumulator;
   QLayer<L1, L2, Activation::SqRelu> first;
   QLayer<L2, L3, Activation ::SqRelu> second;
-  QLayer<L3, 1> output;
-  alignas(64) uint8_t input[L1 + L2 + L3 + 1] = {0};
+  QLayer<L3, Out> output;
+  alignas(64) uint8_t input[L1 + L2 + L3 + 1 * Out] = {0};
 
   void load_bucket(std::string file);
 
@@ -85,7 +89,7 @@ template <int L1, int L2, int L3> struct Network {
 
   int evaluate(Position pos, int ply, int shuffle);
 
-  int get_raw_eval(Position pos);
+  int32_t *get_raw_eval(Position pos);
 
   int operator[](int index);
 
@@ -268,8 +272,8 @@ uint8_t *Accumulator<OutDim>::forward(uint8_t *in, const Position &next) {
   return in;
 }
 
-template <int L1, int L2, int L3>
-void Network<L1, L2, L3>::load_bucket(std::string file) {
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_bucket(std::string file) {
 
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
@@ -282,9 +286,9 @@ void Network<L1, L2, L3>::load_bucket(std::string file) {
   second.load_params(stream);
   output.load_params(stream);
 }
-template <int L1, int L2, int L3>
-void Network<L1, L2, L3>::load_from_array(const unsigned char *data,
-                                          size_t size) {
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
+                                               size_t size) {
   memstream stream(data, size);
   accumulator.load_weights(stream);
   first.load_params(stream);
@@ -292,8 +296,8 @@ void Network<L1, L2, L3>::load_from_array(const unsigned char *data,
   output.load_params(stream);
 }
 
-template <int L1, int L2, int L3>
-int32_t *Network<L1, L2, L3>::compute_incre_forward_pass(Position next) {
+template <int L1, int L2, int L3, int Out>
+int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
   auto bucket_index = next.bucket_index();
   auto *out = accumulator.forward(input, next);
 
@@ -302,25 +306,23 @@ int32_t *Network<L1, L2, L3>::compute_incre_forward_pass(Position next) {
   return output.forward(out, bucket_index);
 }
 
-template <int L1, int L2, int L3>
-int Network<L1, L2, L3>::operator[](int index) {
+template <int L1, int L2, int L3, int Out>
+int Network<L1, L2, L3, Out>::operator[](int index) {
   return input[index];
 }
 
-template <int L1, int L2, int L3>
-int Network<L1, L2, L3>::evaluate(Position pos, int ply, int shuffle) {
+template <int L1, int L2, int L3, int Out>
+int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle) {
 
   auto nnue = *compute_incre_forward_pass(pos);
 
   return nnue;
 }
 
-template <int L1, int L2, int L3>
-int Network<L1, L2, L3>::get_raw_eval(Position pos) {
+template <int L1, int L2, int L3, int Out>
+int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos) {
 
-  const auto nnue = *compute_incre_forward_pass(pos);
-  auto eval = (nnue);
-  return eval;
+  return compute_incre_forward_pass(pos);
 }
 
 #endif // READING_NETWORK_H
