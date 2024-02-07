@@ -11,3 +11,4 @@ extern "C" void close();
 extern "C" void print_fen(char *fen_string);
 extern "C" int probe(char *fen_string);
 extern "C" int probe_dtw(char *fen_string);
+extern "C" int move_played(char *orig, char *next);

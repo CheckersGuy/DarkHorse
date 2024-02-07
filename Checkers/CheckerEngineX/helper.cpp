@@ -28,3 +28,22 @@ extern "C" int probe_dtw(char *fen_string) {
 extern "C" void print_fen(char *fen_string) {
   Position::pos_from_fen(fen_string).print_position();
 }
+
+extern "C" int move_played(char *orig, char *next) {
+  Position o = Position::pos_from_fen(orig);
+  Position n = Position::pos_from_fen(orig);
+
+  if (o.color == BLACK) {
+    o = o.get_color_flip();
+  }
+  if (n.color == WHITE) {
+    n = n.get_color_flip();
+  }
+
+  auto result = o.get_move(o, n);
+  if (result.has_value()) {
+    result.value().get_move_encoding();
+  }
+
+  return -1;
+}

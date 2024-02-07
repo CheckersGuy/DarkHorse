@@ -16,38 +16,6 @@ void MovePicker::apply_bonus(int &value, int bonus) {
   value += bonus - (value * std::abs(bonus)) / MAX_HISTORY;
 }
 
-int MovePicker::get_move_encoding(Move move) {
-  int dir = 0;
-
-  if ((((move.from & MASK_L3) << 3) == move.to) ||
-      (((move.from & MASK_L5) << 5) == move.to)) {
-    dir = 0;
-
-  } else if (((move.from) << 4) == move.to) {
-    dir = 1;
-
-  } else if (((move.from) >> 4) == move.to) {
-    dir = 2;
-
-  } else if ((((move.from & MASK_R3) >> 3) == move.to) ||
-             (((move.from & MASK_R5) >> 5) == move.to)) {
-    dir = 3;
-  };
-
-  return 4 * move.get_from_index() + dir;
-}
-
-int MovePicker::get_policy_encoding(Color mover, Move move) {
-  if (mover == BLACK) {
-    Move temp;
-    temp.from = getMirrored(move.from);
-    temp.to = getMirrored(move.to);
-    temp.captures = getMirrored(move.captures);
-    return get_move_encoding(temp);
-  }
-  return get_move_encoding(move);
-}
-
 int MovePicker::get_history_index(Position pos, Move move) {
   int t;
 
@@ -96,10 +64,6 @@ void MovePicker::clear_scores() {
     for (auto k = 0; k < MAX_KILLERS; ++k) {
       killer_moves[i][k] = Move{};
     }
-  }
-  // Should clear correction_stats as well
-  for (auto i = 0; i < CORRECTION_SIZE; ++i) {
-    correction_stats[i] = 0;
   }
 }
 
