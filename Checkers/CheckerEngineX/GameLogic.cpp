@@ -277,8 +277,10 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     if ((tb_value > 0 && tb_value >= beta) ||
         (tb_value < 0 && tb_value <= alpha)) {
-      if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(tb_value) >= 600) {
-        const auto mlh_score = (300 - get_mlh_estimate(pos));
+      if (Bits::pop_count(board.get_position().BP | board.get_position().WP) <=
+              10 &&
+          std::abs(tb_value) >= 600) {
+        const auto mlh_score = (300 - get_mlh_estimate(board.get_position()));
         if (tb_value >= 600) {
           tb_value += mlh_score;
         } else {

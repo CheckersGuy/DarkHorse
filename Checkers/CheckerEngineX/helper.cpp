@@ -31,7 +31,7 @@ extern "C" void print_fen(char *fen_string) {
 
 extern "C" int move_played(char *orig, char *next) {
   Position o = Position::pos_from_fen(orig);
-  Position n = Position::pos_from_fen(orig);
+  Position n = Position::pos_from_fen(next);
 
   if (o.color == BLACK) {
     o = o.get_color_flip();
@@ -42,7 +42,7 @@ extern "C" int move_played(char *orig, char *next) {
 
   auto result = o.get_move(o, n);
   if (result.has_value()) {
-    result.value().get_move_encoding();
+    return result.value().get_move_encoding();
   }
 
   return -1;

@@ -411,6 +411,40 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     Ok(())
 }
 
+pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut total_count = 0;
+    let mut writer = BufWriter::new(File::create(output)?);
+    for game in reader.iter_games() {
+        for window in game.windows(2) {
+            let fen_next = match window[0].position {
+                SampleType::Fen(ref fen_string) => fen_string.clone(),
+                _ => String::new(),
+            };
+            let fen_previous = match window[1].position {
+                SampleType::Fen(ref fen_string) => fen_string.clone(),
+                _ => String::new(),
+            };
+            let move_encoding = base
+                .get_move_encoding(fen_previous.as_str(), fen_next.as_str())
+                .unwrap();
+
+            if move_encoding > 0 {
+                //base.print_fen(fen_previous.as_str()).unwrap();
+                //println!("{move_encoding}");
+                let mut sample = window[1].clone();
+                sample.mlh = move_encoding as i16;
+                sample.write_fen(&mut writer)?;
+                total_count += 1;
+            }
+        }
+    }
+    drop(writer);
+    let path = Path::new(output);
+    prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
+    Ok(())
+}
+
 impl<'a> Generator<'a> {
     pub fn new(
         book: String,
