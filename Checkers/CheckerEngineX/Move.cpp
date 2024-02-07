@@ -35,3 +35,23 @@ std::ostream &operator<<(std::ostream &stream, Move other) {
   ;
   return stream;
 }
+
+int Move::get_move_encoding() const {
+  int dir = 0;
+
+  if ((((from & MASK_L3) << 3) == to) || (((from & MASK_L5) << 5) == to)) {
+    dir = 0;
+
+  } else if (((from) << 4) == to) {
+    dir = 1;
+
+  } else if (((from) >> 4) == to) {
+    dir = 2;
+
+  } else if ((((from & MASK_R3) >> 3) == to) ||
+             (((from & MASK_R5) >> 5) == to)) {
+    dir = 3;
+  };
+
+  return 4 * get_from_index() + dir;
+}

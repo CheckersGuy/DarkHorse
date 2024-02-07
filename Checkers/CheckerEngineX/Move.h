@@ -28,6 +28,8 @@ struct Move {
 
   bool is_pawn_move(const uint32_t kings) const;
 
+  int get_move_encoding() const;
+
   friend std::ostream &operator<<(std::ostream &, Move other);
 };
 
