@@ -13,52 +13,6 @@ Transposition::Transposition(size_t capacity) {
   resize(size);
 }
 
-void MoveEncoding::encode_move(Move move) {
-  from_index = (!move.is_empty()) ? move.get_from_index() : 32;
-  if (move.is_empty())
-    return;
-  uint8_t dir;
-  if ((((move.from & MASK_L3) << 3) == move.to) ||
-      (((move.from & MASK_L5) << 5) == move.to)) {
-    dir = 0;
-
-  } else if (((move.from) << 4) == move.to) {
-    dir = 1;
-
-  } else if (((move.from) >> 4) == move.to) {
-    dir = 2;
-
-  } else if ((((move.from & MASK_R3) >> 3) == move.to) ||
-             (((move.from & MASK_R5) >> 5) == move.to)) {
-    dir = 3;
-  };
-  direction = dir;
-}
-
-MoveEncoding::MoveEncoding(Move m) { encode_move(m); }
-
-Move MoveEncoding::get_move() {
-  if (from_index == 32) {
-    return Move{};
-  }
-  Move move;
-  uint32_t from = 1u << from_index;
-  uint32_t to;
-  if (direction == 3) {
-    to = ((from & MASK_R3) >> 3) | ((from & MASK_R5) >> 5);
-  } else if (direction == 2) {
-
-    to = from >> 4;
-  } else if (direction == 1) {
-    to = from << 4;
-  } else if (direction == 0) {
-    to = ((from & MASK_L3) << 3) | ((from & MASK_L5) << 5);
-  };
-  move.from = from;
-  move.to = to;
-  return move;
-}
-
 void Transposition::resize(size_t capa) {
   capacity = 1u << capa;
   entries = std::make_unique<Cluster[]>(capacity);

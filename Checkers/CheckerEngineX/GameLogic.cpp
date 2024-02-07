@@ -12,11 +12,12 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<1024, 32, 32> network;
-Network<512, 32, 32> mlh_net;
+Network<1024, 32, 32, 1> network;
+Network<512, 32, 32, 1> mlh_net;
+Network<128, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
-  auto out = mlh_net.get_raw_eval(pos);
+  auto out = mlh_net.evaluate(pos, 0, 0);
   auto scaled = static_cast<float>(out) / 127.0;
   scaled = std::max(0, (int)std::round(scaled * 300));
   return scaled;
@@ -291,13 +292,31 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
 #endif
-  liste.sort(board.get_position(), depth, ply, tt_move, 0);
 
+  auto *out = policy.get_raw_eval(board.get_position());
+  auto oracle = [&](Move move) {
+    if (move == info.tt_move) {
+      return std::numeric_limits<int32_t>::max();
+    }
+    if (board.get_position().color == BLACK) {
+      move = move.flipped();
+    }
+    if (move.is_capture()) {
+      const uint32_t kings_captured = move.captures & board.get_position().K;
+      const uint32_t pawns_captured = move.captures & (~board.get_position().K);
+      return (int)(Bits::pop_count(kings_captured) * 3 +
+                   Bits::pop_count(pawns_captured) * 2);
+    }
+    auto encoding = move.get_move_encoding();
+    auto score = out[encoding];
+    return score;
+  };
+
+  liste.sort(board.get_position(), depth, ply, tt_move, 0, oracle);
   const Value old_alpha = alpha;
 
   const Value prob_beta = beta + prob_cut;
   const int parent_rev_move = last_rev;
-  // singular extension to be continued
   for (auto i = 0; i < liste.length(); ++i) {
     const Move move = liste[i];
     if (is_sing_search && move == excluded) {
@@ -492,7 +511,15 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
     return net_val;
   }
-  moves.sort(board.get_position(), depth, ply, Move{}, false);
+  moves.sort(board.get_position(), depth, ply, Move{}, false, [&](Move move) {
+    if (move.is_capture()) {
+      const uint32_t kings_captured = move.captures & board.get_position().K;
+      const uint32_t pawns_captured = move.captures & (~board.get_position().K);
+      return (int)(Bits::pop_count(kings_captured) * 3 +
+                   Bits::pop_count(pawns_captured) * 2);
+    }
+    return 0;
+  });
   for (int i = 0; i < moves.length(); ++i) {
     Move move = moves[i];
     Line localPV;

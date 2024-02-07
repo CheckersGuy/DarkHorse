@@ -67,6 +67,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
 int get_mlh_estimate(Position pos);
 
-extern Network<1024, 32, 32> network;
-extern Network<512, 32, 32> mlh_net;
+extern Network<1024, 32, 32, 1> network;
+extern Network<512, 32, 32, 1> mlh_net;
+extern Network<128, 32, 32, 128> policy;
 #endif // CHECKERSTEST_GAMELOGIC_H
