@@ -1,4 +1,5 @@
 #![feature(buf_read_has_data_left)]
+#![feature(iter_next_chunk)]
 pub mod Data;
 pub mod Pos;
 pub mod Sample;
@@ -12,6 +13,7 @@ use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
 use Sample::SampleIteratorTrait;
+use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
     /* let mut dataloader = dataloader::DataLoader::new(
@@ -63,7 +65,7 @@ fn main() -> anyhow::Result<()> {
         );
     */
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 
@@ -86,12 +88,36 @@ fn main() -> anyhow::Result<()> {
     */
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
-    //
+
     /*Data::dump_mlh_samples(
             "E:/newtry11rescoredmlh.samples",
             "E:/newtry11rescoredmlhwinning.samples",
         )?;
     */
+    let mut reader = BufReader::new(File::open("E:/newtry11rescoredmlh.samples")?);
+    for game in reader.iter_games().take(1) {
+        for window in game.windows(2) {
+            let fen_next = match window[0].position {
+                SampleType::Fen(ref fen_string) => fen_string.clone(),
+                _ => String::new(),
+            };
+            let fen_previous = match window[1].position {
+                SampleType::Fen(ref fen_string) => fen_string.clone(),
+                _ => String::new(),
+            };
+            let move_encoding = base
+                .get_move_encoding(fen_previous.as_str(), fen_next.as_str())
+                .unwrap();
+            println!("{move_encoding}");
+
+            if move_encoding > 0 {
+                base.print_fen(fen_previous.as_str());
+                println!("{move_encoding}");
+            }
+        }
+
+        //base.print_fen(fen_string.as_str()).unwrap();
+    }
 
     Ok(())
 }

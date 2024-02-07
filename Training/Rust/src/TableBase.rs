@@ -106,4 +106,19 @@ impl Base {
             Ok(func(c_to_print.as_ptr()))
         }
     }
+
+    pub fn get_move_encoding(
+        &self,
+        previous: &str,
+        next: &str,
+    ) -> Result<i32, Box<dyn std::error::Error>> {
+        unsafe {
+            let func: libloading::Symbol<
+                unsafe extern "C" fn(*const libc::c_char, *const libc::c_char) -> i32,
+            > = self.library.get(b"move_played")?;
+            let c_to_previous = CString::new(previous).expect("CString failed");
+            let c_to_next = CString::new(next).expect("CString failed");
+            Ok(func(c_to_previous.as_ptr(), c_to_next.as_ptr()))
+        }
+    }
 }
