@@ -78,14 +78,8 @@ fn main() -> anyhow::Result<()> {
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-    /*
-        Data::rescore_games(
-            "E:/newtry11rescored.samples",
-            "E:/newtry11rescoredmlh.samples",
-            &base,
-        )
-        .unwrap();
-    */
+
+    Data::create_policy_data("E:/newtry11rescored.samples", "E:/policy.samples", &base).unwrap();
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
 
@@ -94,30 +88,6 @@ fn main() -> anyhow::Result<()> {
             "E:/newtry11rescoredmlhwinning.samples",
         )?;
     */
-    let mut reader = BufReader::new(File::open("E:/newtry11rescoredmlh.samples")?);
-    for game in reader.iter_games().take(1) {
-        for window in game.windows(2) {
-            let fen_next = match window[0].position {
-                SampleType::Fen(ref fen_string) => fen_string.clone(),
-                _ => String::new(),
-            };
-            let fen_previous = match window[1].position {
-                SampleType::Fen(ref fen_string) => fen_string.clone(),
-                _ => String::new(),
-            };
-            let move_encoding = base
-                .get_move_encoding(fen_previous.as_str(), fen_next.as_str())
-                .unwrap();
-            println!("{move_encoding}");
-
-            if move_encoding > 0 {
-                base.print_fen(fen_previous.as_str());
-                println!("{move_encoding}");
-            }
-        }
-
-        //base.print_fen(fen_string.as_str()).unwrap();
-    }
 
     Ok(())
 }
