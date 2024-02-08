@@ -6,7 +6,6 @@ use bloomfilter::reexports::bit_vec::BitBlock;
 use bloomfilter::Bloom;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
-use core::slice::SlicePattern;
 use indicatif::{ProgressBar, ProgressStyle};
 use rand::prelude::*;
 use rand::seq::SliceRandom;
