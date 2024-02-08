@@ -457,7 +457,9 @@ pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     writer.write_all((samples.len() as u64).to_le_bytes().as_slice())?;
 
     for sample in samples {
-        sample.write_fen(&mut writer)?;
+        sample
+            .write_fen(&mut writer)
+            .expect("Error writing back data");
     }
 
     Ok(())
