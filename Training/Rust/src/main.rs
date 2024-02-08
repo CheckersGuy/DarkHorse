@@ -65,7 +65,7 @@ fn main() -> anyhow::Result<()> {
         );
     */
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 
@@ -79,7 +79,12 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", result);
     */
 
-    //Data::create_policy_data("E:/newtry11rescored.samples", "E:/policy.samples", &base).unwrap();
+    Data::create_policy_data(
+        "E:/newtry11rescoredmlhshuffled.samples",
+        "E:/policyshuffled.samples",
+        &base,
+    )
+    .unwrap();
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
 
@@ -88,14 +93,6 @@ fn main() -> anyhow::Result<()> {
             "E:/newtry11rescoredmlhwinning.samples",
         )?;
     */
-    rayon::ThreadPoolBuilder::new()
-        .num_threads(220)
-        .build_global()
-        .unwrap();
-    Data::shuffle_data(
-        "newtry11rescoredmlh.samples",
-        "newtry11rescoredmlhshuffled.samples",
-    )?;
 
     Ok(())
 }
