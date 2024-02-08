@@ -34,9 +34,11 @@ public:
 
   Move &operator[](int index);
 
-  bool put_front(Move other);
-
   void reset();
+
+  void move_to_front(int start_index, Move move);
+
+  template <typename Oracle> void move_to_front(int start_index, Oracle func);
 
   auto begin() { return liste.begin(); }
 
@@ -102,4 +104,25 @@ void MoveListe::sort(Position current, Depth depth, Ply ply, Move ttMove,
     scores[j] = tmp;
   }
 }
+
+template <typename Oracle>
+void MoveListe::move_to_front(int start_index, Oracle func) {
+  // finds the best move according to our oracle and swaps it to the front
+
+  int max_score = -10000;
+  int max_index = 0;
+
+  for (auto i = start_index; i < moveCounter; ++i) {
+    const auto score = func(liste[i]);
+    if (score > max_score) {
+      max_score = score;
+      max_index = i;
+    }
+  }
+  // swap moves to front
+  const Move temp = liste[start_index];
+  liste[start_index] = liste[max_index];
+  liste[max_index] = temp;
+}
+
 #endif // CHECKERSTEST_MOVELISTE_H

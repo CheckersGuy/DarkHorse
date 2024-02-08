@@ -292,10 +292,9 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
 #endif
-
   auto *out = policy.get_raw_eval(board.get_position());
   auto oracle = [&](Move move) {
-    if (move == info.tt_move) {
+    if (move == tt_move) {
       return std::numeric_limits<int32_t>::max();
     }
     if (board.get_position().color == BLACK) {
@@ -318,6 +317,16 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   const Value prob_beta = beta + prob_cut;
   const int parent_rev_move = last_rev;
   for (auto i = 0; i < liste.length(); ++i) {
+    /*
+        if (i == 0 && !tt_move.is_empty()) {
+          liste.move_to_front(i, tt_move);
+        } else {
+          if (out == nullptr) {
+            out = policy.get_raw_eval(board.get_position());
+          }
+          liste.move_to_front(i, oracle);
+        }
+    */
     const Move move = liste[i];
     if (is_sing_search && move == excluded) {
       continue;
@@ -433,6 +442,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
         }
         killers[ply][0] = move;
       }
+
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
@@ -511,16 +521,15 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
     return net_val;
   }
-  moves.sort(board.get_position(), depth, ply, Move{}, false, [&](Move move) {
-    if (move.is_capture()) {
+  for (int i = 0; i < moves.length(); ++i) {
+
+    moves.move_to_front(i, [&](Move move) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
       return (int)(Bits::pop_count(kings_captured) * 3 +
                    Bits::pop_count(pawns_captured) * 2);
-    }
-    return 0;
-  });
-  for (int i = 0; i < moves.length(); ++i) {
+    });
+
     Move move = moves[i];
     Line localPV;
     int last_rev = board.pCounter;

@@ -7,19 +7,21 @@ void MoveListe::reset() { moveCounter = 0; }
 
 extern Line mainPV;
 
-bool MoveListe::put_front(Move other) {
-  auto it = std::find(begin(), end(), other);
-  if (it != end()) {
-    std::swap(liste[0], *it);
-    return true;
-  }
-  return false;
-}
-
 MoveListe &MoveListe::operator=(const MoveListe &other) {
   for (auto i = 0; i < other.moveCounter; ++i) {
     liste[i] = other.liste[i];
   }
   this->moveCounter = other.moveCounter;
   return *this;
+}
+
+void MoveListe::move_to_front(int start_index, Move move) {
+  for (auto i = start_index; i < moveCounter; ++i) {
+    if (liste[i] == move) {
+      const Move temp = liste[i];
+      liste[i] = liste[start_index];
+      liste[start_index] = temp;
+      break;
+    }
+  }
 }
