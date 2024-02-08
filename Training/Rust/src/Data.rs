@@ -6,17 +6,18 @@ use bloomfilter::reexports::bit_vec::BitBlock;
 use bloomfilter::Bloom;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
+use core::slice::SlicePattern;
 use indicatif::{ProgressBar, ProgressStyle};
-use mktemp::Temp;
+use rand::prelude::*;
 use rand::seq::SliceRandom;
-use std::borrow::BorrowMut;
+use rand::thread_rng;
+use rayon::prelude::*;
+use rip_shuffle::RipShuffleParallel;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::hash::Hash;
-use std::io::prelude::*;
-use std::io::prelude::*;
 use std::io::{BufRead, Write};
 use std::io::{BufReader, BufWriter};
 use std::path::Path;
@@ -27,7 +28,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use Sample::{Result, SampleType};
-
 //Generator produces fen_strings
 #[derive(Debug)]
 pub struct Generator<'a> {
@@ -442,6 +442,25 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
     drop(writer);
     let path = Path::new(output);
     prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
+    Ok(())
+}
+
+pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut samples = Vec::new();
+
+    for sample in reader.iter_samples() {
+        samples.push(sample);
+    }
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    samples.par_shuffle(&mut rng);
+    writer.write_all((samples.len() as u64).to_le_bytes().as_slice());
+
+    for sample in samples {
+        sample.write_fen(&mut writer);
+    }
+
     Ok(())
 }
 
