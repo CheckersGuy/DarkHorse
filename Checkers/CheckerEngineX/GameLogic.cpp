@@ -521,14 +521,13 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
     return net_val;
   }
+  moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
+    const uint32_t kings_captured = move.captures & board.get_position().K;
+    const uint32_t pawns_captured = move.captures & (~board.get_position().K);
+    return (int)(Bits::pop_count(kings_captured) * 3 +
+                 Bits::pop_count(pawns_captured) * 2);
+  });
   for (int i = 0; i < moves.length(); ++i) {
-
-    moves.move_to_front(i, [&](Move move) {
-      const uint32_t kings_captured = move.captures & board.get_position().K;
-      const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-      return (int)(Bits::pop_count(kings_captured) * 3 +
-                   Bits::pop_count(pawns_captured) * 2);
-    });
 
     Move move = moves[i];
     Line localPV;
