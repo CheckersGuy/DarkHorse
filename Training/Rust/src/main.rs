@@ -88,7 +88,10 @@ fn main() -> anyhow::Result<()> {
             "E:/newtry11rescoredmlhwinning.samples",
         )?;
     */
-
+    rayon::ThreadPoolBuilder::new()
+        .num_threads(220)
+        .build_global()
+        .unwrap();
     Data::shuffle_data(
         "newtry11rescoredmlh.samples",
         "newtry11rescoredmlhshuffled.samples",
