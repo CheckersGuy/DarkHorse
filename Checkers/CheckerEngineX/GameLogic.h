@@ -69,5 +69,5 @@ int get_mlh_estimate(Position pos);
 
 extern Network<1024, 32, 32, 1> network;
 extern Network<512, 32, 32, 1> mlh_net;
-extern Network<128, 32, 32, 128> policy;
+extern Network<512, 32, 32, 128> policy;
 #endif // CHECKERSTEST_GAMELOGIC_H

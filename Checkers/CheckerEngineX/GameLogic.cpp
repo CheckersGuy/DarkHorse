@@ -14,7 +14,7 @@ Value last_eval = -INFINITE;
 SearchGlobal glob;
 Network<1024, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
-Network<128, 32, 32, 128> policy;
+Network<512, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
   auto out = mlh_net.evaluate(pos, 0, 0);
@@ -310,23 +310,12 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     auto score = out[encoding];
     return score;
   };
-
   liste.sort(board.get_position(), depth, ply, tt_move, 0, oracle);
   const Value old_alpha = alpha;
 
   const Value prob_beta = beta + prob_cut;
   const int parent_rev_move = last_rev;
   for (auto i = 0; i < liste.length(); ++i) {
-    /*
-        if (i == 0 && !tt_move.is_empty()) {
-          liste.move_to_front(i, tt_move);
-        } else {
-          if (out == nullptr) {
-            out = policy.get_raw_eval(board.get_position());
-          }
-          liste.move_to_front(i, oracle);
-        }
-    */
     const Move move = liste[i];
     if (is_sing_search && move == excluded) {
       continue;
@@ -432,17 +421,17 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
-        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
-                                          move, depth);
-        // updating killer moves
-        auto &killers = Statistics::mPicker.killer_moves;
-        for (auto i = 1; i < MAX_KILLERS; ++i) {
-          killers[ply][i] = killers[ply][i - 1];
-        }
-        killers[ply][0] = move;
-      }
-
+      /* if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
+         Statistics::mPicker.update_scores(board.get_position(),
+       &liste.liste[0], move, depth);
+         // updating killer moves
+         auto &killers = Statistics::mPicker.killer_moves;
+         for (auto i = 1; i < MAX_KILLERS; ++i) {
+           killers[ply][i] = killers[ply][i - 1];
+         }
+         killers[ply][0] = move;
+       }
+ */
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
