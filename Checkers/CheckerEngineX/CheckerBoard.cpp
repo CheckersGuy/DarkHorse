@@ -7,8 +7,9 @@ Board game_board;
 int num_draw_scores = 0;
 Position previous;
 #define DB_PATH "E:\\kr_english_wld"
-INCBIN(mlh_net, "mlh2.quant");
+INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "final5.quant");
+INCBIN(policy, "policybig.quant");
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
