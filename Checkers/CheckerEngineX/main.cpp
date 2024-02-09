@@ -19,9 +19,9 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh2.quant");
+INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "final5.quant");
-INCBIN(policy, "policy.quant");
+INCBIN(policy, "policybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {

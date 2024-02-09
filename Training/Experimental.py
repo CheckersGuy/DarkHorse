@@ -12,7 +12,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*128
+L1 =2*512
 L2 =32
 L3 = 32
 
@@ -279,7 +279,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=3e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -297,7 +297,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"mlh.pt")
+        torch.save(self.state_dict(),"mlh3.pt")
         result,mlh_target, move,buckets,psqt_buckets, x = val_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0
@@ -308,7 +308,7 @@ class MLHNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("mlh.quant")
+        self.save_quantized_bucket("mlh3.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -479,7 +479,7 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"mlh.pt")
+        torch.save(self.state_dict(),"policybig.pt")
         result,policy_target, move,buckets,psqt_buckets, x = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
@@ -489,7 +489,7 @@ class PolicyNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("mlh.quant")
+        self.save_quantized_bucket("policybig.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}

@@ -198,16 +198,8 @@ pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
 
         if !filter.check(&fen_string) {
             if sample.mlh > 0 {
-                match sample.result {
-                    Sample::Result::TBWIN
-                    | Sample::Result::WIN
-                    | Sample::Result::TBLOSS
-                    | Sample::Result::LOSS => {
-                        sample.write_fen(&mut writer)?;
-                        total_counter += 1;
-                    }
-                    _ => {}
-                }
+                sample.write_fen(&mut writer)?;
+                total_counter += 1;
             }
             filter.set(&fen_string);
         }
@@ -290,6 +282,9 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 
+//check why I am not getting more mlh-positions with >10 pieces
+//if I fix that, I should check what the material distribution looks like !
+
 //#[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     let get_mover = |fen: &str| -> i32 {
@@ -299,7 +294,6 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             _ => 0,
         }
     };
-    //300 is just some value I have come up with, nothing special could change in the future
     let mut counter = 0;
     let mut mlh_counter: Option<i32> = None;
     for sample in game.iter_mut() {
@@ -308,20 +302,18 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             _ => return,
         };
         let probe = base.probe_dtw(fen_string);
-        if let Ok(Some(counter)) = probe {
-            mlh_counter = Some(counter);
+        if let Ok(Some(count)) = probe {
+            mlh_counter = Some(count);
         } else {
-            //if the mlh_counter was set previously, we can
-            //increment the counter
-            if let Some(counter) = mlh_counter {
-                mlh_counter = Some(counter + 1);
+            if let Some(count) = mlh_counter {
+                mlh_counter = Some(count + 1);
             }
         }
         if get_mover(fen_string) == 1 {
             counter += 1;
         }
-        if let Some(counter) = mlh_counter {
-            sample.mlh = counter as i16;
+        if let Some(count) = mlh_counter {
+            sample.mlh = count as i16;
         } else {
             sample.mlh = -1000;
         }

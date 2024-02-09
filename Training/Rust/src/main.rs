@@ -16,11 +16,8 @@ use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    /* let mut dataloader = dataloader::DataLoader::new(
-            String::from("E:/newtry11rescoredmlh.samples"),
-            1000000,
-            false,
-        )?;
+    /*let mut dataloader =
+            dataloader::DataLoader::new(String::from("/mnt/e/mlhshuffled.samples"), 1000000, false)?;
 
         for _ in 0..3000 {
             let sample = dataloader.get_next()?;
@@ -65,7 +62,7 @@ fn main() -> anyhow::Result<()> {
         );
     */
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 
@@ -79,20 +76,20 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", result);
     */
 
-    Data::create_policy_data(
+    /*Data::create_policy_data(
         "E:/newtry11rescoredmlhshuffled.samples",
         "E:/policyshuffled.samples",
         &base,
     )
     .unwrap();
+    */
     //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
     // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
 
-    /*Data::dump_mlh_samples(
-            "E:/newtry11rescoredmlh.samples",
-            "E:/newtry11rescoredmlhwinning.samples",
-        )?;
-    */
+    Data::dump_mlh_samples(
+        "/mnt/e/newtry11rescoredmlhshuffled.samples",
+        "/mnt/e/mlhshuffled2.samples",
+    )?;
 
     Ok(())
 }

@@ -29,9 +29,9 @@ pub struct DataLoader {
 impl DataLoader {
     pub fn new(path: String, capacity: usize, shuffle: bool) -> std::io::Result<DataLoader> {
         let mut data_loader = DataLoader {
-            reader: BufReader::with_capacity(10000000, File::open(path.clone())?),
+            reader: BufReader::with_capacity(1000000, File::open(path.clone())?),
             path: path.clone(),
-            shuff_buf: Vec::with_capacity(capacity),
+            shuff_buf: Vec::new(),
             num_samples: 0,
             shuffle,
             capa: capacity,
@@ -39,6 +39,7 @@ impl DataLoader {
         };
         data_loader.num_samples = data_loader.reader.read_u64::<LittleEndian>()?;
         data_loader.capa = std::cmp::min(data_loader.capa, data_loader.num_samples as usize);
+        data_loader.shuff_buf = Vec::with_capacity(data_loader.capa);
         println!("Got {} available samples", data_loader.num_samples);
         Ok(data_loader)
     }
