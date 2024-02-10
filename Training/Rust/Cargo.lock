@@ -265,6 +265,7 @@ name = "movegen"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "arrayvec",
  "bloomfilter",
  "byteorder",
  "indicatif",

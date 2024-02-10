@@ -6,6 +6,7 @@ pub mod Sample;
 pub mod TableBase;
 pub mod dataloader;
 use anyhow::Context;
+use arrayvec::ArrayVec;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
@@ -90,11 +91,7 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    Data::create_mlh_data(
-        "/mnt/e/newtry11rescored.samples",
-        "/mnt/e/mlh3.samples",
-        &base,
-    )?;
+    Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
 
     Ok(())
 }

@@ -284,22 +284,15 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 //needs to be reworked
 //#[cfg(target_os = "windows")]
 pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
-    let mut mlh_counter: Option<i32> = None;
-    let get_mover = |fen: &str| -> i32 {
-        match fen.chars().next() {
-            Some('W') => 1,
-            Some('B') => -1,
-            _ => 0,
-        }
-    };
-    let mut reader = BufReader::new(File::open(path)?);
-    let mut writer = BufWriter::new(File::create(output)?);
+    let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
+    let mut writer = BufWriter::with_capacity(100000, File::create(output)?);
     let mut write_count = 0;
     for game in reader.iter_games() {
-        for (i, sample) in game.iter().enumerate() {
+        let mut mlh_counter = None;
+        for sample in game.iter() {
             let squares = sample.position.get_squares().unwrap();
             if squares.len() > 10 {
-                break;
+                continue;
             }
             let fen_string = match sample.position {
                 Sample::SampleType::Fen(ref fen) => fen,
@@ -310,13 +303,12 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
                 mlh_counter = Some(count);
             } else {
                 if let Some(count) = mlh_counter {
-                    match base.probe(fen_string).unwrap() {
+                    match sample.result {
                         Sample::Result::TBWIN
                         | Sample::Result::TBLOSS
                         | Sample::Result::WIN
                         | Sample::Result::LOSS => {
                             mlh_counter = Some(count + 1);
-                            println!("{}", squares.len());
                         }
                         _ => mlh_counter = None,
                     }
@@ -330,7 +322,7 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
             }
         }
     }
-    writer.flush();
+    writer.flush()?;
     drop(writer);
     let path = Path::new(output);
     prepend_file((write_count as u64).to_le_bytes().as_slice(), &path)?;
