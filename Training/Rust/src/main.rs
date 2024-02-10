@@ -90,10 +90,6 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    //let distribution = Data::material_distrib("/mnt/e/mlhshuffled2.samples").unwrap();
-
-    //println!("{:?}", distribution);
-
     Data::create_mlh_data(
         "/mnt/e/newtry11rescored.samples",
         "/mnt/e/mlh3.samples",

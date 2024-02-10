@@ -26,7 +26,6 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use string_sum::Sample::SampleIteratorTrait;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]
@@ -282,9 +281,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
         (pos.bp.count_ones() + pos.wp.count_ones()) as usize <= count
     })
 }
-
-//check why I am not getting more mlh-positions with >10 pieces
-//if I fix that, I should check what the material distribution looks like !
+//needs to be reworked
 //#[cfg(target_os = "windows")]
 pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut mlh_counter: Option<i32> = None;
@@ -313,20 +310,23 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
                 mlh_counter = Some(count);
             } else {
                 if let Some(count) = mlh_counter {
-                    mlh_counter = match base.probe(fen_string).unwrap() {
-                        Sample::Result::TBWIN | Sample::Result::TBLOSS => Some(count + 1),
-                        _ => None,
+                    match base.probe(fen_string).unwrap() {
+                        Sample::Result::TBWIN
+                        | Sample::Result::TBLOSS
+                        | Sample::Result::WIN
+                        | Sample::Result::LOSS => {
+                            mlh_counter = Some(count + 1);
+                            println!("{}", squares.len());
+                        }
+                        _ => mlh_counter = None,
                     }
                 }
             }
             if let Some(count) = mlh_counter {
-                sample.mlh = count as i16;
-            } else {
-                sample.mlh = -1000;
-            }
-            if sample.mlh > 0 {
+                let mut copy = sample.clone();
+                copy.mlh = count as i16;
                 write_count += 1;
-                sample.write_fen(&mut writer);
+                copy.write_fen(&mut writer)?;
             }
         }
     }
