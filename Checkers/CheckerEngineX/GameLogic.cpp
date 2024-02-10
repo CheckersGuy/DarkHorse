@@ -292,25 +292,39 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
 #endif
-  auto *out = policy.get_raw_eval(board.get_position());
+  auto *out = &policy.output.buffer[0];
+  bool computed = false;
+
+  int start_index = 0;
+  if (!tt_move.is_empty()) {
+    liste.move_to_front(0, tt_move);
+    start_index += (liste[0] == tt_move);
+  }
+
   auto oracle = [&](Move move) {
-    if (move == tt_move) {
+    /*if (move == tt_move) {
       return std::numeric_limits<int32_t>::max();
-    }
-    if (board.get_position().color == BLACK) {
-      move = move.flipped();
-    }
+    }*/
+
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
       return (int)(Bits::pop_count(kings_captured) * 3 +
                    Bits::pop_count(pawns_captured) * 2);
     }
+
+    if (!computed) {
+      out = policy.get_raw_eval(board.get_position());
+      computed = true;
+    }
+    if (board.get_position().color == BLACK) {
+      move = move.flipped();
+    }
     auto encoding = move.get_move_encoding();
     auto score = out[encoding];
     return score;
   };
-  liste.sort(board.get_position(), depth, ply, tt_move, 0, oracle);
+  liste.sort(board.get_position(), depth, ply, tt_move, start_index, oracle);
   const Value old_alpha = alpha;
 
   const Value prob_beta = beta + prob_cut;
@@ -421,17 +435,17 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      /* if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
-         Statistics::mPicker.update_scores(board.get_position(),
-       &liste.liste[0], move, depth);
-         // updating killer moves
-         auto &killers = Statistics::mPicker.killer_moves;
-         for (auto i = 1; i < MAX_KILLERS; ++i) {
-           killers[ply][i] = killers[ply][i - 1];
-         }
-         killers[ply][0] = move;
-       }
- */
+      if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
+        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
+                                          move, depth);
+        // updating killer moves
+        auto &killers = Statistics::mPicker.killer_moves;
+        for (auto i = 1; i < MAX_KILLERS; ++i) {
+          killers[ply][i] = killers[ply][i - 1];
+        }
+        killers[ply][0] = move;
+      }
+
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
