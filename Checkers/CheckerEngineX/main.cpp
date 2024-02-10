@@ -19,7 +19,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh3.quant");
+INCBIN(mlh_net, "mlh4.quant");
 INCBIN(network, "final7.quant");
 INCBIN(policy, "policybig.quant");
 inline Position posFromString(const std::string &pos) {
