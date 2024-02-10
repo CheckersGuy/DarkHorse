@@ -376,7 +376,7 @@ impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
             .expect("Could not read number of samples");
         GameIterator {
             reader: self,
-            game: Vec::new(),
+            game: Vec::<Sample>::new(),
             num_samples: num,
         }
     }
