@@ -26,6 +26,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use string_sum::Sample::SampleIteratorTrait;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]
@@ -284,6 +285,57 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 
 //check why I am not getting more mlh-positions with >10 pieces
 //if I fix that, I should check what the material distribution looks like !
+//#[cfg(target_os = "windows")]
+pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+    let mut mlh_counter: Option<i32> = None;
+    let get_mover = |fen: &str| -> i32 {
+        match fen.chars().next() {
+            Some('W') => 1,
+            Some('B') => -1,
+            _ => 0,
+        }
+    };
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut write_count = 0;
+    for game in reader.iter_games() {
+        for (i, sample) in game.iter().enumerate() {
+            let squares = sample.position.get_squares().unwrap();
+            if squares.len() > 10 {
+                break;
+            }
+            let fen_string = match sample.position {
+                Sample::SampleType::Fen(ref fen) => fen,
+                _ => return Ok(()),
+            };
+            let probe = base.probe_dtw(fen_string);
+            if let Ok(Some(count)) = probe {
+                mlh_counter = Some(count);
+            } else {
+                if let Some(count) = mlh_counter {
+                    mlh_counter = match base.probe(fen_string).unwrap() {
+                        Sample::Result::TBWIN | Sample::Result::TBLOSS => Some(count + 1),
+                        _ => None,
+                    }
+                }
+            }
+            if let Some(count) = mlh_counter {
+                sample.mlh = count as i16;
+            } else {
+                sample.mlh = -1000;
+            }
+            if sample.mlh > 0 {
+                write_count += 1;
+                sample.write_fen(&mut writer);
+            }
+        }
+    }
+    writer.flush();
+    drop(writer);
+    let path = Path::new(output);
+    prepend_file((write_count as u64).to_le_bytes().as_slice(), &path)?;
+    Ok(())
+}
 
 //#[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {

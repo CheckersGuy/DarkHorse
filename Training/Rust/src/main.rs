@@ -62,7 +62,7 @@ fn main() -> anyhow::Result<()> {
         );
     */
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 
@@ -83,12 +83,21 @@ fn main() -> anyhow::Result<()> {
     )
     .unwrap();
     */
-    //Data::create_unique_fens("newopen2.pos", "newopen3.pos").unwrap();
-    // Data::create_book("../Positions/drawbook.book", "newopen3.pos", 14)?;
+    /*Data::dump_mlh_samples(
+            "/mnt/e/newtry11rescoredmlhshuffled.samples",
+            "/mnt/e/mlhshuffled2.samples",
+        )?;
 
-    Data::dump_mlh_samples(
-        "/mnt/e/newtry11rescoredmlhshuffled.samples",
-        "/mnt/e/mlhshuffled2.samples",
+    */
+
+    //let distribution = Data::material_distrib("/mnt/e/mlhshuffled2.samples").unwrap();
+
+    //println!("{:?}", distribution);
+
+    Data::create_mlh_data(
+        "/mnt/e/newtry11rescored.samples",
+        "/mnt/e/mlh3.samples",
+        &base,
     )?;
 
     Ok(())
