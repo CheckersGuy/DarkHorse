@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "final7bigbigbigadam.quant");
+INCBIN(network, "final7bigbigbig.quant");
 INCBIN(policy, "policybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -106,10 +106,14 @@ int main(int argl, const char **argc) {
   tablebase.load_table_base(DB_PATH);
 #endif
 
-  // mlh_net.load_bucket("mlh2.quant");
+  mlh_net.load_bucket("mlh2.quant");
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
+
+  /*  std::cout << network.evaluate(Position::get_start_position(), 0, 0);
+    return 0;
+    */
 
   /*Position pos = Position::pos_from_fen("B:WK5,K26:B4,3,1");
   pos.print_position();

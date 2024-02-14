@@ -1,5 +1,8 @@
 
 // #include "Network.h"
+
+#ifndef LinearSp
+#define LinearSp
 #include "Bits.h"
 #include "Simd.h"
 #include "types.h"
@@ -10,8 +13,6 @@
 #include <immintrin.h>
 #include <iostream>
 // for testing purposes
-
-enum Activation { Id, SqRelu };
 
 static constexpr int lsb_constexpr(std::uint32_t v) {
   int c = 0;
@@ -59,21 +60,32 @@ void find_nnz_version3(int32_t *input, uint16_t *output, uint32_t &count_out) {
   count_out = count;
 }
 
-#define AVX256
-
-constexpr int ceil_to_multi(int numToRound, int multiple) {
-  if (multiple == 0)
-    return numToRound;
-
-  int remainder = numToRound % multiple;
-  if (remainder == 0)
-    return numToRound;
-
-  return numToRound + multiple - remainder;
+template <int InDim>
+void find_nnz_version1(int32_t *input, uint16_t *output, uint32_t &count) {
+  int nnz = 0;
+  for (auto i = 0; i < InDim; ++i) {
+    if (input[i] != 0) {
+      output[nnz++] = i;
+    }
+  }
+  count = nnz;
 }
 
-template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
-  static_assert(OutDim % 4 == 0);
+#define AVX256
+
+template <int InDim, int OutDim> struct SparseLayer {
+  static_assert(OutDim % 32 == 0);
+
+  constexpr static int ceil_to_multi(int numToRound, int multiple) {
+    if (multiple == 0)
+      return numToRound;
+
+    int remainder = numToRound % multiple;
+    if (remainder == 0)
+      return numToRound;
+
+    return numToRound + multiple - remainder;
+  }
 
 #ifdef AVX256
   static constexpr int PadInDim = ceil_to_multi(InDim, 32);
@@ -83,15 +95,15 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
   static constexpr int CHUNKSIZE = 4;
 #endif
 
-  alignas(CACHE_LINE_SIZE) int32_t biases[OutDim];
-  alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim];
+  alignas(CACHE_LINE_SIZE) int32_t biases[OutDim * NUM_BUCKETS];
+  alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim * NUM_BUCKETS];
   alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
-  alignas(CACHE_LINE_SIZE) uint16_t nnz[ceil_to_multi(OutDim / CHUNKSIZE, 16)];
+
+  alignas(CACHE_LINE_SIZE) uint16_t nnz[InDim / CHUNKSIZE];
 
   int get_weight_index(int index) {
-
     const int BLOCK_ROWS = OutDim;
-    const int BLOCK_COLS = 4;
+    const int BLOCK_COLS = CHUNKSIZE;
 
     const int ROW = index / PadInDim;
     const int COL = index % PadInDim;
@@ -109,106 +121,76 @@ template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
     return out;
   }
 
+  static constexpr int get_weight_index_scrambled(int i) {
+    return (i / CHUNKSIZE) % (PadInDim / CHUNKSIZE) * OutDim * CHUNKSIZE +
+           i / PadInDim * CHUNKSIZE + i % CHUNKSIZE;
+  }
+
   void load_params(std::istream &stream) {
     for (auto k = 0; k < NUM_BUCKETS; ++k) {
-      if constexpr ((OutDim % 4) == 0) {
-        int8_t temp_weights[PadInDim * OutDim] = {0};
-        for (auto i = 0; i < OutDim; ++i) {
-          for (auto j = 0; j < PadInDim; ++j) {
-            int8_t weight;
-            if (j < InDim) {
-              stream.read((char *)&weight, sizeof(int8_t));
-            } else {
-              weight = 0;
-            }
-
-            temp_weights[i * PadInDim + j] = weight;
+      int8_t temp_weights[PadInDim * OutDim] = {0};
+      for (auto i = 0; i < OutDim; ++i) {
+        for (auto j = 0; j < PadInDim; ++j) {
+          int8_t weight;
+          if (j < InDim) {
+            stream.read((char *)&weight, sizeof(int8_t));
+          } else {
+            weight = 0;
           }
-        }
-        for (int i = 0; i < PadInDim * OutDim; ++i) {
-          auto index = get_weight_index(i);
-          weights[index + k * PadInDim * OutDim] = temp_weights[i];
-        }
-        stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
-      } else {
-        for (auto i = 0; i < OutDim; ++i) {
-          for (auto j = 0; j < PadInDim; ++j) {
-            int8_t weight;
-            if (j < InDim) {
-              stream.read((char *)&weight, sizeof(int8_t));
-            } else {
-              weight = 0;
-            }
 
-            weights[i * PadInDim + j + k * PadInDim * OutDim] = weight;
-          }
+          temp_weights[i * PadInDim + j] = weight;
         }
-        stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
       }
+      for (int i = 0; i < PadInDim * OutDim; ++i) {
+        auto index = get_weight_index(i);
+        weights[index + k * PadInDim * OutDim] = temp_weights[i];
+      }
+      stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
     }
   }
 
   auto *forward(uint8_t *input, int bucket_index) {
-    const auto *in = reinterpret_cast<const __m256i *>(input);
-    const auto *bias = reinterpret_cast<const __m256i *>(biases);
-    auto *out = reinterpret_cast<__m256i *>(buffer);
-
+    const auto w_offset = bucket_index * PadInDim * OutDim;
+    const auto b_offset = bucket_index * OutDim;
     // number of output registers for avx2
 
-    const auto numRegs = OutDim / 32;
+    const auto numRegs = OutDim / 8;
     __m256i out_regs[numRegs];
     int32_t *input32 = reinterpret_cast<int32_t *>(input);
 
     // computing nonzero-input-indices
 
     uint32_t count = 0;
-    find_nnz_version3<OutDim / CHUNKSIZE>(input32, nnz, count);
+    find_nnz_version3<InDim / CHUNKSIZE>(input32, nnz, count);
 
     // loading the biases
+    const __m256i *biasvec =
+        reinterpret_cast<const __m256i *>(biases + b_offset);
     for (auto i = 0; i < numRegs; ++i) {
-      out_regs[i] = bias[i];
+      out_regs[i] = biasvec[i];
     }
 
-    for (auto i = 0; i < count; ++i) {
-      auto *col =
-          reinterpret_cast<const __m256i *>(&weights[i * OutDim * CHUNKSIZE]);
-      const auto in = _mm256_set1_epi32(input32[nnz[i]]);
+    for (auto j = 0; j < count; ++j) {
+      const auto i = nnz[j];
+      const auto in = _mm256_set1_epi32(input32[i]);
+      const __m256i *col = reinterpret_cast<const __m256i *>(
+          &weights[i * OutDim * CHUNKSIZE + w_offset]);
       for (auto k = 0; k < numRegs; ++k) {
         Simd::m256_add_dpbusd_epi32(out_regs[k], in, col[k]);
       }
     }
     // copying to output buffer
-
+    __m256i *outptr = reinterpret_cast<__m256i *>(buffer);
     for (auto k = 0; k < numRegs; ++k) {
-      out[k] = out_regs[k];
+      outptr[k] = _mm256_srai_epi32(out_regs[k], 6);
     }
 
-    if constexpr (ac == Id) {
-      return &buffer[0];
-    } else {
-      // computing the activation
-      auto *out = input + PadInDim;
-      Simd::clipped8<PadOutDim>(&buffer[0], out);
-      return out;
-    }
+    // computing the activation
+    auto *out = input + PadInDim;
+    Simd::clipped8<PadOutDim>(&buffer[0], out);
+    return out;
     // activation and other things
   }
-
-  friend std::ostream &operator<<(std::ostream &stream, const QLayer &layer) {
-    std::cout << "PadInDim: " << PadInDim << std::endl;
-    std::cout << "InDim: " << InDim << std::endl;
-    std::cout << "OutDim: " << OutDim << std::endl;
-    for (auto i = 0; i < OutDim; ++i) {
-      for (auto j = 0; j < PadInDim; ++j) {
-        auto weight = layer.weights[i * PadInDim + j];
-        std::cout << (int)weight << ", ";
-      }
-      std::cout << "\n";
-    }
-    std::cout << "BIAS" << std::endl;
-    for (auto i = 0; i < OutDim; ++i) {
-      std::cout << layer.biases[i] << std::endl;
-    }
-    return stream;
-  }
 };
+
+#endif // !LinearSp
