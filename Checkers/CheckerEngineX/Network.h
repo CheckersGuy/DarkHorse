@@ -7,6 +7,7 @@
 
 #include "Bits.h"
 #include "Layer.h"
+#include "LinearSparse.h"
 #include "Position.h"
 #include "types.h"
 #include <chrono>
@@ -81,7 +82,7 @@ template <int l1, int l2, int l3, int out> struct Network {
   static constexpr int L3 = l3;
   static constexpr int Out = out;
   Accumulator<2 * L1> accumulator;
-  QLayer<L1, L2, Activation::SqRelu> first;
+  SparseLayer<L1, L2> first;
   QLayer<L2, L3, Activation ::SqRelu> second;
   QLayer<L3, Out> output;
   alignas(64) uint8_t input[L1 + L2 + L3 + 1 * Out] = {0};

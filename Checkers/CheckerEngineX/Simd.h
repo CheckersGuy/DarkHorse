@@ -1,3 +1,5 @@
+#ifndef SIMD
+#define SIMD
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
@@ -330,3 +332,5 @@ inline void m256_add_dpbusd_epi32(__m256i &acc, __m256i a, __m256i b) {
 }
 
 } // namespace Simd
+
+#endif // !SIMD
