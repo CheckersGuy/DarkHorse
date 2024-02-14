@@ -165,14 +165,6 @@ inline bool isLoss(Value val) { return val <= MATED_IN_MAX_PLY; }
 
 inline bool isWin(Value val) { return val >= MATE_IN_MAX_PLY; }
 
-inline Value value_to_tt(Value v, int ply) {
-  return v >= MATE_IN_MAX_PLY ? v + ply : v <= MATED_IN_MAX_PLY ? v - ply : v;
-}
-
-inline Value value_from_tt(Value v, int ply) {
-  return v >= MATE_IN_MAX_PLY ? v - ply : v <= MATED_IN_MAX_PLY ? v + ply : v;
-}
-
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
   if constexpr (color == BLACK) {
     return maske << 4u;

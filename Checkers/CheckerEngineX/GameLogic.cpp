@@ -12,7 +12,7 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<1024, 32, 32, 1> network;
+Network<2048, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
 Network<512, 32, 32, 128> policy;
 
@@ -21,6 +21,16 @@ int get_mlh_estimate(Position pos) {
   auto scaled = static_cast<float>(out) / 127.0;
   scaled = std::max(0, (int)std::round(scaled * 300));
   return scaled;
+}
+
+inline Value value_to_tt(Value v, int ply, Position pos) {
+
+  return v >= MATE_IN_MAX_PLY ? v + ply : v <= MATED_IN_MAX_PLY ? v - ply : v;
+}
+
+inline Value value_from_tt(Value v, int ply, Position pos) {
+
+  return v >= MATE_IN_MAX_PLY ? v - ply : v <= MATED_IN_MAX_PLY ? v + ply : v;
 }
 
 Value evaluate(Position pos, Ply ply, int shuffle) {
@@ -52,12 +62,14 @@ Value evaluate(Position pos, Ply ply, int shuffle) {
   eval = std::clamp(eval, -600, 600);
 #endif
   if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
-    const auto mlh_score = (300 - get_mlh_estimate(pos));
     if (eval >= 600) {
-      eval += mlh_score;
+      eval += 300;
+      eval -= get_mlh_estimate(pos);
     } else {
-      eval -= mlh_score;
+      eval -= 300;
+      eval += get_mlh_estimate(pos);
     }
+    return eval;
   }
 
   return eval;
@@ -173,7 +185,6 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 
   if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
-    // auto red = (!in_pv && move_index >= 4) ? 2 : 1;
     auto red = LMR_TABLE[std::min(depth - 1, 29)];
     red += (!in_pv && move_index >= 6);
     return red;
@@ -237,7 +248,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
-    tt_value = value_from_tt(info.score, ply);
+    tt_value = value_from_tt(info.score, ply, board.get_position());
 
     if (liste.length() > 1 && !is_sing_search && info.depth >= depth - 4 &&
         info.flag != TT_UPPER && std::abs(info.score) < MATE_IN_MAX_PLY) {
@@ -248,7 +259,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
     tt_move = info.tt_move;
-    tt_value = value_from_tt(info.score, ply);
+    tt_value = value_from_tt(info.score, ply, board.get_position());
 
     if (info.depth >= depth && info.flag != Flag::None) {
       if ((info.flag == TT_LOWER && tt_value >= beta) ||
@@ -278,17 +289,18 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     if ((tb_value > 0 && tb_value >= beta) ||
         (tb_value < 0 && tb_value <= alpha)) {
-      if (Bits::pop_count(board.get_position().BP | board.get_position().WP) <=
-              10 &&
+
+      if (board.get_position().piece_count() <= 10 &&
           std::abs(tb_value) >= 600) {
-        const auto mlh_score = (300 - get_mlh_estimate(board.get_position()));
         if (tb_value >= 600) {
-          tb_value += mlh_score;
+          tb_value += 300;
+          tb_value -= get_mlh_estimate(board.get_position());
         } else {
-          tb_value -= mlh_score;
+          tb_value -= 300;
+          tb_value += get_mlh_estimate(board.get_position());
         }
+        return tb_value;
       }
-      return tb_value;
     }
   }
 #endif
@@ -393,8 +405,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
 
         if (value >= prob_beta) {
           board.undo_move();
-          TT.store_hash(false, value_to_tt(value, ply), static_eval, key,
-                        TT_LOWER, newDepth + 1,
+          TT.store_hash(false, value_to_tt(value, ply, board.get_position()),
+                        static_eval, key, TT_LOWER, newDepth + 1,
                         (!move.is_capture()) ? move : Move{});
           return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
         }
@@ -458,7 +470,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
   if (excluded.is_empty() && !is_root) {
-    Value tt_value = value_to_tt(best_score, ply);
+    Value tt_value = value_to_tt(best_score, ply, board.get_position());
     Flag flag;
     if (best_score <= old_alpha) {
       flag = TT_UPPER;

@@ -2,6 +2,7 @@ import torch.nn as nn
 import torch
 from torch.nn.modules import activation
 import pytorch_lightning as pl
+from torch.optim import Adam
 from ranger import Ranger
 import struct
 import numpy as np
@@ -12,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*512
+L1 =2*2048
 L2 =32
 L3 = 32
 
@@ -102,7 +103,8 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        #optimizer = Ranger(self.parameters(),lr=3e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Adam(self.parameters(),lr=3e-3,betas=(0.9,0.999))
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -127,7 +129,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("final7.quant")
+        self.save_quantized_bucket("final7bigbigbigadam.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
