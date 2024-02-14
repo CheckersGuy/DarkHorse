@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "final7.quant");
+INCBIN(network, "final7bigbigbigadam.quant");
 INCBIN(policy, "policybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -177,6 +177,17 @@ int main(int argl, const char **argc) {
     } else {
       searchValue(board, best, depth, time, true, std::cout);
     }
+
+    /* auto tries = network.accumulator.num_evals;
+     auto accum_time = network.accumulator.total_accum_time / tries;
+     auto l2_time = network.accumulator.total_l2_time / tries;
+     auto nnz = network.accumulator.nnz_ratio / static_cast<double>(tries);
+     std::cout << "TimeAccum: " << accum_time << std::endl;
+     std::cout << "TimeL2: " << l2_time << std::endl;
+     std::cout << "total_num_evals: " << network.accumulator.num_evals
+               << std::endl;
+     std::cout << "NNZ: " << nnz << std::endl;
+ */
     return 0;
   }
 

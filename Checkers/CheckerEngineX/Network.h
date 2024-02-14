@@ -9,6 +9,7 @@
 #include "Layer.h"
 #include "Position.h"
 #include "types.h"
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -42,9 +43,13 @@ Value tempo_black(Position pos);
 constexpr static size_t ALIGNMENT = 64;
 
 template <int OutDim> struct alignas(64) Accumulator {
+  inline static size_t num_evals = 0;
+  inline static size_t total_time = 0;
+  inline static size_t total_accum_time = 0;
+  inline static size_t total_l2_time = 0;
+  inline static double nnz_ratio = 0;
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
-  int16_t psqt{0};
   int16_t *ft_biases;
   int16_t *ft_weights;
 
@@ -266,7 +271,6 @@ uint8_t *Accumulator<OutDim>::forward(uint8_t *in, const Position &next) {
     z_previous = white_acc;
   }
   update(next.color, next);
-  psqt = z_previous[OutDim - 1];
   Simd::accum_activation8<OutDim>(z_previous, in);
 
   return in;
@@ -300,7 +304,6 @@ template <int L1, int L2, int L3, int Out>
 int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
   auto bucket_index = next.bucket_index();
   auto *out = accumulator.forward(input, next);
-
   out = first.forward(out, bucket_index);
   out = second.forward(out, bucket_index);
   return output.forward(out, bucket_index);
