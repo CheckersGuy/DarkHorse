@@ -20,7 +20,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "final7bigbigbig.quant");
+INCBIN(network, "biggerthanbig.quant");
 INCBIN(policy, "policybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -192,6 +192,7 @@ int main(int argl, const char **argc) {
                << std::endl;
      std::cout << "NNZ: " << nnz << std::endl;
  */
+
     return 0;
   }
 
