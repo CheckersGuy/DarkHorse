@@ -12,7 +12,7 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<2048, 32, 32, 1> network;
+Network<3072, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
 Network<512, 32, 32, 128> policy;
 
@@ -447,16 +447,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     board.undo_move();
     if (val > best_score) {
       best_score = val;
-      if (best_score >= beta && !move.is_capture() && liste.length() > 1) {
-        Statistics::mPicker.update_scores(board.get_position(), &liste.liste[0],
-                                          move, depth);
-        // updating killer moves
-        auto &killers = Statistics::mPicker.killer_moves;
-        for (auto i = 1; i < MAX_KILLERS; ++i) {
-          killers[ply][i] = killers[ply][i - 1];
-        }
-        killers[ply][0] = move;
-      }
 
       if (val > alpha) {
         best_move = move;

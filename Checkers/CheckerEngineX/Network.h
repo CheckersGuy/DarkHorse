@@ -44,11 +44,7 @@ Value tempo_black(Position pos);
 constexpr static size_t ALIGNMENT = 64;
 
 template <int OutDim> struct alignas(64) Accumulator {
-  inline static size_t num_evals = 0;
-  inline static size_t total_time = 0;
-  inline static size_t total_accum_time = 0;
-  inline static size_t total_l2_time = 0;
-  inline static double nnz_ratio = 0;
+
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
   int16_t *ft_biases;
