@@ -81,13 +81,7 @@ void MoveListe::sort(Position current, Depth depth, Ply ply, Move ttMove,
   if (moveCounter - start_index <= 1)
     return;
   std::array<int, 40> scores;
-  /*
-    for (auto i = start_index; i < moveCounter; ++i) {
-      Move m = liste[i];
-      scores[i] =
-          Statistics::mPicker.get_move_score(current, depth, ply, m, ttMove);
-    }
-    */
+
   for (auto i = start_index; i < moveCounter; ++i) {
     Move m = liste[i];
     scores[i] = oracle(m);

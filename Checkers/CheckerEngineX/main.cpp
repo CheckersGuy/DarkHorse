@@ -5,7 +5,6 @@
 #include "MovePicker.h"
 #include "Network.h"
 #include "Perft.h"
-#include "Selfplay.h"
 #include "Transposition.h"
 #include "incbin.h"
 #include "types.h"

@@ -58,6 +58,32 @@ void TableBase::load_dtw_base(std::string path) {
   }
 }
 
+void TableBase::load_mtc_base(std::string path) {
+  int i, status, nerrors;
+  int max_pieces;
+
+  EGDB_TYPE egdb_type;
+  /* Check that db files are present, get db type and size. */
+
+  status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  num_pieces = std::min(num_pieces, max_pieces);
+
+  if (status) {
+    printf("No database found at %s\n", path.c_str());
+    std::exit(-1);
+  }
+
+  mtc_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                         [](char *msg) {});
+  std::cout << "Loaded DTW with" << num_pieces << " pieces" << std::endl;
+  if (!mtc_handle) {
+    std::cerr << "Error returned from egdb_open()" << std::endl;
+    std::exit(-1);
+  }
+}
+
 TB_RESULT TableBase::probe(Position pos) {
   // the kingsrow wld database does not have a valid value for any positions
   // where side-to-move can capture the kingsrow database only has valid
@@ -118,4 +144,30 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
   } else {
     return 2 * val;
   }
+}
+
+std::optional<int> TableBase::probe_mtc(Position pos) {
+
+  // probing the wdl first, to check if we have a winning/losing position
+
+  auto wdl = probe(pos);
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
+    return std::nullopt;
+  }
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = dtw_handle->lookup(
+      dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == EGDB_UNKNOWN) {
+    return std::nullopt;
+  }
+
+  // to be continued
 }

@@ -18,7 +18,7 @@ class Board {
 public:
   std::array<Position, MAX_PLY> pStack;
   std::array<Position, 800> rep_history;
-  std::optional<Color> color_us; // will be set whenever we start a search
+  std::array<int16_t, MAX_PLY> last_rev;
   int rep_size = 0;
 
 public:
@@ -44,7 +44,7 @@ public:
 
   uint64_t get_current_key() const;
 
-  bool is_repetition(int last_rev) const;
+  bool is_repetition() const;
 
   Color get_mover() const;
 
