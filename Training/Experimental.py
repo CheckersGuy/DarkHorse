@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*3072
+L1 =2*4096
 L2 =32
 L3 = 32
 
@@ -25,7 +25,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.9
+        self.gamma = 0.90
 
 
         self.num_buckets =12

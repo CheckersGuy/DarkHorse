@@ -53,10 +53,10 @@ Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <NodeType type>
 Value search(Board &board, Ply ply, Line &line, Value alpha, Value beta,
-             Depth depth, int last_rev, Move excluded, bool is_sing_search);
+             Depth depth, Move excluded, bool is_sing_search);
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
-         int last_rev, Move excluded, bool is_sing_search);
+         Move excluded, bool is_sing_search);
 
 Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
@@ -67,7 +67,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
 int get_mlh_estimate(Position pos);
 
-extern Network<3072, 32, 32, 1> network;
+extern Network<4096, 32, 32, 1> network;
 extern Network<512, 32, 32, 1> mlh_net;
 extern Network<512, 32, 32, 128> policy;
 #endif // CHECKERSTEST_GAMELOGIC_H

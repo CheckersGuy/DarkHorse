@@ -31,7 +31,7 @@ if __name__ == "__main__":
 
   
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/biggerthanme.ckpt");
+    trainer.fit(model, data_loader,ckpt_path="Networks/bigger.ckpt");
 
 
 fen_string ="W:W8,12,23,31:BK5,K15,20,K25"

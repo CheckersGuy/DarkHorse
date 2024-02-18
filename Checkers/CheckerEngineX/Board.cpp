@@ -35,11 +35,18 @@ void Board::play_move(Move move) {
   rep_history[rep_size++] = copy;
   pCounter = 0;
   pStack[pCounter] = copy;
+  last_rev[pCounter] = 0;
 }
 
 void Board::make_move(Move move) {
+  if (move.is_capture() || move.is_pawn_move(get_position().K)) {
+    last_rev[pCounter + 1] = pCounter;
+  } else {
+    last_rev[pCounter + 1] = last_rev[pCounter];
+  }
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
+
   pStack[pCounter].make_move(move);
 }
 
@@ -89,8 +96,8 @@ uint64_t Board::get_current_key() const {
   return comb_hash;
 }
 
-bool Board::is_repetition(int last_rev) const {
-  const auto end = std::max(last_rev - 1, 0);
+bool Board::is_repetition() const {
+  const auto end = std::max(last_rev[pCounter] - 1, 0);
   const auto current = pStack[pCounter];
   for (int i = pCounter - 2; i >= end; i -= 2) {
     if (pStack[i] == current) {
