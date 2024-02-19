@@ -313,10 +313,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   }
 
   auto oracle = [&](Move move) {
-    /*if (move == tt_move) {
-      return std::numeric_limits<int32_t>::max();
-    }*/
-
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
