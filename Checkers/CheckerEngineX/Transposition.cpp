@@ -104,3 +104,10 @@ void Transposition::prefetch(uint64_t key) {
   __builtin_prefetch(&entries[index]);
 #endif
 }
+
+int Transposition::get_size_in_mb() {
+
+  const auto bytes = sizeof(Cluster) * capacity;
+
+  return bytes / (1024 * 1024);
+}
