@@ -1,9 +1,4 @@
 #include "GameLogic.h"
-#include "Bits.h"
-#include "MovePicker.h"
-#include "types.h"
-#include <cmath>
-#include <optional>
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -14,7 +9,7 @@ Value last_eval = -INFINITE;
 SearchGlobal glob;
 Network<4096, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
-Network<512, 32, 32, 128> policy;
+Network<256, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
   auto out = mlh_net.evaluate(pos, 0, 0);
@@ -52,7 +47,7 @@ Value evaluate(Position pos, Ply ply) {
                                                   : 0;
     eval = tb_value;
   } else {
-    eval = network.evaluate(pos, ply);
+    eval = network.evaluate(pos, ply, 0);
     eval = std::clamp(eval, -600, 600);
   }
 #endif
@@ -80,7 +75,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
   const Position start_pos = board.get_position();
 
-  Statistics::mPicker.decay_scores();
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
@@ -194,14 +188,12 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 template <NodeType type>
 Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
              Depth depth, Move excluded, bool is_sing_search) {
-  // Note: Next I wanna try the eval correction idea as implemented by stockfish
-  // caissa/Seer
+
   constexpr bool is_root = (type == ROOT);
   constexpr bool in_pv = (type == ROOT) || (type == PV);
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
-  // checking time-used
 
   if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};

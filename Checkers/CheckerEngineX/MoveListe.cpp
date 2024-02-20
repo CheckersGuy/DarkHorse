@@ -1,7 +1,4 @@
 #include "MoveListe.h"
-#include "MovePicker.h"
-#include <cstdint>
-#include <limits>
 
 void MoveListe::reset() { moveCounter = 0; }
 

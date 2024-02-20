@@ -2,19 +2,19 @@
 
 #ifndef CHECKERSTEST_GAMELOGIC_H
 #define CHECKERSTEST_GAMELOGIC_H
-
 #include "Bits.h"
 #include "Board.h"
 #include "Line.h"
 #include "MGenerator.h"
 #include "Move.h"
-#include "MovePicker.h"
 #include "Network.h"
 #include "Transposition.h"
 #include "types.h"
 #include <Network.h>
 #include <algorithm>
 #include <chrono>
+#include <cmath>
+#include <optional>
 #include <types.h>
 
 #ifdef _WIN32
@@ -69,5 +69,5 @@ int get_mlh_estimate(Position pos);
 
 extern Network<4096, 32, 32, 1> network;
 extern Network<512, 32, 32, 1> mlh_net;
-extern Network<512, 32, 32, 128> policy;
+extern Network<256, 32, 32, 128> policy;
 #endif // CHECKERSTEST_GAMELOGIC_H
