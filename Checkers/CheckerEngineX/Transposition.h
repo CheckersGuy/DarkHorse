@@ -63,6 +63,8 @@ public:
   bool find_hash(uint64_t key, NodeInfo &info) const;
 
   void prefetch(uint64_t key);
+
+  int get_size_in_mb(); // returns size of the table in MB
 };
 
 extern Transposition TT;
