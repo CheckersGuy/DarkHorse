@@ -3,7 +3,6 @@
 
 #include "Line.h"
 #include "Move.h"
-#include "MovePicker.h"
 #include "Position.h"
 #include "types.h"
 #include <array>

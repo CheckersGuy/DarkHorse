@@ -1,10 +1,7 @@
 #include "CmdParser.h"
 #include "Match.h"
-#include "MovePicker.h"
 #include "Network.h"
 #include "Position.h"
-#include "Utilities.h"
-#include "types.h"
 #include <GameLogic.h>
 #include <algorithm>
 #include <fstream>

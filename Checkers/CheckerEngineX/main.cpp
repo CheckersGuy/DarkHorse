@@ -2,7 +2,6 @@
 #include "CmdParser.h"
 #include "GameLogic.h"
 #include "MGenerator.h"
-#include "MovePicker.h"
 #include "Network.h"
 #include "Perft.h"
 #include "Transposition.h"
@@ -20,7 +19,7 @@
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
 INCBIN(network, "biggerthanbig.quant");
-INCBIN(policy, "policybig.quant");
+INCBIN(policy, "tinypolicy.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -61,7 +60,6 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
 
   if (depth == 0) {
     Move bestMove;
-    Statistics::mPicker.clear_scores();
     TT.clear();
     Board copy = board;
     auto it = hashset.find(board.get_position());
@@ -134,7 +132,6 @@ int main(int argl, const char **argc) {
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
-  Statistics::mPicker.init();
 
   int time, depth, hash_size;
   std::string net_file;
@@ -198,7 +195,6 @@ int main(int argl, const char **argc) {
   if (parser.has_option("book")) {
     std::string next_line;
     TT.resize(2);
-    Statistics::mPicker.init();
     while (std::getline(std::cin, next_line)) {
       // need to clear statistics all the time
 
@@ -215,11 +211,9 @@ int main(int argl, const char **argc) {
   if (parser.has_option("generate")) {
     int adj_threshold = 25;
     int child_id = -1;
-    Statistics::mPicker.init();
     std::string next_line;
     TT.resize(18);
     std::vector<Position> rep_history;
-    Statistics::mPicker.clear_scores();
     std::vector<Value> values;
     values.reserve(adj_threshold);
     while (std::getline(std::cin, next_line)) {
@@ -230,7 +224,6 @@ int main(int argl, const char **argc) {
       Value last_adj = EVAL_INFINITE;
       int adj_count = 0;
       TT.clear();
-      Statistics::mPicker.clear_scores();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
 
@@ -311,7 +304,6 @@ int main(int argl, const char **argc) {
   while (std::cin >> current) {
     if (current == "init") {
       TT.age_counter = 0u;
-      Statistics::mPicker.clear_scores();
       std::string hash_string;
       std::cin >> hash_string;
       const int hash_size = std::stoi(hash_string);
@@ -320,7 +312,6 @@ int main(int argl, const char **argc) {
                 << "\n";
     } else if (current == "new_game") {
       TT.clear();
-      Statistics::mPicker.clear_scores();
       TT.age_counter = 0u;
       std::string position;
       std::cin >> position;
@@ -350,7 +341,6 @@ int main(int argl, const char **argc) {
       std::cout << "update_ready"
                 << "\n";
     } else if (current == "search") {
-      Statistics::mPicker.clear_scores();
       std::string time_string;
       std::cin >> time_string;
       Move bestMove;

@@ -148,8 +148,6 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
 
 std::optional<int> TableBase::probe_mtc(Position pos) {
 
-  // probing the wdl first, to check if we have a winning/losing position
-
   auto wdl = probe(pos);
   if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;
@@ -162,8 +160,8 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
 
   EGDB_BITBOARD normal;
   normal.normal = board;
-  auto val = dtw_handle->lookup(
-      dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+  auto val = mtc_handle->lookup(
+      mtc_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
   if (val == EGDB_UNKNOWN) {
     return std::nullopt;

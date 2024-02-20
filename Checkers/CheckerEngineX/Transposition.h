@@ -26,9 +26,9 @@ struct Entry {
   int16_t static_eval;    // 2 bytes
   MoveEncoding best_move; // 1byte
   uint8_t age : 6 = 0;    // 1 bytes
-  uint8_t flag : 2 = 0;   // 1 byte
-  uint8_t depth{0};       // 1 byte
-                          //
+  uint8_t flag : 2 = 0;
+  uint8_t depth{0}; // 1 byte
+                    //
 };
 constexpr size_t bucket_size = 4;
 
