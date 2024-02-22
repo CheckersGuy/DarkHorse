@@ -82,10 +82,9 @@ constexpr std::array<int, 32> LMR_TABLE = {1, 1, 1, 1, 1, 1, 2, 2, 2,
                                            2, 2, 2, 2, 2, 2, 2, 2, 2,
                                            2, 2, 2, 2, 2, 2, 2, 2, 2};
 constexpr int prob_cut = 27; // 27;
-constexpr int asp_wind = 15; // 15;
+constexpr int asp_wind = 15; // 15 tryout out values like 12 later;
 constexpr int NUM_BUCKETS = 12;
 constexpr int MAX_ASP = 200;
-constexpr int MAX_KILLERS = 2;
 constexpr int CORRECTION_SIZE = 512;
 
 constexpr uint64_t BLACK_RANDOM = 7985716234ull;
