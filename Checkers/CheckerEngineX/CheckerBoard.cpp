@@ -1,6 +1,5 @@
 #include "CheckerBoard.h"
 #include "GameLogic.h"
-#include "MovePicker.h"
 bool engine_initialized = false;
 Board game_board;
 
@@ -18,7 +17,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   if ((info & CB_RESET_MOVES)) {
     game_board = Board(Position::get_start_position());
     TT.age_counter = 0;
-    Statistics::mPicker.clear_scores();
     TT.clear();
     num_draw_scores = 0;
   }
@@ -58,7 +56,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
     TT.resize(21);
-    Statistics::mPicker.init();
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
@@ -72,7 +69,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     // debug << "New Game or Bug" << std::endl;
     //  ISSUE PROBABLY HERE PAY ATTENTION
     TT.clear();
-    Statistics::mPicker.clear_scores();
     game_board = Board(temp);
     TT.age_counter = 0;
     num_draw_scores = 0;
@@ -142,7 +138,6 @@ int enginecommand(char str[256], char reply[1024]) {
     if (!engine_initialized) {
       network.load_bucket("bigbug14.quant");
       TT.resize(21);
-      Statistics::mPicker.init();
       engine_initialized = true;
       glob.reply = str;
     }
