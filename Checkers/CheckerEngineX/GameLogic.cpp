@@ -7,7 +7,7 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<4096, 32, 32, 1> network;
+Network<2 * 4096, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
 Network<256, 32, 32, 128> policy;
 

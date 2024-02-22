@@ -18,7 +18,8 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "biggerthanbig.quant");
+// INCBIN(network, "biggerthanbig.quant");
+INCBIN(network, "thatsreallybig.quant");
 INCBIN(policy, "tinypolicy.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
