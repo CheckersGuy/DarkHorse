@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =4*4096 #having too much fun
+L1 =2*2048 #having too much fun
 L2 =32
 L3 = 32
 
@@ -128,7 +128,7 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("thatsreallybig.quant")
+        self.save_quantized_bucket("medium.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -480,7 +480,7 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"policybig.pt")
+        torch.save(self.state_dict(),"policyverybig.pt")
         result,policy_target, move,buckets,psqt_buckets, x = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
@@ -490,7 +490,7 @@ class PolicyNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("policybig.quant")
+        self.save_quantized_bucket("policyverybig.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}

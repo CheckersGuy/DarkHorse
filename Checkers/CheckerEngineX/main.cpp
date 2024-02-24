@@ -19,8 +19,8 @@
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
 // INCBIN(network, "biggerthanbig.quant");
-INCBIN(network, "thatsreallybig.quant");
-INCBIN(policy, "tinypolicy.quant");
+INCBIN(network, "biggerthanbig.quant");
+INCBIN(policy, "policyverybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {

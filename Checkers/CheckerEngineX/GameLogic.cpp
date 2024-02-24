@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "types.h"
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -7,9 +8,9 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<2 * 4096, 32, 32, 1> network;
+Network<4096, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
-Network<256, 32, 32, 128> policy;
+Network<2048, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
   auto out = mlh_net.evaluate(pos, 0, 0);
@@ -236,6 +237,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
   Value static_eval = EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
+
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
@@ -295,6 +297,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
   }
 #endif
+
   auto *out = &policy.output.buffer[0];
   bool computed = false;
 
@@ -360,6 +363,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
     reduction = (extension > 0) ? 0 : reduction;
+
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     int tab_pieces = 0;
@@ -367,7 +371,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     tab_pieces = tablebase.num_pieces;
 #endif
 
-    if (!in_pv && std::abs(beta) < MATE_IN_MAX_PLY && depth >= 2 &&
+    if (!in_pv && std::abs(beta) < TB_WIN && depth >= 2 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
       Depth newDepth = std::max(1, depth - 4);
