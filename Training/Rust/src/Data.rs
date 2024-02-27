@@ -111,7 +111,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
 }
 
 pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
     let mut my_map = HashMap::new();
     let mut reader = BufReader::new(File::open(path)?);
     let _buffer = String::new();
