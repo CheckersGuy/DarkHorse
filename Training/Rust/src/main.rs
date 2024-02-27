@@ -10,6 +10,7 @@ use arrayvec::ArrayVec;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::usize;
 use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
@@ -44,16 +45,16 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-
     /*
         let mut generator = Generator::new(
             String::from("../Positions/newopen4.pos"),
-            String::from("/mnt/e/newtry10.samples"),
+            String::from("/mnt/e/newtry13.samples"),
             14,
-            40000000,
+            80000000,
         );
+
         generator.time = 10;
-        generator.prev_file = Some("/mnt/e/newtry7rescored.samples");
+        generator.prev_file = Some("/mnt/e/newtry12.samples");
         generator.generate_games()?;
     */
     /*
@@ -63,7 +64,7 @@ fn main() -> anyhow::Result<()> {
         );
     */
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 
@@ -91,7 +92,28 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
+    //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
+
+    let mut distribution = Data::material_distrib("/mnt/e/newtry13.samples")?;
+
+    for value in 0..24 {
+        println!(
+            "PieceCount {}:{}",
+            value,
+            *distribution.entry(value).or_insert(0)
+        )
+    }
+
+    println!("Old data");
+    distribution = Data::material_distrib("/mnt/e/newtry11rescoredmlhshuffled.samples")?;
+
+    for value in 0..24 {
+        println!(
+            "PieceCount {}:{}",
+            value,
+            *distribution.entry(value).or_insert(0)
+        )
+    }
 
     Ok(())
 }

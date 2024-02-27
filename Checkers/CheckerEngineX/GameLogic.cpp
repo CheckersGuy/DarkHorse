@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "Bits.h"
 #include "types.h"
 
 Line mainPV;
@@ -177,7 +178,7 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv) {
 
-  if (move_index >= ((in_pv) ? 3 : 1) && depth >= 2 && !move.is_capture() &&
+  if (move_index >= ((in_pv) ? 3 : 1) && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 29)];
     red += (!in_pv && move_index >= 6);
@@ -449,6 +450,7 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       flag = TT_EXACT;
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
+
     TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
   }
   return best_score;
