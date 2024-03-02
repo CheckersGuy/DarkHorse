@@ -294,13 +294,11 @@ impl Sample {
 
 pub struct SampleIterator<'a> {
     reader: &'a mut BufReader<File>,
-    pub num_samples: u64,
 }
 
 pub struct GameIterator<'a> {
     reader: &'a mut BufReader<File>,
     game: Vec<Sample>,
-    pub num_samples: u64,
 }
 
 //iterator needs to be tested
@@ -361,23 +359,13 @@ impl<'a> SampleIterator<'a> {
 
 impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
     fn iter_samples(&'a mut self) -> SampleIterator<'a> {
-        let num = self
-            .read_u64::<LittleEndian>()
-            .expect("Could not read number of samples");
-        SampleIterator {
-            reader: self,
-            num_samples: num,
-        }
+        SampleIterator { reader: self }
     }
 
     fn iter_games(&'a mut self) -> GameIterator<'a> {
-        let num = self
-            .read_u64::<LittleEndian>()
-            .expect("Could not read number of samples");
         GameIterator {
             reader: self,
             game: Vec::<Sample>::new(),
-            num_samples: num,
         }
     }
 }

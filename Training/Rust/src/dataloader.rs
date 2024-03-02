@@ -1,4 +1,5 @@
 use crate::Sample;
+use crate::Sample::SampleIteratorTrait;
 
 use byteorder::{LittleEndian, ReadBytesExt};
 use rand::prelude::*;
@@ -11,17 +12,12 @@ use std::time::Instant;
 use Sample::SampleType;
 #[derive(Debug)]
 
-pub struct SampleData {
-    reader: std::io::BufReader<std::fs::File>,
-    num_samples: u64,
-}
-
 pub struct DataLoader {
     reader: std::io::BufReader<std::fs::File>,
     pub path: String,
     shuff_buf: Vec<Sample::Sample>,
     shuffle: bool,
-    pub num_samples: u64,
+    pub num_samples: Option<u64>,
     capa: usize,
     rng: StdRng,
 }
@@ -32,15 +28,21 @@ impl DataLoader {
             reader: BufReader::with_capacity(1000000, File::open(path.clone())?),
             path: path.clone(),
             shuff_buf: Vec::new(),
-            num_samples: 0,
+            num_samples: None,
             shuffle,
             capa: capacity,
             rng: StdRng::from_rng(thread_rng()).unwrap(),
         };
-        data_loader.num_samples = data_loader.reader.read_u64::<LittleEndian>()?;
-        data_loader.capa = std::cmp::min(data_loader.capa, data_loader.num_samples as usize);
-        data_loader.shuff_buf = Vec::with_capacity(data_loader.capa);
-        println!("Got {} available samples", data_loader.num_samples);
+        {
+            let mut reader = BufReader::new(File::open(path)?);
+            data_loader.num_samples = Some(reader.iter_samples().count() as u64);
+        };
+
+        if let Some(num_samples) = data_loader.num_samples {
+            data_loader.capa = std::cmp::min(data_loader.capa, num_samples as usize);
+            data_loader.shuff_buf = Vec::with_capacity(data_loader.capa);
+            println!("Got {} available samples", num_samples);
+        }
         Ok(data_loader)
     }
 
@@ -49,7 +51,6 @@ impl DataLoader {
         if !has_data_left {
             println!("Reached the end of the file and buffer is empty");
             self.reader.rewind()?;
-            self.reader.read_u64::<LittleEndian>()?;
         }
 
         let mut sample = Sample::Sample::default();
@@ -89,7 +90,6 @@ impl DataLoader {
 
     pub fn dump_pos_to_file(&mut self, output: String) -> std::io::Result<()> {
         self.shuffle = false;
-        println!("We have {} positions", self.num_samples);
         let mut writer = File::create(output)?;
         while let Ok(sample) = self.get_next() {
             match sample.position {

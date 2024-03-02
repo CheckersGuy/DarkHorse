@@ -147,7 +147,9 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
 }
 
 std::optional<int> TableBase::probe_mtc(Position pos) {
-
+  // value returned is the correct value or the returned value -1
+  // in that case we have to probe the sucessors and if the best sucessor has
+  // the same value the actual value is ( value -1)
   auto wdl = probe(pos);
   if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;

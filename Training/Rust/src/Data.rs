@@ -105,8 +105,17 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
             bar.inc(1);
         }
     }
-    drop(writer);
-    prepend_file(format!("{u_count}\n").as_str().as_bytes(), &output)?;
+    Ok(())
+}
+//temporary function for the new format
+pub fn dump_samples(input: &str, output: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(input)?);
+    let mut writer = BufWriter::new(File::create(output)?);
+
+    //skipping the num_samples
+    reader.read_u64::<LittleEndian>()?;
+    std::io::copy(&mut reader, &mut writer)?;
+
     Ok(())
 }
 
@@ -115,20 +124,8 @@ pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
     let mut my_map = HashMap::new();
     let mut reader = BufReader::new(File::open(path)?);
     let _buffer = String::new();
-    let num_samples = reader.read_u64::<LittleEndian>()?;
-    let bar = ProgressBar::new(num_samples);
-    bar.set_style(
-        ProgressStyle::with_template(
-            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )
-        .unwrap()
-        .progress_chars("##-"),
-    );
 
-    for _ in 0..num_samples {
-        let mut sample = Sample::Sample::default();
-        sample.read_into(&mut reader)?;
-
+    for sample in reader.iter_samples() {
         let pos = match sample.position.clone() {
             SampleType::Fen(fen_string) => (fen_string, sample.position.get_squares()),
             SampleType::Pos(_) => continue,
@@ -144,41 +141,9 @@ pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
             let piece_count = pos.1.unwrap().len();
             *my_map.entry(piece_count).or_insert(0) += 1;
         }
-
-        bar.inc(1);
     }
     Ok(my_map)
 }
-#[cfg(target_os = "linux")]
-fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
-    //let tmp_path = Temp::new_file()?;
-
-    //let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
-    let tmp_path = Path::new("/mnt/e/tempsamples.samples"); //temporary fix
-    let mut tmp = File::create(&tmp_path)?;
-    let mut src = File::open(&file_path)?;
-    tmp.write_all(&data)?;
-    std::io::copy(&mut src, &mut tmp)?;
-    std::fs::remove_file(file_path)?;
-    std::fs::rename(&tmp_path, file_path)?;
-
-    Ok(())
-}
-
-#[cfg(target_os = "windows")]
-fn prepend_file<P: AsRef<Path>>(data: &[u8], file_path: &P) -> std::io::Result<()> {
-    //let tmp_path = Temp::new_file()?;
-    let tmp_path = Path::new("E:/tempsamples.samples"); //temporary fix
-    let mut tmp = File::create(&tmp_path)?;
-    let mut src = File::open(&file_path)?;
-    tmp.write_all(&data)?;
-    std::io::copy(&mut src, &mut tmp)?;
-    std::fs::remove_file(file_path)?;
-    std::fs::rename(&tmp_path, file_path)?;
-
-    Ok(())
-}
-
 pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut writer = BufWriter::new(File::create(output)?);
@@ -204,10 +169,6 @@ pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
             filter.set(&fen_string);
         }
     }
-    drop(writer);
-    let path = Path::new(output);
-    prepend_file(total_counter.to_le_bytes().as_slice(), &path)?;
-
     Ok(())
 }
 
@@ -233,7 +194,6 @@ pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
             line_count += 1;
         }
     }
-    prepend_file(format!("{line_count}\n").as_str().as_bytes(), &output)?;
     Ok(())
 }
 
@@ -323,9 +283,6 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
         }
     }
     writer.flush()?;
-    drop(writer);
-    let path = Path::new(output);
-    prepend_file((write_count as u64).to_le_bytes().as_slice(), &path)?;
     Ok(())
 }
 
@@ -436,9 +393,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
         }
     }
     writer.flush();
-    drop(writer);
-    let path = Path::new(output);
-    prepend_file((written_count as u64).to_le_bytes().as_slice(), &path)?;
+
     println!(
         "Got back a total of {} while processing {} samples",
         written_count, total_count
@@ -474,9 +429,7 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
             }
         }
     }
-    drop(writer);
-    let path = Path::new(output);
-    prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
+
     Ok(())
 }
 
@@ -490,7 +443,6 @@ pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     }
     let mut rng = StdRng::from_rng(thread_rng()).unwrap();
     samples.par_shuffle(&mut rng);
-    writer.write_all((samples.len() as u64).to_le_bytes().as_slice())?;
 
     for sample in samples {
         sample
@@ -531,7 +483,7 @@ impl<'a> Generator<'a> {
     }
 
     fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<String>)> {
-        let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
         let mut unique_count = 0;
         let mut total_count = 0;
         let mut writer = BufWriter::new(File::create(self.output.clone()).unwrap());
@@ -541,14 +493,6 @@ impl<'a> Generator<'a> {
         //we iterate over all samples and build up the filters from there
         let mut reader = BufReader::new(File::open(self.prev_file.unwrap())?);
         let iterator = reader.iter_samples();
-        let bar = ProgressBar::new(iterator.num_samples);
-        bar.set_style(
-            ProgressStyle::with_template(
-                "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-            )
-            .unwrap()
-            .progress_chars("##-"),
-        );
 
         for sample in iterator {
             let pos_string = match sample.position {
@@ -576,7 +520,6 @@ impl<'a> Generator<'a> {
                 filter.set(&pos_string);
             }
             total_count += 1;
-            bar.inc(1)
         }
         writer.flush().expect("Flush Error");
         println!(
@@ -594,7 +537,7 @@ impl<'a> Generator<'a> {
         let mut writer = BufWriter::new(
             OpenOptions::new()
                 .write(true)
-                .append(true)
+                .append(false)
                 .open(self.output.clone())
                 .unwrap(),
         );
@@ -740,9 +683,7 @@ impl<'a> Generator<'a> {
             unique_count, total_count
         );
         writer.flush().expect("Could not flush writer");
-        drop(writer);
-        let path = Path::new(output_file.as_str());
-        prepend_file((total_count as u64).to_le_bytes().as_slice(), &path)?;
+
         Ok(())
     }
 }

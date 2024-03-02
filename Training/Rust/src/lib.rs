@@ -95,7 +95,7 @@ impl BatchProvider {
     }
     #[getter(num_samples)]
     fn get_samples(&self) -> PyResult<i32> {
-        Ok(self.loader.num_samples as i32)
+        Ok(self.loader.num_samples.unwrap() as i32)
     }
     fn testing(
         &mut self,

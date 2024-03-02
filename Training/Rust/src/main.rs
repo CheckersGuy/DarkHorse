@@ -9,6 +9,7 @@ use anyhow::Context;
 use arrayvec::ArrayVec;
 use std::fs::File;
 use std::io::BufReader;
+use std::io::BufWriter;
 use std::path::Path;
 use std::usize;
 use Data::count_unique_samples;
@@ -18,18 +19,29 @@ use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    /*let mut dataloader =
-            dataloader::DataLoader::new(String::from("/mnt/e/mlhshuffled.samples"), 1000000, false)?;
+    /*  let mut dataloader = dataloader::DataLoader::new(
+          String::from("/mnt/e/newtry11rescoredmlhshuffledx.samples"),
+          1000000,
+          false,
+      )?;
+      for _ in 0..3000 {
+          let sample = dataloader.get_next()?;
+          sample.write_fen(&mut writer)?;
+          println!("{:?}", sample);
+          if let Sample::SampleType::Fen(ref position) = sample.position {
+              let pos = Pos::Position::try_from(position.as_str())?;
+              pos.print_position();
+          }
+          println!();
+          println!();
+      }
+    */
+    /*
+        let mut writer = BufWriter::new(File::create("validation.samples")?);
+        let mut reader = BufReader::new(File::open("/mnt/e/newtry11rescoredmlhshuffledx.samples")?);
 
-        for _ in 0..3000 {
-            let sample = dataloader.get_next()?;
-            println!("{:?}", sample);
-            if let Sample::SampleType::Fen(ref position) = sample.position {
-                let pos = Pos::Position::try_from(position.as_str())?;
-                pos.print_position();
-            }
-            println!();
-            println!();
+        for sample in reader.iter_samples().take(100000) {
+            sample.write_fen(&mut writer)?;
         }
     */
     //Data::create_unique_fens("training.pos", "unique.pos")?;
@@ -45,18 +57,19 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*
-        let mut generator = Generator::new(
-            String::from("../Positions/newopen4.pos"),
-            String::from("/mnt/e/newtry13.samples"),
-            14,
-            80000000,
-        );
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook.pos"),
+        String::from("/mnt/e/newtry14.samples"),
+        14,
+        1000000,
+    );
 
-        generator.time = 10;
-        generator.prev_file = Some("/mnt/e/newtry12.samples");
-        generator.generate_games()?;
-    */
+    generator.time = 10;
+    generator.prev_file = Some("/mnt/e/newtry13.samples");
+    generator.generate_games()?;
+
+    //Data::create_book("../Positions/drawbook.book", "ultrabook.pos", 14)?;
+
     /*
         println!(
             "{}",
@@ -93,27 +106,18 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
+    /*
+        let mut distribution;
+        println!("Old data");
+        distribution = Data::material_distrib("/mnt/e/newtry13.samples")?;
 
-    let mut distribution = Data::material_distrib("/mnt/e/newtry13.samples")?;
-
-    for value in 0..24 {
-        println!(
-            "PieceCount {}:{}",
-            value,
-            *distribution.entry(value).or_insert(0)
-        )
-    }
-
-    println!("Old data");
-    distribution = Data::material_distrib("/mnt/e/newtry11rescoredmlhshuffled.samples")?;
-
-    for value in 0..24 {
-        println!(
-            "PieceCount {}:{}",
-            value,
-            *distribution.entry(value).or_insert(0)
-        )
-    }
-
+        for value in 0..24 {
+            println!(
+                "PieceCount {}:{}",
+                value,
+                *distribution.entry(value).or_insert(0)
+            )
+        }
+    */
     Ok(())
 }

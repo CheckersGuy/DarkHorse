@@ -30,5 +30,7 @@ struct TableBase {
 
   int get_num_pieces();
 
+  std::optional<Move> find_best_mtc(Position pos);
+
   void close();
 };
