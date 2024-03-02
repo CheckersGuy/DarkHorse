@@ -107,6 +107,35 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     }
     Ok(())
 }
+//remove samples from a dataset
+pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Result<()> {
+    let mut filter = Bloom::new_for_fp_rate(30000000, 0.001);
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut counter = 0;
+    let mut rem_counter = 0;
+    {
+        let mut reader = BufReader::new(File::open(removers)?);
+        for sample in reader.iter_samples() {
+            filter.set(&sample.position);
+            counter += 1;
+        }
+    }
+    let mut reader = BufReader::new(File::open(input)?);
+    for sample in reader.iter_samples() {
+        if !filter.check(&sample.position) {
+            sample.write_fen(&mut writer)?;
+        } else {
+            rem_counter += 1;
+        }
+    }
+    println!(
+        "Removed {} of {} possible removable samples",
+        rem_counter, counter
+    );
+
+    Ok(())
+}
+
 //temporary function for the new format
 pub fn dump_samples(input: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
