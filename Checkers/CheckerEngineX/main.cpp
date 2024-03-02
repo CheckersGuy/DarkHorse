@@ -19,7 +19,7 @@
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
 // INCBIN(network, "biggerthanbig.quant");
-INCBIN(network, "generator1.quant");
+INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policyverybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -59,7 +59,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0) {
+  if (depth == 0 || board.get_position().piece_count() <= 20) {
     Move bestMove;
     TT.clear();
     Board copy = board;
@@ -191,7 +191,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(9, pos, -150, 150);
+      generate_book(11, pos, -150, 150);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }

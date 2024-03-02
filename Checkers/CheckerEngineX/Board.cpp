@@ -7,6 +7,7 @@
 #include "types.h"
 #include <cstdint>
 #include <optional>
+#include <unistd.h>
 // std::ofstream debug("debug.txt");
 Position &Board::get_position() { return pStack[pCounter]; }
 
@@ -90,7 +91,7 @@ uint64_t Board::get_current_key() const {
 
   auto comb_hash = hash_combine(hash(first), hash(second));
   if (get_mover() == BLACK) {
-    comb_hash ^= BLACK_RANDOM;
+    comb_hash ^= BLACK_RANDOM ^ getpid();
   }
 
   return comb_hash;

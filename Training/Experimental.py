@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*2048 #having too much fun
+L1 =2*4096 #having too much fun
 L2 =32
 L3 = 32
 
@@ -114,7 +114,7 @@ class Network(pl.LightningModule):
         result,evalu, move,buckets,psqt_buckets, x = train_batch
         evalu = torch.sigmoid(evalu.to(dtype=torch.float32)/64.0)
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2.0).mean()
+        loss =torch.pow(torch.abs(out-result),2).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -122,13 +122,13 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result,evalu, move,buckets,psqt_buckets, x = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2.0).mean()
+        loss = torch.pow(torch.abs(out - result), 2).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("medium.quant")
+        self.save_quantized_bucket("oldloss.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}

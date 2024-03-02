@@ -78,10 +78,14 @@ constexpr uint32_t SINGLE_CORNER = (1 << 28) | (1 << 3);
 constexpr uint32_t DOUBLE_CORNER = (1 << 0) | (1 << 4) | (1 << 31) | (1 << 27);
 constexpr std::array<uint32_t, 8> MASK_ROWS = {
     0xf, 0xf << 4, 0xf << 8, 0xf << 12, 0xf << 16, 0xf << 20, 0xf << 24};
-constexpr std::array<int, 32> LMR_TABLE = {1, 1, 1, 1, 1, 1, 2, 2, 2,
-                                           2, 2, 2, 2, 2, 2, 2, 2, 2,
-                                           2, 2, 2, 2, 2, 2, 2, 2, 2};
-constexpr int prob_cut = 27; // 27;
+constexpr std::array<int, 32> PV_LMR_TABLE = {1, 1, 1, 2, 2, 2, 2, 2, 2,
+                                              2, 2, 2, 2, 2, 2, 2, 2, 2,
+                                              2, 2, 2, 2, 2, 2, 2, 2, 2};
+
+constexpr std::array<int, 32> LMR_TABLE = {1, 1, 1, 2, 2, 2, 2, 3, 3,
+                                           3, 3, 3, 3, 3, 3, 3, 3, 3,
+                                           3, 3, 3, 3, 3, 3, 3, 3, 3};
+constexpr int prob_cut = 20; // 27;
 constexpr int asp_wind = 13; // 15;
 
 constexpr int NUM_BUCKETS = 12;

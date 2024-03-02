@@ -181,6 +181,9 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
   if (move_index >= ((in_pv) ? 3 : 1) && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 29)];
+    if (in_pv) {
+      red = PV_LMR_TABLE[std::min(depth - 1, 29)];
+    }
     red += (!in_pv && move_index >= 6);
     return red;
   }
@@ -312,8 +315,8 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-      return (int)(Bits::pop_count(kings_captured) * 3 +
-                   Bits::pop_count(pawns_captured) * 2);
+      return (int)(Bits::pop_count(kings_captured) * 14 +
+                   Bits::pop_count(pawns_captured) * 10);
     }
 
     if (!computed) {
@@ -498,7 +501,6 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     if (found_hash && info.flag != Flag::None &&
         info.static_eval != EVAL_INFINITE) {
       net_val = info.static_eval;
-
     } else {
       net_val = evaluate(board.get_position(), ply);
 
@@ -510,8 +512,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-    return (int)(Bits::pop_count(kings_captured) * 3 +
-                 Bits::pop_count(pawns_captured) * 2);
+    return (int)(Bits::pop_count(kings_captured) * 14 +
+                 Bits::pop_count(pawns_captured) * 10);
   });
   for (int i = 0; i < moves.length(); ++i) {
 
