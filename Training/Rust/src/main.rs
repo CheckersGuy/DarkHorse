@@ -37,13 +37,19 @@ fn main() -> anyhow::Result<()> {
       }
     */
     /*
-        let mut writer = BufWriter::new(File::create("validation.samples")?);
-        let mut reader = BufReader::new(File::open("/mnt/e/newtry11rescoredmlhshuffledx.samples")?);
+     let mut writer = BufWriter::new(File::create("validation.samples")?);
+     let mut reader = BufReader::new(File::open("/mnt/e/newtry11rescoredmlhshuffledx.samples")?);
 
-        for sample in reader.iter_samples().take(100000) {
-            sample.write_fen(&mut writer)?;
-        }
+     for sample in reader.iter_samples().take(1000000) {
+         sample.write_fen(&mut writer)?;
+     }
     */
+
+    Data::remove_samples(
+        "/mnt/e/newtry11rescoredmlhshuffledx.samples",
+        "/mnt/e/validation.samples",
+        "/mnt/e/master1.samples",
+    )?;
     //Data::create_unique_fens("training.pos", "unique.pos")?;
 
     //Need to write some code to combine 2 or more sample files
@@ -57,16 +63,17 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook.pos"),
-        String::from("/mnt/e/newtry14.samples"),
-        14,
-        1000000,
-    );
+    /*let mut generator = Generator::new(
+            String::from("../Positions/ultrabook.pos"),
+            String::from("/mnt/e/newtry14.samples"),
+            14,
+            1000000,
+        );
 
-    generator.time = 10;
-    generator.prev_file = Some("/mnt/e/newtry13.samples");
-    generator.generate_games()?;
+        generator.time = 10;
+        generator.prev_file = Some("/mnt/e/newtry13.samples");
+        generator.generate_games()?;
+    */
 
     //Data::create_book("../Positions/drawbook.book", "ultrabook.pos", 14)?;
 
