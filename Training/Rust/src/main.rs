@@ -64,21 +64,21 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /* let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("/mnt/e/newtry14.samples"),
-            5,
-            100000,
-        );
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("newtry16.samples"),
+        5,
+        100000,
+    );
 
-        generator.time = 10;
-        //generator.prev_file = Some("/mnt/e/newtry11rescoredmlhx.samples");
-        generator.generate_games()?;
-    */
+    generator.time = 10;
+    generator.prev_file = Some("newtry14rescoredmlhx.samples");
+    generator.generate_games()?;
+
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
 
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
