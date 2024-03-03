@@ -44,12 +44,13 @@ fn main() -> anyhow::Result<()> {
          sample.write_fen(&mut writer)?;
      }
     */
-
-    Data::remove_samples(
-        "/mnt/e/newtry11rescoredmlhshuffledx.samples",
-        "/mnt/e/validation.samples",
-        "/mnt/e/master1.samples",
-    )?;
+    /*
+        Data::remove_samples(
+            "/mnt/e/newtry11rescoredmlhshuffledx.samples",
+            "/mnt/e/validation.samples",
+            "/mnt/e/master1.samples",
+        )?;
+    */
     //Data::create_unique_fens("training.pos", "unique.pos")?;
 
     //Need to write some code to combine 2 or more sample files
@@ -63,28 +64,22 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*let mut generator = Generator::new(
-            String::from("../Positions/ultrabook.pos"),
+    /* let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
             String::from("/mnt/e/newtry14.samples"),
-            14,
-            1000000,
+            5,
+            100000,
         );
 
         generator.time = 10;
-        generator.prev_file = Some("/mnt/e/newtry13.samples");
+        //generator.prev_file = Some("/mnt/e/newtry11rescoredmlhx.samples");
         generator.generate_games()?;
     */
+    //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
-    //Data::create_book("../Positions/drawbook.book", "ultrabook.pos", 14)?;
-
-    /*
-        println!(
-            "{}",
-            Sample::SampleType::invert_fen_string("B:W22,K26,K27:B6,7,K15").unwrap()
-        );
-    */
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
 

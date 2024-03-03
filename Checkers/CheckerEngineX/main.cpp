@@ -59,7 +59,7 @@ std::vector<std::string> split(const std::string &s, char delim) {
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0 || board.get_position().piece_count() <= 20) {
+  if (depth == 0 || board.get_position().piece_count() <= 16) {
     Move bestMove;
     TT.clear();
     Board copy = board;
@@ -191,14 +191,14 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(11, pos, -150, 150);
+      generate_book(12, pos, -150, 150);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
     return 0;
   }
   if (parser.has_option("generate")) {
-    int adj_threshold = 25;
+    int adj_threshold = 5;
     int child_id = -1;
     std::string next_line;
     TT.resize(18);
