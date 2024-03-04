@@ -66,13 +66,13 @@ fn main() -> anyhow::Result<()> {
     */
     let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("newtry16.samples"),
-        5,
-        100000,
+        String::from("nextup.samples"),
+        220,
+        400000000,
     );
 
     generator.time = 10;
-    generator.prev_file = Some("newtry14rescoredmlhx.samples");
+    generator.prev_file = Some("newtry11rescoredmlhx.samples");
     generator.generate_games()?;
 
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;

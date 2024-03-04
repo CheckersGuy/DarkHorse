@@ -566,7 +566,7 @@ impl<'a> Generator<'a> {
         let mut writer = BufWriter::new(
             OpenOptions::new()
                 .write(true)
-                .append(false)
+                .append(true)
                 .open(self.output.clone())
                 .unwrap(),
         );
