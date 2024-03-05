@@ -64,17 +64,17 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("nextup.samples"),
-        220,
-        400000000,
-    );
+    /* let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("nextup.samples"),
+            220,
+            400000000,
+        );
 
-    generator.time = 10;
-    generator.prev_file = Some("newtry11rescoredmlhx.samples");
-    generator.generate_games()?;
-
+        generator.time = 10;
+        generator.prev_file = Some("newtry11rescoredmlhx.samples");
+        generator.generate_games()?;
+    */
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
@@ -108,10 +108,13 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
+
+    Data::shuffle_data("nextup.samples", "nextupshuffled.samples")?;
+
     /*
         let mut distribution;
         println!("Old data");
-        distribution = Data::material_distrib("/mnt/e/newtry13.samples")?;
+        distribution = Data::material_distrib("/mnt/e/master1.samples")?;
 
         for value in 0..24 {
             println!(
