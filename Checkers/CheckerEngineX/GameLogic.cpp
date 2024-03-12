@@ -349,12 +349,12 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     const auto kings = board.get_position().K;
     Line local_pv;
     Value val = -INFINITE;
-    if (!is_root && move == sing_move && depth >= 6 && !is_sing_search &&
+    if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
 
       Line local_pv;
-      Value sing_beta = sing_value - 45;
-      Value sing_depth = depth - 4;
+      Value sing_beta = sing_value - 25;
+      Value sing_depth = std::max(0, depth - 4);
 
       auto val = Search::search<NONPV>(board, ply + 1, local_pv, sing_beta - 1,
                                        sing_beta, sing_depth, sing_move, true);
@@ -367,7 +367,6 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     }
     Depth reduction = Search::reduce(i, depth, ply, board, move, in_pv);
     reduction = (extension > 0) ? 0 : reduction;
-
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     int tab_pieces = 0;
@@ -375,10 +374,10 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
     tab_pieces = tablebase.num_pieces;
 #endif
 
-    if (!in_pv && std::abs(beta) < TB_WIN && depth >= 2 &&
+    if (!in_pv && std::abs(beta) < TB_WIN && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
-      Depth newDepth = std::max(1, depth - 4);
+      Depth newDepth = std::max(0, depth - 4);
       Value board_val = -qs<NONPV>(board, ply + 1, line, -prob_beta,
                                    -prob_beta + 1, 0, Move{}, is_sing_search);
 
@@ -397,11 +396,12 @@ Value search(Board &board, Ply ply, Line &pv, Value alpha, Value beta,
       }
     }
 
-    Depth new_depth = depth - 1 + extension;
+    Depth new_depth = std::max(0, depth - 1 + extension);
+
     if (reduction != 0) {
-      val =
-          -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
-                                 new_depth - reduction, Move{}, is_sing_search);
+      val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1, -alpha,
+                                   std::max(0, new_depth - reduction), Move{},
+                                   is_sing_search);
 
       if (val > alpha) {
         val = -Search::search<NONPV>(board, ply + 1, local_pv, -alpha - 1,
@@ -506,7 +506,9 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
       TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{});
     }
-
+    if (info.flag == TT_EXACT && std::abs(info.score) < TB_WIN) {
+      return value_from_tt(info.score, ply, board.get_position());
+    }
     return net_val;
   }
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
