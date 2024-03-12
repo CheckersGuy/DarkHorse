@@ -18,7 +18,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "finalform.quant");
+INCBIN(network, "finalformshuffled.quant");
 // INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policyverybig.quant");
 inline Position posFromString(const std::string &pos) {

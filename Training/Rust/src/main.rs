@@ -109,20 +109,29 @@ fn main() -> anyhow::Result<()> {
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
 
-    Data::shuffle_data("nextup.samples", "nextupshuffled.samples")?;
+    //Data::shuffle_data("nextup.samples", "nextupshuffled.samples")?;
 
-    /*
-        let mut distribution;
-        println!("Old data");
-        distribution = Data::material_distrib("/mnt/e/master1.samples")?;
+    let mut distribution;
+    println!("Old data");
+    distribution = Data::material_distrib("/mnt/e/master1.samples")?;
 
-        for value in 0..24 {
-            println!(
-                "PieceCount {}:{}",
-                value,
-                *distribution.entry(value).or_insert(0)
-            )
-        }
-    */
+    for value in 0..24 {
+        println!(
+            "PieceCount {}:{}",
+            value,
+            *distribution.entry(value).or_insert(0)
+        )
+    }
+    println!("New data");
+    distribution = Data::material_distrib("/mnt/e/nextuprescored.samples")?;
+
+    for value in 0..24 {
+        println!(
+            "PieceCount {}:{}",
+            value,
+            *distribution.entry(value).or_insert(0)
+        )
+    }
+
     Ok(())
 }
