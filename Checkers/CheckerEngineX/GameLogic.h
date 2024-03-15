@@ -52,8 +52,8 @@ namespace Search {
 Value search_asp(Board &board, Value last_score, Depth depth);
 
 template <NodeType type>
-Value search(Board &board, Ply ply, Line &line, Value alpha, Value beta,
-             Depth depth, Move excluded, bool is_sing_search);
+Value search(bool cutnode, Board &board, Ply ply, Line &line, Value alpha,
+             Value beta, Depth depth, Move excluded, bool is_sing_search);
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          Move excluded, bool is_sing_search);
