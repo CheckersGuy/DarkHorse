@@ -177,13 +177,14 @@ namespace Search {
 
 Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv, bool cutnode) {
-  if (move_index >= 1 + in_pv && !move.is_capture() &&
+
+  if (move_index >= ((in_pv) ? 3 : 1) && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 29)];
     if (in_pv) {
       red = PV_LMR_TABLE[std::min(depth - 1, 29)];
     }
-    red += (move_index >= 5 + 2 * in_pv);
+    red += (!in_pv && move_index >= 6);
     red += cutnode;
     return red;
   }
@@ -241,7 +242,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   Value static_eval = EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
-  bool found_rep = false;
+
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
@@ -303,6 +304,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
+
+  if (cutnode && tt_move.is_empty()) {
+    depth = depth - 2;
+  }
+  if (depth <= 0) {
+    return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, Move{},
+                                 is_sing_search);
+  }
 
   auto *out = &policy.output.buffer[0];
   bool computed = false;
@@ -387,15 +396,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       Value board_val = -qs<NONPV>(board, ply + 1, line, -prob_beta,
                                    -prob_beta + 1, 0, Move{}, is_sing_search);
 
-      if (board_val >= prob_beta && newDepth == 0) {
-        board.undo_move();
-        TT.store_hash(false, value_to_tt(board_val, ply, board.get_position()),
-                      static_eval, key, TT_LOWER, newDepth,
-                      (!move.is_capture()) ? move : Move{});
-        return std::abs(board_val) < TB_WIN ? (board_val - prob_cut)
-                                            : board_val;
-      }
-
       if (board_val >= prob_beta) {
         Value value = -Search::search<NONPV>(!cutnode, board, ply + 1, line,
                                              -prob_beta, -prob_beta + 1,
@@ -439,7 +439,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       for (auto i = 0; i < board.rep_size; ++i) {
         if (board.rep_history[i] == last_position) {
           val = (val) / 2;
-          found_rep = true;
           break;
         }
       }
