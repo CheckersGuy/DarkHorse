@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*4096 #having too much fun
+L1 =2*4096
 L2 =32
 L3 = 32
 
@@ -28,7 +28,7 @@ class Network(pl.LightningModule):
         self.gamma = 0.95
 
 
-        self.num_buckets =27
+        self.num_buckets =12
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
@@ -382,7 +382,7 @@ class PolicyNetwork(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.90
+        self.gamma = 0.95
 
 
         self.num_buckets =12
@@ -392,7 +392,7 @@ class PolicyNetwork(pl.LightningModule):
         self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
         self.output = nn.Linear(L3,128*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
-        self.loss = torch.nn.CrossEntropyLoss();
+        self.loss = torch.nn.CrossEntropyLoss(ignore_index=-1000);
         self.init_layers()
 
     def forward(self, x,buckets):
@@ -462,7 +462,7 @@ class PolicyNetwork(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=self.gamma)
+        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
 
@@ -480,7 +480,7 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"policyverybig.pt")
+        torch.save(self.state_dict(),"policybigger.pt")
         result,policy_target, move,buckets,psqt_buckets, x = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
@@ -490,7 +490,7 @@ class PolicyNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("policyverybig.quant")
+        self.save_quantized_bucket("policybigger.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
