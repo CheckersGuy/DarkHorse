@@ -19,23 +19,17 @@ use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    /*  let mut dataloader = dataloader::DataLoader::new(
-          String::from("/mnt/e/newtry11rescoredmlhshuffledx.samples"),
-          1000000,
-          false,
-      )?;
-      for _ in 0..3000 {
-          let sample = dataloader.get_next()?;
-          sample.write_fen(&mut writer)?;
-          println!("{:?}", sample);
-          if let Sample::SampleType::Fen(ref position) = sample.position {
-              let pos = Pos::Position::try_from(position.as_str())?;
-              pos.print_position();
-          }
-          println!();
-          println!();
-      }
-    */
+    let mut dataloader =
+        dataloader::DataLoader::new(String::from("/mnt/e/validation.samples"), 1000000, false)?;
+    for _ in 0..3000 {
+        let sample = dataloader.get_next()?;
+        if let Sample::SampleType::Fen(ref position) = sample.position {
+            let pos = Pos::Position::try_from(position.as_str())?;
+            pos.print_position();
+            println!("MLH: {}", sample.mlh);
+        }
+    }
+
     /*
      let mut writer = BufWriter::new(File::create("validation.samples")?);
      let mut reader = BufReader::new(File::open("/mnt/e/newtry11rescoredmlhshuffledx.samples")?);
@@ -110,28 +104,6 @@ fn main() -> anyhow::Result<()> {
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
 
     //Data::shuffle_data("nextup.samples", "nextupshuffled.samples")?;
-
-    let mut distribution;
-    println!("Old data");
-    distribution = Data::material_distrib("/mnt/e/master1.samples")?;
-
-    for value in 0..24 {
-        println!(
-            "PieceCount {}:{}",
-            value,
-            *distribution.entry(value).or_insert(0)
-        )
-    }
-    println!("New data");
-    distribution = Data::material_distrib("/mnt/e/nextuprescored.samples")?;
-
-    for value in 0..24 {
-        println!(
-            "PieceCount {}:{}",
-            value,
-            *distribution.entry(value).or_insert(0)
-        )
-    }
 
     Ok(())
 }

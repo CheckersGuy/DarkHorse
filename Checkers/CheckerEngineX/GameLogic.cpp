@@ -50,16 +50,16 @@ Value evaluate(Position pos, Ply ply) {
     eval = tb_value;
   } else {
     eval = network.evaluate(pos, ply, 0);
-    eval = std::clamp(eval, -600, 600);
+    eval = std::clamp(eval, -500, 500);
   }
 #endif
 
 #ifdef __linux__
   eval = network.evaluate(pos, ply, 0);
-  eval = std::clamp(eval, -600, 600);
+  eval = std::clamp(eval, -500, 500);
 #endif
-  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 600) {
-    if (eval >= 600) {
+  if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 500) {
+    if (eval >= 500) {
       eval += 300;
       eval -= get_mlh_estimate(pos);
     } else {
@@ -184,8 +184,8 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
     if (in_pv) {
       red = PV_LMR_TABLE[std::min(depth - 1, 29)];
     }
-    red += (!in_pv && move_index >= 6);
-    red += cutnode;
+    red += (move_index >= 6 + 2 * in_pv);
+    red += 2 * cutnode;
     return red;
   }
   return 0;
@@ -291,8 +291,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         (tb_value < 0 && tb_value <= alpha)) {
 
       if (board.get_position().piece_count() <= 10 &&
-          std::abs(tb_value) >= 600) {
-        if (tb_value >= 600) {
+          std::abs(tb_value) >= 500) {
+        if (tb_value >= 500) {
           tb_value += 300;
           tb_value -= get_mlh_estimate(board.get_position());
         } else {
@@ -304,14 +304,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
-
-  if (cutnode && tt_move.is_empty()) {
-    depth = depth - 2;
-  }
-  if (depth <= 0) {
-    return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, Move{},
-                                 is_sing_search);
-  }
 
   auto *out = &policy.output.buffer[0];
   bool computed = false;

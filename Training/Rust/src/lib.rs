@@ -44,7 +44,6 @@ fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
     }
     let squares = fen.get_squares()?;
     let piece_count = squares.len();
-    let mut has_kings = 0;
     unsafe {
         let mut in_array = input.as_array_mut();
         for square in squares {
@@ -56,39 +55,29 @@ fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
                     in_array[index as usize + 28] = 1.0;
                 }
                 Square::WKING(index) => {
-                    has_kings = 1;
                     in_array[index as usize + 28 + 28] = 1.0;
                 }
                 Square::BKING(index) => {
-                    has_kings = 1;
                     in_array[index as usize + 28 + 28 + 32] = 1.0;
                 }
             }
         }
         let sub_two;
         match piece_count {
-            24 | 23 => sub_two = 0,
-            22 => sub_two = 1,
-            21 => sub_two = 2,
-            20 => sub_two = 3,
-            19 => sub_two = 4,
-            18 => sub_two = 5,
-            17 => sub_two = 6,
-            16 => sub_two = 7,
-            15 => sub_two = 8,
-            14 => sub_two = 9,
-            13 => sub_two = 10,
-            12 => sub_two = 11 + has_kings,
-            11 => sub_two = 13 + has_kings,
-            10 => sub_two = 15 + has_kings,
-            9 => sub_two = 17 + has_kings,
-            8 => sub_two = 19 + has_kings,
-            7 => sub_two = 21 + has_kings,
-            6 => sub_two = 23 + has_kings,
-            5 | 4 | 3 | 2 | 1 => sub_two = 25 + has_kings,
+            24 | 23 | 22 | 21 | 20 | 19 => sub_two = 0,
+            18 | 17 | 16 => sub_two = 1,
+            15 | 14 | 13 => sub_two = 2,
+            12 | 11 => sub_two = 3,
+            10 => sub_two = 4,
+            9 => sub_two = 5,
+            8 => sub_two = 6,
+            7 => sub_two = 7,
+            6 => sub_two = 8,
+            5 => sub_two = 9,
+            4 => sub_two = 10,
+            3 | 2 | 1 | 0 => sub_two = 11,
             _ => sub_two = 0,
         }
-
         Ok(sub_two)
     }
 }
@@ -132,7 +121,6 @@ impl BatchProvider {
                     _ => Vec::new(),
                 };
                 let piece_count = squares.len();
-
                 for square in squares {
                     match square {
                         Square::WPAWN(index) => {
