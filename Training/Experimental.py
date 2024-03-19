@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*4096
+L1 =2*2048
 L2 =32
 L3 = 32
 
@@ -497,6 +497,10 @@ class PolicyNetwork(pl.LightningModule):
         self.log('loss', avg_loss, prog_bar=True)
         print(avg_loss)
         return {"loss": avg_loss, "log": tensorboard_logs}
+
+    def on_train_epoch_end(self) -> None:
+        self.save_quantized_bucket("policybigger.quant")
+        return super().on_train_epoch_end()
 
     def save_quantized_bucket(self, output):
         self.step()

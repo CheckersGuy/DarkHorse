@@ -19,7 +19,7 @@ use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    let mut dataloader =
+    /*let mut dataloader =
         dataloader::DataLoader::new(String::from("/mnt/e/validation.samples"), 1000000, false)?;
     for _ in 0..3000 {
         let sample = dataloader.get_next()?;
@@ -29,6 +29,7 @@ fn main() -> anyhow::Result<()> {
             println!("MLH: {}", sample.mlh);
         }
     }
+    */
 
     /*
      let mut writer = BufWriter::new(File::create("validation.samples")?);
@@ -103,7 +104,10 @@ fn main() -> anyhow::Result<()> {
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
 
-    //Data::shuffle_data("nextup.samples", "nextupshuffled.samples")?;
+    Data::shuffle_data_external::<16>(
+        "/mnt/e/nextuppolicy.samples",
+        "/mnt/e/nextuppolicyshuffled.samples",
+    )?;
 
     Ok(())
 }

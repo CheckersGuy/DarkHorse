@@ -107,6 +107,45 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     }
     Ok(())
 }
+
+pub fn shuffle_data_external<const partitions: usize>(
+    input: &str,
+    output: &str,
+) -> std::io::Result<()> {
+    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for i in 0..partitions {
+        let file_name = String::from(input) + i.to_string().as_str();
+        files.push(BufWriter::new(File::create(file_name)?));
+    }
+
+    let mut reader = BufReader::new(File::open(input)?);
+
+    //iterate over all samples
+
+    for sample in reader.iter_samples() {
+        //picking a random partition for our sample
+        let partition = rand::thread_rng().gen::<usize>() % partitions;
+        sample.write_fen(&mut files[partition])?;
+    }
+
+    println!("Done creating partitions");
+    files.clear();
+    for i in 0..partitions {
+        let file_name = String::from(input) + i.to_string().as_str();
+        let mut read_local = BufReader::new(File::open(file_name)?);
+        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
+        samples.par_shuffle(&mut rng);
+        println!("Done shuffling partition {i}");
+        for sample in samples {
+            sample.write_fen(&mut writer)?;
+        }
+    }
+
+    Ok(())
+}
+
 //remove samples from a dataset
 pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Result<()> {
     let mut filter = Bloom::new_for_fp_rate(30000000, 0.001);
@@ -132,18 +171,6 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
         "Removed {} of {} possible removable samples",
         rem_counter, counter
     );
-
-    Ok(())
-}
-
-//temporary function for the new format
-pub fn dump_samples(input: &str, output: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(input)?);
-    let mut writer = BufWriter::new(File::create(output)?);
-
-    //skipping the num_samples
-    reader.read_u64::<LittleEndian>()?;
-    std::io::copy(&mut reader, &mut writer)?;
 
     Ok(())
 }
