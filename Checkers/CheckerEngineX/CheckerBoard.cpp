@@ -8,7 +8,7 @@ Position previous;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh4.quant");
 INCBIN(network, "biggerthanbig.quant");
-INCBIN(policy, "policyverybig.quant");
+INCBIN(policy, "policybigger.quant");
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {

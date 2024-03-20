@@ -2,6 +2,10 @@
 #include "Bits.h"
 #include "types.h"
 
+// killer-moves try
+
+std::array<Move, MAX_PLY> killer_moves;
+
 Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
@@ -178,7 +182,7 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv, bool cutnode) {
 
-  if (move_index >= ((in_pv) ? 3 : 1) && !move.is_capture() &&
+  if (move_index >= 1 && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 29)];
     if (in_pv) {
@@ -239,7 +243,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   }
   auto key = board.get_current_key();
 
-  Value static_eval = EVAL_INFINITE;
+  Value static_eval = -EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
 
@@ -443,6 +447,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
+          // updating killer_moves
           break;
         }
 
