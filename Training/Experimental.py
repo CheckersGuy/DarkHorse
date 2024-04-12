@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*2048
+L1 =2*(4096)
 L2 =32
 L3 = 32
 
@@ -128,13 +128,17 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("buckets.quant")
+        self.save_quantized_bucket("moesuper.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         self.log('loss', avg_loss, prog_bar=True)
         print(avg_loss)
         return {"loss": avg_loss, "log": tensorboard_logs}
+
+    def on_train_epoch_end(self) -> None:
+        self.save_quantized_bucket("moesuper.quant")
+        return super().on_train_epoch_end()
 
     def save_quantized_bucket(self, output):
         self.step()

@@ -10,11 +10,11 @@ import torch
 
 if __name__ == "__main__":
     batch_size = 2*8192 
-    epochs = 200
-    model = Experimental.PolicyNetwork()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/nextuppolicyshuffled.samples",
+    epochs = 105
+    model = Experimental.Network()
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/crazyms1next3rescoredshuffled.samples",
                                       val_data="/mnt/e/validation.samples",
-                                       batch_size=batch_size, buffer_size=50000000)
+                                       batch_size=batch_size, buffer_size=40000000)
  #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
     #print(provider.num_samples)
 
@@ -29,9 +29,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
 
-    trainer.limit_val_batches=0; 
-
-    trainer.fit(model, data_loader,ckpt_path="Networks/policynext.ckpt");
+    trainer.fit(model, data_loader,ckpt_path="Networks/moe.ckpt");
 
 
 fen_string ="W:W8,12,23,31:BK5,K15,20,K25"

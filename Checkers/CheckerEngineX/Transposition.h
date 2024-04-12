@@ -57,6 +57,8 @@ public:
 
   void resize(size_t capa);
 
+  void resize_in_mb(size_t mb);
+
   void store_hash(bool in_pv, Value value, Value static_eval, uint64_t key,
                   Flag flag, uint8_t depth, Move tt_move);
 

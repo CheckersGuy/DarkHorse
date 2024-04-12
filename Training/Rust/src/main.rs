@@ -59,17 +59,25 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /* let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("nextup.samples"),
-            220,
-            400000000,
-        );
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("crazyms1next4.samples"),
+        14,
+        200000000,
+    );
 
-        generator.time = 10;
-        generator.prev_file = Some("newtry11rescoredmlhx.samples");
-        generator.generate_games()?;
+    generator.time = 1;
+    //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
+    generator.generate_games()?;
+
+    /*Data::create_subset(
+        "/mnt/e/nextupshuffled.samples",
+        "/mnt/e/nextuptoilet.samples",
+        1000000,
+    )
+    .unwrap();
     */
+
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
@@ -103,11 +111,11 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-
-    Data::shuffle_data_external::<16>(
-        "/mnt/e/nextuppolicy.samples",
-        "/mnt/e/nextuppolicyshuffled.samples",
+    /*Data::shuffle_data_external::<16>(
+        "/mnt/e/crazyms1next3rescored.samples",
+        "/mnt/e/crazyms1next3rescoredshuffled.samples",
     )?;
+    */
 
     Ok(())
 }

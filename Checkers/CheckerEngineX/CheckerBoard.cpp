@@ -136,7 +136,6 @@ int enginecommand(char str[256], char reply[1024]) {
 
   if (strcmp(command, "staticevaluation") == 0) {
     if (!engine_initialized) {
-      network.load_bucket("bigbug14.quant");
       TT.resize(21);
       engine_initialized = true;
       glob.reply = str;
@@ -159,9 +158,7 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "hashsize") == 0) {
 
       int numMBs = strtol(param2, &stopstring, 10);
-      // for now just use some default value
-
-      TT.resize(21);
+      ;
       return 1;
     }
 

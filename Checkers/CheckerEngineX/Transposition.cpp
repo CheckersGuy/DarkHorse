@@ -112,3 +112,9 @@ int Transposition::get_size_in_mb() {
 
   return bytes / (1024 * 1024);
 }
+
+void Transposition::resize_in_mb(size_t mb) {
+  // to be checked
+  const auto num_entries = mb * (1024 * 1024) / sizeof(Cluster);
+  resize(num_entries);
+}

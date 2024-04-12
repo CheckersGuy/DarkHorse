@@ -83,9 +83,10 @@ constexpr std::array<int, 32> PV_LMR_TABLE = {1, 1, 1, 2, 2, 2, 2, 2, 2,
                                               2, 2, 2, 2, 2, 2, 2, 2, 2};
 
 constexpr std::array<int, 32> LMR_TABLE = {1, 1, 1, 2, 2, 3, 3, 3, 3,
-                                           3, 3, 3, 3, 3, 3, 3, 3, 3,
-                                           3, 3, 3, 3, 3, 3, 3, 3, 3};
+                                           3, 4, 4, 4, 4, 4, 4, 4, 4,
+                                           4, 4, 4, 4, 4, 4, 4, 4, 4};
 constexpr int prob_cut = 24; // 27;
+
 constexpr int asp_wind = 13; // 15;
 
 constexpr int NUM_BUCKETS = 12;
