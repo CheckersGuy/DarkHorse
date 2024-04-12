@@ -228,6 +228,15 @@ pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+pub fn create_subset(input: &str, output: &str, num_samples: usize) -> std::io::Result<()> {
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut reader = BufReader::new(File::open(input)?);
+    for sample in reader.iter_samples().take(num_samples) {
+        sample.write_fen(&mut writer)?;
+    }
+    Ok(())
+}
+
 //Refactoring this as well
 pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
     //to be implemented

@@ -35,7 +35,7 @@ inline Value value_from_tt(Value v, int ply, Position pos) {
 }
 
 Value evaluate(Position pos, Ply ply) {
-
+  const auto piece_count = pos.piece_count();
   if (pos.BP == 0 && pos.color == BLACK) {
     return loss(ply);
   }
@@ -184,9 +184,9 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 
   if (move_index >= 1 && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
-    auto red = LMR_TABLE[std::min(depth - 1, 29)];
+    auto red = LMR_TABLE[std::min(depth - 1, 31)];
     if (in_pv) {
-      red = PV_LMR_TABLE[std::min(depth - 1, 29)];
+      red = PV_LMR_TABLE[std::min(depth - 1, 31)];
     }
     red += (move_index >= 6 + 2 * in_pv);
     red += 2 * cutnode;
@@ -241,6 +241,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       return alpha;
     }
   }
+
   auto key = board.get_current_key();
 
   Value static_eval = -EVAL_INFINITE;
@@ -340,9 +341,13 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   liste.sort(board.get_position(), depth, ply, tt_move, start_index, oracle);
   const Value old_alpha = alpha;
 
+  // checking if there is a singular move suggested by our policy network
+
   const Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
+
     const Move move = liste[i];
+
     if (is_sing_search && move == excluded) {
       continue;
     }
@@ -447,7 +452,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
-          // updating killer_moves
           break;
         }
 

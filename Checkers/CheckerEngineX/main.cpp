@@ -18,7 +18,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 // INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policybigger.quant");
 inline Position posFromString(const std::string &pos) {
@@ -107,7 +107,6 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-
   /*  std::cout << network.evaluate(Position::get_start_position(), 0, 0);
     return 0;
     */
