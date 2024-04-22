@@ -33,11 +33,12 @@ extern "C" int move_played(char *orig, char *next) {
   Position o = Position::pos_from_fen(orig);
   Position n = Position::pos_from_fen(next);
 
-  if (o.color == BLACK) {
-    o = o.get_color_flip();
-  }
-  if (n.color == WHITE) {
-    n = n.get_color_flip();
+  if (o.color == n.color) {
+    if (o.color == BLACK) {
+      o = o.get_color_flip();
+    } else {
+      n = n.get_color_flip();
+    }
   }
 
   auto result = o.get_move(o, n);
