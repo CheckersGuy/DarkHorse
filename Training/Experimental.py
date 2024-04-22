@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*(4096)
+L1 =2*(2*4096)
 L2 =32
 L3 = 32
 
@@ -25,7 +25,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.95
+        self.gamma = 0.98
 
 
         self.num_buckets =12
@@ -103,7 +103,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=2e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -481,6 +481,15 @@ class PolicyNetwork(pl.LightningModule):
         self.log('train_loss', loss.detach(),prog_bar=True)
         self.log('accuracy', accuracy.detach(),prog_bar=True)
         return {"loss": loss}
+
+
+    def on_train_epoch_end(self) -> None:
+        self.save_quantized_bucket("policybigger.quant")
+        return super().on_train_epoch_end()
+
+    def on_train_start(self) -> None:
+        self.save_quantized_bucket("policybigger.quant")
+        return super().on_train_start()
 
 
     def validation_step(self, val_batch, batch_idx):

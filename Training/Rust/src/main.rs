@@ -19,25 +19,22 @@ use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
 fn main() -> anyhow::Result<()> {
-    /*let mut dataloader =
-        dataloader::DataLoader::new(String::from("/mnt/e/validation.samples"), 1000000, false)?;
-    for _ in 0..3000 {
-        let sample = dataloader.get_next()?;
+    /*let mut reader = BufReader::new(File::open(
+        "/mnt/e/crazyms1ultimaterescoredshuffled.samples",
+    )?);
+    //removing call captures
+    let mut writer = BufWriter::new(File::create(
+        "/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
+    )?);
+
+    for sample in reader.iter_samples() {
         if let Sample::SampleType::Fen(ref position) = sample.position {
             let pos = Pos::Position::try_from(position.as_str())?;
-            pos.print_position();
-            println!("MLH: {}", sample.mlh);
+            if pos.get_jumpers::<1>() == 0 {
+                sample.write_fen(&mut writer)?;
+            }
         }
     }
-    */
-
-    /*
-     let mut writer = BufWriter::new(File::create("validation.samples")?);
-     let mut reader = BufReader::new(File::open("/mnt/e/newtry11rescoredmlhshuffledx.samples")?);
-
-     for sample in reader.iter_samples().take(1000000) {
-         sample.write_fen(&mut writer)?;
-     }
     */
     /*
         Data::remove_samples(
@@ -59,16 +56,16 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("crazyms1next4.samples"),
-        14,
-        200000000,
-    );
-
-    generator.time = 1;
+    /*let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("crazyms1next4.samples"),
+            14,
+            200000000,
+        );
+    */
+    //generator.time = 1;
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
-    generator.generate_games()?;
+    // generator.generate_games()?;
 
     /*Data::create_subset(
         "/mnt/e/nextupshuffled.samples",
@@ -81,7 +78,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
 
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
@@ -96,13 +93,13 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", result);
     */
 
-    /*Data::create_policy_data(
-        "E:/newtry11rescoredmlhshuffled.samples",
-        "E:/policyshuffled.samples",
+    Data::create_policy_data(
+        "D:/crazyms1nextultimaterescored.samples",
+        "E:/policyultimate.samples",
         &base,
     )
     .unwrap();
-    */
+
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
             "/mnt/e/mlhshuffled2.samples",
@@ -111,11 +108,10 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    /*Data::shuffle_data_external::<16>(
-        "/mnt/e/crazyms1next3rescored.samples",
-        "/mnt/e/crazyms1next3rescoredshuffled.samples",
-    )?;
+    /* Data::shuffle_data_external::<32>(
+            "/mnt/e/policyultimate.samples",
+            "/mnt/e/policyultimateshuffled.samples",
+        )?;
     */
-
     Ok(())
 }

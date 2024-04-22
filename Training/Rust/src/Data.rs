@@ -468,7 +468,6 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
 
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
-    let mut total_count = 0;
     let mut writer = BufWriter::new(File::create(output)?);
     for game in reader.iter_games() {
         for window in game.windows(2) {
@@ -485,12 +484,12 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
                 .unwrap();
 
             if move_encoding > 0 {
+                println!("{fen_previous}");
                 //base.print_fen(fen_previous.as_str()).unwrap();
                 //println!("{move_encoding}");
                 let mut sample = window[1].clone();
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
-                total_count += 1;
             }
         }
     }
@@ -704,6 +703,8 @@ impl<'a> Generator<'a> {
                     println!("{}", value);
                 }
                 let pos = Position::try_from(position.as_str())?;
+                //below only works if it is white to move
+                //no longer works since I changed the game-data format
                 let has_captures: bool = pos.get_jumpers::<1>() != 0;
 
                 //writing the samples to our file
