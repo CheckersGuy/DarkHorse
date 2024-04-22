@@ -66,7 +66,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream);
 
 int get_mlh_estimate(Position pos);
-extern Network<4096, 32, 32, 1> network;
+extern Network<2 * 2 * 4096, 32, 32, 1> network;
 extern Network<512, 32, 32, 1> mlh_net;
 extern Network<2048, 32, 32, 128> policy;
 #endif // CHECKERSTEST_GAMELOGIC_H

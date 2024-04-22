@@ -13,7 +13,7 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<4096, 32, 32, 1> network;
+Network<2 * 2 * 4096, 32, 32, 1> network;
 Network<512, 32, 32, 1> mlh_net;
 Network<2048, 32, 32, 128> policy;
 
@@ -205,7 +205,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   pv.clear();
   nodeCounter++;
 
-  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 511) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
   if (!is_root && board.is_repetition()) {
@@ -483,7 +483,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 2047u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 511u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
 
