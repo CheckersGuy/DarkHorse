@@ -73,7 +73,9 @@ void find_nnz_version1(int32_t *input, uint16_t *output, uint32_t &count) {
 
 #define AVX256
 
-template <int InDim, int OutDim> struct SparseLayer {
+template <int In, int Out> struct SparseLayer {
+  static constexpr int InDim = In;
+  static constexpr int OutDim = Out;
   static_assert(OutDim % 16 == 0);
 
   constexpr static int ceil_to_multi(int numToRound, int multiple) {

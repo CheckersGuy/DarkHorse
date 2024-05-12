@@ -2,10 +2,6 @@
 #include "Bits.h"
 #include "types.h"
 
-// killer-moves try
-
-std::array<Move, MAX_PLY> killer_moves;
-
 Line mainPV;
 uint64_t endTime = 1000000000;
 uint64_t nodeCounter = 0u;
@@ -13,8 +9,11 @@ int rootDepth = 0;
 Value last_eval = -INFINITE;
 
 SearchGlobal glob;
-Network<2 * 2 * 4096, 32, 32, 1> network;
+
+Network<4096, 32, 32, 1> network;
+
 Network<512, 32, 32, 1> mlh_net;
+
 Network<2048, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
@@ -182,13 +181,13 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv, bool cutnode) {
 
-  if (move_index >= 1 && !move.is_capture() &&
+  if (move_index >= 1 && depth >= 2 && !move.is_capture() &&
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 31)];
     if (in_pv) {
       red = PV_LMR_TABLE[std::min(depth - 1, 31)];
     }
-    red += (move_index >= 6 + 2 * in_pv);
+    red += (move_index >= 3 + in_pv);
     red += 2 * cutnode;
     return red;
   }
@@ -205,11 +204,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   pv.clear();
   nodeCounter++;
 
-  if ((nodeCounter & 511) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 1023) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
   if (!is_root && board.is_repetition()) {
-    return 0;
+    const int sw = nodeCounter & 1;
+    return 2 * sw - 1;
   }
   if (depth <= 0) {
     return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, Move{},
@@ -310,7 +310,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   }
 #endif
 
-  auto *out = &policy.output.buffer[0];
+  int32_t *out;
+  std::visit([&](auto &output) { out = &output.buffer[0]; },
+             policy.layers.back());
   bool computed = false;
 
   int start_index = 0;
@@ -351,6 +353,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (is_sing_search && move == excluded) {
       continue;
     }
+
+    const auto kings = board.get_position().K;
     int extension = 0;
     if (liste.length() == 1) {
       extension = 1;
@@ -361,7 +365,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       extension = 1;
     }
 
-    const auto kings = board.get_position().K;
     Line local_pv;
     Value val = -INFINITE;
     if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
@@ -376,6 +379,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
       if (val < sing_beta) {
         extension = 1;
+
       } else if (sing_beta >= beta) {
         return sing_beta;
       }
@@ -483,7 +487,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 511u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
 
