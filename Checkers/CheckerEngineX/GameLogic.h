@@ -31,6 +31,15 @@ enum NodeType {
   NONPV,
 };
 
+struct SearchStack {
+  int ply;
+  Move previous;
+  bool ttPv;
+  int cut_count;
+  Value static_eval;
+  // other things as well;
+}
+
 struct SearchGlobal {
   uint32_t sel_depth;
 #ifdef CHECKERBOARD
@@ -66,7 +75,11 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream);
 
 int get_mlh_estimate(Position pos);
-extern Network<2 * 2 * 4096, 32, 32, 1> network;
+
+extern Network<4096, 32, 32, 1> network;
+
 extern Network<512, 32, 32, 1> mlh_net;
+
 extern Network<2048, 32, 32, 128> policy;
+
 #endif // CHECKERSTEST_GAMELOGIC_H

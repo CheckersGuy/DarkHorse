@@ -17,7 +17,6 @@ Board::Board(Position pos) {
   this->pCounter = 0;
   get_position() = pos;
   rep_size = 0;
-  // color_us will be set in search;
 }
 
 void Board::reset(Position start_pos) {
@@ -91,7 +90,7 @@ uint64_t Board::get_current_key() const {
 
   auto comb_hash = hash_combine(hash(first), hash(second));
   if (get_mover() == BLACK) {
-    comb_hash ^= BLACK_RANDOM ^ getpid();
+    comb_hash ^= BLACK_RANDOM;
   }
 
   return comb_hash;

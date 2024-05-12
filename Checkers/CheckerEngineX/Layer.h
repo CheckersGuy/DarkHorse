@@ -25,7 +25,9 @@ constexpr int ceil_to_multi(int numToRound, int multiple) {
   return numToRound + multiple - remainder;
 }
 
-template <int InDim, int OutDim, Activation ac = Id> struct QLayer {
+template <int In, int Out, Activation ac = Id> struct QLayer {
+  static constexpr int InDim = In;
+  static constexpr int OutDim = Out;
 
 #ifdef AVX256
   static constexpr int PadInDim = ceil_to_multi(InDim, 32);

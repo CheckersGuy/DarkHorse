@@ -4,7 +4,6 @@
 
 #ifndef READING_NETWORK_H
 #define READING_NETWORK_H
-
 #include "Bits.h"
 #include "Layer.h"
 #include "LinearSparse.h"
@@ -18,6 +17,62 @@
 #include <immintrin.h>
 #include <iostream>
 #include <sys/types.h>
+#include <tuple>
+#include <utility>
+#include <variant>
+
+template <typename Check, typename... Types> constexpr auto get_unique() {
+
+  if constexpr ((std::is_same_v<Check, Types> || ...)) {
+    return get_unique<Types...>();
+  } else {
+
+    if constexpr (sizeof...(Types) > 0) {
+      return std::tuple_cat(std::tuple<Check>{}, get_unique<Types...>());
+    } else {
+      return std::tuple<Check>{};
+    }
+  }
+}
+
+template <typename... Types>
+constexpr auto get_unique_tuple(std::tuple<Types...>) {
+  return get_unique<Types...>();
+}
+
+// some more code goes here
+
+template <int counter, int first, int second, int... Args>
+constexpr auto get_window_tuple() {
+
+  if constexpr (sizeof...(Args) == 0) {
+    return std::tuple<QLayer<first, second>>{};
+  } else {
+
+    if constexpr (counter == 0) {
+      return std::tuple_cat(std::make_tuple(SparseLayer<first, second>{}),
+                            get_window_tuple<counter + 1, second, Args...>());
+    } else {
+      return std::tuple_cat(
+          std::make_tuple(QLayer<first, second, Activation::SqRelu>{}),
+          get_window_tuple<counter + 1, second, Args...>());
+    }
+  }
+}
+
+template <typename... Args> constexpr auto getVariant(std::tuple<Args...>) {
+  return std::variant<Args...>{};
+};
+
+template <int... layers>
+using VariantLayerType =
+    decltype(getVariant(get_unique_tuple(get_window_tuple<0, layers...>())));
+
+template <class... Ts> struct overloaded : Ts... {
+  using Ts::operator()...;
+};
+
+template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 class membuf : public std::basic_streambuf<char> {
 public:
@@ -54,7 +109,6 @@ template <int OutDim> struct alignas(64) Accumulator {
   Position previous_black, previous_white;
   std::array<int, 32> removed_features;
   std::array<int, 32> active_features;
-  // testing some stuff
 
   ~Accumulator();
 
@@ -71,17 +125,35 @@ template <int OutDim> struct alignas(64) Accumulator {
   uint8_t *forward(uint8_t *in, const Position &next);
 };
 
-template <int l1, int l2, int l3, int out> struct Network {
+template <int... lay> struct Network {
+  static constexpr auto tuple = get_window_tuple<0, lay...>();
   int max_units{0};
-  static constexpr int L1 = l1;
-  static constexpr int L2 = l2;
-  static constexpr int L3 = l3;
-  static constexpr int Out = out;
+  static constexpr int L1 = std::get<0>(std::make_tuple(lay...));
+  std::array<VariantLayerType<lay...>, std::tuple_size_v<decltype(tuple)>>
+      layers;
+
+  Network() {
+    [this]<size_t... indices>(std::index_sequence<indices...>) {
+      int index = 0;
+      ((layers[index++] = std::tuple_element_t<indices, decltype(tuple)>{}),
+       ...);
+    }(std::make_index_sequence<std::tuple_size_v<decltype(tuple)>>{});
+  }
+
+  void print_layers() {
+    for (auto &var : layers) {
+      std::visit(
+          [](auto layer) {
+            std::cout << "InDim: " << layer.InDim << "OutDim: " << layer.OutDim
+                      << std::endl;
+          },
+          var);
+    }
+  }
+
   Accumulator<2 * L1> accumulator;
-  SparseLayer<L1, L2> first;
-  QLayer<L2, L3, Activation ::SqRelu> second;
-  QLayer<L3, Out> output;
-  alignas(64) uint8_t input[L1 + L2 + L3 + 1 * Out] = {0};
+
+  alignas(64) uint8_t input[(lay + ...) + 128] = {0};
 
   void load_bucket(std::string file);
 
@@ -273,54 +345,70 @@ uint8_t *Accumulator<OutDim>::forward(uint8_t *in, const Position &next) {
   return in;
 }
 
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_bucket(std::string file) {
+template <int... layers>
+void Network<layers...>::load_bucket(std::string file) {
 
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
     std::cerr << "Could not load network file, path " << file << std::endl;
     std::exit(-1);
   }
-  // need to load buckets
   accumulator.load_weights(stream);
-  first.load_params(stream);
-  second.load_params(stream);
-  output.load_params(stream);
+  for (auto &var : layers) {
+    std::visit([&](auto &&layer) { layer.load_params(stream); }, var);
+  }
 }
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
-                                               size_t size) {
+template <int... layers>
+void Network<layers...>::load_from_array(const unsigned char *data,
+                                         size_t size) {
   memstream stream(data, size);
   accumulator.load_weights(stream);
-  first.load_params(stream);
-  second.load_params(stream);
-  output.load_params(stream);
+  for (auto &var : layers) {
+    std::visit([&](auto &&layer) { layer.load_params(stream); }, var);
+  }
 }
 
-template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
+template <int... layers>
+int32_t *Network<layers...>::compute_incre_forward_pass(Position next) {
+
   auto bucket_index = next.bucket_index();
-  auto *out = accumulator.forward(input, next);
-  out = first.forward(out, bucket_index);
-  out = second.forward(out, bucket_index);
-  return output.forward(out, bucket_index);
+  uint8_t *out = accumulator.forward(input, next);
+
+  int32_t *output = nullptr;
+
+  for (auto &variant : layers) {
+    std::visit(overloaded{[&]<int L1, int L2>(SparseLayer<L1, L2> &layer) {
+                            out = layer.forward(out, bucket_index);
+                          },
+                          [&]<int L1, int L2, Activation act>(
+                              QLayer<L1, L2, act> &layer) {
+                            if constexpr (act == Activation::SqRelu) {
+                              out = layer.forward(out, bucket_index);
+                            } else {
+                              // That has to be the output layer
+                              output = layer.forward(out, bucket_index);
+                            }
+                          }},
+               variant);
+  }
+
+  return output;
 }
 
-template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::operator[](int index) {
+template <int... layers> int Network<layers...>::operator[](int index) {
   return input[index];
 }
 
-template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle) {
+template <int... layers>
+int Network<layers...>::evaluate(Position pos, int ply, int shuffle) {
 
   auto nnue = *compute_incre_forward_pass(pos);
 
   return nnue;
 }
 
-template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos) {
+template <int... layers>
+int32_t *Network<layers...>::get_raw_eval(Position pos) {
 
   return compute_incre_forward_pass(pos);
 }

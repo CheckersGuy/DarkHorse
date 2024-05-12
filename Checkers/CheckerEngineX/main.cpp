@@ -18,9 +18,9 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh4.quant");
-INCBIN(network, "moesuper.quant");
+INCBIN(network, "finalformshuffled.quant");
 // INCBIN(network, "oldloss.quant");
-INCBIN(policy, "policybigger.quant");
+INCBIN(policy, "policyverybig.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -107,27 +107,17 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-  /*  std::cout << network.evaluate(Position::get_start_position(), 0, 0);
+  /*
+    network.print_layers();
+    policy.print_layers();
+    mlh_net.print_layers();
+
+    Position pos = Position::pos_from_fen("B:WK5,K26:B4,3,1");
+    pos.print_position();
+
+    std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-
-  /*Position pos = Position::pos_from_fen("B:WK5,K26:B4,3,1");
-  pos.print_position();
-  auto *out = policy.compute_incre_forward_pass(pos);
-
-  for (auto i = 0; i < policy.Out; ++i) {
-    // std::cout << out[i] << std::endl;
-  }
-  // getting the maximum_value
-
-  auto max = std::max_element(out, out + policy.Out);
-  auto arg_max = std::distance(out, max);
-  std::cout << "MaxValue: " << *max << std::endl;
-  std::cout << "ArgMax: " << arg_max << std::endl;
-  std::cout << Move::from_encoding(arg_max).flipped() << std::endl;
-  return 0;
-    */
-
   CmdParser parser(argl, argc);
   parser.parse_command_line();
   Board board;
