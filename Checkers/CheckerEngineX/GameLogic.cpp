@@ -192,10 +192,9 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
       !move.is_promotion(board.get_position().K)) {
     auto red = LMR_TABLE[std::min(depth - 1, 31)];
     if (in_pv) {
-      red = PV_LMR_TABLE[std::min(depth - 1, 31)];
+      red = std::max(0, red - 1);
     }
     red += (move_index >= 3 + in_pv);
-    red += 2 * cutnode;
     return red;
   }
   return 0;
@@ -255,16 +254,18 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   Value static_eval = -EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
-
+  bool is_tt_pv = in_pv;
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
+    is_tt_pv = is_tt_pv || info.ttPv;
   }
   if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
+    is_tt_pv = is_tt_pv || info.ttPv;
 
     if (info.depth >= depth && info.flag != Flag::None) {
       if ((info.flag == TT_LOWER && tt_value >= beta) ||
@@ -394,7 +395,16 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
     Depth reduction =
         Search::reduce(i, depth, ply, board, move, in_pv, cutnode);
-    reduction = (extension > 0) ? 0 : reduction;
+    if (is_tt_pv && !in_pv) {
+      reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);
+    } else if (cutnode && move != tt_move) {
+      reduction++;
+    }
+    if (cutnode) {
+      reduction += 2 - (info.depth >= depth && is_tt_pv);
+    }
+
+    reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     int tab_pieces = 0;
@@ -412,7 +422,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         board.undo_move();
         TT.store_hash(false, value_to_tt(board_val, ply, board.get_position()),
                       static_eval, key, TT_LOWER, newDepth,
-                      (!move.is_capture()) ? move : Move{});
+                      (!move.is_capture()) ? move : Move{}, is_tt_pv);
         return std::abs(board_val) < TB_WIN ? (board_val - prob_cut)
                                             : board_val;
       }
@@ -426,7 +436,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
           board.undo_move();
           TT.store_hash(false, value_to_tt(value, ply, board.get_position()),
                         static_eval, key, TT_LOWER, newDepth,
-                        (!move.is_capture()) ? move : Move{});
+                        (!move.is_capture()) ? move : Move{}, is_tt_pv);
           return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
         }
       }
@@ -492,7 +502,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
 
-    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move);
+    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move,
+                  is_tt_pv);
   }
   return best_score;
 }
@@ -542,7 +553,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     } else {
       net_val = evaluate(board.get_position(), ply);
 
-      TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{});
+      TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{},
+                    in_pv);
     }
     if (info.flag == TT_EXACT && std::abs(info.score) < TB_WIN) {
       return value_from_tt(info.score, ply, board.get_position());
