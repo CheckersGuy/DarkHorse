@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <optional>
 #include <types.h>
 
@@ -24,21 +25,13 @@ inline TableBase tablebase;
 #endif
 
 extern uint64_t nodeCounter;
-
+extern uint64_t total_counter;
+extern uint64_t diff_counter;
 enum NodeType {
   ROOT,
   PV,
   NONPV,
 };
-
-struct SearchStack {
-  int ply;
-  Move previous;
-  bool ttPv;
-  int cut_count;
-  Value static_eval;
-  // other things as well;
-}
 
 struct SearchGlobal {
   uint32_t sel_depth;
@@ -80,6 +73,6 @@ extern Network<4096, 32, 32, 1> network;
 
 extern Network<512, 32, 32, 1> mlh_net;
 
-extern Network<2048, 32, 32, 128> policy;
+extern Network<512, 32, 32, 128> policy;
 
 #endif // CHECKERSTEST_GAMELOGIC_H

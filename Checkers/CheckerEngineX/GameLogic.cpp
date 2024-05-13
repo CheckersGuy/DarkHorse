@@ -1,5 +1,6 @@
 #include "GameLogic.h"
 #include "Bits.h"
+#include "Network.h"
 #include "types.h"
 
 Line mainPV;
@@ -8,13 +9,15 @@ uint64_t nodeCounter = 0u;
 int rootDepth = 0;
 Value last_eval = -INFINITE;
 
+uint64_t total_counter = 0;
+uint64_t diff_counter = 0;
 SearchGlobal glob;
 
 Network<4096, 32, 32, 1> network;
 
 Network<512, 32, 32, 1> mlh_net;
 
-Network<2048, 32, 32, 128> policy;
+Network<512, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
   auto out = mlh_net.evaluate(pos, 0, 0);
@@ -58,8 +61,11 @@ Value evaluate(Position pos, Ply ply) {
 #endif
 
 #ifdef __linux__
+
   eval = network.evaluate(pos, ply, 0);
+
   eval = std::clamp(eval, -500, 500);
+
 #endif
   if (Bits::pop_count(pos.BP | pos.WP) <= 10 && std::abs(eval) >= 500) {
     if (eval >= 500) {
@@ -69,6 +75,7 @@ Value evaluate(Position pos, Ply ply) {
       eval -= 300;
       eval += get_mlh_estimate(pos);
     }
+
     return eval;
   }
 
@@ -234,6 +241,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (liste.length() == 0) {
     return loss(ply);
   }
+
   if (!is_root) {
     alpha = std::max(loss(ply), alpha);
     beta = std::min(-loss(ply + 1), beta);
@@ -340,14 +348,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     auto score = out[encoding];
     return score;
   };
-  liste.sort(board.get_position(), depth, ply, tt_move, start_index, oracle);
   const Value old_alpha = alpha;
-
-  // checking if there is a singular move suggested by our policy network
 
   const Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
-
+    if (i == start_index) {
+      liste.sort(board.get_position(), depth, ply, tt_move, start_index,
+                 oracle);
+    }
     const Move move = liste[i];
 
     if (is_sing_search && move == excluded) {
@@ -400,6 +408,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       Depth newDepth = std::max(0, depth - 4);
       Value board_val = -qs<NONPV>(board, ply + 1, line, -prob_beta,
                                    -prob_beta + 1, 0, Move{}, is_sing_search);
+      if (newDepth == 0 && board_val >= prob_beta) {
+        board.undo_move();
+        TT.store_hash(false, value_to_tt(board_val, ply, board.get_position()),
+                      static_eval, key, TT_LOWER, newDepth,
+                      (!move.is_capture()) ? move : Move{});
+        return std::abs(board_val) < TB_WIN ? (board_val - prob_cut)
+                                            : board_val;
+      }
 
       if (board_val >= prob_beta) {
         Value value = -Search::search<NONPV>(!cutnode, board, ply + 1, line,

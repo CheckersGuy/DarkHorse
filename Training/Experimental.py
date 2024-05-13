@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =(2*2048)
+L1 =(2*512)
 L2 =32
 L3 = 32
 
@@ -485,11 +485,11 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("policybigger.quant")
+        self.save_quantized_bucket("policybigger2.quant")
         return super().on_train_epoch_end()
 
     def on_train_start(self) -> None:
-        self.save_quantized_bucket("policybigger.quant")
+        self.save_quantized_bucket("policybigger2.quant")
         return super().on_train_start()
 
 

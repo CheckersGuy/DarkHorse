@@ -68,6 +68,14 @@ constexpr uint32_t MASK_COL_3 = 1145324612u;
 constexpr uint32_t MASK_COL_4 = 2290649224u;
 constexpr uint32_t PROMO_SQUARES_WHITE = 0xfu;
 constexpr uint32_t PROMO_SQUARES_BLACK = 0xf0000000u;
+constexpr uint32_t OUTER_RING = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
+                                (1 << 4) | (1 << 12) | (1 << 20) | (1 << 28) |
+                                (1 << 29) | (1 << 30) | (1 << 31) | (1 << 27) |
+                                (1 << 19) | (1 << 11);
+constexpr uint32_t CENTER = (1 << 9) | (1 << 10) | (1 << 13) | (1 << 14) |
+                            (1 << 17) | (1 << 18) | (1 << 22) | (1 << 21);
+constexpr uint32_t SINGLE_CORNER = (1 << 28) | (1 << 3);
+constexpr uint32_t DOUBLE_CORNER = (1 << 0) | (1 << 4) | (1 << 31) | (1 << 27);
 constexpr std::array<uint32_t, 8> MASK_ROWS = {
     0xf, 0xf << 4, 0xf << 8, 0xf << 12, 0xf << 16, 0xf << 20, 0xf << 24};
 constexpr std::array<int, 32> PV_LMR_TABLE = {1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2,
