@@ -31,7 +31,7 @@ void Transposition::clear() {
 
 void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
                                uint64_t key, Flag flag, uint8_t depth,
-                               Move tt_move) {
+                               Move tt_move, bool ttPV) {
   assert(std::abs(value) <= EVAL_INFINITE);
   assert(!tt_move.is_capture());
   const auto index = (key) & (get_capacity() - 1u);
@@ -67,11 +67,13 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     replace.age = age_counter;
     replace.value = value;
     replace.static_eval = static_eval;
+    replace.ttPv = ttPV;
     return;
   }
   if (replace.key == key && replace.best_move.get_move().is_empty()) {
     replace.best_move = store_move;
     replace.static_eval = static_eval;
+    replace.ttPv = ttPV;
   }
 }
 
@@ -91,6 +93,7 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
       info.flag = this->entries[index].ent[i].flag;
       info.score = this->entries[index].ent[i].value;
       info.static_eval = this->entries[index].ent[i].static_eval;
+      info.ttPv = this->entries[index].ent[i].ttPv;
       return true;
     }
   }
