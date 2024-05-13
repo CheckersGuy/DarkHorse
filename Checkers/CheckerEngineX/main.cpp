@@ -20,7 +20,7 @@
 INCBIN(mlh_net, "mlh4.quant");
 INCBIN(network, "finalformshuffled.quant");
 // INCBIN(network, "oldloss.quant");
-INCBIN(policy, "policyverybig.quant");
+INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -338,6 +338,7 @@ int main(int argl, const char **argc) {
 
       board.play_move(bestMove);
       // adding the move to the repetition history for our side
+
     } else if (current == "terminate") {
       // terminating the program
       break;

@@ -1,4 +1,5 @@
 use crate::Pos::Position;
+use crate::Pos::Square;
 use crate::Sample;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
@@ -7,6 +8,7 @@ use bloomfilter::Bloom;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
 use indicatif::{ProgressBar, ProgressStyle};
+use libc::abs;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -172,6 +174,28 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
         rem_counter, counter
     );
 
+    Ok(())
+}
+
+pub fn create_small_net_data(input: &str, output: &str) -> std::io::Result<()> {
+    let mut writer = BufWriter::new(File::create(output)?);
+
+    let mut reader = BufReader::new(File::open(input)?);
+    for sample in reader.iter_samples() {
+        let squares = sample.position.get_squares()?;
+        let mut diff: i32 = 0;
+        for square in squares {
+            match square {
+                Square::WPAWN(_) => diff += 1,
+                Square::BPAWN(_) => diff -= 1,
+                Square::WKING(_) => diff += 1,
+                Square::BKING(_) => diff -= 1,
+            }
+        }
+        if diff.abs() >= 1 {
+            sample.write_fen(&mut writer)?;
+        }
+    }
     Ok(())
 }
 

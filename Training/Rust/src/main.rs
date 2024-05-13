@@ -78,7 +78,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    // let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
 
     /*
         let result = base.probe_dtw(fen_string).expect("Could not call function");
@@ -93,10 +93,16 @@ fn main() -> anyhow::Result<()> {
         println!("{:?}", result);
     */
 
-    Data::create_policy_data(
+    /*Data::create_policy_data(
         "D:/crazyms1nextultimaterescored.samples",
         "E:/policyultimate.samples",
         &base,
+    )
+    */
+
+    Data::create_small_net_data(
+        "/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
+        "/mnt/e/smallnetdata.samples",
     )
     .unwrap();
 
