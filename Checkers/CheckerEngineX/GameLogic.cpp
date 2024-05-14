@@ -455,6 +455,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                                      is_sing_search);
       }
     } else if (!in_pv || i != 0) {
+
       val =
           -Search::search<NONPV>(!cutnode, board, ply + 1, local_pv, -alpha - 1,
                                  -alpha, new_depth, Move{}, is_sing_search);
@@ -489,6 +490,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         alpha = val;
       }
     }
+  }
+
+  if (!in_pv && best_score >= beta && std::abs(beta) <= MATE_IN_MAX_PLY &&
+      std::abs(alpha) <= MATE_IN_MAX_PLY) {
+    best_score = (best_score * depth + beta) / (depth + 1);
   }
   if (excluded.is_empty() && !is_root) {
     Value tt_value = value_to_tt(best_score, ply, board.get_position());
