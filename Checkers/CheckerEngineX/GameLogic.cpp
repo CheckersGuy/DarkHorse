@@ -565,6 +565,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     if (info.flag == TT_EXACT && std::abs(info.score) < TB_WIN) {
       return value_from_tt(info.score, ply, board.get_position());
     }
+
     return net_val;
   }
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
