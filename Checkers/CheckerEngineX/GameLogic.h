@@ -25,8 +25,7 @@ inline TableBase tablebase;
 #endif
 
 extern uint64_t nodeCounter;
-extern uint64_t total_counter;
-extern uint64_t diff_counter;
+
 enum NodeType {
   ROOT,
   PV,
