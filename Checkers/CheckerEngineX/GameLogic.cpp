@@ -285,8 +285,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!board.get_position().has_jumps(board.get_mover())) {
     // only store static evaluation in quiet positions
     if (found_hash && info.flag != Flag::None &&
-        info.static_eval != EVAL_INFINITE) {
-      static_eval = info.static_eval;
+        std::abs(info.static_eval) < EVAL_INFINITE) {
+      static_eval = value_from_tt(info.static_eval, ply, board.get_position());
     } else {
       static_eval = evaluate(board.get_position(), ply);
     }
@@ -334,7 +334,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-      return (int)(Bits::pop_count(kings_captured) * 14 +
+      return (int)(Bits::pop_count(kings_captured) * 16 +
                    Bits::pop_count(pawns_captured) * 10);
     }
 
@@ -388,7 +388,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
       if (val < sing_beta) {
         extension = 1;
-
       } else if (sing_beta >= beta) {
         return sing_beta;
       }
@@ -397,11 +396,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         Search::reduce(i, depth, ply, board, move, in_pv, cutnode);
     if (is_tt_pv && !in_pv) {
       reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);
-    } else if (cutnode && move != tt_move) {
+    } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
       reduction++;
     }
     if (cutnode) {
-      reduction += 2 - (info.depth >= depth && is_tt_pv);
+      reduction += 2 - (info.depth >= depth && is_tt_pv && found_hash);
     }
 
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
@@ -421,8 +420,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       if (newDepth == 0 && board_val >= prob_beta) {
         board.undo_move();
         TT.store_hash(false, value_to_tt(board_val, ply, board.get_position()),
-                      static_eval, key, TT_LOWER, newDepth,
-                      (!move.is_capture()) ? move : Move{}, is_tt_pv);
+                      value_to_tt(static_eval, ply, board.get_position()), key,
+                      TT_LOWER, newDepth, (!move.is_capture()) ? move : Move{},
+                      is_tt_pv);
         return std::abs(board_val) < TB_WIN ? (board_val - prob_cut)
                                             : board_val;
       }
@@ -435,7 +435,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         if (value >= prob_beta) {
           board.undo_move();
           TT.store_hash(false, value_to_tt(value, ply, board.get_position()),
-                        static_eval, key, TT_LOWER, newDepth,
+                        value_to_tt(static_eval, ply, board.get_position()),
+                        key, TT_LOWER, newDepth,
                         (!move.is_capture()) ? move : Move{}, is_tt_pv);
           return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
         }
@@ -508,8 +509,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
     Move store_move = (best_move.is_capture()) ? Move{} : best_move;
 
-    TT.store_hash(in_pv, tt_value, static_eval, key, flag, depth, store_move,
-                  is_tt_pv);
+    TT.store_hash(in_pv, tt_value,
+                  value_to_tt(static_eval, ply, board.get_position()), key,
+                  flag, depth, store_move, is_tt_pv);
   }
   return best_score;
 }
@@ -537,7 +539,6 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   MoveListe moves;
   get_captures(board.get_position(), moves);
   Value bestValue = -INFINITE;
-
   if (moves.is_empty()) {
     if (board.get_position().is_end()) {
       return loss(ply);
@@ -552,28 +553,31 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     const auto key = board.get_current_key();
     bool found_hash = TT.find_hash(key, info);
     Value net_val;
-
+    bool is_tt_pv = in_pv;
     if (found_hash && info.flag != Flag::None &&
-        info.static_eval != EVAL_INFINITE) {
-      net_val = info.static_eval;
+        std::abs(info.static_eval) < EVAL_INFINITE) {
+      net_val = value_from_tt(info.static_eval, ply, board.get_position());
+      is_tt_pv = is_tt_pv || info.ttPv;
     } else {
       net_val = evaluate(board.get_position(), ply);
-
-      TT.store_hash(in_pv, EVAL_INFINITE, net_val, key, TT_LOWER, 0, Move{},
-                    in_pv);
+      TT.store_hash(in_pv, -EVAL_INFINITE,
+                    value_to_tt(net_val, ply, board.get_position()), key,
+                    TT_LOWER, 0, Move{}, is_tt_pv);
     }
-    if (info.flag == TT_EXACT && std::abs(info.score) < TB_WIN) {
+    if (info.flag == TT_EXACT && found_hash &&
+        std::abs(info.score) < EVAL_INFINITE) {
+
       return value_from_tt(info.score, ply, board.get_position());
     }
-
     return net_val;
   }
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-    return (int)(Bits::pop_count(kings_captured) * 14 +
+    return (int)(Bits::pop_count(kings_captured) * 16 +
                  Bits::pop_count(pawns_captured) * 10);
   });
+  Value old_alpha = alpha;
   for (int i = 0; i < moves.length(); ++i) {
 
     Move move = moves[i];
