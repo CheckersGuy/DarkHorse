@@ -11,6 +11,10 @@ Value last_eval = -INFINITE;
 
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
+
+uint64_t counter = 0;
+uint64_t jump_counter = 0;
+
 SearchGlobal glob;
 
 Network<4096, 32, 32, 1> network;
@@ -237,6 +241,16 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   MoveListe liste;
 
   get_moves(board.get_position(), liste);
+  counter++;
+
+  bool same_captures = true;
+
+  for (auto move : liste) {
+    same_captures =
+        same_captures && (move.num_captured() == liste[0].num_captured());
+  }
+  jump_counter += same_captures && (liste[0].num_captured() == 1);
+
   if (liste.length() == 0) {
     return loss(ply);
   }
@@ -534,7 +548,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
 
   if (board.is_repetition()) {
-    return 0;
+    const int sw = nodeCounter & 1;
+    return 2 * sw - 1;
   }
 
   if (ply >= MAX_PLY) {
@@ -543,9 +558,29 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   if (ply > glob.sel_depth)
     glob.sel_depth = ply;
 
+  const auto key = board.get_current_key();
+
+  bool is_tt_pv = in_pv;
+  NodeInfo info;
+  bool found_hash = TT.find_hash(key, info);
+  if (!in_pv && info.depth >= 0 && found_hash && info.flag != Flag::None &&
+      isEval(info.score)) {
+    if ((info.flag == TT_LOWER && info.score >= beta) ||
+        (info.flag == TT_UPPER && info.score <= alpha) ||
+        info.flag == TT_EXACT) {
+      return value_from_tt(info.score, ply, board.get_position());
+    }
+  }
+  Value static_eval = -EVAL_INFINITE;
+  if (found_hash && std::abs(info.static_eval) < EVAL_INFINITE) {
+    static_eval = value_from_tt(info.static_eval, ply, board.get_position());
+  }
+
+  is_tt_pv = in_pv || info.ttPv && found_hash;
   MoveListe moves;
   get_captures(board.get_position(), moves);
   Value bestValue = -INFINITE;
+
   if (moves.is_empty()) {
     if (board.get_position().is_end()) {
       return loss(ply);
@@ -556,26 +591,16 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
                                        Move{}, is_sing_search);
     }
 
-    NodeInfo info;
-    const auto key = board.get_current_key();
-    bool found_hash = TT.find_hash(key, info);
     Value net_val;
-    bool is_tt_pv = in_pv;
-    if (found_hash && info.flag != Flag::None &&
-        std::abs(info.static_eval) < EVAL_INFINITE) {
-      net_val = value_from_tt(info.static_eval, ply, board.get_position());
-      is_tt_pv = is_tt_pv || info.ttPv;
+    if (std::abs(static_eval) < EVAL_INFINITE) {
+      net_val = static_eval;
     } else {
       net_val = evaluate(board.get_position(), ply);
       TT.store_hash(in_pv, -EVAL_INFINITE,
                     value_to_tt(net_val, ply, board.get_position()), key,
                     TT_LOWER, 0, Move{}, is_tt_pv);
     }
-    if (info.flag == TT_EXACT && found_hash &&
-        std::abs(info.score) < EVAL_INFINITE) {
 
-      return value_from_tt(info.score, ply, board.get_position());
-    }
     return net_val;
   }
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
@@ -590,6 +615,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     Move move = moves[i];
     Line localPV;
     board.make_move(move);
+    TT.prefetch(board.get_current_key());
     Value value;
     value = -Search::qs<next_type>(board, ply + 1, localPV, -beta, -alpha,
                                    depth - 1, Move{}, is_sing_search);
@@ -604,6 +630,21 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
         break;
       alpha = value;
     }
+  }
+  {
+    Value tt_value = value_to_tt(bestValue, ply, board.get_position());
+    Flag flag;
+    if (bestValue <= old_alpha) {
+      flag = TT_UPPER;
+    } else if (bestValue >= beta) {
+      flag = TT_LOWER;
+    } else {
+      flag = TT_EXACT;
+    }
+
+    TT.store_hash(in_pv, tt_value,
+                  value_to_tt(static_eval, ply, board.get_position()),
+                  board.get_current_key(), flag, 0, Move{}, is_tt_pv);
   }
 
   return bestValue;
