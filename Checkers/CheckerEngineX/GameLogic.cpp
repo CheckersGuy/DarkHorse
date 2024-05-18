@@ -292,6 +292,13 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 
+  if (!is_tt_pv && !liste[0].is_capture() && depth < 11 &&
+      std::abs(static_eval) < TB_WIN &&
+      !board.get_position().has_jumps(~board.get_mover()) &&
+      static_eval - 50 - 30 * (depth - 1) >= beta) {
+    return static_eval;
+  }
+
 #ifdef _WIN32
   auto result = tablebase.probe(board.get_position());
   if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
@@ -349,8 +356,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     auto score = out[encoding];
     return score;
   };
-  const Value old_alpha = alpha;
 
+  const Value old_alpha = alpha;
+  int move_count = 0;
   const Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
     if (i == start_index) {
@@ -362,7 +370,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (is_sing_search && move == excluded) {
       continue;
     }
-
     const auto kings = board.get_position().K;
     int extension = 0;
     if (liste.length() == 1) {
