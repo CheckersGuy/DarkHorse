@@ -166,7 +166,8 @@ int main(int argl, const char **argc) {
     } else {
       searchValue(board, best, depth, time, true, std::cout);
     }
-
+    std::cout << counter << std::endl;
+    std::cout << jump_counter << std::endl;
     return 0;
   }
 

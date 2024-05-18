@@ -28,6 +28,8 @@ struct Move {
 
   bool is_pawn_move(const uint32_t kings) const;
 
+  int num_captured() { return Bits::pop_count(captures); }
+
   int get_move_encoding() const;
 
   static Move from_encoding(int encoding);
