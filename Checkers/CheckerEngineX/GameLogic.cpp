@@ -411,6 +411,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         extension = 1;
       } else if (sing_beta >= beta) {
         return sing_beta;
+      } else if (sing_value >= beta) {
+        extension = -1;
       }
     }
     Depth reduction =
@@ -425,6 +427,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
 
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
+
     board.make_move(move);
     TT.prefetch(board.get_current_key());
     int tab_pieces = 0;
@@ -633,14 +636,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
   {
     Value tt_value = value_to_tt(bestValue, ply, board.get_position());
-    Flag flag;
-    if (bestValue <= old_alpha) {
-      flag = TT_UPPER;
-    } else if (bestValue >= beta) {
-      flag = TT_LOWER;
-    } else {
-      flag = TT_EXACT;
-    }
+    auto flag = (bestValue >= beta) ? TT_LOWER : TT_UPPER;
 
     TT.store_hash(in_pv, tt_value,
                   value_to_tt(static_eval, ply, board.get_position()),
