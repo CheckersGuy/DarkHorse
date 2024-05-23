@@ -241,16 +241,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   MoveListe liste;
 
   get_moves(board.get_position(), liste);
-  counter++;
-
-  bool same_captures = true;
-
-  for (auto move : liste) {
-    same_captures =
-        same_captures && (move.num_captured() == liste[0].num_captured());
-  }
-  jump_counter += same_captures && (liste[0].num_captured() == 1);
-
   if (liste.length() == 0) {
     return loss(ply);
   }
