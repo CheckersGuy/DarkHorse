@@ -295,9 +295,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       static_eval = evaluate(board.get_position(), ply);
     }
   }
-
-  if (!is_tt_pv && !liste[0].is_capture() && depth < 11 &&
-      std::abs(static_eval) < TB_WIN &&
+  int tab_pieces = 0;
+#ifdef _WIN32
+  tab_pieces = tablebase.num_pieces;
+#endif
+  if (!is_tt_pv && board.get_position().piece_count() > tab_pieces &&
+      !liste[0].is_capture() && depth < 11 && std::abs(static_eval) < TB_WIN &&
       !board.get_position().has_jumps(~board.get_mover()) &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {
     return static_eval;
@@ -420,10 +423,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
     board.make_move(move);
     TT.prefetch(board.get_current_key());
-    int tab_pieces = 0;
-#ifdef _WIN32
-    tab_pieces = tablebase.num_pieces;
-#endif
 
     if (!in_pv && std::abs(beta) < TB_WIN && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {
