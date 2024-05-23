@@ -258,18 +258,17 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   Value static_eval = -EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
-  bool is_tt_pv = in_pv;
+  bool is_tt_pv = in_pv || (found_hash && info.ttPv);
+
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
-    is_tt_pv = is_tt_pv || info.ttPv;
   }
   if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
     tt_move = info.tt_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
-    is_tt_pv = is_tt_pv || info.ttPv;
 
     if (info.depth >= depth && info.flag != Flag::None) {
       if ((info.flag == TT_LOWER && tt_value >= beta) ||
@@ -299,13 +298,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #ifdef _WIN32
   tab_pieces = tablebase.num_pieces;
 #endif
-  if (!is_tt_pv && board.get_position().piece_count() > tab_pieces &&
-      !liste[0].is_capture() && depth < 11 && std::abs(static_eval) < TB_WIN &&
-      !board.get_position().has_jumps(~board.get_mover()) &&
-      static_eval - 50 - 30 * (depth - 1) >= beta) {
-    return static_eval;
-  }
-
 #ifdef _WIN32
   auto result = tablebase.probe(board.get_position());
   if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
@@ -332,6 +324,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
+  if (!is_tt_pv && board.get_position().piece_count() > tab_pieces &&
+      !liste[0].is_capture() && depth < 11 && std::abs(static_eval) < TB_WIN &&
+      !board.get_position().has_jumps(~board.get_mover()) &&
+      static_eval - 50 - 30 * (depth - 1) >= beta) {
+    return static_eval;
+  }
 
   int32_t *out;
   std::visit([&](auto &output) { out = &output.buffer[0]; },
@@ -552,9 +550,10 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
   const auto key = board.get_current_key();
 
-  bool is_tt_pv = in_pv;
   NodeInfo info;
   bool found_hash = TT.find_hash(key, info);
+
+  bool is_tt_pv = in_pv || (found_hash && info.ttPv);
   if (!in_pv && info.depth >= 0 && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
     if ((info.flag == TT_LOWER && info.score >= beta) ||
@@ -568,7 +567,6 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     static_eval = value_from_tt(info.static_eval, ply, board.get_position());
   }
 
-  is_tt_pv = in_pv || info.ttPv && found_hash;
   MoveListe moves;
   get_captures(board.get_position(), moves);
   Value bestValue = -INFINITE;
