@@ -54,8 +54,8 @@ Value evaluate(Position pos, Ply ply) {
 #ifdef _WIN32
   auto result = tablebase.probe(pos);
   if (result != TB_RESULT::UNKNOWN) {
-    auto tb_value = (result == TB_RESULT::WIN)    ? TB_
-                    : (result == TB_RESULT::LOSS) ? TB_LOSS
+    auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply)
+                    : (result == TB_RESULT::LOSS) ? tbloss(ply)
                                                   : 0;
     eval = tb_value;
   } else {
@@ -281,7 +281,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   if (found_hash && liste.length() > 1 && info.flag != Flag::None &&
       !is_sing_search && info.depth >= depth - 4 && info.flag != TT_UPPER &&
-      std::abs(info.score) < MATE_IN_MAX_PLY) {
+      std::abs(info.score) < -TB_LOSS_MAX_PLY) {
     sing_move = tt_move;
     sing_value = tt_value;
   }
@@ -301,8 +301,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #ifdef _WIN32
   auto result = tablebase.probe(board.get_position());
   if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
-    auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
-                    : (result == TB_RESULT::LOSS) ? TB_LOSS
+    auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply)
+                    : (result == TB_RESULT::LOSS) ? tbloss(ply)
                                                   : 0;
     if (tb_value == 0) {
       return 0;
@@ -326,7 +326,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #endif
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
-      !liste[0].is_capture() && depth < 11 && std::abs(static_eval) < TB_WIN &&
+      !liste[0].is_capture() && depth < 11 &&
+      std::abs(static_eval) < -TB_LOSS_MAX_PLY &&
       !board.get_position().has_jumps(~board.get_mover()) &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {
     return static_eval;
@@ -423,7 +424,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     board.make_move(move);
     TT.prefetch(board.get_current_key());
 
-    if (!in_pv && std::abs(beta) < TB_WIN && depth >= 1 &&
+    if (!in_pv && std::abs(beta) < -TB_LOSS_MAX_PLY && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
       Depth newDepth = std::max(0, depth - 4);
@@ -435,8 +436,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                       value_to_tt(static_eval, ply, board.get_position()), key,
                       TT_LOWER, newDepth, (!move.is_capture()) ? move : Move{},
                       is_tt_pv);
-        return std::abs(board_val) < TB_WIN ? (board_val - prob_cut)
-                                            : board_val;
+        return std::abs(board_val) < -TB_LOSS_MAX_PLY ? (board_val - prob_cut)
+                                                      : board_val;
       }
 
       if (board_val >= prob_beta) {
@@ -450,7 +451,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                         value_to_tt(static_eval, ply, board.get_position()),
                         key, TT_LOWER, newDepth,
                         (!move.is_capture()) ? move : Move{}, is_tt_pv);
-          return std::abs(value) < TB_WIN ? (value - prob_cut) : value;
+          return std::abs(value) < -TB_LOSS_MAX_PLY ? (value - prob_cut)
+                                                    : value;
         }
       }
     }
@@ -505,8 +507,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 
-  if (!in_pv && best_score >= beta && std::abs(beta) <= MATE_IN_MAX_PLY &&
-      std::abs(alpha) <= MATE_IN_MAX_PLY) {
+  if (!in_pv && best_score >= beta && std::abs(beta) < -TB_LOSS_MAX_PLY &&
+      std::abs(alpha) < -TB_LOSS_MAX_PLY) {
     best_score = (best_score * depth + beta) / (depth + 1);
   }
   if (excluded.is_empty() && !is_root) {
