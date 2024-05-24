@@ -32,12 +32,12 @@ int get_mlh_estimate(Position pos) {
 
 inline Value value_to_tt(Value v, int ply, Position pos) {
 
-  return v >= MATE_IN_MAX_PLY ? v + ply : v <= MATED_IN_MAX_PLY ? v - ply : v;
+  return v >= TB_WIN_MAX_PLY ? v + ply : v <= TB_LOSS_MAX_PLY ? v - ply : v;
 }
 
 inline Value value_from_tt(Value v, int ply, Position pos) {
 
-  return v >= MATE_IN_MAX_PLY ? v - ply : v <= MATED_IN_MAX_PLY ? v + ply : v;
+  return v >= TB_WIN_MAX_PLY ? v - ply : v <= TB_LOSS_MAX_PLY ? v + ply : v;
 }
 
 Value evaluate(Position pos, Ply ply) {
@@ -54,7 +54,7 @@ Value evaluate(Position pos, Ply ply) {
 #ifdef _WIN32
   auto result = tablebase.probe(pos);
   if (result != TB_RESULT::UNKNOWN) {
-    auto tb_value = (result == TB_RESULT::WIN)    ? TB_WIN
+    auto tb_value = (result == TB_RESULT::WIN)    ? TB_
                     : (result == TB_RESULT::LOSS) ? TB_LOSS
                                                   : 0;
     eval = tb_value;
@@ -198,7 +198,7 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
     if (in_pv) {
       red = std::max(0, red - 1);
     }
-    red += (move_index >= 3 + in_pv);
+    red += (move_index >= 3);
     return red;
   }
   return 0;
@@ -226,7 +226,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                                  is_sing_search);
   }
 
-  Value best_score = -INFINITE;
+  Value best_score = -EVAL_INFINITE;
   NodeInfo info;
   Move tt_move;
   Move sing_move;
@@ -324,7 +324,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
-  if (!is_tt_pv && board.get_position().piece_count() > tab_pieces &&
+  if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
+      board.get_position().piece_count() > tab_pieces &&
       !liste[0].is_capture() && depth < 11 && std::abs(static_eval) < TB_WIN &&
       !board.get_position().has_jumps(~board.get_mover()) &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {

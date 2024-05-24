@@ -100,11 +100,12 @@ using Value = int;
 enum SEARCH : int { MAX_PLY = 128 };
 enum Score : int {
   INFINITE = 150000,
-  EVAL_INFINITE = 15001,
-  MATE_IN_MAX_PLY = 15000 - MAX_PLY,
+  EVAL_INFINITE = 15000,
+  MATE_IN_MAX_PLY = EVAL_INFINITE - MAX_PLY,
   MATED_IN_MAX_PLY = -MATE_IN_MAX_PLY,
-  TB_WIN = 10000 - MAX_PLY,
-  TB_LOSS = -10000 + MAX_PLY,
+  TB_WIN_MAX_PLY = 10000 - MAX_PLY,
+  TB_LOSS_MAX_PLY = -10000 + MAX_PLY,
+  TB_LOSS = -10000,
 };
 
 enum Color : char { BLACK = -1, WHITE = 1 };
@@ -160,6 +161,8 @@ inline bool isEval(Value val) { return std::abs(val) < EVAL_INFINITE; }
 inline bool isMateVal(Value val) { return std::abs(val) >= MATE_IN_MAX_PLY; }
 
 inline Value loss(int ply) { return -EVAL_INFINITE + ply; }
+
+inline Value tbloss(int ply) { return TB_LOSS + ply; }
 
 constexpr Color operator~(Color color) { return static_cast<Color>(-color); }
 
