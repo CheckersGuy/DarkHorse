@@ -13,7 +13,7 @@ uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
-uint64_t jump_counter = 0;
+uint64_t both_counter = 0;
 
 SearchGlobal glob;
 
@@ -363,7 +363,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     auto score = out[encoding];
     return score;
   };
-
   const Value old_alpha = alpha;
   int move_count = 0;
   const Value prob_beta = beta + prob_cut;
@@ -506,9 +505,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
-
   if (!in_pv && best_score >= beta && std::abs(beta) < -TB_LOSS_MAX_PLY &&
-      std::abs(alpha) < -TB_LOSS_MAX_PLY) {
+      std::abs(alpha) < 500) {
     best_score = (best_score * depth + beta) / (depth + 1);
   }
   if (excluded.is_empty() && !is_root) {
