@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*(4096+2048)
+L1 =2*(512)
 L2 =32
 L3 = 32
 
@@ -112,7 +112,7 @@ class Network(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,evalu, move,buckets,psqt_buckets, x = train_batch
+        result,evalu, move,buckets,psqt_buckets, x,legal_moves = train_batch
         evalu = torch.sigmoid(evalu.to(dtype=torch.float32)/64.0)
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-result),2).mean()
@@ -121,7 +121,7 @@ class Network(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        result,evalu, move,buckets,psqt_buckets, x = val_batch
+        result,evalu, move,buckets,psqt_buckets, x,legal_moves = val_batch
         out = self.forward(x,buckets)
         loss = torch.pow(torch.abs(out - result), 2).mean()
         self.log('val_loss', loss.detach())
@@ -293,7 +293,7 @@ class MLHNetwork(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,mlh_target, move,buckets,psqt_buckets, x = train_batch
+        result,mlh_target, move,buckets,psqt_buckets, x,legal_moves = train_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0 #value range from 0 to 60
         out = self.forward(x,buckets)
@@ -304,7 +304,7 @@ class MLHNetwork(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         torch.save(self.state_dict(),"mlh3.pt")
-        result,mlh_target, move,buckets,psqt_buckets, x = val_batch
+        result,mlh_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0
         out = self.forward(x,buckets)
@@ -474,9 +474,10 @@ class PolicyNetwork(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,policy_target, move,buckets,psqt_buckets, x = train_batch
+        result,policy_target, move,buckets,psqt_buckets, x,legal_moves = train_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
+        out = out.masked_fill(~legal_moves,-10000)
         loss =self.loss(input=out,target=policy_target.flatten())
         accuracy = (torch.softmax(out, dim=1).argmax(dim=1) == policy_target.flatten()).sum().float() / float( policy_target.size(0) )
         self.log('train_loss', loss.detach(),prog_bar=True)
@@ -495,7 +496,7 @@ class PolicyNetwork(pl.LightningModule):
 
     def validation_step(self, val_batch, batch_idx):
         torch.save(self.state_dict(),"policybigger.pt")
-        result,policy_target, move,buckets,psqt_buckets, x = val_batch
+        result,policy_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
         loss =self.loss(input=out,target=policy_target.flatten())
@@ -600,9 +601,10 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         buckets = np.zeros(self.batch_size, dtype=np.int64)
         psqt_buckets = np.zeros(self.batch_size, dtype=np.int64)
         inputs = np.zeros(self.batch_size*input_size, dtype=np.float32)
-        self.loader.testing(inputs,results,evals,buckets,psqt_buckets)
+        legal_moves = np.zeros(self.batch_size * 128, dtype=bool)
+        self.loader.testing(inputs,legal_moves,results,evals,buckets,psqt_buckets)
 
-        return results.reshape(self.batch_size,1),evals.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1), psqt_buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size)
+        return results.reshape(self.batch_size,1),evals.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1), psqt_buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size),legal_moves.reshape(self.batch_size,128)
 
 
 

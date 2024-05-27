@@ -1,11 +1,12 @@
 #![feature(buf_read_has_data_left)]
 use pyo3::prelude::*;
 
-use Pos::Square;
+use Pos::{Position, Square};
 pub mod Pos;
 pub mod Sample;
 pub mod dataloader;
 use dataloader::DataLoader;
+use itertools::Itertools;
 use numpy::PyArray1;
 //Wrapper for the dataloader
 #[pyclass]
@@ -96,10 +97,12 @@ impl BatchProvider {
     fn get_samples(&self) -> PyResult<i32> {
         Ok(self.loader.num_samples.unwrap() as i32)
     }
+
     fn testing(
         &mut self,
         _py: Python<'_>,
         input: &PyArray1<f32>,
+        legal_mask: &PyArray1<bool>,
         result: &PyArray1<f32>,
         mlh: &PyArray1<i16>,
         bucket: &PyArray1<i64>,
@@ -107,19 +110,40 @@ impl BatchProvider {
     ) -> PyResult<()> {
         unsafe {
             let mut in_array = input.as_array_mut();
+            let mut legal_array = legal_mask.as_array_mut();
             let mut res_array = result.as_array_mut();
             let mut bucket_array = bucket.as_array_mut();
             let mut psqt_array = psqt_buckets.as_array_mut();
             let mut mlh_array = mlh.as_array_mut();
             for i in 0..self.batch_size {
                 //need to add continue for not valid samples
-                let mut sample = self.loader.get_next().expect("Error loading sample");
-
+                let sample = self.loader.get_next().expect("Error loading sample");
+                let mut indices = Vec::new();
                 let squares = match sample.position {
                     Sample::SampleType::Squares(our_squares) => our_squares,
-                    Sample::SampleType::Fen(_) => sample.position.get_squares().unwrap(),
+                    Sample::SampleType::Fen(ref fen_string) => {
+                        //getting the legal move indices
+                        let pos = Position::try_from(fen_string.as_str())
+                            .expect("Could not parse fenstring");
+                        let mut liste = Pos::MoveList::new();
+                        liste.get_moves(pos);
+                        for legal in liste.iter().dedup() {
+                            indices.push(legal.get_move_encoding());
+                        }
+
+                        sample.position.get_squares().unwrap()
+                    }
                     _ => Vec::new(),
                 };
+                //setting all the illegal moves
+                for index in 0..128 {
+                    legal_array[128 * i + index] = false;
+                }
+
+                for index in indices {
+                    legal_array[128 * i + index] = true;
+                }
+
                 let piece_count = squares.len();
                 for square in squares {
                     match square {

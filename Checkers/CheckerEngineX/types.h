@@ -162,13 +162,13 @@ inline bool isMateVal(Value val) { return std::abs(val) >= MATE_IN_MAX_PLY; }
 
 inline Value loss(int ply) { return -EVAL_INFINITE + ply; }
 
-inline Value tbloss(int ply) { return TB_LOSS + ply; }
+inline Value tbloss(int ply) { return TB_LOSS + ply; };
 
 constexpr Color operator~(Color color) { return static_cast<Color>(-color); }
 
-inline bool isLoss(Value val) { return val <= MATED_IN_MAX_PLY; }
+inline bool isLoss(Value val) { return val <= TB_LOSS_MAX_PLY; }
 
-inline bool isWin(Value val) { return val >= MATE_IN_MAX_PLY; }
+inline bool isWin(Value val) { return val >= -TB_LOSS_MAX_PLY; }
 
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
   if constexpr (color == BLACK) {

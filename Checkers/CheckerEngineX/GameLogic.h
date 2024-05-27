@@ -71,7 +71,7 @@ int get_mlh_estimate(Position pos);
 
 extern Network<4096, 32, 32, 1> network;
 
-extern Network<512, 32, 32, 1> mlh_net;
+extern Network<128, 32, 32, 1> mlh_net;
 
 extern Network<512, 32, 32, 128> policy;
 
