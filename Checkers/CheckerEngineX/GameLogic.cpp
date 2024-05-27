@@ -19,7 +19,7 @@ SearchGlobal glob;
 
 Network<4096, 32, 32, 1> network;
 
-Network<512, 32, 32, 1> mlh_net;
+Network<128, 32, 32, 1> mlh_net;
 
 Network<512, 32, 32, 128> policy;
 

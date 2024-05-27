@@ -1,7 +1,15 @@
 use std::io::ErrorKind;
 
+use bloomfilter::reexports::bit_vec::BitBlock;
+
 const BLACK: i32 = -1;
 const WHITE: i32 = 1;
+//below needed for conversion to other bitboard layout
+const MASK_L3: u32 = 14737632;
+const MASK_L5: u32 = 117901063;
+const MASK_R3: u32 = 117901056;
+const MASK_R5: u32 = 3772834016;
+
 /*
 const BIT_BOARD: [u32; 32] = [
     18, 12, 6, 0, 19, 13, 7, 1, 26, 20, 14, 8, 27, 21, 15, 9, 2, 28, 22, 16, 3, 29, 23, 17, 10, 4,
@@ -104,7 +112,7 @@ impl Square {
     }
 }
 
-#[derive(PartialEq, Default, Copy, Clone)]
+#[derive(PartialEq, Debug, Default, Copy, Clone)]
 pub struct Move {
     from: u32,
     to: u32,
@@ -113,6 +121,47 @@ pub struct Move {
 pub struct MoveList {
     pub moves: [Move; 40],
     pub length: usize,
+}
+
+impl Move {
+    pub fn get_from_index(&self) -> u32 {
+        return self.from.trailing_zeros();
+    }
+
+    pub fn get_to_index(&self) -> u32 {
+        return self.to.trailing_zeros();
+    }
+
+    pub fn get_board_from_index(&self) -> usize {
+        return BOARD_BIT[self.get_from_index() as usize];
+    }
+
+    pub fn get_board_to_index(&self) -> usize {
+        return BOARD_BIT[self.get_to_index() as usize];
+    }
+
+    pub fn get_move_encoding(&self) -> usize {
+        //for now I can only do that for white to move
+        let board_from = 1 << self.get_board_from_index();
+        let board_to = 1 << self.get_board_to_index();
+
+        let mut dir: usize = 0;
+        if ((((board_from & MASK_L3) << 3) == board_to)
+            || (((board_from & MASK_L5) << 5) == board_to))
+        {
+            dir = 0;
+        } else if (((board_from) << 4) == board_to) {
+            dir = 1;
+        } else if (((board_from) >> 4) == board_to) {
+            dir = 2;
+        } else if ((((board_from & MASK_R3) >> 3) == board_to)
+            || (((board_from & MASK_R5) >> 5) == board_to))
+        {
+            dir = 3;
+        };
+
+        return 4 * self.get_board_from_index() + dir;
+    }
 }
 
 fn move_left<const COLOR: i32>(maske: u32) -> u32 {
@@ -158,18 +207,31 @@ impl Position {
     }
 
     pub fn make_move(&mut self, m: &Move) {
+        if (m.from & self.k) != 0 {
+            self.k |= m.to;
+            self.k &= !m.from;
+        }
+        self.k &= !m.captures;
+
         if self.color == BLACK {
             self.bp &= !m.from;
             self.bp |= m.to;
             self.wp &= !m.captures;
+            if (m.to & BRANK_WHITE) != 0 {
+                self.k |= m.to;
+            }
         } else {
             self.wp &= !m.from;
             self.wp |= m.to;
             self.bp &= !m.captures;
+            if (m.to & BRANK_BLACK) != 0 {
+                self.k |= m.to;
+            }
         }
+        self.color = -self.color;
+
         //need to check for promotion
         //and other things
-        if self.k != 0 {}
     }
 
     pub fn undo_move(&mut self, _m: &Move) {
@@ -340,12 +402,91 @@ impl TryFrom<&str> for Position {
     }
 }
 
+fn jump_left<const COLOR: i32, const OPP: i32>(
+    from: u32,
+    captures: u32,
+    pos: Position,
+) -> (u32, u32) {
+    let opp = pos.get_pieces::<OPP>() & !captures;
+    let nocc = !(pos.bp | pos.wp);
+    let captured = move_left::<COLOR>(from) & opp;
+    (captured, move_left::<COLOR>(captured) & nocc)
+}
+
+fn jump_right<const COLOR: i32, const OPP: i32>(
+    from: u32,
+    captures: u32,
+    pos: Position,
+) -> (u32, u32) {
+    let opp = pos.get_pieces::<OPP>() & !captures;
+    let nocc = !(pos.bp | pos.wp);
+    let captured = move_right::<COLOR>(from) & opp;
+    (captured, move_right::<COLOR>(captured) & nocc)
+}
+
+fn add_capture<const COLOR: i32, const OPP: i32, const is_king: bool>(
+    orig: u32,
+    from: u32,
+    captures: u32,
+    pos: Position,
+    liste: &mut MoveList,
+) {
+    //handling pawn captures first
+    let mut dest: u32 = 0;
+    let left_cap = jump_left::<COLOR, OPP>(from, captures, pos);
+    if left_cap.1 != 0 {
+        add_capture::<COLOR, OPP, is_king>(orig, left_cap.1, captures | left_cap.0, pos, liste);
+    }
+    let right_cap = jump_right::<COLOR, OPP>(from, captures, pos);
+    if right_cap.1 != 0 {
+        add_capture::<COLOR, OPP, is_king>(orig, right_cap.1, captures | right_cap.0, pos, liste);
+    }
+    dest |= left_cap.1 | right_cap.1;
+    if is_king {
+        let king_left = jump_left::<OPP, OPP>(from, captures, pos);
+        if king_left.1 != 0 {
+            add_capture::<COLOR, OPP, is_king>(
+                orig,
+                king_left.1,
+                captures | king_left.0,
+                pos,
+                liste,
+            );
+        }
+
+        let king_right = jump_right::<OPP, OPP>(from, captures, pos);
+        if king_right.1 != 0 {
+            add_capture::<COLOR, OPP, is_king>(
+                orig,
+                king_right.1,
+                captures | king_right.0,
+                pos,
+                liste,
+            );
+        }
+        dest |= king_left.1 | king_right.1;
+    }
+    if dest == 0 {
+        liste.add_move(orig, from, captures);
+    }
+}
+
 impl MoveList {
-    pub fn empty_list() -> MoveList {
+    pub fn new() -> MoveList {
         MoveList {
             length: 0,
             moves: [Move::default(); 40],
         }
+    }
+
+    fn add_move(&mut self, from: u32, to: u32, captures: u32) {
+        let scrap: usize = (to == 0) as usize;
+        self.moves[self.length + scrap] = Move {
+            from,
+            to,
+            captures: captures,
+        };
+        self.length += (to != 0) as usize;
     }
 
     fn add_quiet_move(&mut self, from: u32, to: u32) {
@@ -378,33 +519,47 @@ impl MoveList {
             kings &= kings - 1;
         }
     }
-    /*
-        fn jump_left<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
-            let opp = pos.get_pieces::<COLOR>();
-            let nocc = !(pos.bp | pos.wp);
-            move_left::<COLOR>(move_left::<COLOR>(from) & opp) & nocc
-        }
 
-        fn jump_right<const COLOR: i32, const OPP: i32>(from: u32, pos: &Position) -> u32 {
-            let opp = pos.get_pieces::<COLOR>();
-            let nocc = !(pos.bp | pos.wp);
-            move_right::<COLOR>(move_right::<COLOR>(from) & opp) & nocc
-        }
-    */
-    fn try_capture<const COLOR: i32, const OPP: i32>(_from: u32, _pos: Position) {
-        //need to handle jump loops 'jumps that end at the starting positions'
-        //by removing the captures from the position
-
-        //to be continued
-    }
-    pub fn get_captures<const COLOR: i32, const OPP: i32>(&mut self, pos: Position) {
+    pub fn get_captures<const COLOR: i32, const OPP: i32>(&mut self, pos: &mut Position) {
         let jumpers = pos.get_jumpers::<COLOR>();
         let mut pawns = jumpers & !pos.k;
-        let _kings = jumpers & pos.k;
+        let mut kings = jumpers & pos.k;
         while pawns != 0 {
-            let _from = pawns & !(pawns - 1u32);
-
+            let from = pawns & !(pawns - 1u32);
+            add_capture::<COLOR, OPP, false>(from, from, 0, pos.clone(), self);
             pawns &= pawns - 1;
+        }
+        while kings != 0 {
+            let from = kings & !(kings - 1u32);
+            if COLOR == BLACK {
+                pos.bp ^= from;
+            } else {
+                pos.wp ^= from;
+            }
+            add_capture::<COLOR, OPP, true>(from, from, 0, pos.clone(), self);
+            if COLOR == BLACK {
+                pos.bp ^= from;
+            } else {
+                pos.wp ^= from;
+            }
+            kings &= kings - 1;
+        }
+    }
+
+    pub fn get_moves(&mut self, pos: Position) {
+        let mut copy = pos.clone();
+        if pos.color == BLACK {
+            if pos.get_jumpers::<-1>() != 0 {
+                self.get_captures::<BLACK, WHITE>(&mut copy);
+                return;
+            }
+            self.get_silent_movers::<BLACK, WHITE>(&pos);
+        } else {
+            if pos.get_jumpers::<1>() != 0 {
+                self.get_captures::<WHITE, BLACK>(&mut copy);
+                return;
+            }
+            self.get_silent_movers::<WHITE, BLACK>(&pos);
         }
     }
 

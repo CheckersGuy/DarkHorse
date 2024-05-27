@@ -11,7 +11,6 @@ use std::io::BufReader;
 use std::time::Instant;
 use Sample::SampleType;
 #[derive(Debug)]
-
 pub struct DataLoader {
     reader: std::io::BufReader<std::fs::File>,
     pub path: String,
@@ -75,7 +74,7 @@ impl DataLoader {
             let transform = Instant::now();
             self.shuff_buf.par_iter_mut().for_each(|sample| {
                 if let SampleType::Fen(ref fen_string) = sample.position {
-                    sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
+                    //sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
                 }
             });
 

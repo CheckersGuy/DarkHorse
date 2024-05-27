@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh4.quant");
+INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "finalformshuffled.quant");
 // INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policybigger2.quant");
@@ -103,7 +103,18 @@ int main(int argl, const char **argc) {
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
+  /*
+    Position test =
+        Position::pos_from_fen("W:W32,30,28,27,26,25,19,15:B18,17,14,12,7,6,3,1");
 
+    MoveListe liste;
+    get_moves(test, liste);
+
+    for (auto m : liste) {
+      std::cout << m.get_move_encoding() << std::endl;
+    }
+    return 0;
+  */
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);

@@ -7,6 +7,7 @@ pub mod TableBase;
 pub mod dataloader;
 use anyhow::Context;
 use arrayvec::ArrayVec;
+use itertools::Itertools;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufWriter;
@@ -15,9 +16,25 @@ use std::usize;
 use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
+use Pos::*;
 use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
+pub fn perft(pos: Position, depth: i32) -> usize {
+    let mut liste = MoveList::new();
+    liste.get_moves(pos);
+    if depth == 0 {
+        return 1;
+    }
+    let mut counter: usize = 0;
+    for m in liste.iter().dedup() {
+        let mut copy_pos = pos.clone();
+        copy_pos.make_move(m);
+        counter += perft(copy_pos, depth - 1);
+    }
+    return counter;
+}
+
 fn main() -> anyhow::Result<()> {
     /*let mut reader = BufReader::new(File::open(
         "/mnt/e/crazyms1ultimaterescoredshuffled.samples",
@@ -67,13 +84,12 @@ fn main() -> anyhow::Result<()> {
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
     // generator.generate_games()?;
 
-    /*Data::create_subset(
-        "/mnt/e/nextupshuffled.samples",
-        "/mnt/e/nextuptoilet.samples",
-        1000000,
+    Data::create_subset(
+        "/mnt/e/policyultimateshuffled.samples",
+        "/mnt/e/smallpolicy.samples",
+        2000000,
     )
     .unwrap();
-    */
 
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
@@ -99,12 +115,6 @@ fn main() -> anyhow::Result<()> {
         &base,
     )
     */
-
-    Data::create_small_net_data(
-        "/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
-        "/mnt/e/smallnetdata.samples",
-    )
-    .unwrap();
 
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",

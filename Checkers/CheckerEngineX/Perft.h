@@ -15,7 +15,7 @@
 #include <vector>
 namespace Perft {
 
-uint64_t perft_check(Board &board, int depth);
+uint64_t perft_check(Position pos, int depth);
 
 } // namespace Perft
 #endif // CHECKERENGINEX_PERFT_H

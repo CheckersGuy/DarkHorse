@@ -11,36 +11,18 @@ import torch
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 105
-    model = Experimental.Network()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
-                                      val_data="/mnt/e/validation.samples",
-                                       batch_size=batch_size, buffer_size=40000000)
- #   provider = string_sum.BatchProvider("TrainData/shuffled2.train.raw.rescored",50000000,batch_size,True)
-    #print(provider.num_samples)
-
-   # model.load_state_dict(torch.load("bucket.pt"))
-    #model.save_quantized_bucket("bucket.quant")
-    #model.save_quantized("bla.quant")
+    model = Experimental.PolicyNetwork()
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/policyultimateshuffled.samples",
+    val_data="/mnt/e/validation.samples",
+    batch_size=batch_size, buffer_size=40000000)
 
     
-
     
     check_point_callback = ModelCheckpoint(every_n_epochs=1, dirpath=".", filename="{Networks/medium}")
 
-    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback])
+    trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback],limit_val_batches=0)
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/umpa.ckpt");
+    trainer.fit(model, data_loader,ckpt_path="Networks/masking.ckpt");
 
 
-fen_string ="W:W8,12,23,31:BK5,K15,20,K25"
-string_sum.print_fen_string(fen_string)
-
-model = Experimental.MLHNetwork()
-model.load_state_dict(torch.load("mlh3.pt"))
-input = np.zeros(120,dtype=np.float32)
-bucket = string_sum.input_from_fen(input,fen_string)
-print(torch.from_numpy(input).unsqueeze(dim=0))
-out = model.forward(torch.from_numpy(input).unsqueeze(dim=0),torch.from_numpy(np.array([bucket])).unsqueeze(dim=0))
-print(out*300)
-print(torch.argmax(out,dim=1))
 
