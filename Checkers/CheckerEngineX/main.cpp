@@ -150,7 +150,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("hash_size")) {
     hash_size = parser.as<int>("hash_size");
   } else {
-    hash_size = 22;
+    hash_size = 21;
   }
 
   if (parser.has_option("search") || parser.has_option("bench"))
