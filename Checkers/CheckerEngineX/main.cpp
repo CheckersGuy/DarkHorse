@@ -202,7 +202,7 @@ int main(int argl, const char **argc) {
     int adj_threshold = 5;
     int child_id = -1;
     std::string next_line;
-    TT.resize(18);
+    TT.resize(21);
     std::vector<Position> rep_history;
     std::vector<Value> values;
     values.reserve(adj_threshold);
