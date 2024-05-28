@@ -508,7 +508,6 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
                 .unwrap();
 
             if move_encoding > 0 {
-                println!("{fen_previous}");
                 //base.print_fen(fen_previous.as_str()).unwrap();
                 //println!("{move_encoding}");
                 let mut sample = window[1].clone();

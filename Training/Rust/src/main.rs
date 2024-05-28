@@ -73,24 +73,24 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("crazyms1next4.samples"),
-            14,
-            200000000,
-        );
-    */
-    //generator.time = 1;
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("new100ms.samples"),
+        14,
+        1000000,
+    );
+
+    generator.time = 10;
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
-    // generator.generate_games()?;
+    generator.generate_games()?;
 
-    Data::create_subset(
-        "/mnt/e/policyultimateshuffled.samples",
-        "/mnt/e/smallpolicy.samples",
-        2000000,
-    )
-    .unwrap();
-
+    /*Data::create_subset(
+            "/mnt/e/policyultimateshuffled.samples",
+            "/mnt/e/smallpolicy.samples",
+            2000000,
+        )
+        .unwrap();
+    */
     //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
@@ -108,14 +108,14 @@ fn main() -> anyhow::Result<()> {
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-
-    /*Data::create_policy_data(
-        "D:/crazyms1nextultimaterescored.samples",
-        "E:/policyultimate.samples",
-        &base,
-    )
+    /*
+        Data::create_policy_data(
+            "E:/nextup100ms3rescored.samples",
+            "E:/nextuppolicy.samples",
+            &base,
+        )
+        .unwrap();
     */
-
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
             "/mnt/e/mlhshuffled2.samples",
