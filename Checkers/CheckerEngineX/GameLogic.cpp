@@ -298,9 +298,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 
-  if (in_pv && tt_move.is_empty() && depth >= 3) {
-    depth = depth - 1;
-  }
   int tab_pieces = 0;
 #ifdef _WIN32
   tab_pieces = tablebase.num_pieces;
@@ -331,7 +328,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
-
+  if (in_pv && tt_move.is_empty() && depth >= 2 &&
+      board.get_position().piece_count() > tab_pieces) {
+    depth = depth - 1;
+  }
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !liste[0].is_capture() && depth < 11 &&
