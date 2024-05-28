@@ -332,10 +332,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       board.get_position().piece_count() > tab_pieces) {
     depth = depth - 1;
   }
+
+  const bool cond =
+      !(std::abs(beta) >= TB_WIN_MAX_PLY ||
+        (board.get_position().piece_count() <= 10 && std::abs(beta) > 500));
+
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
-      !liste[0].is_capture() && depth < 11 &&
-      std::abs(static_eval) < -TB_LOSS_MAX_PLY &&
+      !liste[0].is_capture() && depth < 11 && cond &&
       !board.get_position().has_jumps(~board.get_mover()) &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {
     return static_eval;
@@ -431,7 +435,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     board.make_move(move);
     TT.prefetch(board.get_current_key());
 
-    if (!in_pv && std::abs(beta) < -TB_LOSS_MAX_PLY && depth >= 1 &&
+    const bool margin_cond =
+        !(std::abs(beta) >= TB_WIN_MAX_PLY ||
+          (board.get_position().piece_count() <= 10 && std::abs(beta) > 500));
+    if (!in_pv && margin_cond && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
       Depth newDepth = std::max(0, depth - 4);
@@ -443,6 +450,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                       value_to_tt(static_eval, ply, board.get_position()), key,
                       TT_LOWER, newDepth, (!move.is_capture()) ? move : Move{},
                       is_tt_pv);
+
+        if (board.get_position().piece_count() <= 10 &&
+            std::abs(board_val) >= 500) {
+          return board_val;
+        }
         return std::abs(board_val) < -TB_LOSS_MAX_PLY ? (board_val - prob_cut)
                                                       : board_val;
       }
@@ -458,6 +470,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                         value_to_tt(static_eval, ply, board.get_position()),
                         key, TT_LOWER, newDepth,
                         (!move.is_capture()) ? move : Move{}, is_tt_pv);
+
+          if (board.get_position().piece_count() <= 10 &&
+              std::abs(value) >= 500) {
+            return value;
+          }
           return std::abs(value) < -TB_LOSS_MAX_PLY ? (value - prob_cut)
                                                     : value;
         }
