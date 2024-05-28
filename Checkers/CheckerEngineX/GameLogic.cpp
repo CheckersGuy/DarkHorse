@@ -258,8 +258,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   Value static_eval = -EVAL_INFINITE;
 
   bool found_hash = TT.find_hash(key, info);
-  bool is_tt_pv = in_pv || (found_hash && info.ttPv);
+  bool is_tt_pv = false;
 
+  if (excluded.is_empty()) {
+    is_tt_pv = in_pv || (found_hash && info.ttPv);
+  }
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
     tt_move = info.tt_move;
@@ -294,6 +297,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       static_eval = evaluate(board.get_position(), ply);
     }
   }
+
+  if (in_pv && tt_move.is_empty() && depth >= 3) {
+    depth = depth - 1;
+  }
   int tab_pieces = 0;
 #ifdef _WIN32
   tab_pieces = tablebase.num_pieces;
@@ -324,6 +331,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
+
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !liste[0].is_capture() && depth < 11 &&
@@ -459,6 +467,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     Depth new_depth = std::max(0, depth - 1 + extension);
 
     if (reduction != 0) {
+
       val = -Search::search<NONPV>(true, board, ply + 1, local_pv, -alpha - 1,
                                    -alpha, std::max(0, new_depth - reduction),
                                    Move{}, is_sing_search);
