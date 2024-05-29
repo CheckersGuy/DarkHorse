@@ -328,15 +328,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
-  if (in_pv && tt_move.is_empty() && depth >= 2 &&
-      board.get_position().piece_count() > tab_pieces) {
-    depth = depth - 1;
-  }
-
-  if (cutnode && tt_move.is_empty() && depth >= 8) {
-    depth = depth - 1;
-  }
-
   const bool cond =
       !(std::abs(beta) >= TB_WIN_MAX_PLY ||
         (board.get_position().piece_count() <= 10 && std::abs(beta) > 500));
