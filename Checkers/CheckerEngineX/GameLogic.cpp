@@ -198,7 +198,7 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
     if (in_pv) {
       red = std::max(0, red - 1);
     }
-    red += (move_index >= 3);
+    red += (move_index >= 3 + in_pv);
     return red;
   }
   return 0;
@@ -332,7 +332,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !liste[0].is_capture() && depth < 11 &&
-      std::abs(static_eval) < -TB_LOSS_MAX_PLY &&
+      std::abs(static_eval) < TB_WIN_MAX_PLY &&
       !board.get_position().has_jumps(~board.get_mover()) &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {
     return static_eval;
@@ -511,8 +511,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
-  if (!in_pv && best_score >= beta && std::abs(beta) < -TB_LOSS_MAX_PLY &&
-      std::abs(alpha) < 500) {
+  if (!in_pv && best_score >= beta && std::abs(beta) < 500 &&
+      std::abs(alpha) < 500 && std::abs(best_score) < 500) {
     best_score = (best_score * depth + beta) / (depth + 1);
   }
   if (excluded.is_empty() && !is_root) {
