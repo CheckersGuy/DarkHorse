@@ -19,7 +19,6 @@
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "finalformshuffled.quant");
-// INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
