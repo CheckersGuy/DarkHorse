@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback],limit_val_batches=0)
 
-    trainer.fit(model, data_loader,ckpt_path="Networks/depresso.ckpt");
+    trainer.fit(model, data_loader);
 
 
 
