@@ -176,8 +176,7 @@ int main(int argl, const char **argc) {
     } else {
       searchValue(board, best, depth, time, true, std::cout);
     }
-    std::cout << counter << std::endl;
-    std::cout << both_counter << std::endl;
+
     return 0;
   }
 
@@ -198,7 +197,8 @@ int main(int argl, const char **argc) {
     return 0;
   }
   if (parser.has_option("generate")) {
-    int adj_threshold = 5;
+
+    int adj_threshold = 15;
     int child_id = -1;
     std::string next_line;
     TT.resize(21);
@@ -206,6 +206,7 @@ int main(int argl, const char **argc) {
     std::vector<Value> values;
     values.reserve(adj_threshold);
     while (std::getline(std::cin, next_line)) {
+
       if (next_line == "terminate") {
         std::exit(-1);
       }
@@ -218,7 +219,6 @@ int main(int argl, const char **argc) {
 
       board = Board(start_pos);
       Result result = UNKNOWN;
-
       for (auto i = 0; i < 600; ++i) {
         Move best;
         MoveListe liste;
@@ -241,7 +241,7 @@ int main(int argl, const char **argc) {
           break;
         }
         const auto pos = board.get_position();
-        if (Bits::pop_count(pos.BP | pos.WP) <= 10) {
+        if (Bits::pop_count(pos.BP | pos.WP) <= 14) {
           // any advancing moves resets the adj-values
           if (best.is_capture() || best.is_pawn_move(kings)) {
             values.clear();
@@ -254,7 +254,7 @@ int main(int argl, const char **argc) {
               average += std::abs(v);
             }
             average = average / values.size();
-            if (average <= 5) {
+            if (average <= 3) {
               result = DRAW; // all still experimental
               break;
             }

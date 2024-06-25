@@ -38,6 +38,8 @@ public:
 
   bool is_silent_position();
 
+  bool is_silent_position(Color color);
+
   Position &get_position();
 
   Position previous() const;

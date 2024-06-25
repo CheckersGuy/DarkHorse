@@ -38,12 +38,10 @@ int main(int argl, const char **argc) {
   // std::cout<<"NumNodes: "<<call_back.num_nodes<<std::endl;
 
   for (auto i = 1; i < std::min(num_ply + 1, node_counts.size()); ++i) {
-    Board board;
-    board = Position::get_start_position();
 
     std::cout << "Checking depth: " << i << " ";
     auto start_time = std::chrono::high_resolution_clock::now();
-    auto count = Perft::perft_check(board, i);
+    auto count = Perft::perft_check(Position::get_start_position(), i);
     std::cout << count << std::endl;
     std::cout << count << " ";
 

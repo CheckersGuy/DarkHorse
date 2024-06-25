@@ -37,17 +37,6 @@ inline void get_silent_moves(const Position &pos, CallBack &&call_back) {
   uint32_t king_movers = pos.get_movers<color>() & pos.K;
 
   const uint32_t nocc = ~(pos.BP | pos.WP);
-  while (pawn_movers) {
-    uint32_t maske = pawn_movers & ~(pawn_movers - 1u);
-    uint32_t squares = get_neighbour_squares<color, PAWN>(maske);
-    squares &= nocc;
-    while (squares) {
-      uint32_t next = squares & ~(squares - 1u);
-      call_back.template visit<PawnMove>(maske, next);
-      squares &= squares - 1u;
-    }
-    pawn_movers &= ~maske;
-  }
 
   while (king_movers) {
     uint32_t maske = king_movers & ~(king_movers - 1u);
@@ -59,6 +48,18 @@ inline void get_silent_moves(const Position &pos, CallBack &&call_back) {
       squares &= squares - 1u;
     }
     king_movers &= ~maske;
+  }
+
+  while (pawn_movers) {
+    uint32_t maske = pawn_movers & ~(pawn_movers - 1u);
+    uint32_t squares = get_neighbour_squares<color, PAWN>(maske);
+    squares &= nocc;
+    while (squares) {
+      uint32_t next = squares & ~(squares - 1u);
+      call_back.template visit<PawnMove>(maske, next);
+      squares &= squares - 1u;
+    }
+    pawn_movers &= ~maske;
   }
 }
 

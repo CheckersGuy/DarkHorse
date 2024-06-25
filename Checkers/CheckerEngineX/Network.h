@@ -99,7 +99,6 @@ Value tempo_black(Position pos);
 constexpr static size_t ALIGNMENT = 64;
 
 template <int OutDim> struct alignas(64) Accumulator {
-
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
   int16_t *ft_biases;
@@ -126,6 +125,7 @@ template <int OutDim> struct alignas(64) Accumulator {
 };
 
 template <int... lay> struct Network {
+
   static constexpr auto tuple = get_window_tuple<0, lay...>();
   int max_units{0};
   static constexpr int L1 = std::get<0>(std::make_tuple(lay...));
