@@ -2,6 +2,9 @@
 #include "Bits.h"
 #include "Network.h"
 #include "types.h"
+#include <cstdint>
+#include <unordered_map>
+#include <utility>
 
 Line mainPV;
 uint64_t endTime = 1000000000;
@@ -258,14 +261,19 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   }
 
   auto key = board.get_current_key();
-
+  int tab_pieces = 0;
+#ifdef _WIN32
+  tab_pieces = tablebase.num_pieces;
+#endif
   const auto outer_bound = [&](Value score) {
-    return !(
-        std::abs(score) >= TB_WIN_MAX_PLY ||
-        (std::abs(score) >= 500 && board.get_position().piece_count() <= 10));
+    return !(std::abs(score) >= TB_WIN_MAX_PLY ||
+             (std::abs(score) >= 500 &&
+              board.get_position().piece_count() <= tab_pieces));
   };
 
   Value static_eval = -EVAL_INFINITE;
+
+  // doing a collision check
 
   bool found_hash = TT.find_hash(key, info);
   bool is_tt_pv = false;
@@ -308,10 +316,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 
-  int tab_pieces = 0;
-#ifdef _WIN32
-  tab_pieces = tablebase.num_pieces;
-#endif
 #ifdef _WIN32
   auto result = tablebase.probe(board.get_position());
   if (!is_root && excluded.is_empty() && result != TB_RESULT::UNKNOWN) {
@@ -429,10 +433,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
       reduction++;
     }
-    if (cutnode) {
-      reduction += 2 - (info.depth >= depth && is_tt_pv && found_hash);
-    }
-
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
 
     board.make_move(move);
@@ -582,11 +582,9 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     static_eval = value_from_tt(info.static_eval, ply, board.get_position());
   }
 
-  MoveListe moves;
-  get_captures(board.get_position(), moves);
   Value bestValue = -INFINITE;
 
-  if (moves.is_empty()) {
+  if (board.is_silent_position(board.get_mover())) {
     if (board.get_position().is_end()) {
       return loss(ply);
     }
@@ -608,6 +606,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
     return net_val;
   }
+  MoveListe moves;
+  get_captures(board.get_position(), moves);
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
@@ -650,7 +650,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
 Value search_asp(Board &board, Value last_score, Depth depth) {
   Value best_score = -INFINITE;
-  if (depth >= 5 && isEval(last_score)) {
+  if (depth >= 3 && isEval(last_score)) {
     Value margin = asp_wind;
     Value alpha = last_score - margin;
     Value beta = last_score + margin;

@@ -67,6 +67,15 @@ bool Board::is_silent_position() {
           get_position().get_jumpers<BLACK>() == 0u);
 }
 
+bool Board::is_silent_position(Color color) {
+
+  if (color == BLACK) {
+    return (get_position().get_jumpers<BLACK>() == 0u);
+  } else {
+    return (get_position().get_jumpers<WHITE>() == 0u);
+  }
+}
+
 uint64_t hash_combine(uint64_t lhs, uint64_t rhs) {
   lhs ^= rhs + 0x9e3779b9 + (lhs << 6) + (lhs >> 2);
   return lhs;
