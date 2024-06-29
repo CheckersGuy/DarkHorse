@@ -66,7 +66,7 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
     // if we havent evaluated the position before, evaluate it now
     Value value = -INFINITE;
     if (it == hashset.end()) {
-      value = searchValue(copy, bestMove, 1, 100000, false, std::cout);
+      value = searchValue(copy, bestMove, 0, 100000, false, std::cout);
       hashset.insert(board.get_position());
     }
 
@@ -190,7 +190,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(12, pos, -150, 150);
+      generate_book(8, pos, -30, 30);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -198,20 +198,15 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    int adj_threshold = 15;
     int child_id = -1;
     std::string next_line;
     TT.resize(21);
     std::vector<Position> rep_history;
-    std::vector<Value> values;
-    values.reserve(adj_threshold);
     while (std::getline(std::cin, next_line)) {
 
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      values.clear();
-      Value last_adj = EVAL_INFINITE;
       int adj_count = 0;
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
@@ -239,26 +234,6 @@ int main(int argl, const char **argc) {
         if (count >= 3) {
           result = DRAW;
           break;
-        }
-        const auto pos = board.get_position();
-        if (Bits::pop_count(pos.BP | pos.WP) <= 14) {
-          // any advancing moves resets the adj-values
-          if (best.is_capture() || best.is_pawn_move(kings)) {
-            values.clear();
-          }
-          values.emplace_back(value);
-
-          if (values.size() >= adj_threshold) {
-            Value average = 0;
-            for (auto v : values) {
-              average += std::abs(v);
-            }
-            average = average / values.size();
-            if (average <= 3) {
-              result = DRAW; // all still experimental
-              break;
-            }
-          }
         }
       }
 

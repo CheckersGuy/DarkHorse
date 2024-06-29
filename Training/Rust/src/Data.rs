@@ -110,6 +110,49 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     Ok(())
 }
 
+pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let mut total_count = 0;
+    let mut unique_count = 0;
+    for path in input.iter() {
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            for sample in game.iter() {
+                match sample.result {
+                    Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
+                        if !filter.check(&sample.position) {
+                            filter.set(&sample.position);
+                            sample.write_fen(&mut writer)?;
+                            unique_count += 1;
+                            total_count += 1;
+                        }
+                    }
+                    Result::UNKNOWN => {}
+                    _ => {
+                        if !filter.check(&sample.position) {
+                            filter.set(&sample.position);
+                            unique_count += 1;
+                        }
+
+                        total_count += 1;
+                        sample.write_fen(&mut writer)?;
+                    }
+                }
+            }
+        }
+    }
+
+    writer.flush()?;
+
+    println!(
+        "Got back {} unique samples while processing {} samples",
+        unique_count, total_count
+    );
+
+    Ok(())
+}
+
 pub fn shuffle_data_external<const partitions: usize>(
     input: &str,
     output: &str,
