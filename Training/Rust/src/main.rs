@@ -73,18 +73,16 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*
     let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("new100ms.samples"),
-        14,
-        1000000,
+        String::from("../Positions/testbook.pos"),
+        String::from("whatthefuck.samples"),
+        220,
+        80000000,
     );
 
     generator.time = 10;
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
     generator.generate_games()?;
-    */
 
     /*Data::create_subset(
             "/mnt/e/policyultimateshuffled.samples",
@@ -93,7 +91,7 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
+    // Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
     // let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
