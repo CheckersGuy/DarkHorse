@@ -18,7 +18,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -207,7 +207,6 @@ int main(int argl, const char **argc) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      int adj_count = 0;
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();

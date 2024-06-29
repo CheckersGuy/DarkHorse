@@ -771,7 +771,8 @@ impl<'a> Generator<'a> {
                 let pos = Position::try_from(position.as_str())?;
                 //below only works if it is white to move
                 //no longer works since I changed the game-data format
-                let has_captures: bool = pos.get_jumpers::<1>() != 0;
+                let has_captures: bool = (pos.color == 1 && pos.get_jumpers::<1>() != 0)
+                    || (pos.color == -1 && pos.get_jumpers::<-1>() != 0);
 
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
@@ -783,7 +784,7 @@ impl<'a> Generator<'a> {
                         println!("Error {result_string}");
                     }
                 }
-                if sample.result != Sample::Result::UNKNOWN && !has_captures {
+                if !has_captures {
                     if result_string.starts_with("TB_") {
                         if !filter.check(&position) {
                             sample.write_fen::<BufWriter<File>>(&mut writer)?;
