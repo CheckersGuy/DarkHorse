@@ -73,6 +73,7 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
+    /*
     let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
         String::from("new100ms.samples"),
@@ -83,6 +84,7 @@ fn main() -> anyhow::Result<()> {
     generator.time = 10;
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
     generator.generate_games()?;
+    */
 
     /*Data::create_subset(
             "/mnt/e/policyultimateshuffled.samples",
@@ -91,7 +93,7 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    //Data::create_book("../Positions/drawbook.book", "ultrabook2.pos", 6)?;
+    Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
     // let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
@@ -124,10 +126,19 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    /* Data::shuffle_data_external::<32>(
-            "/mnt/e/policyultimate.samples",
-            "/mnt/e/policyultimateshuffled.samples",
-        )?;
+    Data::shuffle_data_external::<32>(
+        "/mnt/e/final1rescored.samples",
+        "/mnt/e/final1shuffled.samples",
+    )?;
+
+    /*Data::merge_rescored_data(
+        vec![
+            "/mnt/e/finalms500batch2rescored.samples",
+            "/mnt/e/finalms500rescored.samples",
+        ],
+        "/mnt/e/final1rescored.samples",
+    );
     */
+
     Ok(())
 }
