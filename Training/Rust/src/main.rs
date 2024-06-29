@@ -73,7 +73,7 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
+    /*let mut generator = Generator::new(
         String::from("../Positions/testbook.pos"),
         String::from("whatthefuck.samples"),
         220,
@@ -81,8 +81,9 @@ fn main() -> anyhow::Result<()> {
     );
 
     generator.time = 10;
+    */
     //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
-    generator.generate_games()?;
+    // generator.generate_games()?;
 
     /*Data::create_subset(
             "/mnt/e/policyultimateshuffled.samples",
@@ -125,8 +126,8 @@ fn main() -> anyhow::Result<()> {
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
     Data::shuffle_data_external::<32>(
-        "/mnt/e/final1rescored.samples",
-        "/mnt/e/final1shuffled.samples",
+        "/mnt/e/whatthefuckrescored.samples",
+        "/mnt/e/whatthefuckshuffled.samples",
     )?;
 
     /*Data::merge_rescored_data(

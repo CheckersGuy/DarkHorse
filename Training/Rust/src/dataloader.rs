@@ -73,8 +73,8 @@ impl DataLoader {
             //Need to convert all the samples
             let transform = Instant::now();
             self.shuff_buf.par_iter_mut().for_each(|sample| {
-                if let SampleType::Fen(ref fen_string) = sample.position {
-                    //sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
+                if let SampleType::Fen(_) = sample.position {
+                    sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
                 }
             });
 
