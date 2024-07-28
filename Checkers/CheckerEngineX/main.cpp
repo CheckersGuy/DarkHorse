@@ -18,7 +18,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "moesuper.quant");
+INCBIN(network, "finalformshuffled.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -99,6 +99,7 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 #define DTW_PATH "E:\\kr_english_dtw"
 
 int main(int argl, const char **argc) {
+
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
@@ -197,33 +198,46 @@ int main(int argl, const char **argc) {
     return 0;
   }
   if (parser.has_option("generate")) {
+    const int adj_threshold = 400;
+    const float adj_percentage = 0.8f; // 20% of all games will be adjudicated
+    std::mt19937_64 generator(getSystemTime() ^ getpid());
+    std::uniform_real_distribution<float> distrib(0, 1);
 
-    int child_id = -1;
     std::string next_line;
-    TT.resize(21);
+    TT.resize(18);
     std::vector<Position> rep_history;
+
+    auto color_to_result = [](Color color) {
+      return ((color == BLACK) ? BLACK_WON : WHITE_WON);
+    };
     while (std::getline(std::cin, next_line)) {
 
       if (next_line == "terminate") {
         std::exit(-1);
       }
+      bool do_adjudicate = (distrib(generator) < adj_percentage);
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
 
-      board = Board(start_pos);
+      board = start_pos;
       Result result = UNKNOWN;
       for (auto i = 0; i < 600; ++i) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
-        if (liste.length() == 0) {
+        rep_history.emplace_back(board.get_position());
+        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
+        if (liste.length() == 0 || ((i >= 10) && do_adjudicate &&
+                                    (std::abs(value) >= adj_threshold))) {
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
+          if (do_adjudicate) {
+            result = ((value > 0) ? color_to_result(board.get_mover())
+                                  : color_to_result((~board.get_mover())));
+          }
           break;
         }
 
-        rep_history.emplace_back(board.get_position());
-        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
         const auto kings = board.get_position().K;
         board.play_move(best);
 
