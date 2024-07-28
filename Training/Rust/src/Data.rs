@@ -220,25 +220,23 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
     Ok(())
 }
 
-pub fn create_small_net_data(input: &str, output: &str) -> std::io::Result<()> {
-    let mut writer = BufWriter::new(File::create(output)?);
-
+pub fn remove_captures(input: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(input)?);
+    let mut writer = BufWriter::new(File::create(output)?);
     for sample in reader.iter_samples() {
-        let squares = sample.position.get_squares()?;
-        let mut diff: i32 = 0;
-        for square in squares {
-            match square {
-                Square::WPAWN(_) => diff += 1,
-                Square::BPAWN(_) => diff -= 1,
-                Square::WKING(_) => diff += 1,
-                Square::BKING(_) => diff -= 1,
-            }
-        }
-        if diff.abs() >= 1 {
-            sample.write_fen(&mut writer)?;
+        let sample_copy = sample.clone();
+        let pos = match sample.position {
+            SampleType::Fen(fen_string) => Position::try_from(fen_string.as_str()).unwrap(),
+            SampleType::Pos(_) => continue,
+            _ => Position::default(),
+        };
+        let has_captures: bool = (pos.color == 1 && pos.get_jumpers::<1>() != 0)
+            || (pos.color == -1 && pos.get_jumpers::<-1>() != 0);
+        if !has_captures {
+            sample_copy.write_fen(&mut writer)?;
         }
     }
+
     Ok(())
 }
 
@@ -612,11 +610,10 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
-    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<String>)> {
+    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<Sample::Sample>)> {
         let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
         let mut unique_count = 0;
         let mut total_count = 0;
-        let mut writer = BufWriter::new(File::create(self.output.clone()).unwrap());
         if self.prev_file == None {
             return Ok((unique_count, total_count, filter));
         }
@@ -625,33 +622,12 @@ impl<'a> Generator<'a> {
         let iterator = reader.iter_samples();
 
         for sample in iterator {
-            let pos_string = match sample.position {
-                Sample::SampleType::Fen(ref fen_string) => fen_string,
-                _ => {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        "No previous file",
-                    ))
-                }
-            };
-
-            match sample.result {
-                Result::TBWIN | Result::TBLOSS | Result::TBDRAW => {
-                    if !filter.check(&pos_string) {
-                        sample.write_fen(&mut writer)?;
-                    }
-                }
-                _ => {
-                    sample.write_fen(&mut writer)?;
-                }
-            }
-            if !filter.check(&pos_string) {
+            if !filter.check(&sample) {
                 unique_count += 1;
-                filter.set(&pos_string);
+                filter.set(&sample);
             }
             total_count += 1;
         }
-        writer.flush().expect("Flush Error");
         println!(
             "Read a previous file with {} unique samples and {} total samples",
             unique_count, total_count
@@ -662,16 +638,9 @@ impl<'a> Generator<'a> {
 
     pub fn generate_games(&self) -> std::io::Result<()> {
         let (mut unique_count, mut total_count, mut filter) = self.load_previous_file()?;
-        let output_file = self.output.clone();
         let time = self.time;
-        let mut writer = BufWriter::new(
-            OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(self.output.clone())
-                .unwrap(),
-        );
 
+        let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
@@ -786,16 +755,16 @@ impl<'a> Generator<'a> {
                 }
                 if !has_captures {
                     if result_string.starts_with("TB_") {
-                        if !filter.check(&position) {
+                        if !filter.check(&sample) {
                             sample.write_fen::<BufWriter<File>>(&mut writer)?;
                         }
                     } else {
                         sample.write_fen::<BufWriter<File>>(&mut writer)?;
                     }
                     total_count += 1;
-                    if !filter.check(&position) {
+                    if !filter.check(&sample) {
                         unique_count += 1;
-                        filter.set(&position);
+                        filter.set(&sample);
                         bar.inc(1);
                         thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         if thread_counter.load(std::sync::atomic::Ordering::Relaxed)

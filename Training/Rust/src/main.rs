@@ -73,17 +73,17 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*let mut generator = Generator::new(
-        String::from("../Positions/testbook.pos"),
-        String::from("whatthefuck.samples"),
-        220,
-        80000000,
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("/mnt/e/adjudication2.samples"),
+        14,
+        1000000,
     );
 
-    generator.time = 10;
-    */
-    //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
-    // generator.generate_games()?;
+    generator.time = 1;
+
+    //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
+    generator.generate_games()?;
 
     /*Data::create_subset(
             "/mnt/e/policyultimateshuffled.samples",
@@ -109,14 +109,7 @@ fn main() -> anyhow::Result<()> {
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-    /*
-        Data::create_policy_data(
-            "E:/nextup100ms3rescored.samples",
-            "E:/nextuppolicy.samples",
-            &base,
-        )
-        .unwrap();
-    */
+
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
             "/mnt/e/mlhshuffled2.samples",
@@ -125,18 +118,18 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    Data::shuffle_data_external::<32>(
-        "/mnt/e/whatthefuckrescored.samples",
-        "/mnt/e/whatthefuckshuffled.samples",
-    )?;
-
-    /*Data::merge_rescored_data(
-        vec![
-            "/mnt/e/finalms500batch2rescored.samples",
-            "/mnt/e/finalms500rescored.samples",
-        ],
-        "/mnt/e/final1rescored.samples",
-    );
+    /*
+        Data::merge_rescored_data(
+            vec![
+                "/mnt/e/finalrescored/paritysuperiorityshuffled.samples",
+                "/mnt/e/finalrescored/hyperseprescored.samples",
+            ],
+            "/mnt/e/gigasuperiorrescored.samples",
+        )?;
+        Data::shuffle_data_external::<32>(
+            "/mnt/e/gigasuperiorrescored.samples",
+            "/mnt/e/gigasuperiorshuffled.samples",
+        )?;
     */
 
     Ok(())

@@ -34,7 +34,8 @@ impl DataLoader {
         };
         {
             let mut reader = BufReader::new(File::open(path)?);
-            data_loader.num_samples = Some(reader.iter_samples().count() as u64);
+            // data_loader.num_samples = Some(reader.iter_samples().count() as u64);
+            data_loader.num_samples = Some(100000000)
         };
 
         if let Some(num_samples) = data_loader.num_samples {
