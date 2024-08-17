@@ -11,9 +11,9 @@ import torch
 
 if __name__ == "__main__":
     batch_size = 8192 
-    epochs = 10
+    epochs = 1000
     model = Experimental.Network()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/adjudication2rescored.samples",                                      
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/adjudicationrrescored.samples",                                      
     val_data="/mnt/e/validation.samples",
     batch_size=batch_size, buffer_size=40000000)
     

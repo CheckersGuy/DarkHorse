@@ -13,8 +13,8 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*(4096)
-L2 =32
+L1 =2*(1024+512)
+L2 =16
 L3 = 32
 
 class Network(pl.LightningModule):

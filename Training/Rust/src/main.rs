@@ -36,22 +36,15 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
-    /*let mut reader = BufReader::new(File::open(
-        "/mnt/e/crazyms1ultimaterescoredshuffled.samples",
-    )?);
-    //removing call captures
-    let mut writer = BufWriter::new(File::create(
-        "/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
-    )?);
-
-    for sample in reader.iter_samples() {
-        if let Sample::SampleType::Fen(ref position) = sample.position {
-            let pos = Pos::Position::try_from(position.as_str())?;
-            if pos.get_jumpers::<1>() == 0 {
-                sample.write_fen(&mut writer)?;
+    /* let mut reader = BufReader::new(File::open("/mnt/e/adjudication2rescored.samples")?);
+        for sample in reader.iter_samples().take(1000) {
+            if let Sample::SampleType::Fen(ref position) = sample.position {
+                let pos = Pos::Position::try_from(position.as_str())?;
+                pos.print_position();
+                println!("Result: {:?}", sample.result);
+                println!();
             }
         }
-    }
     */
     /*
         Data::remove_samples(
@@ -75,9 +68,9 @@ fn main() -> anyhow::Result<()> {
     */
     let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/adjudication2.samples"),
+        String::from("/mnt/e/adjudication3.samples"),
         14,
-        1000000,
+        100000,
     );
 
     generator.time = 1;
