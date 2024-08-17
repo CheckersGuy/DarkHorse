@@ -198,6 +198,7 @@ int main(int argl, const char **argc) {
     return 0;
   }
   if (parser.has_option("generate")) {
+
     const int adj_threshold = 400;
     const float adj_percentage = 0.8f; // 20% of all games will be adjudicated
     std::mt19937_64 generator(getSystemTime() ^ getpid());
@@ -228,16 +229,10 @@ int main(int argl, const char **argc) {
         get_moves(board.get_position(), liste);
         rep_history.emplace_back(board.get_position());
         auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
-        if (liste.length() == 0 || ((i >= 10) && do_adjudicate &&
-                                    (std::abs(value) >= adj_threshold))) {
+        if (liste.length() == 0) {
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
-          if (do_adjudicate) {
-            result = ((value > 0) ? color_to_result(board.get_mover())
-                                  : color_to_result((~board.get_mover())));
-          }
           break;
         }
-
         const auto kings = board.get_position().K;
         board.play_move(best);
 
@@ -253,25 +248,23 @@ int main(int argl, const char **argc) {
       auto res_to_string = [](Result result, Color color) {
         if ((result == BLACK_WON && color == BLACK) ||
             (result == WHITE_WON && color == WHITE)) {
-          return "WON";
+          return 2;
         } else if ((result == BLACK_WON && color != BLACK) ||
                    (result == WHITE_WON && color != WHITE)) {
-          return "LOSS";
+          return 1;
         } else if (result == DRAW) {
-          return "DRAW";
+          return 0;
         } else {
-          return "UNKNOWN";
+          return -1;
         }
       };
 
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
-        auto position = rep_history[i];
-        std::string result_string = "";
-        result_string.append(res_to_string(result, position.color));
-        std::cout << position.get_fen_string() << "!" << result_string
-                  << std::endl;
+        std::cout << rep_history[i].BP << "!" << rep_history[i].WP << "!"
+                  << rep_history[i].K << "!"
+                  << res_to_string(result, rep_history[i].color) << std::endl;
       }
       std::cout << "END" << std::endl;
     }

@@ -130,7 +130,6 @@ impl SampleType {
 
         //to be continued
         //need to convert the option in next.unwrap() to a Result
-
         for s in fen_string.split(":").skip(1) {
             let mut color: i32 = 0;
             let token_op = s.chars().next();
