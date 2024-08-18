@@ -2,6 +2,7 @@
 //should make stuff a little easier to handle :)
 use crate::Pos::Position;
 use crate::Pos::Square;
+use bloomfilter::reexports::bit_vec::BitBlock;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
 use byteorder::WriteBytesExt;
@@ -203,7 +204,7 @@ impl SampleType {
     pub fn invert_fen_string(fen_string: &str) -> Option<String> {
         //some workaround
         let position = SampleType::Fen(String::from(fen_string));
-        let squares = position.get_squares().unwrap();
+        let squares = positioggn.get_squares().unwrap();
         let mut white_fen = String::from("W");
         let mut black_fen = String::from("B");
 
@@ -241,40 +242,40 @@ impl SampleType {
 #[derive(Default, Clone, Hash, PartialEq, Debug)]
 //there always should be a mlh-value for every sample <- sounds like I need to add an assert
 //somewhere
+
 pub struct Sample {
-    pub position: SampleType,
+    pub position: Position,
     pub mlh: i16,
     pub result: Result,
 }
 
 impl Sample {
     pub fn write_fen<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        if let SampleType::Fen(ref fen_string) = self.position {
-            let length: u16 = fen_string.len() as u16;
-            writer.write_u16::<LittleEndian>(length)?;
-            writer.write_all(fen_string.as_bytes())?;
-            writer.write_i16::<LittleEndian>(self.mlh)?;
-            let conv = match self.result {
-                Result::LOSS => 1,
-                Result::WIN => 2,
-                Result::DRAW => 3,
-                Result::TBLOSS => 4,
-                Result::TBWIN => 5,
-                Result::TBDRAW => 6,
-                Result::UNKNOWN => 0,
-            };
-            writer.write_i8(conv)?;
-        }
+        writer.write_u32::<LittleEndian>(self.position.bp)?;
+        writer.write_u32::<LittleEndian>(self.position.wp)?;
+        writer.write_u32::<LittleEndian>(self.position.k)?;
+        writer.write_i8(self.position.color)?;
+        writer.write_i16::<LittleEndian>(self.mlh)?;
+        let conv = match self.result {
+            Result::LOSS => 1,
+            Result::WIN => 2,
+            Result::DRAW => 3,
+            Result::TBLOSS => 4,
+            Result::TBWIN => 5,
+            Result::TBDRAW => 6,
+            Result::UNKNOWN => 0,
+        };
+        writer.write_i8(conv)?;
 
         Ok(())
     }
 
     pub fn read_into<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
         // to be added
-        let length: u16 = reader.read_u16::<LittleEndian>()?;
-        let mut buffer = vec![0; length as usize];
-        reader.read_exact(&mut buffer)?;
-        self.position = SampleType::Fen(String::from_utf8(buffer).unwrap());
+        self.position.bp = reader.read_u32::<LittleEndian>()?;
+        self.position.wp = reader.read_u32::<LittleEndian>()?;
+        self.position.k = reader.read_u32::<LittleEndian>()?;
+        self.position.color = reader.read_i8()?;
         self.mlh = reader.read_i16::<LittleEndian>()?;
         let conv = reader.read_i8()?;
         self.result = match conv {
@@ -318,7 +319,6 @@ impl<'a> Iterator for SampleIterator<'a> {
         }
     }
 }
-//refactoring idea: GameIterator should have a member next_game and return & instead
 impl<'a> Iterator for GameIterator<'a> {
     type Item = Vec<Sample>;
     fn next(&mut self) -> Option<Self::Item> {
@@ -331,8 +331,7 @@ impl<'a> Iterator for GameIterator<'a> {
                 Err(_) => break,
             };
 
-            let squares = sample.position.get_squares().unwrap();
-            let piece_count = squares.len();
+            let piece_count = sample.position.bp.count_ones() + sample.position.wp.count_ones();
             if piece_count >= prev_count {
                 self.game.push(sample);
             } else {
@@ -365,16 +364,6 @@ impl<'a> SampleIteratorTrait<'a> for BufReader<File> {
         GameIterator {
             reader: self,
             game: Vec::<Sample>::new(),
-        }
-    }
-}
-
-impl From<(Position, Result)> for Sample {
-    fn from(value: (Position, Result)) -> Self {
-        Sample {
-            result: value.1,
-            position: SampleType::Pos(value.0),
-            ..Sample::default()
         }
     }
 }

@@ -1,3 +1,4 @@
+use crate::Pos::Position;
 use crate::Sample;
 use libc;
 use libloading;
@@ -75,6 +76,25 @@ impl Base {
                 self.library.get(b"probe")?;
             let c_to_print = CString::new(fen_string).expect("CString failed");
             let tb_result = func(c_to_print.as_ptr());
+            Ok(match tb_result {
+                0 => Sample::Result::TBWIN,
+                1 => Sample::Result::TBLOSS,
+                2 => Sample::Result::TBDRAW,
+                3 => Sample::Result::UNKNOWN,
+                _ => Sample::Result::UNKNOWN,
+            })
+        }
+    }
+    //below needs to be checked tomorrow
+    pub fn probe_with_position(
+        &self,
+        position: Position,
+    ) -> Result<Sample::Result, Box<dyn std::error::Error>> {
+        unsafe {
+            let func: libloading::Symbol<
+                unsafe extern "C" fn(libc::c_uint, libc::c_uint, libc::c_uint, libc::c_int) -> i32,
+            > = self.library.get(b"probe_with_position")?;
+            let tb_result = func(position.bp, position.wp, position.k, position.color as i32);
             Ok(match tb_result {
                 0 => Sample::Result::TBWIN,
                 1 => Sample::Result::TBLOSS,

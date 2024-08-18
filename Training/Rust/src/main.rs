@@ -66,17 +66,20 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/adjudication3.samples"),
-        14,
-        100000,
-    );
+    /*let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("/mnt/e/adjudication3.samples"),
+            14,
+            100000,
+        );
 
-    generator.time = 1;
 
-    //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
-    generator.generate_games()?;
+
+        generator.time = 1;
+
+        //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
+        generator.generate_games()?;
+    */
 
     /*Data::create_subset(
             "/mnt/e/policyultimateshuffled.samples",
