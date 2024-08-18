@@ -227,35 +227,40 @@ int main(int argl, const char **argc) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
-        rep_history.emplace_back(board.get_position());
+
         auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
         if (liste.length() == 0) {
+          // we dont want those positions in our history
+          // since they are not evaluated by the network anyways
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
           break;
         }
         const auto kings = board.get_position().K;
         board.play_move(best);
 
-        const auto last_position = rep_history.back();
+        const auto last_position =
+            (rep_history.size() > 0) ? rep_history.back() : Position{};
         auto count =
             std::count(rep_history.begin(), rep_history.end(), last_position);
         if (count >= 3) {
           result = DRAW;
           break;
         }
+
+        rep_history.emplace_back(board.get_position());
       }
 
       auto res_to_string = [](Result result, Color color) {
         if ((result == BLACK_WON && color == BLACK) ||
             (result == WHITE_WON && color == WHITE)) {
-          return 2;
+          return "WON";
         } else if ((result == BLACK_WON && color != BLACK) ||
                    (result == WHITE_WON && color != WHITE)) {
-          return 1;
+          return "LOSS";
         } else if (result == DRAW) {
-          return 0;
+          return "DRAW";
         } else {
-          return -1;
+          return "UNKNOWN";
         }
       };
 
@@ -263,7 +268,7 @@ int main(int argl, const char **argc) {
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
         std::cout << rep_history[i].BP << "!" << rep_history[i].WP << "!"
-                  << rep_history[i].K << "!"
+                  << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
                   << res_to_string(result, rep_history[i].color) << std::endl;
       }
       std::cout << "END" << std::endl;

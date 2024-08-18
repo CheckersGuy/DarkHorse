@@ -220,79 +220,6 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
     Ok(())
 }
 
-pub fn remove_captures(input: &str, output: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(input)?);
-    let mut writer = BufWriter::new(File::create(output)?);
-    for sample in reader.iter_samples() {
-        let sample_copy = sample.clone();
-        let pos = match sample.position {
-            SampleType::Fen(fen_string) => Position::try_from(fen_string.as_str()).unwrap(),
-            SampleType::Pos(_) => continue,
-            _ => Position::default(),
-        };
-        let has_captures: bool = (pos.color == 1 && pos.get_jumpers::<1>() != 0)
-            || (pos.color == -1 && pos.get_jumpers::<-1>() != 0);
-        if !has_captures {
-            sample_copy.write_fen(&mut writer)?;
-        }
-    }
-
-    Ok(())
-}
-
-pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
-    let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
-    let mut my_map = HashMap::new();
-    let mut reader = BufReader::new(File::open(path)?);
-    let _buffer = String::new();
-
-    for sample in reader.iter_samples() {
-        let pos = match sample.position.clone() {
-            SampleType::Fen(fen_string) => (fen_string, sample.position.get_squares()),
-            SampleType::Pos(_) => continue,
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "didnt find a position in sample",
-                ))
-            }
-        };
-        if !filter.check(&pos.0) {
-            filter.set(&pos.0);
-            let piece_count = pos.1.unwrap().len();
-            *my_map.entry(piece_count).or_insert(0) += 1;
-        }
-    }
-    Ok(my_map)
-}
-pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut total_counter: u64 = 0;
-    let mut reader = BufReader::new(File::open(input)?);
-
-    for sample in reader.iter_samples() {
-        let fen_string = match sample.position.clone() {
-            Sample::SampleType::Fen(fen_string) => fen_string,
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Wrong data format",
-                ));
-            }
-        };
-
-        if !filter.check(&fen_string) {
-            if sample.mlh > 0 {
-                sample.write_fen(&mut writer)?;
-                total_counter += 1;
-            }
-            filter.set(&fen_string);
-        }
-    }
-    Ok(())
-}
-
 pub fn create_subset(input: &str, output: &str, num_samples: usize) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(output)?);
     let mut reader = BufReader::new(File::open(input)?);
@@ -373,7 +300,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 }
 //needs to be reworked
 //#[cfg(target_os = "windows")]
-pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+/*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(100000, File::create(output)?);
     let mut write_count = 0;
@@ -415,65 +342,20 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
     writer.flush()?;
     Ok(())
 }
+*/
 
 //#[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
-    let get_mover = |fen: &str| -> i32 {
-        match fen.chars().next() {
-            Some('W') => 1,
-            Some('B') => -1,
-            _ => 0,
-        }
-    };
-    let mut counter = 0;
-    let mut mlh_counter: Option<i32> = None;
-    for sample in game.iter_mut() {
-        let fen_string = match sample.position {
-            Sample::SampleType::Fen(ref fen) => fen,
-            _ => return,
-        };
-        let probe = base.probe_dtw(fen_string);
-        if let Ok(Some(count)) = probe {
-            mlh_counter = Some(count);
-        } else {
-            if let Some(count) = mlh_counter {
-                mlh_counter = Some(count + 1);
-            }
-        }
-        if get_mover(fen_string) == 1 {
-            counter += 1;
-        }
-        if let Some(count) = mlh_counter {
-            sample.mlh = count as i16;
-        } else {
-            sample.mlh = -1000;
-        }
-    }
-    if counter == game.len() {
-        //game has previously been rescored
-        return;
-    }
-
     let last = game.last().unwrap().clone();
-    let fen_string = match last.position {
-        Sample::SampleType::Fen(ref fen) => fen,
-        _ => return,
-    };
-
-    let mut local_result = (get_mover(fen_string), last.result);
+    let mut local_result = (last.position.color, last.result);
     for sample in game.iter_mut() {
-        let fen_string = match sample.position {
-            Sample::SampleType::Fen(ref fen) => fen,
-            _ => return,
-        };
-
-        let mover = get_mover(fen_string);
-        let result = (mover, base.probe(fen_string).unwrap());
+        let mover = sample.position.color;
+        let result = (mover, base.probe_with_position(sample.position).unwrap());
         if result.1 != Result::UNKNOWN {
             local_result = result;
         }
 
-        let piece_count = sample.position.get_squares().unwrap().len();
+        let piece_count = sample.position.piece_count();
         let mut adj_result;
         if piece_count > 10 {
             adj_result = match local_result.1 {
@@ -489,7 +371,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             adj_result = !adj_result;
         }
         if mover == -1 {
-            sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
+            sample.position = sample.position.get_color_flip();
         }
         sample.result = adj_result;
     }
@@ -530,7 +412,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     );
     Ok(())
 }
-
+/*
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
@@ -560,6 +442,7 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
 
     Ok(())
 }
+*/
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
