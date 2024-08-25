@@ -99,6 +99,7 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 #define DTW_PATH "E:\\kr_english_dtw"
 
 int main(int argl, const char **argc) {
+
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
 #endif
@@ -198,43 +199,55 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    int child_id = -1;
+    const int adj_threshold = 400;
+    const float adj_percentage = 0.8f; // 20% of all games will be adjudicated
+    std::mt19937_64 generator(getSystemTime() ^ getpid());
+    std::uniform_real_distribution<float> distrib(0, 1);
+
     std::string next_line;
-    TT.resize(21);
+    TT.resize(18);
     std::vector<Position> rep_history;
+
+    auto color_to_result = [](Color color) {
+      return ((color == BLACK) ? BLACK_WON : WHITE_WON);
+    };
     while (std::getline(std::cin, next_line)) {
 
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      int adj_count = 0;
+      bool do_adjudicate = (distrib(generator) < adj_percentage);
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
 
-      board = Board(start_pos);
+      board = start_pos;
       Result result = UNKNOWN;
       for (auto i = 0; i < 600; ++i) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
+
+        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
         if (liste.length() == 0) {
+          // we dont want those positions in our history
+          // since they are not evaluated by the network anyways
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
           break;
         }
-
-        rep_history.emplace_back(board.get_position());
-        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
         const auto kings = board.get_position().K;
         board.play_move(best);
 
-        const auto last_position = rep_history.back();
+        const auto last_position =
+            (rep_history.size() > 0) ? rep_history.back() : Position{};
         auto count =
             std::count(rep_history.begin(), rep_history.end(), last_position);
         if (count >= 3) {
           result = DRAW;
           break;
         }
+
+        rep_history.emplace_back(board.get_position());
       }
 
       auto res_to_string = [](Result result, Color color) {
@@ -254,11 +267,9 @@ int main(int argl, const char **argc) {
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
-        auto position = rep_history[i];
-        std::string result_string = "";
-        result_string.append(res_to_string(result, position.color));
-        std::cout << position.get_fen_string() << "!" << result_string
-                  << std::endl;
+        std::cout << rep_history[i].BP << "!" << rep_history[i].WP << "!"
+                  << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
+                  << res_to_string(result, rep_history[i].color) << std::endl;
       }
       std::cout << "END" << std::endl;
     }

@@ -2,8 +2,8 @@ use std::io::ErrorKind;
 
 use bloomfilter::reexports::bit_vec::BitBlock;
 
-const BLACK: i32 = -1;
-const WHITE: i32 = 1;
+const BLACK: i8 = -1;
+const WHITE: i8 = 1;
 //below needed for conversion to other bitboard layout
 const MASK_L3: u32 = 14737632;
 const MASK_L5: u32 = 117901063;
@@ -54,12 +54,16 @@ const NOT_RR_1: u32 = NOT_RL_7;
 const NOT_RL_1: u32 = (1 << 1) | (1 << 9) | (1 << 17) | (1 << 25);
 const NOT_RR_7: u32 = NOT_RL_1;
 
+const MASK_COL_1: u32 = 286331153;
+const MASK_COL_2: u32 = 572662306;
+const MASK_COL_3: u32 = 1145324612;
+const MASK_COL_4: u32 = 2290649224;
 #[derive(PartialEq, Default, Clone, Copy, Hash, Eq, Debug)]
 pub struct Position {
     pub bp: u32,
     pub wp: u32,
     pub k: u32,
-    pub color: i32,
+    pub color: i8,
 }
 
 pub struct PosIterator {
@@ -164,7 +168,7 @@ impl Move {
     }
 }
 
-fn move_left<const COLOR: i32>(maske: u32) -> u32 {
+fn move_left<const COLOR: i8>(maske: u32) -> u32 {
     if COLOR == BLACK {
         (maske & (!NOT_RL_7) & (!BRANK_WHITE)).rotate_left(7)
     } else {
@@ -172,12 +176,37 @@ fn move_left<const COLOR: i32>(maske: u32) -> u32 {
     }
 }
 
-fn move_right<const COLOR: i32>(maske: u32) -> u32 {
+fn move_right<const COLOR: i8>(maske: u32) -> u32 {
     if COLOR == BLACK {
         (maske & (!NOT_RL_1) & (!BRANK_WHITE)).rotate_left(1)
     } else {
         (maske & (!NOT_RR_1) & (!BRANK_BLACK)).rotate_right(1)
     }
+}
+
+fn get_horizontal_flip(b: u32) -> u32 {
+    let mut x: u32 = (b & MASK_COL_4) >> 3u32;
+    x |= (b & MASK_COL_3) >> 1u32;
+    x |= (b & MASK_COL_1) << 3u32;
+    x |= (b & MASK_COL_2) << 1u32;
+    return x;
+}
+
+fn get_vertical_flip(b: u32) -> u32 {
+    let mut x: u32 = b >> 28u32;
+    x |= (b >> 20u32) & 0xf0u32;
+    x |= (b >> 12u32) & 0xf00u32;
+    x |= (b >> 4u32) & 0xf000u32;
+
+    x |= b << 28u32;
+    x |= (b << 20u32) & 0x0f000000u32;
+    x |= (b << 12u32) & 0x00f00000u32;
+    x |= (b << 4u32) & 0x000f0000u32;
+    return x;
+}
+
+fn get_mirrored(b: u32) -> u32 {
+    return get_horizontal_flip(get_vertical_flip(b));
 }
 
 impl Position {
@@ -246,7 +275,7 @@ impl Position {
         }
     }
 
-    pub fn get_pieces<const COLOR: i32>(&self) -> u32 {
+    pub fn get_pieces<const COLOR: i8>(&self) -> u32 {
         if COLOR == -1 {
             self.bp
         } else {
@@ -254,7 +283,11 @@ impl Position {
         }
     }
 
-    pub fn get_movers<const COLOR: i32>(&self) -> u32 {
+    pub fn piece_count(&self) -> u32 {
+        (self.bp.count_ones() + self.wp.count_ones())
+    }
+
+    pub fn get_movers<const COLOR: i8>(&self) -> u32 {
         let nocc: u32 = !(self.bp | self.wp);
         let mut movers: u32 = 0;
         if self.k != 0 {
@@ -274,7 +307,7 @@ impl Position {
         return movers;
     }
 
-    pub fn get_jumpers<const COLOR: i32>(&self) -> u32 {
+    pub fn get_jumpers<const COLOR: i8>(&self) -> u32 {
         let nocc: u32 = !(self.bp | self.wp);
         let mut movers: u32 = 0;
         let opp: u32 = if COLOR == BLACK { self.wp } else { self.bp };
@@ -312,6 +345,19 @@ impl Position {
         PosIterator {
             partial: self.clone(),
         }
+    }
+
+    pub fn get_color_flip(&self) -> Position {
+        let mut next = Position::empty();
+        next.bp = get_mirrored(self.bp);
+        next.wp = get_mirrored(self.wp);
+        next.k = get_mirrored(self.k);
+        if self.color == -1 {
+            next.color = 1;
+        } else {
+            next.color = -1;
+        }
+        return next;
     }
 }
 
@@ -402,7 +448,7 @@ impl TryFrom<&str> for Position {
     }
 }
 
-fn jump_left<const COLOR: i32, const OPP: i32>(
+fn jump_left<const COLOR: i8, const OPP: i8>(
     from: u32,
     captures: u32,
     pos: Position,
@@ -413,7 +459,7 @@ fn jump_left<const COLOR: i32, const OPP: i32>(
     (captured, move_left::<COLOR>(captured) & nocc)
 }
 
-fn jump_right<const COLOR: i32, const OPP: i32>(
+fn jump_right<const COLOR: i8, const OPP: i8>(
     from: u32,
     captures: u32,
     pos: Position,
@@ -424,7 +470,7 @@ fn jump_right<const COLOR: i32, const OPP: i32>(
     (captured, move_right::<COLOR>(captured) & nocc)
 }
 
-fn add_capture<const COLOR: i32, const OPP: i32, const is_king: bool>(
+fn add_capture<const COLOR: i8, const OPP: i8, const is_king: bool>(
     orig: u32,
     from: u32,
     captures: u32,
@@ -499,7 +545,7 @@ impl MoveList {
         self.length += (to != 0) as usize;
     }
 
-    pub fn get_silent_movers<const COLOR: i32, const OPP: i32>(&mut self, pos: &Position) {
+    pub fn get_silent_movers<const COLOR: i8, const OPP: i8>(&mut self, pos: &Position) {
         let movers = pos.get_movers::<COLOR>();
         let nocc = !(pos.bp | pos.wp);
         let mut pawns = movers & !pos.k;
@@ -520,7 +566,7 @@ impl MoveList {
         }
     }
 
-    pub fn get_captures<const COLOR: i32, const OPP: i32>(&mut self, pos: &mut Position) {
+    pub fn get_captures<const COLOR: i8, const OPP: i8>(&mut self, pos: &mut Position) {
         let jumpers = pos.get_jumpers::<COLOR>();
         let mut pawns = jumpers & !pos.k;
         let mut kings = jumpers & pos.k;

@@ -34,7 +34,8 @@ impl DataLoader {
         };
         {
             let mut reader = BufReader::new(File::open(path)?);
-            data_loader.num_samples = Some(reader.iter_samples().count() as u64);
+            // data_loader.num_samples = Some(reader.iter_samples().count() as u64);
+            data_loader.num_samples = Some(100000000)
         };
 
         if let Some(num_samples) = data_loader.num_samples {
@@ -73,8 +74,8 @@ impl DataLoader {
             //Need to convert all the samples
             let transform = Instant::now();
             self.shuff_buf.par_iter_mut().for_each(|sample| {
-                if let SampleType::Fen(ref fen_string) = sample.position {
-                    //sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
+                if let SampleType::Fen(_) = sample.position {
+                    sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
                 }
             });
 

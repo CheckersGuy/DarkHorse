@@ -13,8 +13,8 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-L1 =2*(4096)
-L2 =32
+L1 =2*(1024+512)
+L2 =16
 L3 = 32
 
 class Network(pl.LightningModule):
@@ -25,7 +25,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.96
+        self.gamma = 0.98
 
 
         self.num_buckets =12
@@ -104,7 +104,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=2e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
