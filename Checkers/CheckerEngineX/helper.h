@@ -11,4 +11,10 @@ extern "C" void close();
 extern "C" void print_fen(char *fen_string);
 extern "C" int probe(char *fen_string);
 extern "C" int probe_dtw(char *fen_string);
+
+extern "C" int probe_with_position(unsigned int bp, unsigned int wp,
+                                   unsigned int k, int color);
+extern "C" int probe_dtw_with_position(unsigned int bp, unsigned int wp,
+                                       unsigned int k, int color);
+
 extern "C" int move_played(char *orig, char *next);
