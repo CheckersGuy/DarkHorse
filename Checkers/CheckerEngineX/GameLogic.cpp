@@ -266,9 +266,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   tab_pieces = tablebase.num_pieces;
 #endif
   const auto outer_bound = [&](Value score) {
-    return !(std::abs(score) >= TB_WIN_MAX_PLY ||
-             (std::abs(score) >= 500 &&
-              board.get_position().piece_count() <= tab_pieces));
+    return !(
+        std::abs(score) >= TB_WIN_MAX_PLY ||
+        (std::abs(score) >= 500 &&
+         (std::abs(score) >= 500 && board.get_position().piece_count() <= 10)));
   };
 
   Value static_eval = -EVAL_INFINITE;

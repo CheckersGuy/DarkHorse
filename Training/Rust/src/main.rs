@@ -36,22 +36,15 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
-    /*let mut reader = BufReader::new(File::open(
-        "/mnt/e/crazyms1ultimaterescoredshuffled.samples",
-    )?);
-    //removing call captures
-    let mut writer = BufWriter::new(File::create(
-        "/mnt/e/crazyms1ultimaterescoredshuffledfixed.samples",
-    )?);
-
-    for sample in reader.iter_samples() {
-        if let Sample::SampleType::Fen(ref position) = sample.position {
-            let pos = Pos::Position::try_from(position.as_str())?;
-            if pos.get_jumpers::<1>() == 0 {
-                sample.write_fen(&mut writer)?;
+    /* let mut reader = BufReader::new(File::open("/mnt/e/adjudication2rescored.samples")?);
+        for sample in reader.iter_samples().take(1000) {
+            if let Sample::SampleType::Fen(ref position) = sample.position {
+                let pos = Pos::Position::try_from(position.as_str())?;
+                pos.print_position();
+                println!("Result: {:?}", sample.result);
+                println!();
             }
         }
-    }
     */
     /*
         Data::remove_samples(
@@ -73,17 +66,19 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /*
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("new100ms.samples"),
-        14,
-        1000000,
-    );
+    /*let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("/mnt/e/adjudication3.samples"),
+            14,
+            100000,
+        );
 
-    generator.time = 10;
-    //generator.prev_file = Some("/mnt/e/crazyms1next3.samples");
-    generator.generate_games()?;
+
+
+        generator.time = 1;
+
+        //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
+        generator.generate_games()?;
     */
 
     /*Data::create_subset(
@@ -121,14 +116,7 @@ fn main() -> anyhow::Result<()> {
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         println!("{:?}", result);
     */
-    /*
-        Data::create_policy_data(
-            "E:/nextup100ms3rescored.samples",
-            "E:/nextuppolicy.samples",
-            &base,
-        )
-        .unwrap();
-    */
+
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
             "/mnt/e/mlhshuffled2.samples",
@@ -149,6 +137,7 @@ fn main() -> anyhow::Result<()> {
         ],
         "/mnt/e/final1rescored.samples",
     );
+
     */
 
     Ok(())

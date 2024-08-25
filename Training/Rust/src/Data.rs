@@ -220,81 +220,6 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
     Ok(())
 }
 
-pub fn create_small_net_data(input: &str, output: &str) -> std::io::Result<()> {
-    let mut writer = BufWriter::new(File::create(output)?);
-
-    let mut reader = BufReader::new(File::open(input)?);
-    for sample in reader.iter_samples() {
-        let squares = sample.position.get_squares()?;
-        let mut diff: i32 = 0;
-        for square in squares {
-            match square {
-                Square::WPAWN(_) => diff += 1,
-                Square::BPAWN(_) => diff -= 1,
-                Square::WKING(_) => diff += 1,
-                Square::BKING(_) => diff -= 1,
-            }
-        }
-        if diff.abs() >= 1 {
-            sample.write_fen(&mut writer)?;
-        }
-    }
-    Ok(())
-}
-
-pub fn material_distrib(path: &str) -> std::io::Result<HashMap<usize, usize>> {
-    let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
-    let mut my_map = HashMap::new();
-    let mut reader = BufReader::new(File::open(path)?);
-    let _buffer = String::new();
-
-    for sample in reader.iter_samples() {
-        let pos = match sample.position.clone() {
-            SampleType::Fen(fen_string) => (fen_string, sample.position.get_squares()),
-            SampleType::Pos(_) => continue,
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::NotFound,
-                    "didnt find a position in sample",
-                ))
-            }
-        };
-        if !filter.check(&pos.0) {
-            filter.set(&pos.0);
-            let piece_count = pos.1.unwrap().len();
-            *my_map.entry(piece_count).or_insert(0) += 1;
-        }
-    }
-    Ok(my_map)
-}
-pub fn dump_mlh_samples(input: &str, output: &str) -> std::io::Result<()> {
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut total_counter: u64 = 0;
-    let mut reader = BufReader::new(File::open(input)?);
-
-    for sample in reader.iter_samples() {
-        let fen_string = match sample.position.clone() {
-            Sample::SampleType::Fen(fen_string) => fen_string,
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    "Wrong data format",
-                ));
-            }
-        };
-
-        if !filter.check(&fen_string) {
-            if sample.mlh > 0 {
-                sample.write_fen(&mut writer)?;
-                total_counter += 1;
-            }
-            filter.set(&fen_string);
-        }
-    }
-    Ok(())
-}
-
 pub fn create_subset(input: &str, output: &str, num_samples: usize) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(output)?);
     let mut reader = BufReader::new(File::open(input)?);
@@ -375,7 +300,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 }
 //needs to be reworked
 //#[cfg(target_os = "windows")]
-pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+/*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(100000, File::create(output)?);
     let mut write_count = 0;
@@ -417,65 +342,20 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
     writer.flush()?;
     Ok(())
 }
+*/
 
 //#[cfg(target_os = "windows")]
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
-    let get_mover = |fen: &str| -> i32 {
-        match fen.chars().next() {
-            Some('W') => 1,
-            Some('B') => -1,
-            _ => 0,
-        }
-    };
-    let mut counter = 0;
-    let mut mlh_counter: Option<i32> = None;
-    for sample in game.iter_mut() {
-        let fen_string = match sample.position {
-            Sample::SampleType::Fen(ref fen) => fen,
-            _ => return,
-        };
-        let probe = base.probe_dtw(fen_string);
-        if let Ok(Some(count)) = probe {
-            mlh_counter = Some(count);
-        } else {
-            if let Some(count) = mlh_counter {
-                mlh_counter = Some(count + 1);
-            }
-        }
-        if get_mover(fen_string) == 1 {
-            counter += 1;
-        }
-        if let Some(count) = mlh_counter {
-            sample.mlh = count as i16;
-        } else {
-            sample.mlh = -1000;
-        }
-    }
-    if counter == game.len() {
-        //game has previously been rescored
-        return;
-    }
-
     let last = game.last().unwrap().clone();
-    let fen_string = match last.position {
-        Sample::SampleType::Fen(ref fen) => fen,
-        _ => return,
-    };
-
-    let mut local_result = (get_mover(fen_string), last.result);
+    let mut local_result = (last.position.color, last.result);
     for sample in game.iter_mut() {
-        let fen_string = match sample.position {
-            Sample::SampleType::Fen(ref fen) => fen,
-            _ => return,
-        };
-
-        let mover = get_mover(fen_string);
-        let result = (mover, base.probe(fen_string).unwrap());
+        let mover = sample.position.color;
+        let result = (mover, base.probe_with_position(sample.position).unwrap());
         if result.1 != Result::UNKNOWN {
             local_result = result;
         }
 
-        let piece_count = sample.position.get_squares().unwrap().len();
+        let piece_count = sample.position.piece_count();
         let mut adj_result;
         if piece_count > 10 {
             adj_result = match local_result.1 {
@@ -491,7 +371,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             adj_result = !adj_result;
         }
         if mover == -1 {
-            sample.position = SampleType::Fen(SampleType::invert_fen_string(fen_string).unwrap());
+            sample.position = sample.position.get_color_flip();
         }
         sample.result = adj_result;
     }
@@ -532,7 +412,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     );
     Ok(())
 }
-
+/*
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
@@ -562,6 +442,7 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
 
     Ok(())
 }
+*/
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
@@ -612,11 +493,10 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
-    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<String>)> {
+    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<Sample::Sample>)> {
         let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
         let mut unique_count = 0;
         let mut total_count = 0;
-        let mut writer = BufWriter::new(File::create(self.output.clone()).unwrap());
         if self.prev_file == None {
             return Ok((unique_count, total_count, filter));
         }
@@ -625,33 +505,12 @@ impl<'a> Generator<'a> {
         let iterator = reader.iter_samples();
 
         for sample in iterator {
-            let pos_string = match sample.position {
-                Sample::SampleType::Fen(ref fen_string) => fen_string,
-                _ => {
-                    return Err(std::io::Error::new(
-                        std::io::ErrorKind::NotFound,
-                        "No previous file",
-                    ))
-                }
-            };
-
-            match sample.result {
-                Result::TBWIN | Result::TBLOSS | Result::TBDRAW => {
-                    if !filter.check(&pos_string) {
-                        sample.write_fen(&mut writer)?;
-                    }
-                }
-                _ => {
-                    sample.write_fen(&mut writer)?;
-                }
-            }
-            if !filter.check(&pos_string) {
+            if !filter.check(&sample) {
                 unique_count += 1;
-                filter.set(&pos_string);
+                filter.set(&sample);
             }
             total_count += 1;
         }
-        writer.flush().expect("Flush Error");
         println!(
             "Read a previous file with {} unique samples and {} total samples",
             unique_count, total_count
@@ -662,16 +521,9 @@ impl<'a> Generator<'a> {
 
     pub fn generate_games(&self) -> std::io::Result<()> {
         let (mut unique_count, mut total_count, mut filter) = self.load_previous_file()?;
-        let output_file = self.output.clone();
         let time = self.time;
-        let mut writer = BufWriter::new(
-            OpenOptions::new()
-                .write(true)
-                .append(true)
-                .open(self.output.clone())
-                .unwrap(),
-        );
 
+        let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
@@ -771,7 +623,6 @@ impl<'a> Generator<'a> {
                 if cfg!(debug_assertions) {
                     println!("{}", value);
                 }
-
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
                 sample.position = SampleType::Fen(position.clone());
@@ -784,16 +635,16 @@ impl<'a> Generator<'a> {
                 }
                 if sample.result != Sample::Result::UNKNOWN {
                     if result_string.starts_with("TB_") {
-                        if !filter.check(&position) {
+                        if !filter.check(&sample) {
                             sample.write_fen::<BufWriter<File>>(&mut writer)?;
                         }
                     } else {
                         sample.write_fen::<BufWriter<File>>(&mut writer)?;
                     }
                     total_count += 1;
-                    if !filter.check(&position) {
+                    if !filter.check(&sample) {
                         unique_count += 1;
-                        filter.set(&position);
+                        filter.set(&sample);
                         bar.inc(1);
                         thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         if thread_counter.load(std::sync::atomic::Ordering::Relaxed)
