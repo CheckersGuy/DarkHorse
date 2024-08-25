@@ -93,18 +93,29 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
+    //Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    // let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 10).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
-    /*
-        let result = base.probe_dtw(fen_string).expect("Could not call function");
+    let test = Position::try_from("W:W30,29:B4,K20").expect("Could not parse fen");
+    test.print_position();
+    println!();
+    let result = base
+        .probe("W:W30,29:B4,K20")
+        .expect("Could not call function");
 
-        if let Some(mlh_counter) = result {
-            println!("{mlh_counter}");
-        }
-    */
+    println!("{:?}", result);
+
+    let result2 = base
+        .probe_with_position(test)
+        .expect("Could not call function");
+
+    println!("{:?}", result2);
+    println!("Color: {:?}", test.color);
+    println!("{:?}", test.wp);
+    println!("{:?}", test.bp);
+    println!("{:?}", test.k);
     /*
         let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
@@ -126,11 +137,11 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    Data::shuffle_data_external::<32>(
-        "/mnt/e/final1rescored.samples",
-        "/mnt/e/final1shuffled.samples",
-    )?;
-
+    /* Data::shuffle_data_external::<32>(
+            "/mnt/e/final1rescored.samples",
+            "/mnt/e/final1shuffled.samples",
+        )?;
+    */
     /*Data::merge_rescored_data(
         vec![
             "/mnt/e/finalms500batch2rescored.samples",

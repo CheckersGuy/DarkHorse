@@ -184,7 +184,7 @@ impl Position {
     pub fn print_position(&self) {
         for i in (0..8).rev() {
             for j in (0..4).rev() {
-                let maske: u32 = 1u32 << (BIT_BOARD[4 * i + j]);
+                let maske: u32 = 1u32 << (4 * i + j);
                 let value: i32 = ((maske & self.bp) != 0) as i32
                     + (((maske & self.wp) != 0) as i32) * 2i32
                     + (((maske & self.k) != 0) as i32) * 3i32;
@@ -299,10 +299,10 @@ impl Position {
     pub fn get_start_position() -> Position {
         let mut start: Position = Position::empty();
         for i in 0..12 {
-            start.bp |= 1 << BIT_BOARD[i];
+            start.bp |= 1 << i;
         }
         for i in 20..32 {
-            start.wp |= 1 << BIT_BOARD[i];
+            start.wp |= 1 << i;
         }
         start.k = 0u32;
         return start;
@@ -323,9 +323,9 @@ impl TryFrom<&str> for Position {
 
         let add_sq = |pos: &mut Position, color: i32, square: usize| {
             if color == -1 {
-                pos.bp |= 1 << BIT_BOARD[square - 1];
+                pos.bp |= 1 << (square - 1);
             } else {
-                pos.wp |= 1 << BIT_BOARD[square - 1];
+                pos.wp |= 1 << (square - 1);
             }
         };
 
@@ -379,7 +379,7 @@ impl TryFrom<&str> for Position {
                         };
 
                         add_sq(&mut pos, color, square);
-                        pos.k |= 1 << BIT_BOARD[square - 1];
+                        pos.k |= 1 << (square - 1);
                     }
 
                     _ => {

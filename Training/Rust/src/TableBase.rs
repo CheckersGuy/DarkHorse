@@ -1,3 +1,4 @@
+use crate::Pos::Position;
 use crate::Sample;
 use libc;
 use libloading;
@@ -85,12 +86,49 @@ impl Base {
         }
     }
 
+    pub fn probe_with_position(
+        &self,
+        position: Position,
+    ) -> Result<Sample::Result, Box<dyn std::error::Error>> {
+        unsafe {
+            let func: libloading::Symbol<
+                unsafe extern "C" fn(libc::c_uint, libc::c_uint, libc::c_uint, libc::c_int) -> i32,
+            > = self.library.get(b"probe_with_position")?;
+
+            let tb_result = func(position.bp, position.wp, position.k, position.color);
+            Ok(match tb_result {
+                0 => Sample::Result::TBWIN,
+                1 => Sample::Result::TBLOSS,
+                2 => Sample::Result::TBDRAW,
+                3 => Sample::Result::UNKNOWN,
+                _ => Sample::Result::UNKNOWN,
+            })
+        }
+    }
+
     pub fn probe_dtw(&self, fen_string: &str) -> Result<Option<i32>, Box<dyn std::error::Error>> {
         unsafe {
             let func: libloading::Symbol<unsafe extern "C" fn(*const libc::c_char) -> i32> =
                 self.library.get(b"probe_dtw")?;
             let c_to_print = CString::new(fen_string).expect("CString failed");
             let tb_result = func(c_to_print.as_ptr());
+            if tb_result > 0 {
+                return Ok(Some(tb_result));
+            }
+            Ok(None)
+        }
+    }
+
+    pub fn probe_dtw_with_position(
+        &self,
+        position: Position,
+    ) -> Result<Option<i32>, Box<dyn std::error::Error>> {
+        unsafe {
+            let func: libloading::Symbol<
+                unsafe extern "C" fn(libc::c_uint, libc::c_uint, libc::c_uint, libc::c_int) -> i32,
+            > = self.library.get(b"probe_dtw_with_position")?;
+
+            let tb_result = func(position.bp, position.wp, position.k, position.color);
             if tb_result > 0 {
                 return Ok(Some(tb_result));
             }

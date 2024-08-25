@@ -25,6 +25,30 @@ extern "C" int probe_dtw(char *fen_string) {
   return -1000;
 }
 
+extern "C" int probe_with_position(unsigned int bp, unsigned int wp,
+                                   unsigned int k, int color) {
+  Position next = Position{};
+  next.WP = wp;
+  next.BP = bp;
+  next.K = k;
+  next.color = (color == -1) ? BLACK : WHITE;
+  return static_cast<int>(base.probe(next));
+}
+extern "C" int probe_dtw_with_position(unsigned int bp, unsigned int wp,
+                                       unsigned int k, int color) {
+  Position next = Position{};
+  next.WP = wp;
+  next.BP = bp;
+  next.K = k;
+  next.color = (color == -1) ? BLACK : WHITE;
+
+  auto dtw = base.probe_dtw(next);
+  if (dtw.has_value()) {
+    return dtw.value();
+  }
+  return -1000;
+}
+
 extern "C" void print_fen(char *fen_string) {
   Position::pos_from_fen(fen_string).print_position();
 }

@@ -763,15 +763,14 @@ impl<'a> Generator<'a> {
         'game: for game in rx {
             for value in game {
                 let splits: Vec<&str> = value.split("!").collect();
-                let position = String::from(splits[0].replace("\n", "").trim());
-                let result_string = String::from(splits[1].replace("\n", "").trim());
+                let wp: u32 = splits[0].parse().expect("Could not parse pieces");
+                let bp: u32 = splits[1].parse().expect("Could not parse pieces");
+                let k: u32 = splits[2].parse().expect("Could not parse pieces");
+
+                let result_string = String::from(splits.last().unwrap().replace("\n", "").trim());
                 if cfg!(debug_assertions) {
                     println!("{}", value);
                 }
-                let pos = Position::try_from(position.as_str())?;
-                //below only works if it is white to move
-                //no longer works since I changed the game-data format
-                let has_captures: bool = pos.get_jumpers::<1>() != 0;
 
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
@@ -783,7 +782,7 @@ impl<'a> Generator<'a> {
                         println!("Error {result_string}");
                     }
                 }
-                if sample.result != Sample::Result::UNKNOWN && !has_captures {
+                if sample.result != Sample::Result::UNKNOWN {
                     if result_string.starts_with("TB_") {
                         if !filter.check(&position) {
                             sample.write_fen::<BufWriter<File>>(&mut writer)?;
