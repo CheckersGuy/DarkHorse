@@ -251,8 +251,8 @@ pub struct Sample {
 
 impl Sample {
     pub fn write_fen<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
-        writer.write_u32::<LittleEndian>(self.position.bp)?;
         writer.write_u32::<LittleEndian>(self.position.wp)?;
+        writer.write_u32::<LittleEndian>(self.position.bp)?;
         writer.write_u32::<LittleEndian>(self.position.k)?;
         writer.write_i8(self.position.color)?;
         writer.write_i16::<LittleEndian>(self.mlh)?;
@@ -272,8 +272,8 @@ impl Sample {
 
     pub fn read_into<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
         // to be added
-        self.position.bp = reader.read_u32::<LittleEndian>()?;
         self.position.wp = reader.read_u32::<LittleEndian>()?;
+        self.position.bp = reader.read_u32::<LittleEndian>()?;
         self.position.k = reader.read_u32::<LittleEndian>()?;
         self.position.color = reader.read_i8()?;
         self.mlh = reader.read_i16::<LittleEndian>()?;

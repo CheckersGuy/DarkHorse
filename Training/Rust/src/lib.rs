@@ -29,7 +29,8 @@ fn print_fen_string(fen_string: &str) -> PyResult<()> {
 #[pyfunction]
 fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
     let mut fen = Sample::SampleType::Fen(String::from(fen_string));
-
+    let position =
+        Position::try_from(fen_string).expect("Could not create position from fen_string");
     //need to invert to the correct color
     let get_mover = |fen: &str| -> i32 {
         match fen.chars().next() {
@@ -43,11 +44,11 @@ fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
             Sample::SampleType::invert_fen_string(fen_string).unwrap(),
         ));
     }
-    let squares = fen.get_squares()?;
-    let piece_count = squares.len();
+
+    let piece_count = position.piece_count();
     unsafe {
         let mut in_array = input.as_array_mut();
-        for square in squares {
+        for square in position.iter() {
             match square {
                 Square::WPAWN(index) => {
                     in_array[index as usize - 4] = 1.0;
@@ -109,43 +110,32 @@ impl BatchProvider {
         psqt_buckets: &PyArray1<i64>,
     ) -> PyResult<()> {
         unsafe {
+            //make sure that on the python side
+            //I pass zerod arrays (for most of them)
             let mut in_array = input.as_array_mut();
             let mut legal_array = legal_mask.as_array_mut();
             let mut res_array = result.as_array_mut();
             let mut bucket_array = bucket.as_array_mut();
             let mut psqt_array = psqt_buckets.as_array_mut();
             let mut mlh_array = mlh.as_array_mut();
+            let mut indices = Vec::new();
             for i in 0..self.batch_size {
+                indices.clear();
                 //need to add continue for not valid samples
                 let sample = self.loader.get_next().expect("Error loading sample");
-                let mut indices = Vec::new();
-                let squares = match sample.position {
-                    Sample::SampleType::Squares(our_squares) => our_squares,
-                    Sample::SampleType::Fen(ref fen_string) => {
-                        //getting the legal move indices
-                        let pos = Position::try_from(fen_string.as_str())
-                            .expect("Could not parse fenstring");
-                        let mut liste = Pos::MoveList::new();
-                        liste.get_moves(pos);
-                        for legal in liste.iter().dedup() {
-                            indices.push(legal.get_move_encoding());
-                        }
 
-                        sample.position.get_squares().unwrap()
-                    }
-                    _ => Vec::new(),
-                };
-                //setting all the illegal moves
-                for index in 0..128 {
-                    legal_array[128 * i + index] = false;
+                let mut liste = Pos::MoveList::new();
+                liste.get_moves(sample.position);
+                for legal in liste.iter().dedup() {
+                    indices.push(legal.get_move_encoding());
                 }
 
                 for index in indices {
                     legal_array[128 * i + index] = true;
                 }
 
-                let piece_count = squares.len();
-                for square in squares {
+                let piece_count = sample.position.piece_count();
+                for square in sample.position.iter() {
                     match square {
                         Square::WPAWN(index) => {
                             in_array[120 * i + index as usize - 4] = 1.0;
@@ -161,7 +151,6 @@ impl BatchProvider {
                         }
                     }
                 }
-
                 match sample.result {
                     Sample::Result::WIN | Sample::Result::TBWIN => res_array[i] = 1.0,
                     Sample::Result::LOSS | Sample::Result::TBLOSS => res_array[i] = 0.0,
