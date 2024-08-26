@@ -71,36 +71,9 @@ impl DataLoader {
                 println!("Shuffled the buffer");
                 println!("ShuffleTime {}", shuff_time.elapsed().as_millis());
             }
-            //Need to convert all the samples
-            let transform = Instant::now();
-            self.shuff_buf.par_iter_mut().for_each(|sample| {
-                if let SampleType::Fen(_) = sample.position {
-                    sample.position = SampleType::Squares(sample.position.get_squares().unwrap());
-                }
-            });
-
-            let elapsed = now.elapsed().as_millis();
-            println!("Elapsed time {}", elapsed);
-            println!("Transformation time {}", transform.elapsed().as_millis());
         }
 
         let sample = self.shuff_buf.pop().unwrap();
         Ok(sample)
-    }
-
-    pub fn dump_pos_to_file(&mut self, output: String) -> std::io::Result<()> {
-        self.shuffle = false;
-        let mut writer = File::create(output)?;
-        while let Ok(sample) = self.get_next() {
-            match sample.position {
-                SampleType::Fen(fen_string) => {
-                    writer.write_all((fen_string + "\n").as_bytes())?;
-                }
-                SampleType::Pos(_) => (),
-                _ => (),
-            }
-        }
-
-        Ok(())
     }
 }

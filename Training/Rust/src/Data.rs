@@ -28,6 +28,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use string_sum::Pos::Position;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]
@@ -615,9 +616,17 @@ impl<'a> Generator<'a> {
         'game: for game in rx {
             for value in game {
                 let splits: Vec<&str> = value.split("!").collect();
-                let wp: u32 = splits[0].parse().expect("Could not parse pieces");
-                let bp: u32 = splits[1].parse().expect("Could not parse pieces");
-                let k: u32 = splits[2].parse().expect("Could not parse pieces");
+                let wp: u32 = splits[0].parse().expect("Could not parse white-pieces");
+                let bp: u32 = splits[1].parse().expect("Could not parse black-pieces");
+                let k: u32 = splits[2].parse().expect("Could not parse king-pieces");
+                let color: i32 = splits[3].parse().expect("Could not parse color");
+
+                let mut position = Position::default();
+                position.wp = wp;
+                position.bp = bp;
+                position.k = k;
+                position.color = color as i8;
+                position.print_position();
 
                 let result_string = String::from(splits.last().unwrap().replace("\n", "").trim());
                 if cfg!(debug_assertions) {
@@ -625,7 +634,7 @@ impl<'a> Generator<'a> {
                 }
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
-                sample.position = SampleType::Fen(position.clone());
+                sample.position = position;
                 sample.result = Sample::Result::from(result_string.as_str());
 
                 if cfg!(debug_assertions) {

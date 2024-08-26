@@ -284,7 +284,7 @@ impl Position {
     }
 
     pub fn piece_count(&self) -> u32 {
-        (self.bp.count_ones() + self.wp.count_ones())
+        self.bp.count_ones() + self.wp.count_ones()
     }
 
     pub fn get_movers<const COLOR: i8>(&self) -> u32 {
