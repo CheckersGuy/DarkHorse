@@ -28,21 +28,12 @@ fn print_fen_string(fen_string: &str) -> PyResult<()> {
 
 #[pyfunction]
 fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
-    let mut fen = Sample::SampleType::Fen(String::from(fen_string));
-    let position =
+    let mut position =
         Position::try_from(fen_string).expect("Could not create position from fen_string");
     //need to invert to the correct color
-    let get_mover = |fen: &str| -> i32 {
-        match fen.chars().next() {
-            Some('W') => 1,
-            Some('B') => -1,
-            _ => 0,
-        }
-    };
-    if get_mover(fen_string) == -1 {
-        fen = Sample::SampleType::Fen(String::from(
-            Sample::SampleType::invert_fen_string(fen_string).unwrap(),
-        ));
+
+    if position.color == -1 {
+        position = position.get_color_flip();
     }
 
     let piece_count = position.piece_count();
@@ -118,9 +109,8 @@ impl BatchProvider {
             let mut bucket_array = bucket.as_array_mut();
             let mut psqt_array = psqt_buckets.as_array_mut();
             let mut mlh_array = mlh.as_array_mut();
-            let mut indices = Vec::new();
             for i in 0..self.batch_size {
-                indices.clear();
+                let mut indices = Vec::with_capacity(128);
                 //need to add continue for not valid samples
                 let sample = self.loader.get_next().expect("Error loading sample");
 

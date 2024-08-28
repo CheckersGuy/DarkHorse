@@ -93,11 +93,11 @@ fn main() -> anyhow::Result<()> {
     //let fen_string = "B:W30,29:B4,24";
     let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
-    let test = Position::try_from("W:W30,29:B4,K20").expect("Could not parse fen");
+    let test = Position::try_from("B:WK2,29:BK3,K12").expect("Could not parse fen");
     test.print_position();
     println!();
     let result = base
-        .probe("W:W30,29:B4,K20")
+        .probe("B:WK2,29:BK3,K12")
         .expect("Could not call function");
 
     println!("{:?}", result);
@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
         .probe_with_position(test)
         .expect("Could not call function");
 
-    println!("{:?}", result2);
+    println!("Result using probing with position: {:?}", result2);
     println!("Color: {:?}", test.color);
     println!("{:?}", test.wp);
     println!("{:?}", test.bp);

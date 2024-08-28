@@ -28,7 +28,6 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use string_sum::Pos::Position;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]

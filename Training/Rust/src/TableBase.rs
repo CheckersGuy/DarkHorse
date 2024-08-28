@@ -127,7 +127,7 @@ impl Base {
                 unsafe extern "C" fn(libc::c_uint, libc::c_uint, libc::c_uint, libc::c_int) -> i32,
             > = self.library.get(b"probe_dtw_with_position")?;
 
-            let tb_result = func(position.bp, position.wp, position.k, position.color);
+            let tb_result = func(position.bp, position.wp, position.k, position.color as i32);
             if tb_result > 0 {
                 return Ok(Some(tb_result));
             }

@@ -267,7 +267,7 @@ int main(int argl, const char **argc) {
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
-        std::cout << rep_history[i].BP << "!" << rep_history[i].WP << "!"
+        std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
                   << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
                   << res_to_string(result, rep_history[i].color) << std::endl;
       }
