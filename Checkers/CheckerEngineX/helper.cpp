@@ -25,7 +25,7 @@ extern "C" int probe_dtw(char *fen_string) {
   return -1000;
 }
 
-extern "C" int probe_with_position(unsigned int bp, unsigned int wp,
+extern "C" int probe_with_position(unsigned int wp, unsigned int bp,
                                    unsigned int k, int color) {
   Position next = Position{};
   next.WP = wp;
@@ -34,7 +34,7 @@ extern "C" int probe_with_position(unsigned int bp, unsigned int wp,
   next.color = (color == -1) ? BLACK : WHITE;
   return static_cast<int>(base.probe(next));
 }
-extern "C" int probe_dtw_with_position(unsigned int bp, unsigned int wp,
+extern "C" int probe_dtw_with_position(unsigned int wp, unsigned int bp,
                                        unsigned int k, int color) {
   Position next = Position{};
   next.WP = wp;
