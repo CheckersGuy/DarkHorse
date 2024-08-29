@@ -111,6 +111,14 @@ fn main() -> anyhow::Result<()> {
     println!("{:?}", test.wp);
     println!("{:?}", test.bp);
     println!("{:?}", test.k);
+
+    let test_position =
+        Position::try_from("W:W10,28,29:BK8,K7,K24,K25").expect("Could not parse fen");
+
+    for square in test_position.iter() {
+        println!("{:?}", square);
+    }
+
     /*
         let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
         base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
