@@ -376,7 +376,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         sample.result = adj_result;
     }
 }
-#[cfg(target_os = "windows")]
+//#[cfg(target_os = "windows")]
 pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
@@ -387,6 +387,11 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
         let mut borrow_game = game.clone();
         rescore_game(&mut borrow_game, base);
         for sample in borrow_game {
+            if (sample.position.color == -1 && sample.position.get_jumpers::<-1>() != 0)
+                || (sample.position.color == 1 && sample.position.get_jumpers::<1>() != 0)
+            {
+                continue;
+            }
             total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
@@ -404,7 +409,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
             }
         }
     }
-    writer.flush();
+    writer.flush()?;
 
     println!(
         "Got back a total of {} while processing {} samples",
@@ -625,7 +630,8 @@ impl<'a> Generator<'a> {
                 position.bp = bp;
                 position.k = k;
                 position.color = color as i8;
-                position.print_position();
+                //position.print_position();
+                //println!();
 
                 let result_string = String::from(splits.last().unwrap().replace("\n", "").trim());
                 if cfg!(debug_assertions) {
