@@ -36,19 +36,20 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
-    let mut reader = BufReader::new(File::open("/mnt/e/newformat.samples")?);
+    //Need to check why get-color-flip is not working as expected
+    /*let mut reader = BufReader::new(File::open("E:\\newformatrescored.samles")?);
 
-    for game in reader.iter_games().take(1000) {
-        println!("NewGame");
-        println!("---------------------------");
-        for sample in game.iter().rev() {
+        for sample in reader.iter_samples().take(1000) {
             sample.position.print_position();
             println!("Result: {:?}", sample.result);
             println!();
         }
-        println!("---------------------------");
-    }
 
+        let next = Position::get_start_position();
+        next.print_position();
+        println!();
+        next.get_color_flip().print_position();
+    */
     /*
         Data::remove_samples(
             "/mnt/e/newtry11rescoredmlhshuffledx.samples",
@@ -69,17 +70,17 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    /* let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("/mnt/e/newformat.samples"),
-            14,
-            100000,
-        );
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("/mnt/e/newformat.samples"),
+        14,
+        80000000,
+    );
 
-        generator.time = 1;
+    generator.time = 1;
 
     generator.generate_games()?;
-    */
+
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -92,8 +93,8 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    /*let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
-
+    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    /*
     let test = Position::try_from("B:WK2,29:BK3,K12").expect("Could not parse fen");
     test.print_position();
     println!();
@@ -150,5 +151,11 @@ fn main() -> anyhow::Result<()> {
 
     */
 
+    /* Data::rescore_games(
+            "E:\\newformat.samples",
+            "E:\\newformatrescored.samles",
+            &base,
+        )?;
+    */
     Ok(())
 }

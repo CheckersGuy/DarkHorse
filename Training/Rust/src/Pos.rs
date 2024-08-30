@@ -349,8 +349,8 @@ impl Position {
 
     pub fn get_color_flip(&self) -> Position {
         let mut next = Position::empty();
-        next.bp = get_mirrored(self.bp);
-        next.wp = get_mirrored(self.wp);
+        next.bp = get_mirrored(self.wp);
+        next.wp = get_mirrored(self.bp);
         next.k = get_mirrored(self.k);
         if self.color == -1 {
             next.color = 1;
