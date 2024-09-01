@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <types.h>
@@ -64,6 +65,8 @@ Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
 } // namespace Search
 
+Value searchValue(Board &board, Move &best, int depth, uint32_t time,
+                  size_t max_nodes, bool print, std::ostream &stream);
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream);
 

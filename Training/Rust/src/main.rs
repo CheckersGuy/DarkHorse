@@ -72,12 +72,13 @@ fn main() -> anyhow::Result<()> {
     */
     let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/newformat.samples"),
-        14,
-        80000000,
+        String::from("/mnt/e/testnodes4.samples"),
+        16,
+        240000000,
     );
 
-    generator.time = 1;
+    generator.time = 100000;
+    generator.max_nodes = 1000;
 
     generator.generate_games()?;
 
