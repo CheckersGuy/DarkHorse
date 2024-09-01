@@ -329,6 +329,11 @@ impl Position {
         return movers;
     }
 
+    pub fn has_capture(&self) -> bool {
+        return (self.color == -1 && self.get_jumpers::<-1>() != 0)
+            || (self.color == 1 && self.get_jumpers::<1>() != 0);
+    }
+
     pub fn get_start_position() -> Position {
         let mut start: Position = Position::empty();
         for i in 0..12 {

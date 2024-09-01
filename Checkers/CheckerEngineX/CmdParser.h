@@ -15,17 +15,25 @@ class CmdParser {
 public:
   const int arg_length;
   const char **args;
-  using CmdType = std::variant<bool, double, int, std::string,
-                               std::vector<double>, std::vector<int>,
-                               std::vector<std::string>, std::vector<bool>>;
+  using CmdType =
+      std::variant<bool, double, size_t, int, std::string, std::vector<double>,
+                   std::vector<int>, std::vector<std::string>,
+                   std::vector<bool>, std::vector<size_t>>;
   std::map<std::string, CmdType> options;
 
-  template <typename T> auto convert(std::string arg) {
+  template <typename T> T convert(std::string arg) {
     if constexpr (std::is_same_v<int, T>) {
       return std::stoi(arg);
     }
     if constexpr (std::is_same_v<double, T>) {
       return std::stod(arg);
+    }
+
+    if constexpr (std::is_same_v<size_t, T>) {
+      std::stringstream sstream(arg);
+      size_t result;
+      sstream >> result;
+      return result;
     }
     if constexpr (!std::is_same_v<int, T> && !std::is_same_v<double, T>) {
       return std::string(arg);

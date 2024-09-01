@@ -8,6 +8,7 @@
 
 Line mainPV;
 uint64_t endTime = 1000000000;
+size_t max_nodes_search = 18446744073709551615ull;
 uint64_t nodeCounter = 0u;
 int rootDepth = 0;
 Value last_eval = -INFINITE;
@@ -95,9 +96,14 @@ Value evaluate(Position pos, Ply ply) {
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream) {
+  return searchValue(board, best, depth, time, 18446744073709551615ull, print,
+                     stream);
+}
+Value searchValue(Board &board, Move &best, int depth, uint32_t time,
+                  size_t max_nodes, bool print, std::ostream &stream) {
 
   const Position start_pos = board.get_position();
-
+  max_nodes_search = max_nodes;
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
   network.accumulator.refresh();
@@ -120,30 +126,29 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   }
 
   endTime = getSystemTime() + time;
-  size_t total_nodes = 0;
   size_t total_time = 0;
   int i;
   double speed = 0;
   Value best_score = -INFINITE;
+  nodeCounter = 0;
   for (i = 1; i <= depth; i += 2) {
     network.accumulator.refresh();
     auto start_time = std::chrono::high_resolution_clock::now();
     std::stringstream ss;
-    nodeCounter = 0;
+    size_t prev_nodes = nodeCounter;
     try {
       rootDepth = i;
       best_score = Search::search_asp(board, eval, i);
     } catch (std::string &msg) {
       break;
     }
-    total_nodes += nodeCounter;
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
                         end_time - start_time)
                         .count();
     if (duration > 0)
-      speed = (double)nodeCounter / (double)duration;
+      speed = (double)(nodeCounter - prev_nodes) / (double)duration;
     total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
                       end_time - start_time)
                       .count();
@@ -155,7 +160,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
     if (print) {
       std::string temp = std::to_string(eval) + " ";
       ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
-      ss << "Nodes: " << total_nodes << " | ";
+      ss << "Nodes: " << nodeCounter << " | ";
       ss << "Time: " << time_seconds << "\n";
       ss << "Speed: " << (int)(1000000.0 * speed) << " " << mainPV.toString()
          << "\n\n";
@@ -222,6 +227,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   nodeCounter++;
 
   if ((nodeCounter & 1023) == 0u && getSystemTime() >= endTime) {
+    throw std::string{"Time_out"};
+  }
+  if (nodeCounter >= max_nodes_search) {
     throw std::string{"Time_out"};
   }
   if (!is_root && board.is_repetition()) {
@@ -413,7 +421,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         !sing_move.is_empty() && extension == 0) {
       Line local_pv;
       Value sing_beta = sing_value - 25;
-      Value sing_depth = std::max(0, depth - 4);
+      Value sing_depth = std::max(1, depth - 4);
 
       auto val = Search::search<NONPV>(cutnode, board, ply + 1, local_pv,
                                        sing_beta - 1, sing_beta, sing_depth,
@@ -552,7 +560,9 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
-
+  if (nodeCounter >= max_nodes_search) {
+    throw std::string{"Time_out"};
+  }
   if (board.is_repetition()) {
     const int sw = nodeCounter & 1;
     return 2 * sw - 1;

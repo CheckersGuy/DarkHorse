@@ -8,6 +8,7 @@
 #include "incbin.h"
 #include "types.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -133,7 +134,9 @@ int main(int argl, const char **argc) {
   parser.parse_command_line();
   Board board;
 
+  std::vector<int> value_history;
   int time, depth, hash_size;
+  size_t max_nodes = 18446744073709551615ull;
   std::string net_file;
 
   if (parser.has_option("network")) {
@@ -145,6 +148,11 @@ int main(int argl, const char **argc) {
     time = parser.as<int>("time");
   } else {
     time = 100;
+  }
+  if (parser.has_option("nodes")) {
+    max_nodes = parser.as<int>("nodes");
+  } else {
+    max_nodes = 18446744073709551615ull;
   }
 
   if (parser.has_option("hash_size")) {
@@ -173,9 +181,9 @@ int main(int argl, const char **argc) {
     TT.resize(hash_size);
     Move best;
     if (parser.has_option("bench")) {
-      searchValue(board, best, depth, time, false, std::cout);
+      searchValue(board, best, depth, time, max_nodes, false, std::cout);
     } else {
-      searchValue(board, best, depth, time, true, std::cout);
+      searchValue(board, best, depth, time, max_nodes, true, std::cout);
     }
 
     return 0;
@@ -199,8 +207,8 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    const int adj_threshold = 400;
-    const float adj_percentage = 0.8f; // 20% of all games will be adjudicated
+    const int adj_threshold = 500;
+    const float adj_percentage = 0.8f; // 80% of all games will be adjudicated
     std::mt19937_64 generator(getSystemTime() ^ getpid());
     std::uniform_real_distribution<float> distrib(0, 1);
 
@@ -212,7 +220,7 @@ int main(int argl, const char **argc) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
     while (std::getline(std::cin, next_line)) {
-
+      value_history.clear();
       if (next_line == "terminate") {
         std::exit(-1);
       }
@@ -227,15 +235,46 @@ int main(int argl, const char **argc) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
-
-        auto value = searchValue(board, best, MAX_PLY, time, false, std::cout);
         if (liste.length() == 0) {
           // we dont want those positions in our history
           // since they are not evaluated by the network anyways
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
           break;
         }
+
+        auto value = searchValue(board, best, MAX_PLY, time, max_nodes, false,
+                                 std::cout);
+        if (std::abs(value) >= adj_threshold && do_adjudicate && (i >= 3)) {
+          if (value > 0) {
+            result = ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
+          } else {
+            result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
+          }
+          break;
+        }
+        // computing the exponential moving average;
+        value_history.emplace_back(value);
+
+        if (value_history.size() >= 40) {
+          double average = 0;
+          for (auto i = 0; i < 40; i++) {
+            average += std::abs(value_history[value_history.size() - 1 - i]);
+          }
+          average /= 40.0;
+          if (average <= 3) {
+            result = DRAW;
+            break;
+          }
+        }
         const auto kings = board.get_position().K;
+        if (best.is_capture() || best.is_pawn_move(kings)) {
+          value_history.clear();
+        }
+        if (best.is_empty()) {
+          // Just in case search could not finish
+          result = UNKNOWN;
+          break;
+        }
         board.play_move(best);
 
         const auto last_position =

@@ -37,6 +37,7 @@ pub struct Generator<'a> {
     num_workers: usize,
     pub max_samples: usize,
     pub time: usize,
+    pub max_nodes: usize,
     pub prev_file: Option<&'a str>,
 }
 
@@ -387,9 +388,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
         let mut borrow_game = game.clone();
         rescore_game(&mut borrow_game, base);
         for sample in borrow_game {
-            if (sample.position.color == -1 && sample.position.get_jumpers::<-1>() != 0)
-                || (sample.position.color == 1 && sample.position.get_jumpers::<1>() != 0)
-            {
+            if sample.position.has_capture() || (sample.result == Result::UNKNOWN) {
                 continue;
             }
             total_count += 1;
@@ -482,6 +481,7 @@ impl<'a> Generator<'a> {
             num_workers: num_workers,
             max_samples: max_samples,
             time: 10,
+            max_nodes: 18446744073709551615usize,
             prev_file: None,
         }
     }
@@ -498,36 +498,12 @@ impl<'a> Generator<'a> {
         Ok(())
     }
 
-    fn load_previous_file(&self) -> std::io::Result<(u64, u64, Bloom<Sample::Sample>)> {
+    pub fn generate_games(&self) -> std::io::Result<()> {
         let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
         let mut unique_count = 0;
         let mut total_count = 0;
-        if self.prev_file == None {
-            return Ok((unique_count, total_count, filter));
-        }
-        //we iterate over all samples and build up the filters from there
-        let mut reader = BufReader::new(File::open(self.prev_file.unwrap())?);
-        let iterator = reader.iter_samples();
-
-        for sample in iterator {
-            if !filter.check(&sample) {
-                unique_count += 1;
-                filter.set(&sample);
-            }
-            total_count += 1;
-        }
-        println!(
-            "Read a previous file with {} unique samples and {} total samples",
-            unique_count, total_count
-        );
-        //checking and testing this stuff
-        Ok((unique_count, total_count, filter))
-    }
-
-    pub fn generate_games(&self) -> std::io::Result<()> {
-        let (mut unique_count, mut total_count, mut filter) = self.load_previous_file()?;
         let time = self.time;
-
+        let max_nodes = self.max_nodes;
         let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
@@ -557,7 +533,7 @@ impl<'a> Generator<'a> {
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
                 let mut command = Command::new("./generator2")
-                    .args([format!("--generate --time {}", time)])
+                    .args([format!("--generate --time {} --nodes {}", time, max_nodes)])
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .spawn()
@@ -630,8 +606,6 @@ impl<'a> Generator<'a> {
                 position.bp = bp;
                 position.k = k;
                 position.color = color as i8;
-                //position.print_position();
-                //println!();
 
                 let result_string = String::from(splits.last().unwrap().replace("\n", "").trim());
                 if cfg!(debug_assertions) {
@@ -649,17 +623,17 @@ impl<'a> Generator<'a> {
                 }
                 if sample.result != Sample::Result::UNKNOWN {
                     if result_string.starts_with("TB_") {
-                        if !filter.check(&sample) {
+                        if !filter.check(&sample.position) {
                             sample.write_fen::<BufWriter<File>>(&mut writer)?;
                         }
                     } else {
                         sample.write_fen::<BufWriter<File>>(&mut writer)?;
                     }
                     total_count += 1;
-                    if !filter.check(&sample) {
+                    if !filter.check(&sample.position) && !sample.position.has_capture() {
                         unique_count += 1;
-                        filter.set(&sample);
                         bar.inc(1);
+                        filter.set(&sample.position);
                         thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                         if thread_counter.load(std::sync::atomic::Ordering::Relaxed)
                             >= self.max_samples
