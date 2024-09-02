@@ -386,9 +386,12 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     let mut written_count: u64 = 0;
     for game in reader.iter_games() {
         let mut borrow_game = game.clone();
+        if game.last().unwrap().result == Result::UNKNOWN {
+            continue;
+        }
         rescore_game(&mut borrow_game, base);
         for sample in borrow_game {
-            if sample.position.has_capture() || (sample.result == Result::UNKNOWN) {
+            if sample.position.has_capture() {
                 continue;
             }
             total_count += 1;
