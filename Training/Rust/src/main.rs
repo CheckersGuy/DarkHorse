@@ -70,18 +70,18 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/testnodes4.samples"),
-        16,
-        240000000,
-    );
+    /* let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("/mnt/e/testnodes4.samples"),
+            16,
+            240000000,
+        );
 
-    generator.time = 100000;
-    generator.max_nodes = 1000;
+        generator.time = 100000;
+        generator.max_nodes = 1000;
 
-    generator.generate_games()?;
-
+        generator.generate_games()?;
+    */
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -94,7 +94,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
     /*
     let test = Position::try_from("B:WK2,29:BK3,K12").expect("Could not parse fen");
     test.print_position();
@@ -152,11 +152,11 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    /* Data::rescore_games(
-            "E:\\newformat.samples",
-            "E:\\newformatrescored.samles",
-            &base,
-        )?;
-    */
+    Data::rescore_games(
+        "E:\\testnodes4.samples",
+        "E:\\testnodes4rescored.samles",
+        &base,
+    )?;
+
     Ok(())
 }
