@@ -70,18 +70,18 @@ fn main() -> anyhow::Result<()> {
         "../TrainData/merged2.samples",
     )?;
     */
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/testnodes4.samples"),
-        16,
-        240000000,
-    );
+    /* let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("/mnt/e/testnodes4.samples"),
+            16,
+            240000000,
+        );
 
-    generator.time = 100000;
-    generator.max_nodes = 1000;
+        generator.time = 100000;
+        generator.max_nodes = 1000;
 
-    generator.generate_games()?;
-
+        generator.generate_games()?;
+    */
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -137,11 +137,11 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    /* Data::shuffle_data_external::<32>(
-            "/mnt/e/final1rescored.samples",
-            "/mnt/e/final1shuffled.samples",
-        )?;
-    */
+    Data::shuffle_data_external::<32>(
+        "/mnt/e/testnodes4rescored.samles",
+        "/mnt/e/testnodes4shuffle3d.samples",
+    )?;
+
     /*Data::merge_rescored_data(
         vec![
             "/mnt/e/finalms500batch2rescored.samples",
