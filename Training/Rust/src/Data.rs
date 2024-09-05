@@ -38,6 +38,7 @@ pub struct Generator<'a> {
     pub max_samples: usize,
     pub time: usize,
     pub max_nodes: usize,
+    pub depth: usize,
     pub prev_file: Option<&'a str>,
 }
 
@@ -484,6 +485,7 @@ impl<'a> Generator<'a> {
             num_workers: num_workers,
             max_samples: max_samples,
             time: 10,
+            depth: 128,
             max_nodes: 18446744073709551615usize,
             prev_file: None,
         }
@@ -507,6 +509,7 @@ impl<'a> Generator<'a> {
         let mut total_count = 0;
         let time = self.time;
         let max_nodes = self.max_nodes;
+        let depth = self.depth;
         let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
         let mut handles = Vec::new();
@@ -536,7 +539,10 @@ impl<'a> Generator<'a> {
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
                 let mut command = Command::new("./generator2")
-                    .args([format!("--generate --time {} --nodes {}", time, max_nodes)])
+                    .args([format!(
+                        "--generate --time {} --nodes {} --depth {}",
+                        time, max_nodes, depth
+                    )])
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .spawn()
