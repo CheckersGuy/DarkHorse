@@ -47,18 +47,6 @@ inline Position posFromString(const std::string &pos) {
   }
   return result;
 }
-std::vector<std::string> split(const std::string &s, char delim) {
-  std::vector<std::string> result;
-  std::stringstream ss(s);
-  std::string item;
-
-  while (getline(ss, item, delim)) {
-    result.push_back(item);
-  }
-
-  return result;
-}
-
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
@@ -99,135 +87,10 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
   recurse(board, hashset, depth, min_value, max_value);
 }
 
-std::vector<std::string> split(std::string s, std::string delimiter) {
-  std::vector<std::string> tokens;
-  size_t pos = 0;
-  std::string token;
-  while ((pos = s.find(delimiter)) != std::string::npos) {
-    token = s.substr(0, pos);
-    tokens.push_back(token);
-    s.erase(0, pos + delimiter.length());
-  }
-  tokens.push_back(s);
-
-  return tokens;
-}
-
-inline void ltrim(std::string &s) {
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-            return !std::isspace(ch);
-          }));
-}
-
-// trim from end (in place)
-inline void rtrim(std::string &s) {
-  s.erase(std::find_if(s.rbegin(), s.rend(),
-                       [](unsigned char ch) { return !std::isspace(ch); })
-              .base(),
-          s.end());
-}
-
-// trim from both ends (in place)
-inline void trim(std::string &s) {
-  rtrim(s);
-  ltrim(s);
-}
-
-template <typename C> struct is_vector : std::false_type {};
-template <typename T, typename A>
-struct is_vector<std::vector<T, A>> : std::true_type {};
-template <typename C> inline constexpr bool is_vector_v = is_vector<C>::value;
-
-struct NewCmdParser {
-
-public:
-  std::unordered_map<std::string, std::vector<std::string>> options;
-
-public:
-  void parse(int argl, const char **argc) {
-    std::stringstream sstream;
-    for (auto i = 1; i < argl; ++i) {
-      sstream << argc[i] << " ";
-    }
-
-    const auto token_string = sstream.str();
-
-    const auto tokens = split(token_string, "--");
-
-    for (auto i = 0; i < tokens.size(); ++i) {
-      const auto temp = tokens[i];
-      auto opt = split(temp, " ");
-      trim(opt[0]);
-      if (opt[0].empty())
-        continue;
-
-      options[opt[0]] = std::vector<std::string>{};
-
-      for (auto i = 1; i < opt.size(); ++i) {
-        auto value = opt[i];
-        trim(value);
-        if (value.empty())
-          continue;
-        options[opt[0]].emplace_back(value);
-      }
-      for (auto &value : options[opt[0]]) {
-        trim(value);
-      }
-    }
-  }
-
-  bool has_option(std::string option_name) {
-    return options.find(option_name) != options.end();
-  }
-
-  template <typename T> T as(std::string option_name) {
-    // support more datatypes later
-    auto &args = options[option_name];
-    if constexpr (std::is_same_v<int, T>) {
-      return std::stoi(args[0]);
-    }
-    if constexpr (std::is_same_v<std::string, T>) {
-      return args[0];
-    }
-
-    if constexpr (std::is_same_v<std::vector<int>, T>) {
-      std::vector<int> result;
-      for (auto value : args) {
-        std::cout << value << std::endl;
-        result.emplace_back(stoi(value));
-      }
-      return result;
-    }
-
-    if constexpr (std::is_same_v<std::vector<std::string>, T>) {
-      std::vector<std::string> result;
-      for (auto value : args) {
-        result.emplace_back(value);
-      }
-      return result;
-    }
-    // für morgen
-    // wie bekomme ich den inneren Typ eines Vektors ?
-  }
-};
-
 #define DB_PATH "E:\\kr_english_wld"
 #define DTW_PATH "E:\\kr_english_dtw"
 
 int main(int argl, const char **argc) {
-
-  NewCmdParser parsertest;
-  parsertest.parse(argl, argc);
-  std::cout << parsertest.as<std::vector<int>>("time").size() << std::endl;
-  /*
-    for (auto [key, value] : parsertest.options) {
-      std::cout << "Key: " << key << " and Values: ";
-      std::copy(value.begin(), value.end(),
-                std::ostream_iterator<std::string>(std::cout, " "));
-      std::cout << std::endl;
-    }
-  */
-  return 0;
 
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
@@ -236,7 +99,7 @@ int main(int argl, const char **argc) {
     Position test =
         Position::pos_from_fen("W:W32,30,28,27,26,25,19,15:B18,17,14,12,7,6,3,1");
 
-    MoveListe liste;
+    MoveL/diste liste;
     get_moves(test, liste);
 
     for (auto m : liste) {
@@ -258,8 +121,8 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-  CmdParser parser(argl, argc);
-  parser.parse_command_line();
+  CmdParser parser;
+  parser.parse(argl, argc);
   Board board;
 
   std::vector<int> value_history;
@@ -289,14 +152,15 @@ int main(int argl, const char **argc) {
     hash_size = 21;
   }
 
+  if (parser.has_option("depth")) {
+    depth = parser.as<int>("depth");
+  } else {
+    depth = parser.has_option("bench") ? 27 : MAX_PLY;
+  }
+
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
-    if (parser.has_option("depth")) {
-      depth = parser.as<int>("depth");
-    } else {
-      depth = parser.has_option("bench") ? 27 : MAX_PLY;
-    }
 
     if (parser.has_option("position")) {
       auto pos_string = parser.as<std::string>("position");
@@ -370,15 +234,16 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        auto value = searchValue(board, best, MAX_PLY, time, max_nodes, false,
-                                 std::cout);
+        auto value =
+            searchValue(board, best, depth, time, max_nodes, false, std::cout);
         if (best.is_empty()) {
           // Just in case search could not finish
           result = UNKNOWN;
           break;
         }
         if (std::abs(value) >= adj_threshold && do_adjudicate && (i >= 15) &&
-            (board.get_position().piece_count() <= 10)) {
+            (board.get_position().piece_count() <= 10 &&
+             !board.get_position().has_jumps())) {
           if (value > 0) {
             result = ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
           } else {
@@ -388,18 +253,6 @@ int main(int argl, const char **argc) {
         }
         // computing the exponential moving average;
         value_history.emplace_back(value);
-
-        if (value_history.size() >= 40) {
-          double average = 0;
-          for (auto i = 0; i < 40; i++) {
-            average += std::abs(value_history[value_history.size() - 1 - i]);
-          }
-          average /= 40.0;
-          if (average <= 3 && (board.get_position().piece_count() <= 10)) {
-            result = DRAW;
-            break;
-          }
-        }
 
         const auto kings = board.get_position().K;
         if (best.is_capture() || best.is_pawn_move(kings)) {
