@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -290,6 +290,12 @@ int main(int argl, const char **argc) {
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
+        // skipping terminal positions
+        MoveListe check_liste;
+        get_moves(rep_history[i], check_liste);
+        if (check_liste.length() == 0)
+          continue;
+
         std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
                   << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
                   << res_to_string(result, rep_history[i].color) << std::endl;
