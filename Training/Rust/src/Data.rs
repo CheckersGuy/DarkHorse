@@ -346,6 +346,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 */
 
 //#[cfg(target_os = "windows")]
+
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     let last = game.last().unwrap().clone();
     let mut local_result = (last.position.color, last.result);
@@ -356,9 +357,8 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             local_result = result;
         }
 
-        let piece_count = sample.position.piece_count();
         let mut adj_result;
-        if piece_count > 10 {
+        if result.1 == Result::UNKNOWN {
             adj_result = match local_result.1 {
                 Result::TBWIN => Result::WIN,
                 Result::TBLOSS => Result::LOSS,
@@ -377,6 +377,7 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
         sample.result = adj_result;
     }
 }
+
 //#[cfg(target_os = "windows")]
 pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
