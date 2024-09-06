@@ -13,13 +13,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <hash_set>
+#include <iterator>
 #include <random>
+#include <sstream>
 #include <string>
 #include <unistd.h>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -44,18 +47,6 @@ inline Position posFromString(const std::string &pos) {
   }
   return result;
 }
-std::vector<std::string> split(const std::string &s, char delim) {
-  std::vector<std::string> result;
-  std::stringstream ss(s);
-  std::string item;
-
-  while (getline(ss, item, delim)) {
-    result.push_back(item);
-  }
-
-  return result;
-}
-
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
@@ -108,7 +99,7 @@ int main(int argl, const char **argc) {
     Position test =
         Position::pos_from_fen("W:W32,30,28,27,26,25,19,15:B18,17,14,12,7,6,3,1");
 
-    MoveListe liste;
+    MoveL/diste liste;
     get_moves(test, liste);
 
     for (auto m : liste) {
@@ -130,8 +121,8 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-  CmdParser parser(argl, argc);
-  parser.parse_command_line();
+  CmdParser parser;
+  parser.parse(argl, argc);
   Board board;
 
   std::vector<int> value_history;
@@ -161,14 +152,15 @@ int main(int argl, const char **argc) {
     hash_size = 21;
   }
 
+  if (parser.has_option("depth")) {
+    depth = parser.as<int>("depth");
+  } else {
+    depth = parser.has_option("bench") ? 27 : MAX_PLY;
+  }
+
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
-    if (parser.has_option("depth")) {
-      depth = parser.as<int>("depth");
-    } else {
-      depth = parser.has_option("bench") ? 27 : MAX_PLY;
-    }
 
     if (parser.has_option("position")) {
       auto pos_string = parser.as<std::string>("position");
@@ -207,7 +199,7 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    const int adj_threshold = 500;
+    const int adj_threshold = 350;
     const float adj_percentage = 0.8f; // 80% of all games will be adjudicated
     std::mt19937_64 generator(getSystemTime() ^ getpid());
     std::uniform_real_distribution<float> distrib(0, 1);
@@ -242,9 +234,16 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        auto value = searchValue(board, best, MAX_PLY, time, max_nodes, false,
-                                 std::cout);
-        if (std::abs(value) >= adj_threshold && do_adjudicate && (i >= 3)) {
+        auto value =
+            searchValue(board, best, depth, time, max_nodes, false, std::cout);
+        if (best.is_empty()) {
+          // Just in case search could not finish
+          result = UNKNOWN;
+          break;
+        }
+        if (std::abs(value) >= adj_threshold && do_adjudicate && (i >= 15) &&
+            (board.get_position().piece_count() <= 10 &&
+             !board.get_position().has_jumps())) {
           if (value > 0) {
             result = ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
           } else {
@@ -255,26 +254,11 @@ int main(int argl, const char **argc) {
         // computing the exponential moving average;
         value_history.emplace_back(value);
 
-        if (value_history.size() >= 40) {
-          double average = 0;
-          for (auto i = 0; i < 40; i++) {
-            average += std::abs(value_history[value_history.size() - 1 - i]);
-          }
-          average /= 40.0;
-          if (average <= 3) {
-            result = DRAW;
-            break;
-          }
-        }
         const auto kings = board.get_position().K;
         if (best.is_capture() || best.is_pawn_move(kings)) {
           value_history.clear();
         }
-        if (best.is_empty()) {
-          // Just in case search could not finish
-          result = UNKNOWN;
-          break;
-        }
+
         board.play_move(best);
 
         const auto last_position =
@@ -306,6 +290,12 @@ int main(int argl, const char **argc) {
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
+        // skipping terminal positions
+        MoveListe check_liste;
+        get_moves(rep_history[i], check_liste);
+        if (check_liste.length() == 0)
+          continue;
+
         std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
                   << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
                   << res_to_string(result, rep_history[i].color) << std::endl;
