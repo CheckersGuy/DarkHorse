@@ -65,6 +65,7 @@ impl std::ops::Not for Result {
             Result::TBLOSS => Result::TBWIN,
             Result::TBWIN => Result::TBLOSS,
             Result::TBDRAW => Result::TBDRAW,
+            Result::UNKNOWN => Result::UNKNOWN,
             _ => self,
         }
     }

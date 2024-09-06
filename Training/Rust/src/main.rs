@@ -153,8 +153,8 @@ fn main() -> anyhow::Result<()> {
     */
 
     Data::rescore_games(
-        "E:\\testnodes4.samples",
-        "E:\\testnodes4rescored.samles",
+        "E:\\testnode5.samples",
+        "E:\\testnodes5rescoredcheck2.samples",
         &base,
     )?;
 
