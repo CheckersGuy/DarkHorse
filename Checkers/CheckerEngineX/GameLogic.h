@@ -57,6 +57,10 @@ Value search_asp(Board &board, Value last_score, Depth depth);
 template <NodeType type>
 Value search(bool cutnode, Board &board, Ply ply, Line &line, Value alpha,
              Value beta, Depth depth, Move excluded, bool is_sing_search);
+
+Value search_root(bool cutnode, Board &board, Ply ply, Line &line, Value alpha,
+                  Value beta, Depth depth, Move excluded, bool is_sing_search);
+
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          Move excluded, bool is_sing_search);
@@ -67,6 +71,7 @@ Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   size_t max_nodes, bool print, std::ostream &stream);
+
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream);
 
