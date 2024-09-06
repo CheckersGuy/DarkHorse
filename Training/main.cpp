@@ -43,8 +43,8 @@ int main(int argl, const char **argc) {
   return 0;
   */
 
-  CmdParser parser(argl, argc);
-  parser.parse_command_line();
+  CmdParser parser;
+  parser.parse(argl, argc);
 
   if (parser.has_option("match")) {
     if (parser.has_option("engines") && parser.has_option("time")) {
