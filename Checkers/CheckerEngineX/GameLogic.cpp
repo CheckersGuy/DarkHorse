@@ -275,14 +275,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #endif
 
   const auto outer_bound = [&](Value score) {
-    return !(
-        std::abs(score) >= TB_WIN_MAX_PLY ||
-        (std::abs(score) >= 500 && board.get_position().piece_count() <= 10));
+    return !(std::abs(score) >= TB_WIN_MAX_PLY || (std::abs(score) >= 500)) &&
+           (std::abs(score) < EVAL_INFINITE);
   };
 
   Value static_eval = -EVAL_INFINITE;
-
-  // doing a collision check
 
   bool found_hash = TT.find_hash(key, info);
   bool is_tt_pv = false;
@@ -356,8 +353,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
-      !liste[0].is_capture() && depth < 11 && outer_bound(static_eval) &&
-      !board.get_position().has_jumps(~board.get_mover()) &&
+      outer_bound(static_eval) && !board.get_position().has_jumps() &&
       static_eval - 50 - 30 * (depth - 1) >= beta) {
     return static_eval;
   }
