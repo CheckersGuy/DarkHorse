@@ -13,6 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
+from AdEMAMix import AdEMAMix
 L1 =2*(4096)
 L2 =32
 L3 = 32
@@ -104,7 +105,8 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = Ranger(self.parameters(),lr=4e-2,betas=(.9, 0.999),use_gc=True,gc_loc=True)
+        #optimizer = AdEMAMix(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
