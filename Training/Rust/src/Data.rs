@@ -396,6 +396,9 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
             if sample.position.has_capture() {
                 continue;
             }
+            if (sample.position.bp == 0) || (sample.position.wp == 0) {
+                continue;
+            }
             total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
