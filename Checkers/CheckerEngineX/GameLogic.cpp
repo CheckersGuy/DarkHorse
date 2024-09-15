@@ -326,7 +326,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   TB_RESULT result = TB_RESULT::UNKNOWN;
   if (!is_root && excluded.is_empty() &&
-      (result = tablebase.probe(board.get_position()) != TB_RESULT::UNKNOWN)) {
+      ((result = tablebase.probe(board.get_position())) !=
+       TB_RESULT::UNKNOWN)) {
     auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply)
                     : (result == TB_RESULT::LOSS) ? tbloss(ply)
                                                   : 0;
