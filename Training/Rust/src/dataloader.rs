@@ -23,8 +23,10 @@ pub struct DataLoader {
 
 impl DataLoader {
     pub fn new(path: String, capacity: usize, shuffle: bool) -> std::io::Result<DataLoader> {
+        let file = File::open(path.clone())?;
+        let file_length = file.metadata().unwrap().len();
         let mut data_loader = DataLoader {
-            reader: BufReader::with_capacity(1000000, File::open(path.clone())?),
+            reader: BufReader::with_capacity(1000000, file),
             path: path.clone(),
             shuff_buf: Vec::new(),
             num_samples: Some(100000000),
@@ -33,7 +35,13 @@ impl DataLoader {
             rng: StdRng::from_rng(thread_rng()).unwrap(),
         };
 
-        Ok(data_loader)
+        data_loader.num_samples =
+            Some(file_length / (std::mem::size_of::<Sample::Sample>() as u64));
+        data_loader.capa = std::cmp::min(
+            data_loader.num_samples.unwrap_or(0) as usize,
+            data_loader.capa,
+        );
+        return Ok(data_loader);
     }
 
     pub fn read(&mut self) -> std::io::Result<Sample::Sample> {
