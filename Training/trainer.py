@@ -15,7 +15,7 @@ if __name__ == "__main__":
     model = Experimental.Network()
     data_loader = Experimental.LitDataModule(train_data="/mnt/e/testbookrescored.samples",                                      
     val_data="/mnt/e/validation.samples",
-    batch_size=batch_size, buffer_size=90000000)
+    batch_size=batch_size, buffer_size=100000000)
     
 
     
