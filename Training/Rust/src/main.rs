@@ -57,32 +57,22 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/master1.samples",
         )?;
     */
-    //Data::create_unique_fens("training.pos", "unique.pos")?;
 
-    //Need to write some code to combine 2 or more sample files
-    //which should be straight forward to add
     //
-    /* Data::merge_samples(
-        vec![
-            "../TrainData/newopen14.samples",
-            "../TrainData/merged.samples",
-        ],
-        "../TrainData/merged2.samples",
-    )?;
-    */
-    /*let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("/mnt/e/testnode6.samples"),
-            14,
-            150000000,
-        );
 
-        generator.time = 100000;
-        generator.max_nodes = 50000000;
-        generator.depth = 7;
+    let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("/mnt/e/testbook.samples"),
+        14,
+        2500000,
+    );
 
-        generator.generate_games()?;
-    */
+    generator.time = 1;
+    generator.max_nodes = 500000000;
+    generator.depth = 70;
+
+    generator.generate_games()?;
+
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -95,7 +85,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
     /*
     let test = Position::try_from("B:WK2,29:BK3,K12").expect("Could not parse fen");
     test.print_position();
@@ -153,12 +143,14 @@ fn main() -> anyhow::Result<()> {
     );
 
     */
-
-    Data::rescore_games(
-        "E:\\testnodes4.samples",
-        "E:\\testnodes4rescoredcheck.samples",
-        &base,
-    )?;
+    Data::create_book("/mnt/e/drawbook.book", "/mnt/e/testbook.pos", 6)
+        .expect("Could not create book");
+    /* Data::rescore_games(
+         "E:\\testnodes4.samples",
+         "E:\\testnodes4rescoredcheck.samples",
+         &base,
+     )?;
+    */
 
     Ok(())
 }

@@ -27,22 +27,12 @@ impl DataLoader {
             reader: BufReader::with_capacity(1000000, File::open(path.clone())?),
             path: path.clone(),
             shuff_buf: Vec::new(),
-            num_samples: None,
+            num_samples: Some(100000000),
             shuffle,
             capa: capacity,
             rng: StdRng::from_rng(thread_rng()).unwrap(),
         };
-        {
-            let mut reader = BufReader::new(File::open(path)?);
-            // data_loader.num_samples = Some(reader.iter_samples().count() as u64);
-            data_loader.num_samples = Some(100000000)
-        };
 
-        if let Some(num_samples) = data_loader.num_samples {
-            data_loader.capa = std::cmp::min(data_loader.capa, num_samples as usize);
-            data_loader.shuff_buf = Vec::with_capacity(data_loader.capa);
-            println!("Got {} available samples", num_samples);
-        }
         Ok(data_loader)
     }
 
