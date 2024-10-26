@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -191,7 +191,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(8, pos, -30, 30);
+      generate_book(6, pos, -27, 27);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -199,8 +199,9 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    const int adj_threshold = 350;
-    const float adj_percentage = 0.8f; // 80% of all games will be adjudicated
+    // const int adj_threshold = 350;
+    // const float adj_percentage = 0.8f; // 80% of all games will be
+    // adjudicated
     std::mt19937_64 generator(getSystemTime() ^ getpid());
     std::uniform_real_distribution<float> distrib(0, 1);
 
@@ -216,7 +217,7 @@ int main(int argl, const char **argc) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      bool do_adjudicate = (distrib(generator) < adj_percentage);
+      // bool do_adjudicate = (distrib(generator) < adj_percentage);
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
@@ -241,17 +242,6 @@ int main(int argl, const char **argc) {
           result = UNKNOWN;
           break;
         }
-        if (std::abs(value) >= adj_threshold && do_adjudicate && (i >= 15) &&
-            (board.get_position().piece_count() <= 10 &&
-             !board.get_position().has_jumps())) {
-          if (value > 0) {
-            result = ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
-          } else {
-            result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
-          }
-          break;
-        }
-        // computing the exponential moving average;
         value_history.emplace_back(value);
 
         const auto kings = board.get_position().K;
@@ -261,16 +251,14 @@ int main(int argl, const char **argc) {
 
         board.play_move(best);
 
-        const auto last_position =
-            (rep_history.size() > 0) ? rep_history.back() : Position{};
-        auto count =
-            std::count(rep_history.begin(), rep_history.end(), last_position);
+        rep_history.emplace_back(board.get_position());
+
+        auto count = std::count(rep_history.begin(), rep_history.end(),
+                                rep_history.back());
         if (count >= 3) {
           result = DRAW;
           break;
         }
-
-        rep_history.emplace_back(board.get_position());
       }
 
       auto res_to_string = [](Result result, Color color) {

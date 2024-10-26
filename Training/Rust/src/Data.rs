@@ -387,10 +387,12 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     let mut total_count = 0;
     let mut written_count: u64 = 0;
     for game in reader.iter_games() {
-        let mut borrow_game = game.clone();
         if game.last().unwrap().result == Result::UNKNOWN {
             continue;
         }
+        
+        let mut borrow_game = game.clone();
+       
         rescore_game(&mut borrow_game, base);
         for sample in borrow_game {
             if sample.position.has_capture() {
@@ -399,6 +401,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
             if (sample.position.bp == 0) || (sample.position.wp == 0) {
                 continue;
             }
+            println!("Color: {}",sample.position.color);
             total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {

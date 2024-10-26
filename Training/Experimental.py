@@ -45,8 +45,16 @@ class Network(pl.LightningModule):
         ac= self.accu.forward(x)
         ac = torch.clamp(ac,0.0,1.0)
 
+
+
         ac_x,ac_y = ac.split(L1//2,dim = 1)
         ac_out = ac_x.mul(ac_y)*(127.0/128.0)
+
+        b,rest = ac_out.split((L1//2)-self.num_buckets,dim=1)
+        #testindices = torch.argmax(rest,dim =1)
+        #testindices = testindices.flatten()+offset
+
+        ac_out = torch.cat((b,rest),dim=1)
 
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
@@ -105,7 +113,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=4e-2,betas=(.9, 0.999),use_gc=True,gc_loc=True)
+        optimizer = Ranger(self.parameters(),lr=4e-2,betas=(.9, 0.999), eps=1.0e-7, use_gc=False,gc_loc=False)
         #optimizer = AdEMAMix(self.parameters())
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
