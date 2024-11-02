@@ -37,19 +37,19 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 
 fn main() -> anyhow::Result<()> {
     //Need to check why get-color-flip is not working as expected
-    /*let mut reader = BufReader::new(File::open("E:\\newformatrescored.samles")?);
+    let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
-        for sample in reader.iter_samples().take(1000) {
-            sample.position.print_position();
-            println!("Result: {:?}", sample.result);
-            println!();
-        }
-
-        let next = Position::get_start_position();
-        next.print_position();
+    for sample in reader.iter_samples().take(1000) {
+        sample.position.print_position();
+        println!("Result: {:?}", sample.result);
         println!();
-        next.get_color_flip().print_position();
-    */
+    }
+
+    let next = Position::get_start_position();
+    next.print_position();
+    println!();
+    next.get_color_flip().print_position();
+
     /*
         Data::remove_samples(
             "/mnt/e/newtry11rescoredmlhshuffledx.samples",
@@ -59,20 +59,20 @@ fn main() -> anyhow::Result<()> {
     */
 
     //
+    /*
+        let mut generator = Generator::new(
+            String::from("../Positions/ultrabook2.pos"),
+            String::from("/mnt/e/weirdstuff.samples"),
+            14,
+            20000000,
+        );
 
-    let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/testbook.samples"),
-        14,
-        2500000,
-    );
+        generator.time = 50;
+        generator.max_nodes = 250000000;
+        generator.depth = 70;
 
-    generator.time = 1;
-    generator.max_nodes = 500000000;
-    generator.depth = 70;
-
-    generator.generate_games()?;
-
+        generator.generate_games()?;
+    */
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    //Data::create_book("../Positions/drawbook.book", "testbook.pos", 6)?;
+    //Data::create_book("../Positions/drawbook.book", "moretesting2.pos", 8)?;
 
     //let fen_string = "B:W30,29:B4,24";
     //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
@@ -128,10 +128,10 @@ fn main() -> anyhow::Result<()> {
     */
 
     //Data::create_mlh_data("E:/newtry11rescored.samples", "E:/mlh3.samples", &base)?;
-    /*Data::shuffle_data_external::<32>(
-        "/mnt/e/testnodes4rescored.samles",
-        "/mnt/e/testnodes4shuffle3d.samples",
-    )?;
+    /* Data::shuffle_data_external::<16>(
+         "/mnt/e/final1mstestrescored.samples",
+         "/mnt/e/final1msshuffled.samples",
+     )?;
     */
 
     /*Data::merge_rescored_data(
@@ -143,8 +143,6 @@ fn main() -> anyhow::Result<()> {
     );
 
     */
-    Data::create_book("/mnt/e/drawbook.book", "/mnt/e/testbook.pos", 6)
-        .expect("Could not create book");
     /* Data::rescore_games(
          "E:\\testnodes4.samples",
          "E:\\testnodes4rescoredcheck.samples",

@@ -191,7 +191,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(6, pos, -27, 27);
+      generate_book(8, pos, -100, 100);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -250,15 +250,15 @@ int main(int argl, const char **argc) {
         }
 
         board.play_move(best);
-
-        rep_history.emplace_back(board.get_position());
-
-        auto count = std::count(rep_history.begin(), rep_history.end(),
-                                rep_history.back());
+        auto count =
+            std::count(rep_history.begin(), rep_history.end(),
+                       (rep_history.empty()) ? Position{} : rep_history.back());
         if (count >= 3) {
           result = DRAW;
           break;
         }
+
+        rep_history.emplace_back(board.get_position());
       }
 
       auto res_to_string = [](Result result, Color color) {
