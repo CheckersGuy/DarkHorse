@@ -232,15 +232,15 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (nodeCounter >= max_nodes_search) {
     throw std::string{"Time_out"};
   }
-  if (!is_root && board.is_repetition()) {
-    const int sw = nodeCounter & 1;
-    return 2 * sw - 1;
-  }
+
   if (depth <= 0) {
     return Search::qs<next_type>(board, ply, pv, alpha, beta, depth, Move{},
                                  is_sing_search);
   }
-
+  if (!is_root && board.is_repetition()) {
+    const int sw = nodeCounter & 1;
+    return 2 * sw - 1;
+  }
   Value best_score = -EVAL_INFINITE;
   NodeInfo info;
   Move tt_move;
@@ -337,7 +337,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if ((tb_value > 0 && tb_value >= beta) ||
         (tb_value < 0 && tb_value <= alpha)) {
 
-      if (board.get_position().piece_count() <= 10 &&
+      if (board.get_position().piece_count() <= tab_pieces &&
           std::abs(tb_value) >= 500) {
         if (tb_value >= 500) {
           tb_value += 300;

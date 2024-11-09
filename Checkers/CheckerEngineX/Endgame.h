@@ -11,8 +11,8 @@ struct TableBase {
   EGDB_DRIVER *handle;
   EGDB_DRIVER *dtw_handle;
   EGDB_DRIVER *mtc_handle;
-  int num_pieces{6}; // only used for the wdl-tablebase
-  uint64_t cache_size{500};
+  int num_pieces{10}; // only used for the wdl-tablebase
+  uint64_t cache_size{2000};
 
   ~TableBase();
 

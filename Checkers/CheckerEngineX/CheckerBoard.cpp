@@ -57,7 +57,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
-    TT.resize(21);
+    TT.resize(22);
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
