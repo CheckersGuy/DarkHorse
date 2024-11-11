@@ -313,7 +313,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     sing_value = tt_value;
   }
   if (!board.get_position().has_jumps(board.get_mover())) {
-    // only store static evaluation in quiet positions
     if (found_hash && info.flag != Flag::None &&
         std::abs(info.static_eval) < EVAL_INFINITE) {
       static_eval = value_from_tt(info.static_eval, ply, board.get_position());
@@ -375,7 +374,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
       const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-      return (int)(Bits::pop_count(kings_captured) * 16 +
+      return (int)(Bits::pop_count(kings_captured) * 14 +
                    Bits::pop_count(pawns_captured) * 10);
     }
 
@@ -417,7 +416,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
     Line local_pv;
     Value val = -INFINITE;
-    if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
+    if (!is_root && move == sing_move && depth >= 1 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
       Line local_pv;
       Value sing_beta = sing_value - 25;
@@ -431,8 +430,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         extension = 1;
       } else if (sing_beta >= beta) {
         return sing_beta;
-      } else if (sing_value >= beta) {
-        extension = -1;
+      } else if (sing_value >= beta &&
+                 (std::abs(sing_value) < TB_WIN_MAX_PLY)) {
+        extension = -3;
+      } else if (cutnode) {
+        extension = -2;
       }
     }
     Depth reduction =
@@ -622,7 +624,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
-    return (int)(Bits::pop_count(kings_captured) * 16 +
+    return (int)(Bits::pop_count(kings_captured) * 14 +
                  Bits::pop_count(pawns_captured) * 10);
   });
   Value old_alpha = alpha;

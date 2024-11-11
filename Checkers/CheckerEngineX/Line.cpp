@@ -17,10 +17,10 @@ int Line::length() const { return counter; }
 void Line::addMove(const Move &move) { this->myArray[counter++] = move; }
 
 void Line::concat(const Move &best, const Line &line) {
-  myArray[0] = best;
-  for (int i = 0; i < line.length(); ++i) {
+  for (int i = line.length() - 1; i < line.length(); ++i) {
     myArray[i + 1] = line.myArray[i];
   }
+  myArray[0] = best;
   this->counter = line.counter + 1;
 }
 
