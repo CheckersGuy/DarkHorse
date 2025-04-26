@@ -171,6 +171,8 @@ inline bool isLoss(Value val) { return val <= TB_LOSS_MAX_PLY; }
 
 inline bool isWin(Value val) { return val >= -TB_LOSS_MAX_PLY; }
 
+inline bool isWinningEval(Value val) { return val >= 500; };
+inline bool isLosingEval(Value val) { return val <= -500; };
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
   if constexpr (color == BLACK) {
     return maske << 4u;
