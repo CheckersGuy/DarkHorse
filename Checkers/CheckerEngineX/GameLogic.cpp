@@ -284,8 +284,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #endif
 
   const auto outer_bound = [&](Value score) {
-    return !(std::abs(score) >= TB_WIN_MAX_PLY || (std::abs(score) >= 500)) &&
-           (std::abs(score) < EVAL_INFINITE);
+    return !isWinningEval(std::abs(score));
   };
 
   Value static_eval = -EVAL_INFINITE;
