@@ -35,6 +35,11 @@ int get_mlh_estimate(Position pos) {
 }
 
 inline Value value_to_tt(Value v, int ply, Position pos) {
+
+  if (!isEval(v)) {
+    return v;
+  }
+
   if (std::abs(v) >= 500 && pos.piece_count() <= 10) {
     return v >= 500 ? v + ply : v <= -500 ? v - ply : v;
   }
@@ -42,6 +47,10 @@ inline Value value_to_tt(Value v, int ply, Position pos) {
 }
 
 inline Value value_from_tt(Value v, int ply, Position pos) {
+  if (!isEval(v)) {
+    return v;
+  }
+
   if (std::abs(v) >= 500 && pos.piece_count() <= 10) {
     return v >= 500 ? v - ply : v <= -500 ? v + ply : v;
   }
@@ -582,7 +591,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return value_from_tt(info.score, ply, board.get_position());
     }
   }
-  Value static_eval = -EVAL_INFINITE;
+  Value static_eval = -INFINITE;
   if (found_hash && std::abs(info.static_eval) < EVAL_INFINITE) {
     static_eval = value_from_tt(info.static_eval, ply, board.get_position());
   }
@@ -604,7 +613,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       net_val = static_eval;
     } else {
       net_val = evaluate(board.get_position(), ply);
-      TT.store_hash(in_pv, -EVAL_INFINITE,
+      TT.store_hash(in_pv, INFINITE,
                     value_to_tt(net_val, ply, board.get_position()), key,
                     TT_LOWER, 0, Move{}, is_tt_pv);
     }
