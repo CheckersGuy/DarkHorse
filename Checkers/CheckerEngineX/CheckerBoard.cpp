@@ -1,10 +1,12 @@
 #include "CheckerBoard.h"
 #include "GameLogic.h"
+#include "types.h"
 bool engine_initialized = false;
 Board game_board;
 
 int num_draw_scores = 0;
 Position previous;
+std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "finalformshuffled.quant");
@@ -53,7 +55,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
 
   if (!engine_initialized) {
-    tablebase.load_table_base(DB_PATH);
+    db_path = DB_PATH;
+    write_to_logfile("init engine");
+    tablebase.load_table_base(db_path);
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
@@ -75,8 +79,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.age_counter = 0;
     num_draw_scores = 0;
   } else if (m.has_value()) {
-    // debug << "Got a move from our opponent" << std::endl;
-    Move move = m.value();
+    TT.age_counter = (TT.age_counter + 1) & 63ull;
     game_board.play_move(m.value());
   }
 
@@ -136,19 +139,6 @@ int enginecommand(char str[256], char reply[1024]) {
     return 1;
   }
 
-  if (strcmp(command, "staticevaluation") == 0) {
-    if (!engine_initialized) {
-      TT.resize(21);
-      engine_initialized = true;
-      glob.reply = str;
-    }
-
-    Move best;
-    auto *eval = network.compute_incre_forward_pass(game_board.get_position());
-    strcpy(reply, std::to_string(*eval).c_str());
-    return (1);
-  }
-
   /* 	if (strcmp(param1, "check_wld_dir") == 0) {
                   check_wld_dir(param2, reply);
                   return(1);
@@ -164,21 +154,22 @@ int enginecommand(char str[256], char reply[1024]) {
       return 1;
     }
 
-    /* 	if (strcmp(param1, "dbpath") == 0) {
-                   char* p = strstr(str, "dbpath");
-                   while (!isspace(*p))
-                           ++p;
-                   while (isspace(*p))
-                           ++p;
-                   if (strcmp(p, checkerBoard.db_path)) {
-                           checkerBoard.request_egdb_init = true;
-                           strcpy(checkerBoard.db_path, p);
-                           save_dbpath(checkerBoard.db_path);
-                   }
+    if (strcmp(param1, "dbpath") == 0) {
+      char *p = strstr(str, "dbpath");
+      while (!isspace(*p))
+        ++p;
+      while (isspace(*p))
+        ++p;
+      if (strcmp(p, db_path.c_str())) {
+        engine_initialized = false;
+        db_path = p;
+        ;
+        write_to_logfile("DBPath was set to : " + db_path);
+      }
 
-                   sprintf(reply, "dbpath set to %s", checkerBoard.db_path);
-                   return(1);
-           }   */
+      sprintf(reply, "dbpath set to %s", db_path.c_str());
+      return (1);
+    }
     /*
                     if (strcmp(param1, "enable_wld") == 0) {
                             val = strtol(param2, &stopstring, 10);
@@ -244,35 +235,34 @@ int enginecommand(char str[256], char reply[1024]) {
         return 1;
       }
 
-      /* if (strcmp(param1, "dbpath") == 0) {
-              get_dbpath(checkerBoard.db_path, sizeof(checkerBoard.db_path));
-              snprintf(reply, REPLY_MAX, checkerBoard.db_path);
-              return(1);
+      if (strcmp(param1, "dbpath") == 0) {
+        snprintf(reply, REPLY_MAX, db_path.c_str());
+        return (1);
       }
+      /*
+        if (strcmp(param1, "enable_wld") == 0) {
+                get_enable_wld(&checkerBoard.enable_wld);
+                snprintf(reply, REPLY_MAX, "%d", checkerBoard.enable_wld);
+                return(1);
+        }
 
-      if (strcmp(param1, "enable_wld") == 0) {
-              get_enable_wld(&checkerBoard.enable_wld);
-              snprintf(reply, REPLY_MAX, "%d", checkerBoard.enable_wld);
-              return(1);
-      }
+        if (strcmp(param1, "book") == 0) {
+                get_book_setting(&checkerBoard.useOpeningBook);
+                snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
+                return(1);
+        }
 
-      if (strcmp(param1, "book") == 0) {
-              get_book_setting(&checkerBoard.useOpeningBook);
-              snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
-              return(1);
-      }
+        if (strcmp(param1, "max_dbpieces") == 0) {
+                get_max_dbpieces(&checkerBoard.max_dbpieces);
+                sprintf(reply, "%d", checkerBoard.max_dbpieces);
+                return(1);
+        }
 
-      if (strcmp(param1, "max_dbpieces") == 0) {
-              get_max_dbpieces(&checkerBoard.max_dbpieces);
-              sprintf(reply, "%d", checkerBoard.max_dbpieces);
-              return(1);
-      }
-
-      if (strcmp(param1, "dbmbytes") == 0) {
-              get_dbmbytes(&checkerBoard.wld_cache_mb);
-              sprintf(reply, "%d",checkerBoard.wld_cache_mb);
-              return(1);
-      } */
+        if (strcmp(param1, "dbmbytes") == 0) {
+                get_dbmbytes(&checkerBoard.wld_cache_mb);
+                sprintf(reply, "%d",checkerBoard.wld_cache_mb);
+                return(1);
+        } */
     }
   }
 
