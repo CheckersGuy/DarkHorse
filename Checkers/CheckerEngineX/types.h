@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <cassert>
 #include <cstdint>
+#include <fstream>
 #include <iostream>
 #include <thread>
 // Utility functions and other stuff
@@ -195,6 +196,13 @@ constexpr uint32_t get_neighbour_squares(uint32_t maske) {
   } else {
     return defaultShift<color>(maske) | forwardMask<color>(maske);
   }
+}
+
+inline void write_to_logfile(std::string msg) {
+  std::cout << "Das ist ein Test" << std::endl;
+  std::ofstream stream("E:\\logfile.txt", std::ios::out);
+  stream << msg << std::endl;
+  stream.flush();
 }
 
 #endif // CHECKERSTEST_TYPES_H

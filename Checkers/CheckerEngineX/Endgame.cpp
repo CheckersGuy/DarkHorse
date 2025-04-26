@@ -1,5 +1,6 @@
 #include "Endgame.h"
 #include "egdb.h"
+#include "types.h"
 
 TableBase::~TableBase() {}
 // change how loading works when num_pieces > max_pieces
@@ -92,6 +93,9 @@ TB_RESULT TableBase::probe(Position pos) {
       Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
     return TB_RESULT::UNKNOWN;
   }
+  if (handle == nullptr) {
+    return TB_RESULT::UNKNOWN;
+  }
 
   EGDB_NORMAL_BITBOARD board;
   board.white = pos.WP;
@@ -114,12 +118,16 @@ TB_RESULT TableBase::probe(Position pos) {
 
   if (val == EGDB_DRAW)
     return TB_RESULT::DRAW;
+
+  return TB_RESULT::UNKNOWN;
 }
 
 std::optional<int> TableBase::probe_dtw(Position pos) {
 
   // probing the wdl first, to check if we have a winning/losing position
-
+  if (dtw_handle == nullptr) {
+    return std::nullopt;
+  }
   auto wdl = probe(pos);
   if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;
@@ -150,6 +158,10 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   // value returned is the correct value or the returned value -1
   // in that case we have to probe the sucessors and if the best sucessor has
   // the same value the actual value is ( value -1)
+
+  if (mtc_handle == nullptr) {
+    return std::nullopt;
+  }
   auto wdl = probe(pos);
   if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;

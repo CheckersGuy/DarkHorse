@@ -94,6 +94,7 @@ int main(int argl, const char **argc) {
 
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
+  write_to_logfile("Writing a log-entry");
 #endif
   /*
     Position test =
