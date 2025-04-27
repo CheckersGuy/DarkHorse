@@ -145,12 +145,12 @@ int enginecommand(char str[256], char reply[1024]) {
           } */
 
   if (strcmp(command, "set") == 0) {
-    int val;
-
     if (strcmp(param1, "hashsize") == 0) {
 
-      int numMBs = strtol(param2, &stopstring, 10);
-      ;
+      const int numMBs = strtol(param2, &stopstring, 10);
+      TT.resize_in_mb(numMBs);
+      write_to_logfile("Trying to set the hashsize");
+      engine_initialized = false;
       return 1;
     }
 
