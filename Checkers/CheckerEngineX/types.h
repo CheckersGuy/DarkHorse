@@ -202,7 +202,7 @@ constexpr uint32_t get_neighbour_squares(uint32_t maske) {
 
 inline void write_to_logfile(std::string msg) {
   std::cout << "Das ist ein Test" << std::endl;
-  std::ofstream stream("E:\\logfile.txt", std::ios::out);
+  std::ofstream stream("E:\\logfile.txt", std::ios::out | std::ios::app);
   stream << msg << std::endl;
   stream.flush();
 }

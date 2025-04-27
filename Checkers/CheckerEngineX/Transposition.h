@@ -14,19 +14,19 @@
 
 struct NodeInfo {
   Move tt_move;
-  Value score{0};
-  Value static_eval{0};
+  Value score{-INFINITE};
+  Value static_eval{-INFINITE};
   uint8_t depth{0};
   uint8_t flag{Flag::None};
   bool ttPv{false};
 };
 
 struct Entry {
-  uint32_t key{0u};                    // 4 bytes
-  int16_t value{-EVAL_INFINITE};       // 2 bytes
-  int16_t static_eval{-EVAL_INFINITE}; // 2 bytes
-  MoveEncoding best_move;              // 1byte
-  uint8_t age : 6 = 0;                 // 1 bytes
+  uint32_t key{0u};               // 4 bytes
+  int16_t value{-INFINITE};       // 2 bytes
+  int16_t static_eval{-INFINITE}; // 2 bytes
+  MoveEncoding best_move;         // 1byte
+  uint8_t age : 6 = 0;            // 1 bytes
   uint8_t flag : 2 = 0;
   uint8_t depth : 7; // 1 byte
   uint8_t ttPv : 1;

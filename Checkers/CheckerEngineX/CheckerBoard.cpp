@@ -56,7 +56,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     db_path = DB_PATH;
-    write_to_logfile("init engine");
     tablebase.load_table_base(db_path);
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
@@ -65,6 +64,10 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
+
+    write_to_logfile("init engine with a hashsize of " +
+                     std::to_string(TT.get_size_in_mb()) +
+                     " and the db_path: " + db_path);
   }
 
   // CheckerBoard Bug
@@ -139,12 +142,8 @@ int enginecommand(char str[256], char reply[1024]) {
     return 1;
   }
 
-  /* 	if (strcmp(param1, "check_wld_dir") == 0) {
-                  check_wld_dir(param2, reply);
-                  return(1);
-          } */
-
   if (strcmp(command, "set") == 0) {
+    write_to_logfile("Trying to set anything at all");
     if (strcmp(param1, "hashsize") == 0) {
 
       const int numMBs = strtol(param2, &stopstring, 10);
@@ -219,10 +218,11 @@ int enginecommand(char str[256], char reply[1024]) {
   }
   // GETTING ENGINE INFORMATION
   if (strcmp(command, "get") == 0) {
-    write_to_logfile("Trying to read engine data");
+    write_to_logfile("Get-Command is: " + std::string(param1));
     if (strcmp(param1, "hashsize") == 0) {
       write_to_logfile("Trying to read hashsize");
       snprintf(reply, REPLY_MAX, "%d", TT.get_size_in_mb());
+      engine_initialized = false;
       return 1;
     }
 
@@ -233,6 +233,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
     if (strcmp(param1, "gametype") == 0) {
       snprintf(reply, REPLY_MAX, "%d", GT_ENGLISH);
+      write_to_logfile("Giving the gametype: " + std::string(reply));
       return 1;
     }
 
