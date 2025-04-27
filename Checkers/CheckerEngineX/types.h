@@ -101,7 +101,7 @@ using Value = int;
 enum SEARCH : int { MAX_PLY = 128 };
 enum Score : int {
   INFINITE = 15001,
-  EVAL_INFINITE = 15000,
+  EVAL_INFINITE = 13000,
   MATE_IN_MAX_PLY = EVAL_INFINITE - MAX_PLY,
   MATED_IN_MAX_PLY = -MATE_IN_MAX_PLY,
   TB_WIN_MAX_PLY = 10000 - MAX_PLY,
@@ -205,6 +205,14 @@ inline void write_to_logfile(std::string msg) {
   std::ofstream stream("E:\\logfile.txt", std::ios::out | std::ios::app);
   stream << msg << std::endl;
   stream.flush();
+}
+
+// fast modulo operation for two 32-bit unsigned integers
+inline uint32_t reduce(uint32_t a, uint32_t b) {
+  const uint64_t op_a = static_cast<uint64_t>(a);
+  const uint64_t op_b = static_cast<uint64_t>(b);
+  const uint32_t result = static_cast<uint32_t>((op_a * op_b) >> 32);
+  return result;
 }
 
 #endif // CHECKERSTEST_TYPES_H
