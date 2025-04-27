@@ -433,11 +433,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                                        sing_move, true);
 
       if (val < sing_beta) {
-        extension = 1 + (val < sing_beta - 75);
+        extension = 1;
       } else if (sing_beta >= beta) {
         return sing_beta;
-      } else if (sing_value >= beta &&
-                 (std::abs(sing_value) < TB_WIN_MAX_PLY)) {
+      } else if (sing_value >= beta && !isWinningEval(sing_value)) {
         extension = -3;
       } else if (cutnode) {
         extension = -2;
