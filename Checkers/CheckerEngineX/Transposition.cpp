@@ -8,13 +8,10 @@
 
 Transposition TT;
 
-Transposition::Transposition(size_t capacity) {
-  size_t size = 1u << capacity;
-  resize(size);
-}
+Transposition::Transposition(size_t capacity) { resize(capacity); }
 
 void Transposition::resize(size_t capa) {
-  capacity = 1u << capa;
+  capacity = capa;
   entries = std::make_unique<Cluster[]>(capacity);
   clear();
 }
@@ -122,5 +119,6 @@ int Transposition::get_size_in_mb() {
 void Transposition::resize_in_mb(size_t mb) {
 
   const auto num_entries = mb * (1024 * 1024) / sizeof(Cluster);
+  std::cout << "Number of entries: " << num_entries << std::endl;
   resize(num_entries);
 }
