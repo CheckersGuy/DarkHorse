@@ -647,10 +647,16 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       alpha = value;
     }
   }
-  {
+  if (excluded.is_empty()) {
     Value tt_value = value_to_tt(bestValue, ply, board.get_position());
-    auto flag = (bestValue >= beta) ? TT_LOWER : TT_UPPER;
-
+    Flag flag;
+    if (bestValue <= old_alpha) {
+      flag = TT_UPPER;
+    } else if (bestValue >= beta) {
+      flag = TT_LOWER;
+    } else {
+      flag = TT_EXACT;
+    }
     TT.store_hash(in_pv, tt_value,
                   value_to_tt(static_eval, ply, board.get_position()),
                   board.get_current_key(), flag, 0, Move{}, is_tt_pv);
