@@ -237,7 +237,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
       if (strcmp(param1, "dbpath") == 0) {
         snprintf(reply, REPLY_MAX, db_path.c_str());
-        return (1);
+        return 1;
       }
       /*
         if (strcmp(param1, "enable_wld") == 0) {
