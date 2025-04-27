@@ -5,6 +5,7 @@ bool engine_initialized = false;
 Board game_board;
 
 int num_draw_scores = 0;
+int hash_size_in_mb = 8;
 Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
@@ -60,7 +61,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
-    TT.resize(22);
+    TT.resize_in_mb(hash_size_in_mb);
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
@@ -148,6 +149,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
       const int numMBs = strtol(param2, &stopstring, 10);
       TT.resize_in_mb(numMBs);
+      hash_size_in_mb = numMBs;
       write_to_logfile("Trying to set the hashsize");
       engine_initialized = false;
       return 1;
@@ -220,7 +222,8 @@ int enginecommand(char str[256], char reply[1024]) {
   if (strcmp(command, "get") == 0) {
     write_to_logfile("Get-Command is: " + std::string(param1));
     if (strcmp(param1, "hashsize") == 0) {
-      write_to_logfile("Trying to read hashsize");
+      write_to_logfile("Read the hashsize with a value of: " +
+                       std::to_string(TT.get_size_in_mb()));
       snprintf(reply, REPLY_MAX, "%d", TT.get_size_in_mb());
       engine_initialized = false;
       return 1;

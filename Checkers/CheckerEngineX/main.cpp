@@ -122,6 +122,11 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
+
+  TT.resize_in_mb(32);
+  std::cout << TT.get_size_in_mb() << std::endl;
+  TT.resize_in_mb(2048);
+  std::cout << TT.get_size_in_mb() << std::endl;
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
