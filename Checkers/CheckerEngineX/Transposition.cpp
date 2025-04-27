@@ -34,7 +34,9 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
                                Move tt_move, bool ttPV) {
   assert(std::abs(value) <= EVAL_INFINITE);
   assert(!tt_move.is_capture());
-  const auto index = (key) & (get_capacity() - 1u);
+
+  const auto index =
+      reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
   auto &replace = cluster.ent[0];
@@ -78,7 +80,8 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
-  const auto index = key & (get_capacity() - 1u);
+  const auto index =
+      reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
   const uint32_t currKey = key >> 32u;
 
   for (auto i = 0; i < bucket_size; ++i) {
