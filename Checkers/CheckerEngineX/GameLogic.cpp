@@ -362,7 +362,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && outer_bound(static_eval) &&
       (static_eval - 50 - 30 * (depth - 1) >= beta)) {
-    return (beta + (static_eval - beta) / 3);
+    return static_eval;
   }
 
   int32_t *out;
@@ -436,7 +436,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         extension = 1;
       } else if (sing_beta >= beta) {
         return sing_beta;
-      } else if (sing_value >= beta && !isWinningEval(sing_value)) {
+      } else if (sing_value >= beta &&
+                 (std::abs(sing_value) < TB_WIN_MAX_PLY)) {
         extension = -3;
       } else if (cutnode) {
         extension = -2;
