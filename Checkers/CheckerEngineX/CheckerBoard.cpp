@@ -224,7 +224,8 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "hashsize") == 0) {
       write_to_logfile("Read the hashsize with a value of: " +
                        std::to_string(TT.get_size_in_mb()));
-      snprintf(reply, REPLY_MAX, "%d", TT.get_size_in_mb());
+      const int ttsize_rounded = round_nearest_power2(TT.get_size_in_mb());
+      snprintf(reply, REPLY_MAX, "%d", ttsize_rounded);
       engine_initialized = false;
       return 1;
     }
