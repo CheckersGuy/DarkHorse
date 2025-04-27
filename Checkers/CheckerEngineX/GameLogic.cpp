@@ -316,13 +316,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   if (found_hash && liste.length() > 1 && info.flag != Flag::None &&
       !is_sing_search && info.depth >= depth - 4 && info.flag != TT_UPPER &&
-      std::abs(info.score) < -TB_LOSS_MAX_PLY) {
+      isEval(info.score)) {
     sing_move = tt_move;
     sing_value = tt_value;
   }
   if (!board.get_position().has_jumps(board.get_mover())) {
-    if (found_hash && info.flag != Flag::None &&
-        std::abs(info.static_eval) < EVAL_INFINITE) {
+    if (found_hash && std::abs(info.static_eval) < EVAL_INFINITE) {
       static_eval = value_from_tt(info.static_eval, ply, board.get_position());
     } else {
       static_eval = evaluate(board.get_position(), ply);
@@ -362,9 +361,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && outer_bound(static_eval) &&
-      // static_eval - 50 - 30 * (depth - 1) >= beta)
       (static_eval - 50 - 30 * (depth - 1) >= beta)) {
-    return static_eval;
+    return (beta + (static_eval - beta) / 3);
   }
 
   int32_t *out;
@@ -435,7 +433,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                                        sing_move, true);
 
       if (val < sing_beta) {
-        extension = 1;
+        extension = 1 + (val < sing_beta - 75);
       } else if (sing_beta >= beta) {
         return sing_beta;
       } else if (sing_value >= beta &&

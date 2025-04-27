@@ -113,7 +113,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
 
-  if (std::abs(value) >= MATE_IN_MAX_PLY) {
+  if (isWinningEval(std::abs(value))) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
   return CB_UNKNOWN;
