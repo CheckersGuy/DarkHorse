@@ -163,12 +163,11 @@ int enginecommand(char str[256], char reply[1024]) {
       if (strcmp(p, db_path.c_str())) {
         engine_initialized = false;
         db_path = p;
-        ;
         write_to_logfile("DBPath was set to : " + db_path);
       }
 
       sprintf(reply, "dbpath set to %s", db_path.c_str());
-      return (1);
+      return 1;
     }
     /*
                     if (strcmp(param1, "enable_wld") == 0) {
@@ -219,11 +218,10 @@ int enginecommand(char str[256], char reply[1024]) {
     } */
 
     if (strcmp(command, "get") == 0) {
-      /* if (strcmp(param1, "hashsize") == 0) {
-              get_hashsize(&engine.TTable.sizeMb);
-              snprintf(reply, REPLY_MAX, "%d", engine.TTable.sizeMb);
-              return 1;
-      } */
+      if (strcmp(param1, "hashsize") == 0) {
+        snprintf(reply, REPLY_MAX, "%d", TT.get_size_in_mb());
+        return 1;
+      }
 
       if (strcmp(param1, "protocolversion") == 0) {
         snprintf(reply, REPLY_MAX, "2");
