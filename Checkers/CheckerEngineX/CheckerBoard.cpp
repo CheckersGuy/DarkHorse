@@ -6,6 +6,7 @@ Board game_board;
 
 int num_draw_scores = 0;
 int hash_size_in_mb = 8;
+bool enable_wld = false;
 Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
@@ -56,8 +57,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
 
   if (!engine_initialized) {
-    db_path = DB_PATH;
-    tablebase.load_table_base(db_path);
+    if (enable_wld) {
+      tablebase.load_table_base(db_path);
+    }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
@@ -170,18 +172,20 @@ int enginecommand(char str[256], char reply[1024]) {
       sprintf(reply, "dbpath set to %s", db_path.c_str());
       return 1;
     }
-    /*
-                    if (strcmp(param1, "enable_wld") == 0) {
-                            val = strtol(param2, &stopstring, 10);
-                            if (val != checkerBoard.enable_wld) {
-                                    checkerBoard.request_egdb_init = true;
-                                    checkerBoard.enable_wld = val;
-                                    save_enable_wld(checkerBoard.enable_wld);
-                            }
+    // TODO checking if we want to use tablebases
+    if (strcmp(param1, "enable_wld") == 0) {
+      val = strtol(param2, &stopstring, 10);
+      write_to_logfile("EnableWldDebug: " + std::to_string(val));
+      /*if (val != checkerBoard.enable_wld) {
+        checkerBoard.request_egdb_init = true;
+        checkerBoard.enable_wld = val;
+        save_enable_wld(checkerBoard.enable_wld);
+      }
+      */
 
-                            snprintf(reply, REPLY_MAX, "enable_wld set to %d",
-       checkerBoard.enable_wld); return(1);
-                    } */
+      snprintf(reply, REPLY_MAX, "enable_wld set to %d", val);
+      return (1);
+    }
 
     /* 	if (strcmp(param1, "book") == 0) {
                     val = strtol(param2, &stopstring, 10);
