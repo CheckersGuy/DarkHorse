@@ -176,12 +176,10 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "enable_wld") == 0) {
       auto val = strtol(param2, &stopstring, 10);
       write_to_logfile("EnableWldDebug: " + std::to_string(val));
-      /*if (val != checkerBoard.enable_wld) {
-        checkerBoard.request_egdb_init = true;
-        checkerBoard.enable_wld = val;
-        save_enable_wld(checkerBoard.enable_wld);
+      if (static_cast<bool>(val) != enable_wld) {
+        engine_initialized = false;
+        enable_wld = true;
       }
-      */
 
       snprintf(reply, REPLY_MAX, "enable_wld set to %d", val);
       return (1);
@@ -248,30 +246,31 @@ int enginecommand(char str[256], char reply[1024]) {
       snprintf(reply, REPLY_MAX, db_path.c_str());
       return 1;
     }
+
+    if (strcmp(param1, "enable_wld") == 0) {
+      // get_enable_wld(&checkerBoard.enable_wld);
+      snprintf(reply, REPLY_MAX, "%d", enable_wld);
+      return (1);
+    }
     /*
-      if (strcmp(param1, "enable_wld") == 0) {
-              get_enable_wld(&checkerBoard.enable_wld);
-              snprintf(reply, REPLY_MAX, "%d", checkerBoard.enable_wld);
-              return(1);
-      }
 
-      if (strcmp(param1, "book") == 0) {
-              get_book_setting(&checkerBoard.useOpeningBook);
-              snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
-              return(1);
-      }
+    if (strcmp(param1, "book") == 0) {
+            get_book_setting(&checkerBoard.useOpeningBook);
+            snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
+            return(1);
+    }
 
-      if (strcmp(param1, "max_dbpieces") == 0) {
-              get_max_dbpieces(&checkerBoard.max_dbpieces);
-              sprintf(reply, "%d", checkerBoard.max_dbpieces);
-              return(1);
-      }
+    if (strcmp(param1, "max_dbpieces") == 0) {
+            get_max_dbpieces(&checkerBoard.max_dbpieces);
+            sprintf(reply, "%d", checkerBoard.max_dbpieces);
+            return(1);
+    }
 
-      if (strcmp(param1, "dbmbytes") == 0) {
-              get_dbmbytes(&checkerBoard.wld_cache_mb);
-              sprintf(reply, "%d",checkerBoard.wld_cache_mb);
-              return(1);
-      } */
+    if (strcmp(param1, "dbmbytes") == 0) {
+            get_dbmbytes(&checkerBoard.wld_cache_mb);
+            sprintf(reply, "%d",checkerBoard.wld_cache_mb);
+            return(1);
+    } */
   }
 
   strcpy(reply, "?");
