@@ -174,7 +174,7 @@ int enginecommand(char str[256], char reply[1024]) {
     }
     // TODO checking if we want to use tablebases
     if (strcmp(param1, "enable_wld") == 0) {
-      val = strtol(param2, &stopstring, 10);
+      auto val = strtol(param2, &stopstring, 10);
       write_to_logfile("EnableWldDebug: " + std::to_string(val));
       /*if (val != checkerBoard.enable_wld) {
         checkerBoard.request_egdb_init = true;
