@@ -6,6 +6,8 @@ Board game_board;
 
 int num_draw_scores = 0;
 int hash_size_in_mb = 8;
+int db_size_in_mb = 256;
+int max_db_pieces = 4;
 bool enable_wld = false;
 Position previous;
 std::string db_path;
@@ -58,6 +60,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     if (enable_wld) {
+      tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
@@ -70,7 +73,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
     write_to_logfile("init engine with a hashsize of " +
                      std::to_string(TT.get_size_in_mb()) +
-                     " and the db_path: " + db_path);
+                     " and the db_path: " + db_path +
+                     " the database size is: " + std::to_string(db_size_in_mb));
   }
 
   // CheckerBoard Bug
@@ -148,7 +152,6 @@ int enginecommand(char str[256], char reply[1024]) {
   if (strcmp(command, "set") == 0) {
     write_to_logfile("Trying to set anything at all");
     if (strcmp(param1, "hashsize") == 0) {
-
       const int numMBs = strtol(param2, &stopstring, 10);
       TT.resize_in_mb(numMBs);
       hash_size_in_mb = numMBs;
@@ -184,95 +187,83 @@ int enginecommand(char str[256], char reply[1024]) {
       snprintf(reply, REPLY_MAX, "enable_wld set to %d", val);
       return (1);
     }
-
-    /* 	if (strcmp(param1, "book") == 0) {
-                    val = strtol(param2, &stopstring, 10);
-                    if (val != checkerBoard.useOpeningBook) {
-                            checkerBoard.useOpeningBook = val;
-                            save_book_setting(checkerBoard.useOpeningBook);
-                    }
-
-                    snprintf(reply, REPLY_MAX, "book set to %d",
-       checkerBoard.useOpeningBook); return(1);
-            } */
-    /* 	if (strcmp(param1, "max_dbpieces") == 0) {
-                    val = strtol(param2, &stopstring, 10);
-                    if (val != checkerBoard.max_dbpieces) {
-                            checkerBoard.request_egdb_init = true;
-                            checkerBoard.max_dbpieces = val;
-                            save_max_dbpieces(checkerBoard.max_dbpieces);
-                    }
-
-                    sprintf(reply, "max_dbpieces set to %d",
-       checkerBoard.max_dbpieces); return(1);
-            }
-*/
-    /* 	if (strcmp(param1, "dbmbytes") == 0) {
-                    val = strtol(param2, &stopstring, 10);
-                    if (val != checkerBoard.wld_cache_mb) {
-                            checkerBoard.request_egdb_init = true;
-                            checkerBoard.wld_cache_mb = val;
-                            save_dbmbytes(checkerBoard.wld_cache_mb);
-                    }
-
-                    sprintf(reply, "dbmbytes set to %d",
-    checkerBoard.wld_cache_mb); return(1);
-            }
-    } */
-  }
-  // GETTING ENGINE INFORMATION
-  if (strcmp(command, "get") == 0) {
-    write_to_logfile("Get-Command is: " + std::string(param1));
-    if (strcmp(param1, "hashsize") == 0) {
-      write_to_logfile("Read the hashsize with a value of: " +
-                       std::to_string(TT.get_size_in_mb()));
-      snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
-      engine_initialized = false;
-      return 1;
-    }
-
-    if (strcmp(param1, "protocolversion") == 0) {
-      snprintf(reply, REPLY_MAX, "2");
-      return 1;
-    }
-
-    if (strcmp(param1, "gametype") == 0) {
-      snprintf(reply, REPLY_MAX, "%d", GT_ENGLISH);
-      write_to_logfile("Giving the gametype: " + std::string(reply));
-      return 1;
-    }
-
-    if (strcmp(param1, "dbpath") == 0) {
-      snprintf(reply, REPLY_MAX, db_path.c_str());
-      return 1;
-    }
-
-    if (strcmp(param1, "enable_wld") == 0) {
-      // get_enable_wld(&checkerBoard.enable_wld);
-      snprintf(reply, REPLY_MAX, "%d", enable_wld);
-      return (1);
-    }
-    /*
-
-    if (strcmp(param1, "book") == 0) {
-            get_book_setting(&checkerBoard.useOpeningBook);
-            snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
-            return(1);
-    }
-
     if (strcmp(param1, "max_dbpieces") == 0) {
-            get_max_dbpieces(&checkerBoard.max_dbpieces);
-            sprintf(reply, "%d", checkerBoard.max_dbpieces);
-            return(1);
+      auto val = strtol(param2, &stopstring, 10);
+      if (val != max_db_pieces) {
+        engine_initialized = false;
+        max_db_pieces = val;
+      }
+
+      sprintf(reply, "max_dbpieces set to %d", max_dbpieces);
+
+      return (1);
     }
 
     if (strcmp(param1, "dbmbytes") == 0) {
-            get_dbmbytes(&checkerBoard.wld_cache_mb);
-            sprintf(reply, "%d",checkerBoard.wld_cache_mb);
-            return(1);
-    } */
+      auto val = strtol(param2, &stopstring, 10);
+      if (val != db_size_in_mb) {
+        engine_initialized = false;
+        val = db_size_in_mb;
+      }
+
+      sprintf(reply, "dbmbytes set to %d", db_size_in_mb);
+      return (1);
+    }
+  }
+}
+// GETTING ENGINE INFORMATION
+if (strcmp(command, "get") == 0) {
+  write_to_logfile("Get-Command is: " + std::string(param1));
+  if (strcmp(param1, "hashsize") == 0) {
+    write_to_logfile("Read the hashsize with a value of: " +
+                     std::to_string(TT.get_size_in_mb()));
+    snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
+    engine_initialized = false;
+    return 1;
   }
 
-  strcpy(reply, "?");
-  return 0;
+  if (strcmp(param1, "protocolversion") == 0) {
+    snprintf(reply, REPLY_MAX, "2");
+    return 1;
+  }
+
+  if (strcmp(param1, "gametype") == 0) {
+    snprintf(reply, REPLY_MAX, "%d", GT_ENGLISH);
+    write_to_logfile("Giving the gametype: " + std::string(reply));
+    return 1;
+  }
+
+  if (strcmp(param1, "dbpath") == 0) {
+    snprintf(reply, REPLY_MAX, db_path.c_str());
+    return 1;
+  }
+
+  if (strcmp(param1, "enable_wld") == 0) {
+    // get_enable_wld(&checkerBoard.enable_wld);
+    snprintf(reply, REPLY_MAX, "%d", enable_wld);
+    return (1);
+  }
+  /*
+
+  if (strcmp(param1, "book") == 0) {
+          get_book_setting(&checkerBoard.useOpeningBook);
+          snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
+          return(1);
+  }
+
+  if (strcmp(param1, "max_dbpieces") == 0) {
+          get_max_dbpieces(&checkerBoard.max_dbpieces);
+          sprintf(reply, "%d", checkerBoard.max_dbpieces);
+          return(1);
+  }
+
+  if (strcmp(param1, "dbmbytes") == 0) {
+          get_dbmbytes(&checkerBoard.wld_cache_mb);
+          sprintf(reply, "%d",checkerBoard.wld_cache_mb);
+          return(1);
+  } */
+}
+
+strcpy(reply, "?");
+return 0;
 }
