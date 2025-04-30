@@ -84,7 +84,6 @@ Value evaluate(Position pos, Ply ply) {
 #ifdef __linux__
 
   eval = network.evaluate(pos, ply, 0);
-
   eval = std::clamp(eval, -500, 500);
 
 #endif
@@ -219,7 +218,7 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
     if (in_pv) {
       red = std::max(0, red - 1);
     }
-    red += (move_index >= 3 + in_pv);
+    red += (move_index >= 2 + in_pv);
     return red;
   }
   return 0;
@@ -316,7 +315,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   if (found_hash && liste.length() > 1 && info.flag != Flag::None &&
       !is_sing_search && info.depth >= depth - 4 && info.flag != TT_UPPER &&
-      isEval(info.score)) {
+      isEval(info.score) && !isWinningEval(info.score)) {
     sing_move = tt_move;
     sing_value = tt_value;
   }
@@ -364,7 +363,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       (static_eval - 50 - 30 * (depth - 1) >= beta)) {
     return static_eval;
   }
-
+  if (in_pv && depth >= 7 && found_hash && tt_move.is_empty()) {
+    depth--;
+  }
   int32_t *out;
   std::visit([&](auto &output) { out = &output.buffer[0]; },
              policy.layers.back());
@@ -528,10 +529,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
-  if (!in_pv && best_score >= beta && outer_bound(beta) && outer_bound(beta) &&
-      outer_bound(best_score)) {
-    best_score = (best_score * depth + beta) / (depth + 1);
-  }
+
   if (excluded.is_empty() && !is_root) {
     Value tt_value = value_to_tt(best_score, ply, board.get_position());
     Flag flag;

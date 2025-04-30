@@ -123,9 +123,6 @@ int main(int argl, const char **argc) {
     return 0;
     */
 
-  TT.resize_in_mb(32);
-  std::cout << TT.get_size_in_mb() << std::endl;
-  TT.resize_in_mb(2048);
   std::cout << TT.get_size_in_mb() << std::endl;
   CmdParser parser;
   parser.parse(argl, argc);
@@ -176,7 +173,7 @@ int main(int argl, const char **argc) {
     }
     board.get_position().print_position();
 
-    TT.resize(hash_size);
+    TT.resize_in_mb(hash_size);
     Move best;
     if (parser.has_option("bench")) {
       searchValue(board, best, depth, time, max_nodes, false, std::cout);
@@ -189,7 +186,7 @@ int main(int argl, const char **argc) {
 
   if (parser.has_option("book")) {
     std::string next_line;
-    TT.resize(2);
+    TT.resize_in_mb(2);
     while (std::getline(std::cin, next_line)) {
       // need to clear statistics all the time
 
@@ -212,7 +209,7 @@ int main(int argl, const char **argc) {
     std::uniform_real_distribution<float> distrib(0, 1);
 
     std::string next_line;
-    TT.resize(18);
+    TT.resize_in_mb(18);
     std::vector<Position> rep_history;
 
     auto color_to_result = [](Color color) {
@@ -305,7 +302,7 @@ int main(int argl, const char **argc) {
       std::string hash_string;
       std::cin >> hash_string;
       const int hash_size = std::stoi(hash_string);
-      TT.resize(hash_size);
+      TT.resize_in_mb(hash_size);
       std::cout << "init_ready"
                 << "\n";
     } else if (current == "new_game") {
