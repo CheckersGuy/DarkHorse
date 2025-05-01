@@ -62,6 +62,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     if (enable_wld) {
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
+      write_to_logfile("Loaded the database. Path is " + db_path +
+                       " the cache-size is: " + std::to_string(db_size_in_mb));
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
@@ -72,9 +74,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     num_draw_scores = 0;
 
     write_to_logfile("init engine with a hashsize of " +
-                     std::to_string(TT.get_size_in_mb()) +
-                     " and the db_path: " + db_path +
-                     " the database size is: " + std::to_string(db_size_in_mb));
+                     std::to_string(TT.get_size_in_mb()));
   }
 
   // CheckerBoard Bug
