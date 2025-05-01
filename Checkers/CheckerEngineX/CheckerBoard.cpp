@@ -7,7 +7,7 @@ Board game_board;
 int num_draw_scores = 0;
 int hash_size_in_mb = 8;
 int db_size_in_mb = 256;
-int max_db_pieces = 4;
+int max_db_pieces = 6;
 bool enable_wld = false;
 Position previous;
 std::string db_path;
@@ -123,7 +123,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
 
-  if (isWinningEval(std::abs(value))) {
+  if (isWinningEval(value)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
   return CB_UNKNOWN;
@@ -242,25 +242,16 @@ int enginecommand(char str[256], char reply[1024]) {
       snprintf(reply, REPLY_MAX, "%d", enable_wld);
       return (1);
     }
-    /*
-
-    if (strcmp(param1, "book") == 0) {
-            get_book_setting(&checkerBoard.useOpeningBook);
-            snprintf(reply, REPLY_MAX, "%d", checkerBoard.useOpeningBook);
-            return(1);
-    }
 
     if (strcmp(param1, "max_dbpieces") == 0) {
-            get_max_dbpieces(&checkerBoard.max_dbpieces);
-            sprintf(reply, "%d", checkerBoard.max_dbpieces);
-            return(1);
+      sprintf(reply, "%d", max_db_pieces);
+      return (1);
     }
 
     if (strcmp(param1, "dbmbytes") == 0) {
-            get_dbmbytes(&checkerBoard.wld_cache_mb);
-            sprintf(reply, "%d",checkerBoard.wld_cache_mb);
-            return(1);
-    } */
+      sprintf(reply, "%d", db_size_in_mb);
+      return (1);
+    }
   }
   strcpy(reply, "?");
   return 0;
