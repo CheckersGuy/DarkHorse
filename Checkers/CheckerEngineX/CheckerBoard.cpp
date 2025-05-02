@@ -14,7 +14,6 @@ std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "finalformshuffled.quant");
-// INCBIN(network, "oldloss.quant");
 INCBIN(policy, "policybigger2.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
@@ -60,6 +59,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if (!engine_initialized) {
     if (enable_wld) {
+      tablebase.num_pieces = max_db_pieces;
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
       write_to_logfile("Loaded the database. Path is " + db_path +

@@ -363,9 +363,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       (static_eval - 50 - 30 * (depth - 1) >= beta)) {
     return static_eval;
   }
-  if (in_pv && depth >= 7 && found_hash && tt_move.is_empty()) {
-    depth--;
-  }
+
   int32_t *out;
   std::visit([&](auto &output) { out = &output.buffer[0]; },
              policy.layers.back());

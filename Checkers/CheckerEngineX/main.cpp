@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "moesuper.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -50,7 +50,7 @@ inline Position posFromString(const std::string &pos) {
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0 || board.get_position().piece_count() <= 16) {
+  if (depth == 0) {
     Move bestMove;
     TT.clear();
     Board copy = board;
@@ -94,7 +94,6 @@ int main(int argl, const char **argc) {
 
 #ifdef _WIN32
   tablebase.load_table_base(DB_PATH);
-  write_to_logfile("Writing a log-entry");
 #endif
   /*
     Position test =
@@ -123,7 +122,6 @@ int main(int argl, const char **argc) {
     return 0;
     */
 
-  std::cout << TT.get_size_in_mb() << std::endl;
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
@@ -194,7 +192,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(8, pos, -100, 100);
+      generate_book(10, pos, -100, 100);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -209,7 +207,7 @@ int main(int argl, const char **argc) {
     std::uniform_real_distribution<float> distrib(0, 1);
 
     std::string next_line;
-    TT.resize_in_mb(18);
+    TT.resize_in_mb(128);
     std::vector<Position> rep_history;
 
     auto color_to_result = [](Color color) {

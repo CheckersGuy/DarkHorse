@@ -37,19 +37,19 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 
 fn main() -> anyhow::Result<()> {
     //Need to check why get-color-flip is not working as expected
-    let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
+    /*let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
-    for sample in reader.iter_samples().take(1000) {
-        sample.position.print_position();
-        println!("Result: {:?}", sample.result);
+        for sample in reader.iter_samples().take(1000) {
+            sample.position.print_position();
+            println!("Result: {:?}", sample.result);
+            println!();
+        }
+
+        let next = Position::get_start_position();
+        next.print_position();
         println!();
-    }
-
-    let next = Position::get_start_position();
-    next.print_position();
-    println!();
-    next.get_color_flip().print_position();
-
+        next.get_color_flip().print_position();
+    */
     /*
         Data::remove_samples(
             "/mnt/e/newtry11rescoredmlhshuffledx.samples",
@@ -61,13 +61,13 @@ fn main() -> anyhow::Result<()> {
     //
     /*
         let mut generator = Generator::new(
-            String::from("../Positions/ultrabook2.pos"),
-            String::from("/mnt/e/weirdstuff.samples"),
+            String::from("../Positions/newtest3.pos"),
+            String::from("/mnt/e/hellothere1.samples"),
             14,
             20000000,
         );
 
-        generator.time = 50;
+        generator.time = 10;
         generator.max_nodes = 250000000;
         generator.depth = 70;
 
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    //Data::create_book("../Positions/drawbook.book", "moretesting2.pos", 8)?;
+    Data::create_book("../Positions/drawbook.book", "differentbook.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
     //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
