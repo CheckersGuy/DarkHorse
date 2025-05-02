@@ -351,6 +351,9 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     let last = game.last().unwrap().clone();
     let mut local_result = (last.position.color, last.result);
+    last.position.print_position();
+    println!();
+    println!();
     for sample in game.iter_mut() {
         let mover = sample.position.color;
         let result = (mover, base.probe_with_position(sample.position).unwrap());
@@ -390,9 +393,9 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
         if game.last().unwrap().result == Result::UNKNOWN {
             continue;
         }
-        
+
         let mut borrow_game = game.clone();
-       
+
         rescore_game(&mut borrow_game, base);
         for sample in borrow_game {
             if sample.position.has_capture() {
@@ -401,7 +404,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
             if (sample.position.bp == 0) || (sample.position.wp == 0) {
                 continue;
             }
-            println!("Color: {}",sample.position.color);
+            println!("Color: {}", sample.position.color);
             total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
