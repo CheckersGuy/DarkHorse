@@ -2,6 +2,7 @@
 #include "Bits.h"
 #include "Network.h"
 #include "types.h"
+#include <chrono>
 #include <cstdint>
 #include <unordered_map>
 #include <utility>
@@ -133,7 +134,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                              false);
   }
 
-  endTime = getSystemTime() + time;
+  endTime = getSystemTime() + static_cast<uint64_t>(time) * 1000000;
   size_t total_time = 0;
   int i;
   double speed = 0;
@@ -152,7 +153,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
                         end_time - start_time)
                         .count();
     if (duration > 0)
@@ -170,8 +171,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
       ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
       ss << "Nodes: " << nodeCounter << " | ";
       ss << "Time: " << time_seconds << "\n";
-      ss << "Speed: " << (int)(1000000.0 * speed) << " " << mainPV.toString()
-         << "\n\n";
+      ss << "Speed: " << (int)(speed) << " " << mainPV.toString() << "\n\n";
       stream << ss.str();
     }
 #ifdef CHECKERBOARD

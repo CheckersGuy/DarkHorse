@@ -107,9 +107,9 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = Ranger(self.parameters(),lr=1e-3, eps=1.0e-5, use_gc=True,gc_loc=False,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1e-3, eps=1.0e-5, use_gc=True,gc_loc=False,weight_decay=0)
         #optimizer = AdEMAMix(self.parameters())
-        optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
+        #optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
