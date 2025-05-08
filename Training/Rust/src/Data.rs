@@ -300,86 +300,32 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
         (pos.bp.count_ones() + pos.wp.count_ones()) as usize <= count
     })
 }
-//needs to be reworked
 //#[cfg(target_os = "windows")]
-/*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(100000, File::create(output)?);
     let mut write_count = 0;
     for game in reader.iter_games() {
-        let mut mlh_counter = None;
+        let mut mlh_counter = 0;
+
         for sample in game.iter() {
-            let squares = sample.position.get_squares().unwrap();
-            if squares.len() > 10 {
-                continue;
+            let probe = base.probe_dtw_with_position(sample.position).unwrap();
+
+            if let Some(count) = probe {
+                mlh_counter = count;
             }
-            let fen_string = match sample.position {
-                Sample::SampleType::Fen(ref fen) => fen,
-                _ => return Ok(()),
-            };
-            let probe = base.probe_dtw(fen_string);
-            if let Ok(Some(count)) = probe {
-                mlh_counter = Some(count);
-            } else {
-                if let Some(count) = mlh_counter {
-                    match sample.result {
-                        Sample::Result::TBWIN
-                        | Sample::Result::TBLOSS
-                        | Sample::Result::WIN
-                        | Sample::Result::LOSS => {
-                            mlh_counter = Some(count + 1);
-                        }
-                        _ => mlh_counter = None,
-                    }
-                }
-            }
-            if let Some(count) = mlh_counter {
+
+            if !sample.position.has_capture() {
                 let mut copy = sample.clone();
-                copy.mlh = count as i16;
-                write_count += 1;
-                copy.write_fen(&mut writer)?;
+                copy.mlh = mlh_counter as i16;
+                copy.write_fen(&mut writer)
+                    .expect("Error writing sample to a file");
             }
+            mlh_counter += 1;
         }
     }
     writer.flush()?;
     Ok(())
-}
-*/
-
-//#[cfg(target_os = "windows")]
-
-pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
-    let last = game.last().unwrap().clone();
-    let mut local_result = (last.position.color, last.result);
-    last.position.print_position();
-    println!();
-    println!();
-    for sample in game.iter_mut() {
-        let mover = sample.position.color;
-        let result = (mover, base.probe_with_position(sample.position).unwrap());
-        if result.1 != Result::UNKNOWN {
-            local_result = result;
-        }
-
-        let mut adj_result;
-        if result.1 == Result::UNKNOWN {
-            adj_result = match local_result.1 {
-                Result::TBWIN => Result::WIN,
-                Result::TBLOSS => Result::LOSS,
-                Result::TBDRAW => Result::DRAW,
-                _ => local_result.1,
-            }
-        } else {
-            adj_result = local_result.1;
-        }
-        if mover != local_result.0 {
-            adj_result = !adj_result;
-        }
-        if mover == -1 {
-            sample.position = sample.position.get_color_flip();
-        }
-        sample.result = adj_result;
-    }
 }
 
 //#[cfg(target_os = "windows")]
@@ -390,7 +336,7 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     let mut total_count = 0;
     let mut written_count: u64 = 0;
     for game in reader.iter_games() {
-        if game.last().unwrap().result == Result::UNKNOWN {
+        if game.first().unwrap().result == Result::UNKNOWN {
             continue;
         }
 
@@ -404,7 +350,6 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
             if (sample.position.bp == 0) || (sample.position.wp == 0) {
                 continue;
             }
-            println!("Color: {}", sample.position.color);
             total_count += 1;
             match sample.result {
                 Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
@@ -430,6 +375,47 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     );
     Ok(())
 }
+
+pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
+    let last = game.first().unwrap().clone();
+    let mut local_result = last.result;
+    for sample in game.iter_mut() {
+        let mover = sample.position.color;
+        if mover == -1 {
+            sample.position = sample.position.get_color_flip();
+        }
+
+        let result = base.probe_with_position(sample.position).unwrap();
+        if result == Result::UNKNOWN {
+            sample.result = local_result;
+        } else {
+            sample.result = result;
+            local_result = match result {
+                Result::TBWIN => Result::WIN,
+                Result::TBLOSS => Result::LOSS,
+                Result::TBDRAW => Result::DRAW,
+                _ => local_result,
+            };
+        }
+        local_result = match local_result {
+            Result::WIN | Result::TBWIN => Result::LOSS,
+            Result::LOSS | Result::TBLOSS => Result::WIN,
+            _ => local_result,
+        };
+    }
+    /*
+    if last.result == Result::WIN {
+        for sample in game.iter().rev() {
+            sample.position.print_position();
+            println!("Result: {:?}", sample.result);
+            println!("--------------------------------")
+        }
+        println!();
+        println!();
+    }
+    */
+}
+
 /*
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);

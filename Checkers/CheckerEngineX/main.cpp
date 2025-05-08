@@ -52,7 +52,6 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
 
   if (depth == 0) {
     Move bestMove;
-    TT.clear();
     Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
@@ -62,7 +61,7 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
       hashset.insert(board.get_position());
     }
 
-    if (value >= min && value <= max && !board.get_position().has_jumps()) {
+    if (value >= min && value <= max) {
       std::cout << board.get_position().get_fen_string() << std::endl;
     }
     return;
@@ -192,7 +191,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(10, pos, -100, 100);
+      generate_book(10, pos, -115, 115);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }

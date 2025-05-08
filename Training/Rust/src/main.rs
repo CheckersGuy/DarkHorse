@@ -59,20 +59,20 @@ fn main() -> anyhow::Result<()> {
     */
 
     //
-    /*
-        let mut generator = Generator::new(
-            String::from("../Positions/newtest3.pos"),
-            String::from("/mnt/e/hellothere1.samples"),
-            14,
-            20000000,
-        );
+    /*let mut generator = Generator::new(
+        String::from("../Positions/ultrabook2.pos"),
+        String::from("/mnt/e/Iamhere7.samples"),
+        14,
+        500000000,
+    );
 
-        generator.time = 10;
-        generator.max_nodes = 250000000;
-        generator.depth = 70;
+    generator.time = 1;
+    generator.max_nodes = 250000000;
+    generator.depth = 70;
 
-        generator.generate_games()?;
+    generator.generate_games()?;
     */
+
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
         )
         .unwrap();
     */
-    Data::create_book("../Positions/drawbook.book", "differentbook.pos", 10)?;
+    //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
     //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
@@ -134,15 +134,18 @@ fn main() -> anyhow::Result<()> {
      )?;
     */
 
-    /*Data::merge_rescored_data(
+    Data::merge_rescored_data(
         vec![
-            "/mnt/e/finalms500batch2rescored.samples",
-            "/mnt/e/finalms500rescored.samples",
+            "/mnt/e/Iamherenextrescored.samples",
+            "/mnt/e/Iamhere7rescored.samples",
         ],
-        "/mnt/e/final1rescored.samples",
-    );
+        "/mnt/e/Iamherenext2rescored.samples",
+    )?;
 
-    */
+    Data::shuffle_data_external::<16>(
+        "/mnt/e/Iamherenext2rescored.samples",
+        "/mnt/e/Iamherenext2shuffled.samples",
+    )?;
     /* Data::rescore_games(
          "E:\\testnodes4.samples",
          "E:\\testnodes4rescoredcheck.samples",
