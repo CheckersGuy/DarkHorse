@@ -1,4 +1,5 @@
 #include "Endgame.h"
+#include "MGenerator.h"
 #include "egdb.h"
 #include "types.h"
 
@@ -143,7 +144,34 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
   auto val = dtw_handle->lookup(
       dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
-  if (val == EGDB_UNKNOWN) {
+  if (val == EGDB_UNKNOWN || val == EGDB_SUBDB_UNAVAILABLE) {
+
+    // probing any of the sucessors
+    MoveListe liste;
+    get_moves(pos, liste);
+    int dtw_succ = -100000;
+    for (auto move : liste) {
+      auto copy = pos;
+      copy.make_move(move);
+
+      auto w = probe(pos);
+      if (w != TB_RESULT::DRAW && w != TB_RESULT::UNKNOWN && w != wdl) {
+        auto dtw = dtw_handle->lookup(
+            dtw_handle, &normal,
+            ((copy.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+        if (dtw < dtw_succ && dtw > 0) {
+          dtw_succ = dtw + 1;
+        }
+      }
+    }
+
+    if (dtw_succ > 0) {
+      if (wdl == TB_RESULT::WIN) {
+        return 2 * dtw_succ + 1;
+      } else {
+        return 2 * dtw_succ;
+      }
+    }
     return std::nullopt;
   }
 
