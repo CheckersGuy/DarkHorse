@@ -4,6 +4,7 @@
 #include "MGenerator.h"
 #include "Network.h"
 #include "Perft.h"
+#include "Position.h"
 #include "Transposition.h"
 #include "incbin.h"
 #include "types.h"
@@ -21,8 +22,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "moesuper.quant");
+INCBIN(mlh_net, "mlh4.quant");
+INCBIN(network, "finalformshuffled.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -106,9 +107,11 @@ int main(int argl, const char **argc) {
     }
     return 0;
   */
+
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
+
   /*
     network.print_layers();
     policy.print_layers();
@@ -129,7 +132,15 @@ int main(int argl, const char **argc) {
   int time, depth, hash_size;
   size_t max_nodes = 18446744073709551615ull;
   std::string net_file;
-
+  /*
+    if (parser.has_option("position")) {
+      auto pos_string = parser.as<std::string>("position");
+      std::cout << "MLHEstimate: "
+                << get_mlh_estimate(Position::pos_from_fen(pos_string))
+                << std::endl;
+    }
+    return 0;
+    */
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
     network.load_bucket(net_file);
@@ -197,6 +208,22 @@ int main(int argl, const char **argc) {
     }
     return 0;
   }
+
+  if (parser.has_option("eval-loop")) {
+    // give back the static evaluation of the position
+    std::string next_line;
+    while (std::getline(std::cin, next_line)) {
+      value_history.clear();
+      if (next_line == "terminate") {
+        std::exit(-1);
+      }
+      const auto position = Position::pos_from_fen(next_line);
+      const auto eval = network.evaluate(position, 0, 0);
+      std::cout << eval << std::endl;
+    }
+    return 0;
+  }
+
   if (parser.has_option("generate")) {
 
     // const int adj_threshold = 350;

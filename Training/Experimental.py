@@ -14,7 +14,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from AdEMAMix import AdEMAMix
-L1 =2*(4096)
+L1 =2*(1024)
 L2 =32
 L3 = 32
 
@@ -211,7 +211,7 @@ class MLHNetwork(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.975
+        self.gamma = 0.91
 
 
         self.num_buckets =12
@@ -289,7 +289,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=5e-3,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -307,7 +307,6 @@ class MLHNetwork(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"mlh3.pt")
         result,mlh_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0
@@ -318,13 +317,18 @@ class MLHNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("mlh3.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
         self.log('loss', avg_loss, prog_bar=True)
         print(avg_loss)
         return {"loss": avg_loss, "log": tensorboard_logs}
+
+    def on_train_epoch_end(self) -> None:
+        self.save_quantized_bucket("mlh4.quant")
+        return 
+
+
 
     def save_quantized_bucket(self, output):
         self.step()
