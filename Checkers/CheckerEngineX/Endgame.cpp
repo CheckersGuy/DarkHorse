@@ -124,13 +124,16 @@ TB_RESULT TableBase::probe(Position pos) {
 }
 
 std::optional<int> TableBase::probe_dtw(Position pos) {
-
-  // probing the wdl first, to check if we have a winning/losing position
   if (dtw_handle == nullptr) {
     return std::nullopt;
   }
+
+  if (handle == nullptr) {
+    return std::nullopt;
+  }
+
   auto wdl = probe(pos);
-  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
+  if (wdl == TB_RESULT::UNKNOWN || wdl == TB_RESULT::DRAW) {
     return std::nullopt;
   }
 
@@ -144,49 +147,24 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
   auto val = dtw_handle->lookup(
       dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
-  if (val == EGDB_UNKNOWN || val == EGDB_SUBDB_UNAVAILABLE) {
-
-    // probing any of the sucessors
-    MoveListe liste;
-    get_moves(pos, liste);
-    int dtw_succ = -100000;
-    for (auto move : liste) {
-      auto copy = pos;
-      copy.make_move(move);
-
-      auto w = probe(pos);
-      if (w != TB_RESULT::DRAW && w != TB_RESULT::UNKNOWN && w != wdl) {
-        auto dtw = dtw_handle->lookup(
-            dtw_handle, &normal,
-            ((copy.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
-        if (dtw < dtw_succ && dtw > 0) {
-          dtw_succ = dtw + 1;
-        }
-      }
+  if (val > 0) {
+    if (wdl == TB_RESULT::WIN) {
+      return 2 * val + 1;
+    } else {
+      return 2 * val;
     }
-
-    if (dtw_succ > 0) {
-      if (wdl == TB_RESULT::WIN) {
-        return 2 * dtw_succ + 1;
-      } else {
-        return 2 * dtw_succ;
-      }
-    }
-    return std::nullopt;
   }
-
-  if (wdl == TB_RESULT::WIN) {
-    return 2 * val + 1;
-  } else {
-    return 2 * val;
-  }
+  return std::nullopt;
 }
 
 std::optional<int> TableBase::probe_mtc(Position pos) {
   // value returned is the correct value or the returned value -1
   // in that case we have to probe the sucessors and if the best sucessor has
   // the same value the actual value is ( value -1)
-
+  if (pos.has_jumps() || pos.piece_count() > num_pieces ||
+      Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
+    return std::nullopt;
+  }
   if (mtc_handle == nullptr) {
     return std::nullopt;
   }

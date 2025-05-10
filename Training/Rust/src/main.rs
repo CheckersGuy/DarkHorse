@@ -85,41 +85,9 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
-    /*
-    let test = Position::try_from("B:WK2,29:BK3,K12").expect("Could not parse fen");
-    test.print_position();
-    println!();
-    let result = base
-        .probe("B:WK2,29:BK3,K12")
-        .expect("Could not call function");
+    let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 8).unwrap();
 
-    println!("{:?}", result);
-
-    let result2 = base
-        .probe_with_position(test)
-        .expect("Could not call function");
-
-    println!("Result using probing with position: {:?}", result2);
-    println!("Color: {:?}", test.color);
-    println!("{:?}", test.wp);
-    println!("{:?}", test.bp);
-    println!("{:?}", test.k);
-
-    let test_position =
-        Position::try_from("W:W10,28,29:BK8,K7,K24,K25").expect("Could not parse fen");
-
-    for square in test_position.iter() {
-        println!("{:?}", square);
-    }
-    */
-
-    /*
-        let result = base.probe("W:W8,6,K13:BK4,7,5,11,9").unwrap();
-        base.print_fen("W:W8,6,K13:BK4,7,5,11,9").unwrap();
-        println!("{:?}", result);
-    */
-
+    Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
             "/mnt/e/mlhshuffled2.samples",
@@ -134,7 +102,7 @@ fn main() -> anyhow::Result<()> {
      )?;
     */
 
-    Data::merge_rescored_data(
+    /*Data::merge_rescored_data(
         vec![
             "/mnt/e/Iamherenextrescored.samples",
             "/mnt/e/Iamhere7rescored.samples",
@@ -146,6 +114,7 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/Iamherenext2rescored.samples",
         "/mnt/e/Iamherenext2shuffled.samples",
     )?;
+    */
     /* Data::rescore_games(
          "E:\\testnodes4.samples",
          "E:\\testnodes4rescoredcheck.samples",

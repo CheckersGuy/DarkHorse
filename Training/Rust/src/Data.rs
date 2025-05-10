@@ -303,18 +303,10 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 //#[cfg(target_os = "windows")]
 pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
-    let mut writer = BufWriter::with_capacity(100000, File::create(output)?);
-    let mut write_count = 0;
+    let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
     for game in reader.iter_games() {
         let mut mlh_counter = 0;
-
         for sample in game.iter() {
-            let probe = base.probe_dtw_with_position(sample.position).unwrap();
-
-            if let Some(count) = probe {
-                mlh_counter = count;
-            }
-
             if !sample.position.has_capture() {
                 let mut copy = sample.clone();
                 copy.mlh = mlh_counter as i16;
