@@ -212,8 +212,7 @@ namespace Search {
 Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
              bool in_pv, bool cutnode) {
 
-  if (move_index >= 1 && depth >= 2 && !move.is_capture() &&
-      !move.is_promotion(board.get_position().K)) {
+  if (move_index >= 1 && depth >= 2 && !move.is_capture()) {
     auto red = LMR_TABLE[std::min(depth - 1, 31)];
     if (in_pv) {
       red = std::max(0, red - 1);
