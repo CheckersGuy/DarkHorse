@@ -93,7 +93,7 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 int main(int argl, const char **argc) {
 
 #ifdef _WIN32
-  tablebase.load_table_base(DB_PATH);
+  // tablebase.load_table_base(DB_PATH);
 #endif
   /*
     Position test =
