@@ -4,7 +4,6 @@
 #include "MGenerator.h"
 #include "Network.h"
 #include "Perft.h"
-#include "Position.h"
 #include "Transposition.h"
 #include "incbin.h"
 #include "types.h"
@@ -22,7 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh4.quant");
+INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "finalformshuffled.quant");
 INCBIN(policy, "policybigger2.quant");
 inline Position posFromString(const std::string &pos) {
@@ -51,8 +50,9 @@ inline Position posFromString(const std::string &pos) {
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0) {
+  if (depth == 0 || board.get_position().piece_count() <= 16) {
     Move bestMove;
+    TT.clear();
     Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
@@ -62,7 +62,7 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
       hashset.insert(board.get_position());
     }
 
-    if (value >= min && value <= max) {
+    if (value >= min && value <= max && !board.get_position().has_jumps()) {
       std::cout << board.get_position().get_fen_string() << std::endl;
     }
     return;
@@ -93,7 +93,8 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 int main(int argl, const char **argc) {
 
 #ifdef _WIN32
-  // tablebase.load_table_base(DB_PATH);
+  tablebase.load_table_base(DB_PATH);
+  write_to_logfile("Writing a log-entry");
 #endif
   /*
     Position test =
@@ -107,11 +108,9 @@ int main(int argl, const char **argc) {
     }
     return 0;
   */
-
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-
   /*
     network.print_layers();
     policy.print_layers();
@@ -132,15 +131,7 @@ int main(int argl, const char **argc) {
   int time, depth, hash_size;
   size_t max_nodes = 18446744073709551615ull;
   std::string net_file;
-  /*
-    if (parser.has_option("position")) {
-      auto pos_string = parser.as<std::string>("position");
-      std::cout << "MLHEstimate: "
-                << get_mlh_estimate(Position::pos_from_fen(pos_string))
-                << std::endl;
-    }
-    return 0;
-    */
+
   if (parser.has_option("network")) {
     net_file = parser.as<std::string>("network");
     network.load_bucket(net_file);
@@ -160,7 +151,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("hash_size")) {
     hash_size = parser.as<int>("hash_size");
   } else {
-    hash_size = 21;
+    hash_size = 128;
   }
 
   if (parser.has_option("depth")) {
@@ -192,6 +183,20 @@ int main(int argl, const char **argc) {
     return 0;
   }
 
+  if (parser.has_option("eval-loop")) {
+
+    std::string current;
+    while (std::getline(std::cin, current)) {
+      if (current == "terminate") {
+        std::exit(-1);
+      }
+      const auto pos = Position::pos_from_fen(current);
+      const auto net_eval = network.evaluate(pos, 0, 0);
+      std::cout << net_eval << std::endl;
+    }
+    return 0;
+  }
+
   if (parser.has_option("book")) {
     std::string next_line;
     TT.resize_in_mb(2);
@@ -202,28 +207,12 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(10, pos, -115, 115);
+      generate_book(8, pos, -100, 100);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
     return 0;
   }
-
-  if (parser.has_option("eval-loop")) {
-    // give back the static evaluation of the position
-    std::string next_line;
-    while (std::getline(std::cin, next_line)) {
-      value_history.clear();
-      if (next_line == "terminate") {
-        std::exit(-1);
-      }
-      const auto position = Position::pos_from_fen(next_line);
-      const auto eval = network.evaluate(position, 0, 0);
-      std::cout << eval << std::endl;
-    }
-    return 0;
-  }
-
   if (parser.has_option("generate")) {
 
     // const int adj_threshold = 350;

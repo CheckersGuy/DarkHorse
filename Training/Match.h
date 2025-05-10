@@ -103,7 +103,7 @@ private:
   std::string arg1, arg2;
   int time{100};
   std::pair<int, int> times;
-  int hash_size{21};
+  int hash_size{128};
   int maxGames{1000000};
   int wins_one{0}, wins_two{0}, draws{0};
   int threads{1};
