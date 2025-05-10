@@ -92,7 +92,7 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 int main(int argl, const char **argc) {
 
 #ifdef _WIN32
-  tablebase.load_table_base(DB_PATH);
+  // tablebase.load_table_base(DB_PATH);
 #endif
   /*
     Position test =
@@ -106,6 +106,21 @@ int main(int argl, const char **argc) {
     }
     return 0;
   */
+  tablebase.num_pieces = 8;
+  tablebase.load_dtw_base("E:\\kr_english_dtw");
+  tablebase.load_table_base(DB_PATH);
+
+  Position test = Position::pos_from_fen("B:WK29:BK4");
+
+  auto value = tablebase.probe_dtw(test);
+
+  if (value.has_value()) {
+
+    std::cout << "Tablebase_Value: " << value.value() << std::endl;
+  }
+
+  return 0;
+
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
