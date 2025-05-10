@@ -301,17 +301,60 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 //#[cfg(target_os = "windows")]
-pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+pub fn create_mlh_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
+
+    let mut command = Command::new("./generator2")
+        .args(["--eval-loop"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to start process");
+    let mut stdin = command.stdin.take().unwrap();
+    let stdout = command.stdout.take().unwrap();
+    let mut f = BufReader::new(stdout);
+
     for game in reader.iter_games() {
         let mut mlh_counter = 0;
         for sample in game.iter() {
+            //checking if fen_strings are working
+
+            //let pos = sample.position;
+            //let fen_string = pos.get_fen_string();
+            //let copy_pos =
+            //  Position::try_from(fen_string.as_str()).expect("Could not convert from fen");
+            /*if pos != copy_pos {
+                pos.print_position();
+                println!("{}", fen_string);
+                copy_pos.print_position();
+                println!();
+                println!();
+            }*/
+
             if !sample.position.has_capture() {
-                let mut copy = sample.clone();
-                copy.mlh = mlh_counter as i16;
-                copy.write_fen(&mut writer)
-                    .expect("Error writing sample to a file");
+                stdin
+                    .write_all((sample.position.clone().get_fen_string() + "\n").as_bytes())
+                    .unwrap();
+
+                let mut buffer = String::new();
+                match f.read_line(&mut buffer) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("{:?}", e)
+                    }
+                }
+                buffer = buffer.trim().replace("\n", "");
+                let eval: i32 = buffer.parse().unwrap_or(0);
+                if eval.abs() >= 500 {
+                    let mut copy = sample.clone();
+                    if copy.position.color == -1 {
+                        copy.position = copy.position.get_color_flip();
+                    }
+                    copy.mlh = mlh_counter as i16;
+                    copy.write_fen(&mut writer)
+                        .expect("Error writing sample to a file");
+                }
             }
             mlh_counter += 1;
         }

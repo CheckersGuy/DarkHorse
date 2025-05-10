@@ -1,4 +1,7 @@
-use std::io::ErrorKind;
+use std::{
+    fmt::{Debug, Display},
+    io::ErrorKind,
+};
 
 use bloomfilter::reexports::bit_vec::BitBlock;
 
@@ -267,7 +270,45 @@ impl Position {
         //to be implemented
     }
 
-    //need to understand the borrow trait
+    pub fn get_fen_string(&self) -> String {
+        let mut black_pieces_string = String::new();
+        let mut white_pieces_string = String::new();
+
+        let mut fen_string = String::new();
+        fen_string.push_str(match self.color {
+            1 => "W:",
+            -1 => "B:",
+            _ => "",
+        });
+
+        for square in self.iter() {
+            match square {
+                Square::BPAWN(ind) => {
+                    black_pieces_string.push_str(((ind + 1).to_string() + ",").as_str())
+                }
+                Square::WPAWN(ind) => {
+                    white_pieces_string.push_str(((ind + 1).to_string() + ",").as_str())
+                }
+                Square::WKING(ind) => {
+                    white_pieces_string
+                        .push_str(("K".to_owned() + (ind + 1).to_string().as_str() + ",").as_str());
+                }
+                Square::BKING(ind) => {
+                    black_pieces_string
+                        .push_str(("K".to_owned() + (ind + 1).to_string().as_str() + ",").as_str());
+                }
+            }
+        }
+
+        black_pieces_string = black_pieces_string.trim_end_matches(",").to_string();
+        white_pieces_string = white_pieces_string.trim_end_matches(",").to_string();
+        fen_string.push_str("W");
+        fen_string.push_str(white_pieces_string.as_str());
+        fen_string.push_str(":B");
+        fen_string.push_str(black_pieces_string.as_str());
+        return fen_string.trim_end_matches(",").to_string();
+    }
+
     pub fn empty() -> Position {
         Position {
             color: BLACK,
