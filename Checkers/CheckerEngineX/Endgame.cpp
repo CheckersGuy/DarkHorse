@@ -133,7 +133,7 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
   }
 
   auto wdl = probe(pos);
-  if (wdl != TB_RESULT::WIN || wdl != TB_RESULT::LOSS) {
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;
   }
 
