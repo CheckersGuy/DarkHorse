@@ -301,7 +301,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 //#[cfg(target_os = "windows")]
-pub fn create_mlh_data(path: &str, output: &str) -> std::io::Result<()> {
+pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
 
@@ -333,19 +333,40 @@ pub fn create_mlh_data(path: &str, output: &str) -> std::io::Result<()> {
             }*/
 
             if !sample.position.has_capture() {
-                stdin
-                    .write_all((sample.position.clone().get_fen_string() + "\n").as_bytes())
-                    .unwrap();
+                let probe = base.probe_with_position(sample.position).unwrap();
+                let mut eval: i32 = 0;
 
-                let mut buffer = String::new();
-                match f.read_line(&mut buffer) {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("{:?}", e)
+                if probe == Result::TBDRAW {
+                    stdin
+                        .write_all((sample.position.clone().get_fen_string() + "\n").as_bytes())
+                        .unwrap();
+
+                    let mut buffer = String::new();
+                    match f.read_line(&mut buffer) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            println!("{:?}", e)
+                        }
+                    }
+                    buffer = buffer.trim().replace("\n", "");
+
+                    eval = buffer.parse().unwrap_or(0);
+                } else if probe == Result::TBWIN || probe == Result::TBLOSS {
+                    eval = 1000;
+                    //trying out dtw once again
+
+                    let mlh_base = base
+                        .probe_dtw_with_position(sample.position)
+                        .expect("Could not probe position");
+
+                    if let Some(res) = mlh_base {
+                        sample.position.print_position();
+                        println!("{:?}", res);
+                        println!();
+                        println!();
                     }
                 }
-                buffer = buffer.trim().replace("\n", "");
-                let eval: i32 = buffer.parse().unwrap_or(0);
+
                 if eval.abs() >= 500 {
                     let mut copy = sample.clone();
                     if copy.position.color == -1 {

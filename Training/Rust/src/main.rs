@@ -85,7 +85,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 2000, 8).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -95,7 +95,7 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    Data::create_mlh_data("/mnt/e/Iamhere7.samples", "/mnt/e/mlh5.samples").expect("Error");
+    // Data::create_mlh_data("E:\\Iamhere7.samples", "E:\\mlh5.samples", &base).expect("Error");
     /* Data::shuffle_data_external::<16>(
          "/mnt/e/final1mstestrescored.samples",
          "/mnt/e/final1msshuffled.samples",
@@ -121,10 +121,6 @@ fn main() -> anyhow::Result<()> {
          &base,
      )?;
     */
-
-    let position = Position::try_from("W:W10,K32,K30:BK2,K7,K9,24,K29")?;
-    position.print_position();
-    println!("{}", position.get_fen_string());
 
     Ok(())
 }
