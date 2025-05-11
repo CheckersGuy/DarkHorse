@@ -88,7 +88,7 @@ Value evaluate(Position pos, Ply ply) {
   eval = std::clamp(eval, -500, 500);
 
 #endif
-  if (std::abs(eval) >= 500) {
+  if (pos.piece_count() <= 10 && std::abs(eval) >= 500) {
     if (eval >= 500) {
       eval += 300;
       eval -= get_mlh_estimate(pos);
