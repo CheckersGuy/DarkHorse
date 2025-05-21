@@ -7,6 +7,7 @@ pub mod TableBase;
 pub mod dataloader;
 use anyhow::Context;
 use arrayvec::ArrayVec;
+use bloomfilter::reexports::bit_vec::BitBlock;
 use itertools::Itertools;
 use std::fs::File;
 use std::io::BufReader;
@@ -36,6 +37,14 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
+    let position = Position::get_start_position();
+    position.print_position();
+
+    let mut liste = MoveList::new();
+    liste.get_moves(position);
+    println!("The number of moves is {}", liste.length);
+    let movers = position.get_movers::<-1>().count_ones();
+    println!("The number of pieces which can move {}", movers);
     //Need to check why get-color-flip is not working as expected
     /*let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
@@ -57,13 +66,11 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/master1.samples",
         )?;
     */
-
-    //
     /*let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/Iamhere7.samples"),
+        String::from("/mnt/e/Iamhere8.samples"),
         14,
-        500000000,
+        2000000000,
     );
 
     generator.time = 1;
@@ -85,7 +92,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -101,20 +108,21 @@ fn main() -> anyhow::Result<()> {
          "/mnt/e/final1msshuffled.samples",
      )?;
     */
+    /*
+        Data::merge_rescored_data(
+            vec![
+                "/mnt/e/Iamherenext2rescored.samples",
+                "/mnt/e/Iamhere8rescored.samples",
+            ],
+            "/mnt/e/Iamherenext3rescored.samples",
+        )?;
 
-    /*Data::merge_rescored_data(
-        vec![
-            "/mnt/e/Iamherenextrescored.samples",
-            "/mnt/e/Iamhere7rescored.samples",
-        ],
-        "/mnt/e/Iamherenext2rescored.samples",
-    )?;
-
-    Data::shuffle_data_external::<16>(
-        "/mnt/e/Iamherenext2rescored.samples",
-        "/mnt/e/Iamherenext2shuffled.samples",
-    )?;
+        Data::shuffle_data_external::<16>(
+            "/mnt/e/Iamherenext3rescored.samples",
+            "/mnt/e/Iamherenext3shuffled.samples",
+        )?;
     */
+
     /* Data::rescore_games(
          "E:\\testnodes4.samples",
          "E:\\testnodes4rescoredcheck.samples",
