@@ -53,18 +53,9 @@ extern "C" void print_fen(char *fen_string) {
   Position::pos_from_fen(fen_string).print_position();
 }
 
-extern "C" int move_played(unsigned int o_wp, unsigned int o_bp,
-                           unsigned int o_k, unsigned int n_wp,
-                           unsigned int n_bp, unsigned int n_k) {
-  Position o;
-  o.BP = o_bp;
-  o.WP = o_wp;
-  o.K = o_k;
-
-  Position n;
-  n.BP = n_bp;
-  n.WP = n_wp;
-  n.K = n_k;
+extern "C" int move_played(char *orig, char *next) {
+  Position o = Position::pos_from_fen(orig);
+  Position n = Position::pos_from_fen(next);
 
   if (o.color == n.color) {
     if (o.color == BLACK) {
