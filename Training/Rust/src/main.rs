@@ -21,20 +21,6 @@ use Pos::*;
 use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
-pub fn perft(pos: Position, depth: i32) -> usize {
-    let mut liste = MoveList::new();
-    liste.get_moves(pos);
-    if depth == 0 {
-        return 1;
-    }
-    let mut counter: usize = 0;
-    for m in liste.iter().dedup() {
-        let mut copy_pos = pos.clone();
-        copy_pos.make_move(m);
-        counter += perft(copy_pos, depth - 1);
-    }
-    return counter;
-}
 
 fn main() -> anyhow::Result<()> {
     //Need to check why get-color-flip is not working as expected

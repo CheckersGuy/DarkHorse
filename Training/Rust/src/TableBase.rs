@@ -4,6 +4,7 @@ use libc;
 use libloading;
 use std::ffi::CString;
 use std::os::raw::c_char;
+use string_sum::Pos::Position;
 pub struct Base {
     cache_size: i32,
     num_pieces: i32,
@@ -146,16 +147,28 @@ impl Base {
 
     pub fn get_move_encoding(
         &self,
-        previous: &str,
-        next: &str,
+        previous: Position,
+        next: Position,
     ) -> Result<i32, Box<dyn std::error::Error>> {
         unsafe {
             let func: libloading::Symbol<
-                unsafe extern "C" fn(*const libc::c_char, *const libc::c_char) -> i32,
+                unsafe extern "C" fn(
+                    libc::c_uint,
+                    libc::c_uint,
+                    libc::c_uint,
+                    libc::c_uint,
+                    libc::c_uint,
+                    libc::c_uint,
+                ) -> i32,
             > = self.library.get(b"move_played")?;
-            let c_to_previous = CString::new(previous).expect("CString failed");
-            let c_to_next = CString::new(next).expect("CString failed");
-            Ok(func(c_to_previous.as_ptr(), c_to_next.as_ptr()))
+            Ok(func(
+                previous.wp,
+                previous.bp,
+                previous.k,
+                next.wp,
+                next.bp,
+                next.k,
+            ))
         }
     }
 }
