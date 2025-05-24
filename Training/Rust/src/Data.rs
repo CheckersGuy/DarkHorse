@@ -454,19 +454,11 @@ pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
         for window in game.windows(2) {
             let next_pos = window[0].position;
             let prev_pos = window[1].position;
-            let fen_next = match window[0].position {
-                SampleType::Fen(ref fen_string) => fen_string.clone(),
-                _ => String::new(),
-            };
-            let fen_previous = match window[1].position {
-                SampleType::Fen(ref fen_string) => fen_string.clone(),
-                _ => String::new(),
-            };
-            let move_encoding = base
-                .get_move_encoding(fen_previous.as_str(), fen_next.as_str())
-                .unwrap();
+
+            let move_encoding = base.get_move_encoding(prev_pos, next_pos).unwrap();
 
             if move_encoding > 0 {
+                println!("MoveEncoding: {}", move_encoding);
                 let mut sample = window[1].clone();
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
