@@ -340,17 +340,6 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
                 } else if probe == Result::TBWIN || probe == Result::TBLOSS {
                     eval = 1000;
                     //trying out dtw once again
-
-                    let mlh_base = base
-                        .probe_dtw_with_position(sample.position)
-                        .expect("Could not probe position");
-
-                    if let Some(res) = mlh_base {
-                        sample.position.print_position();
-                        println!("{:?}", res);
-                        println!();
-                        println!();
-                    }
                 }
 
                 if eval.abs() >= 500 {
