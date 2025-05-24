@@ -458,12 +458,13 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     */
 }
 
-/*
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
     for game in reader.iter_games() {
         for window in game.windows(2) {
+            let next_pos = window[0].position;
+            let prev_pos = window[1].position;
             let fen_next = match window[0].position {
                 SampleType::Fen(ref fen_string) => fen_string.clone(),
                 _ => String::new(),
@@ -477,8 +478,6 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
                 .unwrap();
 
             if move_encoding > 0 {
-                //base.print_fen(fen_previous.as_str()).unwrap();
-                //println!("{move_encoding}");
                 let mut sample = window[1].clone();
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
@@ -488,7 +487,6 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
 
     Ok(())
 }
-*/
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
