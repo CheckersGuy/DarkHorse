@@ -14,9 +14,13 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from AdEMAMix import AdEMAMix
-L1 =2*(64)
+L1 =2*128
 L2 =32
 L3 = 32
+
+
+        
+
 
 class Network(pl.LightningModule):
 
@@ -26,7 +30,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.93
+        self.gamma = 0.98
 
 
         self.num_buckets =12
@@ -107,9 +111,9 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        #optimizer = Ranger(self.parameters(),lr=1e-3, eps=1.0e-5, use_gc=True,gc_loc=False,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
         #optimizer = AdEMAMix(self.parameters())
-        optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
+        #optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -211,7 +215,7 @@ class MLHNetwork(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.91
+        self.gamma = 0.93
 
 
         self.num_buckets =12
@@ -289,7 +293,7 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -599,7 +603,8 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         return self
 
     def __len__(self):
-        return self.num_samples//self.batch_size
+    #return self.num_samples//self.batch_size
+        return 100000000//self.batch_size
 
     def __next__(self):
         input_size = 120
