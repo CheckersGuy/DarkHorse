@@ -79,7 +79,7 @@ fn main() -> anyhow::Result<()> {
         )?;
 
     */
-    Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
+    //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
     /* Data::shuffle_data_external::<16>(
          "/mnt/e/final1mstestrescored.samples",
          "/mnt/e/final1msshuffled.samples",
@@ -106,11 +106,15 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     */
-
+    /*
     let mut start_position = Position::get_start_position();
     start_position.print_position();
     let node_count = perft_count(12, start_position);
     println!("Nodecount: {}", node_count);
+
+    */
+
+    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
 
     Ok(())
 }
