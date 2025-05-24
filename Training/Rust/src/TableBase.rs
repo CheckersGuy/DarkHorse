@@ -4,7 +4,6 @@ use libc;
 use libloading;
 use std::ffi::CString;
 use std::os::raw::c_char;
-use string_sum::Pos::Position;
 pub struct Base {
     cache_size: i32,
     num_pieces: i32,

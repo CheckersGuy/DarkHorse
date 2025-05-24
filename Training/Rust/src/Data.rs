@@ -447,10 +447,12 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     */
 }
 
-pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
+pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
     for game in reader.iter_games() {
+        //need to use the chinook format
+        //or keep using fen-strings
         for window in game.windows(2) {
             let next_pos = window[0].position;
             let prev_pos = window[1].position;
@@ -458,10 +460,14 @@ pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
             let move_encoding = base.get_move_encoding(prev_pos, next_pos).unwrap();
 
             if move_encoding > 0 {
-                println!("MoveEncoding: {}", move_encoding);
                 let mut sample = window[1].clone();
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
+            } else {
+                println!("-------------------------------");
+                prev_pos.print_position();
+                println!("Next");
+                next_pos.print_position();
             }
         }
     }
