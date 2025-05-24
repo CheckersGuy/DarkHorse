@@ -146,28 +146,16 @@ impl Base {
 
     pub fn get_move_encoding(
         &self,
-        previous: Position,
-        next: Position,
+        previous: &str,
+        next: &str,
     ) -> Result<i32, Box<dyn std::error::Error>> {
         unsafe {
             let func: libloading::Symbol<
-                unsafe extern "C" fn(
-                    libc::c_uint,
-                    libc::c_uint,
-                    libc::c_uint,
-                    libc::c_uint,
-                    libc::c_uint,
-                    libc::c_uint,
-                ) -> i32,
+                unsafe extern "C" fn(*const libc::c_char, *const libc::c_char) -> i32,
             > = self.library.get(b"move_played")?;
-            Ok(func(
-                previous.wp,
-                previous.bp,
-                previous.k,
-                next.wp,
-                next.bp,
-                next.k,
-            ))
+            let c_to_previous = CString::new(previous).expect("CString failed");
+            let c_to_next = CString::new(next).expect("CString failed");
+            Ok(func(c_to_previous.as_ptr(), c_to_next.as_ptr()))
         }
     }
 }
