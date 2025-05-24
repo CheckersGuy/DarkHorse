@@ -95,7 +95,7 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    // Data::create_mlh_data("E:\\Iamhere7.samples", "E:\\mlh5.samples", &base).expect("Error");
+    Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
     /* Data::shuffle_data_external::<16>(
          "/mnt/e/final1mstestrescored.samples",
          "/mnt/e/final1msshuffled.samples",
@@ -115,11 +115,11 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/Iamherenext2shuffled.samples",
     )?;
     */
-    /* Data::rescore_games(
-         "E:\\testnodes4.samples",
-         "E:\\testnodes4rescoredcheck.samples",
-         &base,
-     )?;
+    /*Data::rescore_games(
+        "E:\\Iamhere8.samples",
+        "E:\\Iamhere8rescored.samples",
+        &base,
+    )?;
     */
 
     Ok(())

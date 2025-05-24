@@ -318,20 +318,6 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
     for game in reader.iter_games() {
         let mut mlh_counter = 0;
         for sample in game.iter() {
-            //checking if fen_strings are working
-
-            //let pos = sample.position;
-            //let fen_string = pos.get_fen_string();
-            //let copy_pos =
-            //  Position::try_from(fen_string.as_str()).expect("Could not convert from fen");
-            /*if pos != copy_pos {
-                pos.print_position();
-                println!("{}", fen_string);
-                copy_pos.print_position();
-                println!();
-                println!();
-            }*/
-
             if !sample.position.has_capture() {
                 let probe = base.probe_with_position(sample.position).unwrap();
                 let mut eval: i32 = 0;
@@ -354,17 +340,6 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
                 } else if probe == Result::TBWIN || probe == Result::TBLOSS {
                     eval = 1000;
                     //trying out dtw once again
-
-                    let mlh_base = base
-                        .probe_dtw_with_position(sample.position)
-                        .expect("Could not probe position");
-
-                    if let Some(res) = mlh_base {
-                        sample.position.print_position();
-                        println!("{:?}", res);
-                        println!();
-                        println!();
-                    }
                 }
 
                 if eval.abs() >= 500 {
