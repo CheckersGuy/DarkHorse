@@ -17,4 +17,6 @@ extern "C" int probe_with_position(unsigned int bp, unsigned int wp,
 extern "C" int probe_dtw_with_position(unsigned int bp, unsigned int wp,
                                        unsigned int k, int color);
 
-extern "C" int move_played(char *orig, char *next);
+extern "C" int move_played(unsigned int o_wp, unsigned int o_bp,
+                           unsigned int o_k, unsigned int n_wp,
+                           unsigned int n_bp, unsigned int n_k);
