@@ -4,6 +4,7 @@ use std::{
 };
 
 use bloomfilter::reexports::bit_vec::BitBlock;
+use libc::size_t;
 
 const BLACK: i8 = -1;
 const WHITE: i8 = 1;
@@ -41,14 +42,23 @@ pub const BOARD_BIT: [usize; 32] = [
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
-//squares should be 0-index (where fen_strings are 1-index)
+//squares should be 0-index (where fen_strings are 1-inde/stx)
 pub enum Square {
     BPAWN(u8),
     WPAWN(u8),
     BKING(u8),
     WKING(u8),
 }
-
+/*
+  11  05  31  25
+10  04  30  24
+  03  29  23  17
+02  28  22  16
+  27  21  15  09
+26  20  14  08
+  19  13  07  01
+18  12  06  00
+*/
 const BRANK_BLACK: u32 = (1 << 18) | (1 << 12) | (1 << 6) | (1 << 0);
 const BRANK_WHITE: u32 = (1 << 11) | (1 << 5) | (1 << 31) | (1 << 25);
 
@@ -216,7 +226,9 @@ impl Position {
     pub fn print_position(&self) {
         for i in (0..8).rev() {
             for j in (0..4).rev() {
-                let maske: u32 = 1u32 << (4 * i + j);
+                let board_index = 4 * i + j;
+                let bit_index = BIT_BOARD[board_index];
+                let maske: u32 = 1u32 << bit_index;
                 let value: i32 = ((maske & self.bp) != 0) as i32
                     + (((maske & self.wp) != 0) as i32) * 2i32
                     + (((maske & self.k) != 0) as i32) * 3i32;
@@ -344,7 +356,6 @@ impl Position {
             movers |= move_right::<BLACK>(nocc);
             movers &= self.wp;
         }
-
         return movers;
     }
 
@@ -378,10 +389,10 @@ impl Position {
     pub fn get_start_position() -> Position {
         let mut start: Position = Position::empty();
         for i in 0..12 {
-            start.bp |= 1 << i;
+            start.bp |= 1 << BIT_BOARD[i];
         }
         for i in 20..32 {
-            start.wp |= 1 << i;
+            start.wp |= 1 << BIT_BOARD[i];
         }
         start.k = 0u32;
         return start;
@@ -500,7 +511,7 @@ fn jump_left<const COLOR: i8, const OPP: i8>(
     pos: Position,
 ) -> (u32, u32) {
     let opp = pos.get_pieces::<OPP>() & !captures;
-    let nocc = !(pos.bp | pos.wp);
+    let nocc = !(opp | pos.get_pieces::<COLOR>());
     let captured = move_left::<COLOR>(from) & opp;
     (captured, move_left::<COLOR>(captured) & nocc)
 }
@@ -511,7 +522,7 @@ fn jump_right<const COLOR: i8, const OPP: i8>(
     pos: Position,
 ) -> (u32, u32) {
     let opp = pos.get_pieces::<OPP>() & !captures;
-    let nocc = !(pos.bp | pos.wp);
+    let nocc = !(opp | pos.get_pieces::<COLOR>());
     let captured = move_right::<COLOR>(from) & opp;
     (captured, move_right::<COLOR>(captured) & nocc)
 }
@@ -596,6 +607,7 @@ impl MoveList {
         let nocc = !(pos.bp | pos.wp);
         let mut pawns = movers & !pos.k;
         let mut kings = movers & pos.k;
+
         while pawns != 0 {
             let from = pawns & !(pawns - 1u32);
             self.add_quiet_move(from, move_left::<COLOR>(from) & nocc);
@@ -658,4 +670,23 @@ impl MoveList {
     pub fn iter(&mut self) -> std::slice::Iter<'_, Move> {
         (&self.moves[0..self.length]).iter()
     }
+}
+
+pub fn perft_count(depth: i32, position: Position) -> size_t {
+    let mut liste = MoveList::new();
+    liste.get_moves(position);
+
+    if depth == 1 {
+        return liste.length as size_t;
+    }
+
+    let mut node_count: size_t = 0;
+
+    for m in liste.iter() {
+        let mut cp = position.clone();
+        cp.make_move(m);
+        node_count += perft_count(depth - 1, cp)
+    }
+
+    return node_count;
 }

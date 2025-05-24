@@ -37,14 +37,6 @@ pub fn perft(pos: Position, depth: i32) -> usize {
 }
 
 fn main() -> anyhow::Result<()> {
-    let position = Position::get_start_position();
-    position.print_position();
-
-    let mut liste = MoveList::new();
-    liste.get_moves(position);
-    println!("The number of moves is {}", liste.length);
-    let movers = position.get_movers::<-1>().count_ones();
-    println!("The number of pieces which can move {}", movers);
     //Need to check why get-color-flip is not working as expected
     /*let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
@@ -129,6 +121,11 @@ fn main() -> anyhow::Result<()> {
          &base,
      )?;
     */
+
+    let mut start_position = Position::get_start_position();
+    start_position.print_position();
+    let node_count = perft_count(12, start_position);
+    println!("Nodecount: {}", node_count);
 
     Ok(())
 }
