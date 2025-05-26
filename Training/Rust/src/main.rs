@@ -113,7 +113,15 @@ fn main() -> anyhow::Result<()> {
     println!("Nodecount: {}", node_count);
 
     */
-
+    /*
+        let result = base
+            .get_move_encoding(
+                "B:W9,15,K18,19,21,30:B20,K32",
+                "W:W9,15,K18,19,21,30:B20,K27",
+            )
+            .unwrap();
+        println!("Encoding: {}", result);
+    */
     Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
 
     Ok(())

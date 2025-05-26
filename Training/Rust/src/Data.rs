@@ -450,24 +450,41 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
 pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
+    let mut fen_prev = String::new();
+    let mut fen_next = String::new();
     for game in reader.iter_games() {
         //need to use the chinook format
         //or keep using fen-strings
         for window in game.windows(2) {
             let next_pos = window[0].position;
             let prev_pos = window[1].position;
+            if prev_pos.has_capture() {
+                continue;
+            }
+            if (prev_pos.bp == 0) || (prev_pos.wp == 0) {
+                continue;
+            }
 
-            let move_encoding = base.get_move_encoding(prev_pos, next_pos).unwrap();
+            fen_next = next_pos.clone().get_fen_string();
+            fen_prev = prev_pos.clone().get_fen_string();
 
-            if move_encoding > 0 {
+            let move_encoding = base
+                .get_move_encoding(fen_prev.as_str(), fen_next.as_str())
+                .unwrap();
+
+            if move_encoding >= 0 {
                 let mut sample = window[1].clone();
+                if sample.position.color == -1 {
+                    sample.position = sample.position.get_color_flip();
+                }
+
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
             } else {
                 println!("-------------------------------");
-                prev_pos.print_position();
+                println!("{}", fen_prev);
                 println!("Next");
-                next_pos.print_position();
+                println!("{}", fen_next);
             }
         }
     }

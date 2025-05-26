@@ -53,7 +53,6 @@ int Move::get_move_encoding() const {
              (((from & MASK_R5) >> 5) == to)) {
     dir = 3;
   };
-
   return 4 * get_from_index() + dir;
 }
 
