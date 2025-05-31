@@ -14,7 +14,7 @@
 #include <optional>
 #include <vector>
 namespace Perft {
-
+inline int select_moves = 0;
 uint64_t perft_check(Position pos, int depth);
 
 } // namespace Perft

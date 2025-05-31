@@ -110,19 +110,21 @@ impl BatchProvider {
             let mut psqt_array = psqt_buckets.as_array_mut();
             let mut mlh_array = mlh.as_array_mut();
             for i in 0..self.batch_size {
-                let mut indices = Vec::with_capacity(128);
+                //let mut indices = Vec::with_capacity(128);
                 //need to add continue for not valid samples
                 let sample = self.loader.get_next().expect("Error loading sample");
 
                 let mut liste = Pos::MoveList::new();
-                liste.get_moves(sample.position);
-                for legal in liste.iter().dedup() {
+                // liste.get_moves(sample.position);
+                /*for legal in liste.iter().dedup() {
                     indices.push(legal.get_move_encoding());
                 }
+                */
 
-                for index in indices {
+                /*for index in indices {
                     legal_array[128 * i + index] = true;
                 }
+                */
 
                 let piece_count = sample.position.piece_count();
                 for square in sample.position.iter() {

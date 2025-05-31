@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    io::ErrorKind,
-};
+use std::ops::{Shl, Shr};
 
 use bloomfilter::reexports::bit_vec::BitBlock;
 use libc::size_t;
@@ -13,32 +10,21 @@ const MASK_L3: u32 = 14737632;
 const MASK_L5: u32 = 117901063;
 const MASK_R3: u32 = 117901056;
 const MASK_R5: u32 = 3772834016;
+const MASK_COL_1: u32 = 286331153;
+const MASK_COL_2: u32 = 572662306;
+const MASK_COL_3: u32 = 1145324612;
+const MASK_COL_4: u32 = 2290649224;
 
-/*
-const BIT_BOARD: [u32; 32] = [
-    18, 12, 6, 0, 19, 13, 7, 1, 26, 20, 14, 8, 27, 21, 15, 9, 2, 28, 22, 16, 3, 29, 23, 17, 10, 4,
-    30, 24, 11, 5, 31, 25,
-];
-*/
-/*
-  11  05  31  25
-10  04  30  24
-  03  29  23  17
-02  28  22  16
-  27  21  15  09
-26  20  14  08
-  19  13  07  01
-18  12  06  00
-*/
-//reordering to be continued
-pub const BIT_BOARD: [usize; 32] = [
-    0, 6, 12, 18, 1, 7, 13, 19, 8, 14, 20, 26, 9, 15, 21, 27, 16, 22, 28, 2, 17, 23, 29, 3, 24, 30,
-    4, 10, 25, 31, 5, 11,
-];
+const PROMO_SQUARES_WHITE: u32 = 0xf;
+const PROMO_SQUARES_BLACK: u32 = 0xf0000000;
 
-pub const BOARD_BIT: [usize; 32] = [
-    0, 4, 19, 23, 26, 30, 1, 5, 8, 12, 27, 31, 2, 6, 9, 13, 16, 20, 3, 7, 10, 14, 17, 21, 24, 28,
-    11, 15, 18, 22, 25, 29,
+pub const BIT_TO_BOARD: [usize; 32] = [
+    3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26,
+    25, 24, 31, 30, 29, 28,
+];
+pub const BOARD_TO_BIT: [usize; 32] = [
+    3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26,
+    25, 24, 31, 30, 29, 28,
 ];
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
@@ -49,28 +35,7 @@ pub enum Square {
     BKING(u8),
     WKING(u8),
 }
-/*
-  11  05  31  25
-10  04  30  24
-  03  29  23  17
-02  28  22  16
-  27  21  15  09
-26  20  14  08
-  19  13  07  01
-18  12  06  00
-*/
-const BRANK_BLACK: u32 = (1 << 18) | (1 << 12) | (1 << 6) | (1 << 0);
-const BRANK_WHITE: u32 = (1 << 11) | (1 << 5) | (1 << 31) | (1 << 25);
 
-const NOT_RL_7: u32 = (1 << 18) | (1 << 26) | (1 << 2) | (1 << 10);
-const NOT_RR_1: u32 = NOT_RL_7;
-const NOT_RL_1: u32 = (1 << 1) | (1 << 9) | (1 << 17) | (1 << 25);
-const NOT_RR_7: u32 = NOT_RL_1;
-
-const MASK_COL_1: u32 = 286331153;
-const MASK_COL_2: u32 = 572662306;
-const MASK_COL_3: u32 = 1145324612;
-const MASK_COL_4: u32 = 2290649224;
 #[derive(PartialEq, Default, Clone, Copy, Hash, Eq, Debug)]
 pub struct Position {
     pub bp: u32,
@@ -136,7 +101,7 @@ pub struct Move {
     captures: u32,
 }
 pub struct MoveList {
-    pub moves: [Move; 40],
+    pub moves: [Move; 60],
     pub length: usize,
 }
 
@@ -149,51 +114,20 @@ impl Move {
         return self.to.trailing_zeros();
     }
 
-    pub fn get_board_from_index(&self) -> usize {
-        return BOARD_BIT[self.get_from_index() as usize];
-    }
-
-    pub fn get_board_to_index(&self) -> usize {
-        return BOARD_BIT[self.get_to_index() as usize];
-    }
-
-    pub fn get_move_encoding(&self) -> usize {
-        //for now I can only do that for white to move
-        let board_from = 1 << self.get_board_from_index();
-        let board_to = 1 << self.get_board_to_index();
-
-        let mut dir: usize = 0;
-        if ((((board_from & MASK_L3) << 3) == board_to)
-            || (((board_from & MASK_L5) << 5) == board_to))
-        {
+    pub fn get_move_encoding(&self) -> i32 {
+        let mut dir: i32 = 0;
+        if (((self.from & MASK_L3) << 3) == self.to) || (((self.from & MASK_L5) << 5) == self.to) {
             dir = 0;
-        } else if (((board_from) << 4) == board_to) {
+        } else if ((self.from) << 4) == self.to {
             dir = 1;
-        } else if (((board_from) >> 4) == board_to) {
+        } else if ((self.from) >> 4) == self.to {
             dir = 2;
-        } else if ((((board_from & MASK_R3) >> 3) == board_to)
-            || (((board_from & MASK_R5) >> 5) == board_to))
+        } else if ((self.from & MASK_R3) >> 3) == self.to || ((self.from & MASK_R5) >> 5) == self.to
         {
             dir = 3;
         };
 
-        return 4 * self.get_board_from_index() + dir;
-    }
-}
-
-fn move_left<const COLOR: i8>(maske: u32) -> u32 {
-    if COLOR == BLACK {
-        (maske & (!NOT_RL_7) & (!BRANK_WHITE)).rotate_left(7)
-    } else {
-        (maske & (!NOT_RR_7) & (!BRANK_BLACK)).rotate_right(7)
-    }
-}
-
-fn move_right<const COLOR: i8>(maske: u32) -> u32 {
-    if COLOR == BLACK {
-        (maske & (!NOT_RL_1) & (!BRANK_WHITE)).rotate_left(1)
-    } else {
-        (maske & (!NOT_RR_1) & (!BRANK_BLACK)).rotate_right(1)
+        return 4 * self.get_from_index() as i32 + dir;
     }
 }
 
@@ -227,7 +161,7 @@ impl Position {
         for i in (0..8).rev() {
             for j in (0..4).rev() {
                 let board_index = 4 * i + j;
-                let bit_index = BIT_BOARD[board_index];
+                let bit_index = board_index;
                 let maske: u32 = 1u32 << bit_index;
                 let value: i32 = ((maske & self.bp) != 0) as i32
                     + (((maske & self.wp) != 0) as i32) * 2i32
@@ -251,31 +185,34 @@ impl Position {
     }
 
     pub fn make_move(&mut self, m: &Move) {
-        if (m.from & self.k) != 0 {
-            self.k |= m.to;
-            self.k &= !m.from;
-        }
-        self.k &= !m.captures;
-
         if self.color == BLACK {
+            if m.captures != 0 {
+                self.wp &= !m.captures;
+                self.k &= !m.captures;
+            }
             self.bp &= !m.from;
             self.bp |= m.to;
-            self.wp &= !m.captures;
-            if (m.to & BRANK_WHITE) != 0 {
+
+            if ((m.to & PROMO_SQUARES_BLACK) != 0) && ((m.from & self.k) == 0) {
                 self.k |= m.to;
             }
         } else {
+            if m.captures != 0 {
+                self.bp &= !m.captures;
+                self.k &= !m.captures;
+            }
             self.wp &= !m.from;
             self.wp |= m.to;
-            self.bp &= !m.captures;
-            if (m.to & BRANK_BLACK) != 0 {
+
+            if ((m.to & PROMO_SQUARES_WHITE) != 0) && ((m.from & self.k) == 0) {
                 self.k |= m.to;
             }
         }
+        if (m.from & self.k) != 0 {
+            self.k &= !m.from;
+            self.k |= m.to;
+        }
         self.color = -self.color;
-
-        //need to check for promotion
-        //and other things
     }
 
     pub fn undo_move(&mut self, _m: &Move) {
@@ -328,55 +265,67 @@ impl Position {
         }
     }
 
-    pub fn get_pieces<const COLOR: i8>(&self) -> u32 {
-        if COLOR == -1 {
-            self.bp
+    pub fn get_own_pieces(self: Position) -> u32 {
+        if self.color == BLACK {
+            return self.bp;
         } else {
-            self.wp
+            return self.wp;
         }
     }
 
+    pub fn get_opp_pieces(self: Position) -> u32 {
+        if self.color == BLACK {
+            return self.wp;
+        } else {
+            return self.bp;
+        }
+    }
     pub fn piece_count(&self) -> u32 {
         self.bp.count_ones() + self.wp.count_ones()
     }
 
-    pub fn get_movers<const COLOR: i8>(&self) -> u32 {
-        let nocc: u32 = !(self.bp | self.wp);
-        let mut movers: u32 = 0;
-        if self.k != 0 {
-            movers |= move_left::<COLOR>(nocc);
-            movers |= move_right::<COLOR>(nocc);
-        }
-        if COLOR == BLACK {
-            movers |= move_left::<WHITE>(nocc);
-            movers |= move_right::<WHITE>(nocc);
-            movers &= self.bp;
+    pub fn get_movers(&self) -> u32 {
+        let nocc = !(self.wp | self.bp);
+        let current = if self.color == BLACK {
+            self.bp
         } else {
-            movers |= move_left::<BLACK>(nocc);
-            movers |= move_right::<BLACK>(nocc);
-            movers &= self.wp;
+            self.wp
+        };
+        let kings = current & self.k;
+
+        let mut movers =
+            (default_shift(-self.color, nocc) | forward_mask(-self.color, nocc)) & current;
+        if kings != 0 {
+            movers |= (default_shift(self.color, nocc) | forward_mask(self.color, nocc)) & kings;
         }
         return movers;
     }
 
     pub fn get_jumpers<const COLOR: i8>(&self) -> u32 {
-        let nocc: u32 = !(self.bp | self.wp);
-        let mut movers: u32 = 0;
-        let opp: u32 = if COLOR == BLACK { self.wp } else { self.bp };
-        let own: u32 = if COLOR == BLACK { self.bp } else { self.wp };
-        if COLOR == BLACK {
-            movers |= move_left::<WHITE>(move_left::<WHITE>(nocc) & self.wp);
-            movers |= move_right::<WHITE>(move_right::<WHITE>(nocc) & self.wp);
-            movers &= self.bp;
-        } else {
-            movers |= move_left::<BLACK>(move_left::<BLACK>(nocc) & self.bp);
-            movers |= move_right::<BLACK>(move_right::<BLACK>(nocc) & self.bp);
-            movers &= self.wp;
+        let nocc = !(self.bp | self.wp);
+        let current = if COLOR == BLACK { self.bp } else { self.wp };
+        let opp = if COLOR == BLACK { self.wp } else { self.bp };
+        let kings = current & self.k;
+
+        let mut movers = 0;
+        let temp = default_shift(-self.color, nocc) & opp;
+        if temp != 0 {
+            movers |= forward_mask(-self.color, temp) & current;
         }
-        if self.k != 0 {
-            movers |= move_left::<COLOR>(move_left::<COLOR>(nocc) & opp);
-            movers |= move_right::<COLOR>(move_right::<COLOR>(nocc) & opp);
-            movers &= own & self.k;
+        let mut temp = forward_mask(-self.color, nocc) & opp;
+        if temp != 0 {
+            movers |= default_shift(-self.color, temp) & current;
+        }
+        if kings != 0 {
+            temp = default_shift(self.color, nocc) & opp;
+            if temp != 0 {
+                movers |= forward_mask(self.color, temp) & kings;
+            }
+            temp = forward_mask(self.color, nocc) & opp;
+
+            if temp != 0 {
+                movers |= default_shift(self.color, temp) & kings;
+            }
         }
         return movers;
     }
@@ -389,10 +338,10 @@ impl Position {
     pub fn get_start_position() -> Position {
         let mut start: Position = Position::empty();
         for i in 0..12 {
-            start.bp |= 1 << BIT_BOARD[i];
+            start.bp |= 1 << i;
         }
         for i in 20..32 {
-            start.wp |= 1 << BIT_BOARD[i];
+            start.wp |= 1 << i;
         }
         start.k = 0u32;
         return start;
@@ -409,12 +358,13 @@ impl Position {
         next.bp = get_mirrored(self.wp);
         next.wp = get_mirrored(self.bp);
         next.k = get_mirrored(self.k);
-        if self.color == -1 {
-            next.color = 1;
-        } else {
-            next.color = -1;
-        }
+        next.color = -self.color;
         return next;
+    }
+
+    pub fn has_jumps(self) -> bool {
+        return (self.get_jumpers::<BLACK>() != 0 && self.color == BLACK)
+            || (self.get_jumpers::<WHITE>() != 0 && self.color == WHITE);
     }
 }
 
@@ -426,9 +376,9 @@ impl TryFrom<&str> for Position {
 
         let add_sq = |pos: &mut Position, color: i32, square: usize| {
             if color == -1 {
-                pos.bp |= 1 << (square - 1);
+                pos.bp |= 1 << square - 1;
             } else {
-                pos.wp |= 1 << (square - 1);
+                pos.wp |= 1 << square - 1;
             }
         };
 
@@ -437,7 +387,7 @@ impl TryFrom<&str> for Position {
             Some('B') => -1,
             _ => {
                 return Err(std::io::Error::new(
-                    ErrorKind::NotFound,
+                    std::io::ErrorKind::NotFound,
                     format!("Error parsing color when fen_string is {}", test),
                 ))
             }
@@ -451,7 +401,7 @@ impl TryFrom<&str> for Position {
             let token_op = s.chars().next();
             if token_op == None {
                 std::io::Error::new(
-                    ErrorKind::NotFound,
+                    std::io::ErrorKind::NotFound,
                     format!("Error parsing color when fen_string is {}", test),
                 );
             }
@@ -475,14 +425,14 @@ impl TryFrom<&str> for Position {
                             Ok(n) => n,
                             Err(_) => {
                                 return Err(std::io::Error::new(
-                                    ErrorKind::NotFound,
+                                    std::io::ErrorKind::NotFound,
                                     "Error parsing squares",
                                 ))
                             }
                         };
 
                         add_sq(&mut pos, color, square);
-                        pos.k |= 1 << (square - 1);
+                        pos.k |= 1 << square - 1;
                     }
 
                     _ => {
@@ -490,7 +440,7 @@ impl TryFrom<&str> for Position {
                             Ok(n) => n,
                             Err(_) => {
                                 return Err(std::io::Error::new(
-                                    ErrorKind::NotFound,
+                                    std::io::ErrorKind::NotFound,
                                     "Error parsing squares",
                                 ))
                             }
@@ -505,83 +455,16 @@ impl TryFrom<&str> for Position {
     }
 }
 
-fn jump_left<const COLOR: i8, const OPP: i8>(
-    from: u32,
-    captures: u32,
-    pos: Position,
-) -> (u32, u32) {
-    let opp = pos.get_pieces::<OPP>() & !captures;
-    let nocc = !(opp | pos.get_pieces::<COLOR>());
-    let captured = move_left::<COLOR>(from) & opp;
-    (captured, move_left::<COLOR>(captured) & nocc)
-}
-
-fn jump_right<const COLOR: i8, const OPP: i8>(
-    from: u32,
-    captures: u32,
-    pos: Position,
-) -> (u32, u32) {
-    let opp = pos.get_pieces::<OPP>() & !captures;
-    let nocc = !(opp | pos.get_pieces::<COLOR>());
-    let captured = move_right::<COLOR>(from) & opp;
-    (captured, move_right::<COLOR>(captured) & nocc)
-}
-
-fn add_capture<const COLOR: i8, const OPP: i8, const is_king: bool>(
-    orig: u32,
-    from: u32,
-    captures: u32,
-    pos: Position,
-    liste: &mut MoveList,
-) {
-    //handling pawn captures first
-    let mut dest: u32 = 0;
-    let left_cap = jump_left::<COLOR, OPP>(from, captures, pos);
-    if left_cap.1 != 0 {
-        add_capture::<COLOR, OPP, is_king>(orig, left_cap.1, captures | left_cap.0, pos, liste);
-    }
-    let right_cap = jump_right::<COLOR, OPP>(from, captures, pos);
-    if right_cap.1 != 0 {
-        add_capture::<COLOR, OPP, is_king>(orig, right_cap.1, captures | right_cap.0, pos, liste);
-    }
-    dest |= left_cap.1 | right_cap.1;
-    if is_king {
-        let king_left = jump_left::<OPP, OPP>(from, captures, pos);
-        if king_left.1 != 0 {
-            add_capture::<COLOR, OPP, is_king>(
-                orig,
-                king_left.1,
-                captures | king_left.0,
-                pos,
-                liste,
-            );
-        }
-
-        let king_right = jump_right::<OPP, OPP>(from, captures, pos);
-        if king_right.1 != 0 {
-            add_capture::<COLOR, OPP, is_king>(
-                orig,
-                king_right.1,
-                captures | king_right.0,
-                pos,
-                liste,
-            );
-        }
-        dest |= king_left.1 | king_right.1;
-    }
-    if dest == 0 {
-        liste.add_move(orig, from, captures);
-    }
-}
-
 impl MoveList {
     pub fn new() -> MoveList {
         MoveList {
             length: 0,
-            moves: [Move::default(); 40],
+            moves: [Move::default(); 60],
         }
     }
-
+    pub fn iter(&mut self) -> std::slice::Iter<'_, Move> {
+        (&self.moves[0..self.length]).iter()
+    }
     fn add_move(&mut self, from: u32, to: u32, captures: u32) {
         let scrap: usize = (to == 0) as usize;
         self.moves[self.length + scrap] = Move {
@@ -602,91 +485,150 @@ impl MoveList {
         self.length += (to != 0) as usize;
     }
 
-    pub fn get_silent_movers<const COLOR: i8, const OPP: i8>(&mut self, pos: &Position) {
-        let movers = pos.get_movers::<COLOR>();
+    pub fn get_silent_moves(&mut self, pos: Position) {
+        let mut pawn_movers = pos.get_movers() & (!pos.k);
+        let mut king_movers = pos.get_movers() & pos.k;
+
         let nocc = !(pos.bp | pos.wp);
-        let mut pawns = movers & !pos.k;
-        let mut kings = movers & pos.k;
 
-        while pawns != 0 {
-            let from = pawns & !(pawns - 1u32);
-            self.add_quiet_move(from, move_left::<COLOR>(from) & nocc);
-            self.add_quiet_move(from, move_right::<COLOR>(from) & nocc);
-            pawns &= pawns - 1;
+        while king_movers != 0 {
+            let maske = king_movers & !(king_movers - 1);
+            let mut squares = get_neighbour_squares(pos.color, true, maske);
+            squares &= nocc;
+            while squares != 0 {
+                let next = squares & !(squares - 1);
+                self.add_quiet_move(maske, next);
+                squares &= squares - 1;
+            }
+            king_movers &= !maske;
         }
-        while kings != 0 {
-            let from = kings & !(kings - 1u32);
-            self.add_quiet_move(from, move_left::<COLOR>(from) & nocc);
-            self.add_quiet_move(from, move_right::<COLOR>(from) & nocc);
-            self.add_quiet_move(from, move_left::<OPP>(from) & nocc);
-            self.add_quiet_move(from, move_right::<OPP>(from) & nocc);
-            kings &= kings - 1;
+
+        while pawn_movers != 0 {
+            let maske = pawn_movers & !(pawn_movers - 1);
+            let mut squares = get_neighbour_squares(pos.color, false, maske);
+            squares &= nocc;
+            while squares != 0 {
+                let next = squares & !(squares - 1);
+                self.add_quiet_move(maske, next);
+                squares &= squares - 1;
+            }
+            pawn_movers &= !maske;
         }
     }
 
-    pub fn get_captures<const COLOR: i8, const OPP: i8>(&mut self, pos: &mut Position) {
-        let jumpers = pos.get_jumpers::<COLOR>();
-        let mut pawns = jumpers & !pos.k;
-        let mut kings = jumpers & pos.k;
-        while pawns != 0 {
-            let from = pawns & !(pawns - 1u32);
-            add_capture::<COLOR, OPP, false>(from, from, 0, pos.clone(), self);
-            pawns &= pawns - 1;
+    pub fn add_capture(
+        &mut self,
+        is_king_cap: bool,
+        pos: Position,
+        orig: u32,
+        current: u32,
+        captures: u32,
+    ) {
+        let opp = pos.get_opp_pieces() ^ captures;
+        let nocc = !(opp | pos.get_own_pieces());
+        let temp0 = default_shift(pos.color, current) & opp;
+        let temp1 = forward_mask(pos.color, current) & opp;
+        let dest0 = forward_mask(pos.color, temp0) & nocc;
+        let dest1 = default_shift(pos.color, temp1) & nocc;
+
+        let mut imed = forward_mask(-pos.color, dest0) | default_shift(-pos.color, dest1);
+        let mut dest = dest0 | dest1;
+        if is_king_cap {
+            let temp2 = default_shift(-pos.color, current) & opp;
+            let temp3 = forward_mask(-pos.color, current) & opp;
+            let dest2 = forward_mask(-pos.color, temp2) & nocc;
+            let dest3 = default_shift(-pos.color, temp3) & nocc;
+            imed |= forward_mask(pos.color, dest2) | default_shift(pos.color, dest3);
+            dest |= dest2 | dest3;
         }
-        while kings != 0 {
-            let from = kings & !(kings - 1u32);
-            if COLOR == BLACK {
-                pos.bp ^= from;
-            } else {
-                pos.wp ^= from;
-            }
-            add_capture::<COLOR, OPP, true>(from, from, 0, pos.clone(), self);
-            if COLOR == BLACK {
-                pos.bp ^= from;
-            } else {
-                pos.wp ^= from;
-            }
-            kings &= kings - 1;
+        if dest == 0 {
+            self.add_move(orig, current, captures);
+        }
+        while dest != 0 {
+            let destMask = dest & !(dest - 1);
+            let capMask = imed & !(imed - 1);
+            dest &= dest - 1;
+            imed &= imed - 1;
+            self.add_capture(is_king_cap, pos, orig, destMask, captures | capMask);
         }
     }
-
-    pub fn get_moves(&mut self, pos: Position) {
-        let mut copy = pos.clone();
-        if pos.color == BLACK {
-            if pos.get_jumpers::<-1>() != 0 {
-                self.get_captures::<BLACK, WHITE>(&mut copy);
-                return;
-            }
-            self.get_silent_movers::<BLACK, WHITE>(&pos);
+    pub fn loop_captures(&mut self, mut pos: Position) {
+        let movers = if pos.color == BLACK {
+            pos.get_jumpers::<BLACK>()
         } else {
-            if pos.get_jumpers::<1>() != 0 {
-                self.get_captures::<WHITE, BLACK>(&mut copy);
-                return;
+            pos.get_jumpers::<WHITE>()
+        };
+        let mut king_jumpers = movers & pos.k;
+        let mut pawn_jumpers = movers & (!pos.k);
+        while king_jumpers != 0 {
+            let maske = king_jumpers & !(king_jumpers - 1);
+            if pos.color == BLACK {
+                pos.bp ^= maske;
+            } else {
+                pos.wp ^= maske;
             }
-            self.get_silent_movers::<WHITE, BLACK>(&pos);
+            self.add_capture(true, pos, maske, maske, 0);
+            if pos.color == BLACK {
+                pos.bp ^= maske;
+            } else {
+                pos.wp ^= maske;
+                king_jumpers &= king_jumpers - 1;
+            }
+        }
+
+        while pawn_jumpers != 0 {
+            let maske = pawn_jumpers & !(pawn_jumpers - 1);
+            self.add_capture(false, pos, maske, maske, 0);
+            pawn_jumpers &= pawn_jumpers - 1;
         }
     }
-
-    pub fn iter(&mut self) -> std::slice::Iter<'_, Move> {
-        (&self.moves[0..self.length]).iter()
+    pub fn get_moves(&mut self, pos: Position) {
+        if pos.has_jumps() {
+            self.loop_captures(pos);
+        } else {
+            self.get_silent_moves(pos);
+        }
     }
 }
-
 pub fn perft_count(depth: i32, position: Position) -> size_t {
     let mut liste = MoveList::new();
     liste.get_moves(position);
 
     if depth == 1 {
-        return liste.length as size_t;
+        return liste.length;
     }
 
     let mut node_count: size_t = 0;
-
     for m in liste.iter() {
         let mut cp = position.clone();
         cp.make_move(m);
+
         node_count += perft_count(depth - 1, cp)
     }
 
     return node_count;
+}
+pub fn default_shift(color: i8, maske: u32) -> u32 {
+    if color == BLACK {
+        return maske.shl(4);
+    } else {
+        return maske.shr(4);
+    }
+}
+
+pub fn forward_mask(color: i8, maske: u32) -> u32 {
+    if color == BLACK {
+        return (maske & MASK_L3).shl(3) | (maske & MASK_L5).shl(5);
+    } else {
+        return (maske & MASK_R3).shr(3) | (maske & MASK_R5).shr(5);
+    }
+}
+pub fn get_neighbour_squares(color: i8, is_king: bool, maske: u32) -> u32 {
+    if is_king {
+        let mut squares = default_shift(color, maske) | forward_mask(color, maske);
+        squares |= forward_mask(-color, maske) | default_shift(-color, maske);
+        return squares;
+    } else {
+        return default_shift(color, maske) | forward_mask(color, maske);
+    }
 }

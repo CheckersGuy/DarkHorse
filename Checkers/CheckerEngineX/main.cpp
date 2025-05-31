@@ -109,15 +109,6 @@ int main(int argl, const char **argc) {
     return 0;
   */
 
-  Position prev = Position::pos_from_fen("B:W9,15,K18,19,21,30:B20,K32");
-  Position next = Position::pos_from_fen("W:W9,15,K18,19,21,30:B20,K27");
-
-  auto move = Position::get_move(prev, next);
-  if (move.has_value()) {
-    std::cout << move.value().get_move_encoding() << std::endl;
-  }
-
-  return 0;
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
@@ -132,6 +123,11 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
+
+  auto node_count = Perft::perft_check(Position::get_start_position(), 3);
+  std::cout << "NodeCount: " << Perft::select_moves << std::endl;
+
+  return 0;
 
   CmdParser parser;
   parser.parse(argl, argc);
