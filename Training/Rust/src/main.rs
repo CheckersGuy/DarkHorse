@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new("E:\\kr_english_wld", 2000, 6).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 6).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -106,13 +106,7 @@ fn main() -> anyhow::Result<()> {
     )?;
 
     */
-    /*
-    let mut start_position = Position::get_start_position();
-    start_position.print_position();
-    let node_count = perft_count(12, start_position);
-    println!("Nodecount: {}", node_count);
 
-    */
     /*
         let result = base
             .get_move_encoding(
@@ -122,7 +116,15 @@ fn main() -> anyhow::Result<()> {
             .unwrap();
         println!("Encoding: {}", result);
     */
-    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
+    //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
 
+    let mut position = Position::get_start_position();
+    position.print_position();
+    let mut liste = MoveList::new();
+    liste.get_moves(position);
+
+    println!("{}", liste.length);
+    let perft_count = perft_count(9, position);
+    println!("PerftCount is given by {}", perft_count);
     Ok(())
 }

@@ -1,5 +1,6 @@
 #include "helper.h"
-
+#include "MGenerator.h"
+#ifdef _WIN32
 extern "C" void load(char *path, int cache_size, int num_pieces) {
   // would need seperate caches for both
   base.cache_size = cache_size;
@@ -48,7 +49,7 @@ extern "C" int probe_dtw_with_position(unsigned int wp, unsigned int bp,
   }
   return -1000;
 }
-
+#endif
 extern "C" void print_fen(char *fen_string) {
   Position::pos_from_fen(fen_string).print_position();
 }
@@ -66,4 +67,44 @@ extern "C" int move_played(char *orig, char *next) {
   }
 
   return -1;
+}
+
+extern "C" int move_played_pos(uint32_t o_wp, uint32_t o_bp, uint32_t o_k,
+                               uint32_t n_wp, uint32_t n_bp, uint32_t n_k) {
+  Position o = Position{};
+  Position n = Position{};
+  o.WP = o_wp;
+  o.BP = o_bp;
+  o.K = o_k;
+
+  n.WP = n_wp;
+  n.BP = n_bp;
+  n.K = n_k;
+
+  MoveListe liste;
+  get_moves(o, liste);
+
+  for (int i = 0; i < liste.length(); ++i) {
+    Position copy = o;
+    copy.make_move(liste[i]);
+    if (copy == n) {
+      return i;
+    }
+  }
+  // at this point no move was found
+
+  return -1;
+}
+
+extern "C" int get_num_moves(uint32_t wp, uint32_t bp, uint32_t k) {
+  Position o = Position{};
+  Position n = Position{};
+  o.WP = wp;
+  o.BP = bp;
+  o.K = k;
+
+  MoveListe liste;
+  get_moves(o, liste);
+
+  return liste.length();
 }
