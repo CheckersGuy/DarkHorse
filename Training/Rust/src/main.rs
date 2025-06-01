@@ -116,15 +116,7 @@ fn main() -> anyhow::Result<()> {
             .unwrap();
         println!("Encoding: {}", result);
     */
-    //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
+    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
 
-    let mut position = Position::get_start_position();
-
-    let mut liste = MoveList::new();
-    liste.get_moves(position);
-
-    println!("{}", liste.length);
-    let perft_count = perft_count(14, position);
-    println!("PerftCount is given by {}", perft_count);
     Ok(())
 }
