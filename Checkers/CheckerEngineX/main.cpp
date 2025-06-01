@@ -23,7 +23,7 @@
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "moesuper.quant");
-INCBIN(policy, "policybigger2.quant");
+INCBIN(policy, "policybigger3.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -123,11 +123,6 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-
-  auto node_count = Perft::perft_check(Position::get_start_position(), 3);
-  std::cout << "NodeCount: " << Perft::select_moves << std::endl;
-
-  return 0;
 
   CmdParser parser;
   parser.parse(argl, argc);

@@ -14,7 +14,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from AdEMAMix import AdEMAMix
-L1 =2*128
+L1 =2*512
 L2 =32
 L3 = 32
 

@@ -101,7 +101,7 @@ pub struct Move {
     captures: u32,
 }
 pub struct MoveList {
-    pub moves: [Move; 60],
+    pub moves: [Move; 40],
     pub length: usize,
 }
 
@@ -459,7 +459,7 @@ impl MoveList {
     pub fn new() -> MoveList {
         MoveList {
             length: 0,
-            moves: [Move::default(); 60],
+            moves: [Move::default(); 40],
         }
     }
     pub fn iter(&mut self) -> std::slice::Iter<'_, Move> {
@@ -543,13 +543,14 @@ impl MoveList {
         }
         if dest == 0 {
             self.add_move(orig, current, captures);
+            return;
         }
         while dest != 0 {
             let destMask = dest & !(dest - 1);
             let capMask = imed & !(imed - 1);
             dest &= dest - 1;
             imed &= imed - 1;
-            self.add_capture(is_king_cap, pos, orig, destMask, captures | capMask);
+            self.add_capture(is_king_cap, pos, orig, destMask, (captures | capMask));
         }
     }
     pub fn loop_captures(&mut self, mut pos: Position) {
@@ -572,8 +573,9 @@ impl MoveList {
                 pos.bp ^= maske;
             } else {
                 pos.wp ^= maske;
-                king_jumpers &= king_jumpers - 1;
             }
+
+            king_jumpers &= king_jumpers - 1;
         }
 
         while pawn_jumpers != 0 {
@@ -610,17 +612,17 @@ pub fn perft_count(depth: i32, position: Position) -> size_t {
 }
 pub fn default_shift(color: i8, maske: u32) -> u32 {
     if color == BLACK {
-        return maske.shl(4);
+        return maske << 4;
     } else {
-        return maske.shr(4);
+        return maske >> 4;
     }
 }
 
 pub fn forward_mask(color: i8, maske: u32) -> u32 {
     if color == BLACK {
-        return (maske & MASK_L3).shl(3) | (maske & MASK_L5).shl(5);
+        return ((maske & MASK_L3) << 3) | ((maske & MASK_L5) << 5);
     } else {
-        return (maske & MASK_R3).shr(3) | (maske & MASK_R5).shr(5);
+        return ((maske & MASK_R3) >> 3) | ((maske & MASK_R5) >> 5);
     }
 }
 pub fn get_neighbour_squares(color: i8, is_king: bool, maske: u32) -> u32 {
