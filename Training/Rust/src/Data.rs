@@ -1,3 +1,4 @@
+use crate::Move;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample;
@@ -476,6 +477,16 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
                 let mut sample = window[1].clone();
                 if sample.position.color == -1 {
                     sample.position = sample.position.get_color_flip();
+                    let test_encoding = Move::get_move_encoding_from_pos(
+                        prev_pos.get_color_flip(),
+                        next_pos.get_color_flip(),
+                    );
+                    if move_encoding != test_encoding.unwrap_or(-1) {
+                        println!(
+                            "Move Encoding did not agree here: {}",
+                            test_encoding.unwrap()
+                        );
+                    }
                 }
 
                 sample.mlh = move_encoding as i16;
