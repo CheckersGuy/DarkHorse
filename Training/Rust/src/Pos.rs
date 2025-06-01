@@ -129,6 +129,24 @@ impl Move {
 
         return 4 * self.get_from_index() as i32 + dir;
     }
+
+    pub fn get_move_encoding_from_pos (orig : Position, next : Position) -> Option<i32>{
+        //first we need to figure out , what move was played
+        let mut liste = MoveList::new();
+        liste.get_moves(orig);
+        
+        for m in liste.iter(){
+            let copy = orig;
+            copy.make_move(move);
+            if copy == next{
+                return Some(m.get_move_encoding());
+            }
+        }
+        //At this point there was no move in 'orig' that
+        //lead to the position 'next'
+        return None;
+        
+    }
 }
 
 fn get_horizontal_flip(b: u32) -> u32 {
