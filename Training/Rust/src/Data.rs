@@ -448,11 +448,9 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
     */
 }
 
-pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
-    let mut fen_prev = String::new();
-    let mut fen_next = String::new();
     for game in reader.iter_games() {
         //need to use the chinook format
         //or keep using fen-strings
@@ -466,36 +464,25 @@ pub fn create_policy_data(path: &str, output: &str, base: &TableBase::Base) -> s
                 continue;
             }
 
-            fen_next = next_pos.clone().get_fen_string();
-            fen_prev = prev_pos.clone().get_fen_string();
-
-            let move_encoding = base
-                .get_move_encoding(fen_prev.as_str(), fen_next.as_str())
-                .unwrap();
+            let move_encoding;
+            if prev_pos.color == -1 {
+                move_encoding = Move::get_move_encoding_from_pos(
+                    prev_pos.get_color_flip(),
+                    next_pos.get_color_flip(),
+                )
+                .unwrap_or(-1);
+            } else {
+                move_encoding = Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
+            }
 
             if move_encoding >= 0 {
                 let mut sample = window[1].clone();
                 if sample.position.color == -1 {
                     sample.position = sample.position.get_color_flip();
-                    let test_encoding = Move::get_move_encoding_from_pos(
-                        prev_pos.get_color_flip(),
-                        next_pos.get_color_flip(),
-                    );
-                    if move_encoding != test_encoding.unwrap_or(-1) {
-                        println!(
-                            "Move Encoding did not agree here: {}",
-                            test_encoding.unwrap()
-                        );
-                    }
                 }
 
                 sample.mlh = move_encoding as i16;
                 sample.write_fen(&mut writer)?;
-            } else {
-                println!("-------------------------------");
-                println!("{}", fen_prev);
-                println!("Next");
-                println!("{}", fen_next);
             }
         }
     }
