@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 6).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -94,10 +94,11 @@ fn main() -> anyhow::Result<()> {
                 "/mnt/e/Iamherenext3rescored.samples",
             )?;
     */
-    Data::shuffle_data_external::<16>(
+    /*Data::shuffle_data_external::<16>(
         "E:\\Iamhere9rescored.samples",
         "E:\\Iamhere9shuffled.samples",
     )?;
+    */
 
     /* Data::rescore_games(
         "E:\\Iamhere8.samples",
@@ -115,7 +116,7 @@ fn main() -> anyhow::Result<()> {
             .unwrap();
         println!("Encoding: {}", result);
     */
-    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples", &base);
+    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
 
     Ok(())
 }
