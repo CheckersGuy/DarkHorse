@@ -55,6 +55,51 @@ impl From<i8> for Result {
     }
 }
 
+pub struct Game {
+    pos: Position,
+    moves: Vec<u8>,
+    result: Result,
+}
+
+impl Game {
+    pub fn new() -> Game {
+        Game {
+            pos: Position::empty(),
+            moves: Vec::new(),
+            result: Result::UNKNOWN,
+        }
+    }
+
+    pub fn save_game<W: Write>(&self, writer: &mut W) {
+        //writing the length of the game first
+    }
+
+    pub fn read_game<R: Read>(&mut self, reader: &mut R) {
+        //the length of the game does not include any captures or the starting position of the game
+        self.moves.clear();
+        let game_length = reader
+            .read_u16::<LittleEndian>()
+            .expect("Could not read game_length");
+        let wp = reader
+            .read_u32::<LittleEndian>()
+            .expect("Could not read wp");
+        let bp = reader
+            .read_u32::<LittleEndian>()
+            .expect("Could not read bp");
+        let k = reader.read_u32::<LittleEndian>().expect("Could not read k");
+        let color = reader.read_i8().expect("Could not read color");
+        let mut pos = Position::empty();
+
+        pos.wp = wp;
+        pos.bp = bp;
+        pos.k = k;
+        pos.color = color;
+        self.pos = pos;
+
+        for _ in 0..game_length {}
+    }
+}
+
 impl std::ops::Not for Result {
     type Output = Self;
     fn not(self) -> Self::Output {
