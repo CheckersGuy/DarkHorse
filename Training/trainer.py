@@ -12,8 +12,8 @@ import torch
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 605
-    model = Experimental.MLHNetwork()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/mlh6.samples",
+    model = Experimental.PolicyNetwork()
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/Iamhere8policy.samples",
     val_data="/mnt/e/validation.samples",
     batch_size=batch_size, buffer_size=300000000)
     
@@ -26,17 +26,7 @@ if __name__ == "__main__":
 
     trainer.fit(model, data_loader);
 
-if __name__ == "__main__d":
-    batch_size = 8192
-    batch = torch.randn(batch_size,120)
 
-    network = Experimental.GumbelNetwork(num_experts=12)
-    network2 = Experimental.Network()
-
-    out, accum, weights = network.forward(batch)
-    print(out.shape)
-    print(accum.shape)
-    print(weights.shape)
 
 
 
