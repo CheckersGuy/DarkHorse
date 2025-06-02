@@ -1,5 +1,6 @@
 //move sample definition from dataloader here
 //should make stuff a little easier to handle :)
+use crate::Pos::MoveList;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use bloomfilter::reexports::bit_vec::BitBlock;
@@ -56,22 +57,71 @@ impl From<i8> for Result {
 }
 
 pub struct Game {
-    pos: Position,
+    start_pos: Position,
     moves: Vec<u8>,
     result: Result,
+    current: Position,
 }
 
 impl Game {
     pub fn new() -> Game {
         Game {
-            pos: Position::empty(),
+            start_pos: Position::empty(),
             moves: Vec::new(),
             result: Result::UNKNOWN,
+            current: Position::empty(),
         }
+    }
+
+    pub fn set_start_position(&mut self, pos: Position) {
+        self.start_pos = pos;
+        self.current = pos;
+    }
+    //should return an error if the position could not be found
+    pub fn add_position(&mut self, pos: Position) -> Option<u8> {
+        let mut liste = MoveList::new();
+        liste.get_moves(self.current);
+        for (index, m) in liste.iter().enumerate() {
+            let mut copy = self.current;
+            copy.make_move(m);
+            if copy == pos {
+                return Some(index as u8);
+            }
+        }
+        None
     }
 
     pub fn save_game<W: Write>(&self, writer: &mut W) {
         //writing the length of the game first
+        writer
+            .write_u16::<LittleEndian>(self.moves.len() as u16)
+            .expect("Could not write game_length");
+        writer
+            .write_u32::<LittleEndian>(self.start_pos.wp)
+            .expect("Could not write wp");
+        writer
+            .write_u32::<LittleEndian>(self.start_pos.bp)
+            .expect("Could not write bp");
+        writer
+            .write_u32::<LittleEndian>(self.start_pos.k)
+            .expect("Could not write k");
+        writer
+            .write_i8(self.start_pos.color)
+            .expect("Could not write color");
+        let conv = match self.result {
+            Result::LOSS => 1,
+            Result::WIN => 2,
+            Result::DRAW => 3,
+            Result::TBLOSS => 4,
+            Result::TBWIN => 5,
+            Result::TBDRAW => 6,
+            Result::UNKNOWN => 0,
+        };
+        writer.write_i8(conv).expect("Could not write color");
+
+        for ind in self.moves.iter() {
+            writer.write_u8(*ind).expect("Could not write ind");
+        }
     }
 
     pub fn read_game<R: Read>(&mut self, reader: &mut R) {
@@ -88,15 +138,31 @@ impl Game {
             .expect("Could not read bp");
         let k = reader.read_u32::<LittleEndian>().expect("Could not read k");
         let color = reader.read_i8().expect("Could not read color");
+        //reading the game_result;
+
+        let result_index = reader.read_i8().expect("Could not read result_index");
+        self.result = match result_index {
+            1 => Result::LOSS,
+            2 => Result::WIN,
+            3 => Result::DRAW,
+            4 => Result::TBLOSS,
+            5 => Result::TBWIN,
+            6 => Result::TBDRAW,
+            _ => Result::UNKNOWN,
+        };
+
         let mut pos = Position::empty();
 
         pos.wp = wp;
         pos.bp = bp;
         pos.k = k;
         pos.color = color;
-        self.pos = pos;
+        self.start_pos = pos;
 
-        for _ in 0..game_length {}
+        for _ in 0..game_length {
+            let move_index = reader.read_u8().expect("Could not read move_index");
+            self.moves.push(move_index);
+        }
     }
 }
 

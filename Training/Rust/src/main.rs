@@ -12,12 +12,15 @@ use itertools::Itertools;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::BufWriter;
+use std::io::Write;
 use std::path::Path;
 use std::usize;
 use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
 use Pos::*;
+use Sample::Game;
+use Sample::Result;
 use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
@@ -116,7 +119,26 @@ fn main() -> anyhow::Result<()> {
             .unwrap();
         println!("Encoding: {}", result);
     */
-    Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
+    //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
+    let mut writer = BufWriter::new(File::create("test.games")?);
+    let mut game = Game::new();
+    game.start_pos = Position::get_start_position();
+    game.moves.push(0);
+    game.moves.push(0);
+    game.moves.push(3);
+    game.moves.push(10);
+    game.result = Result::DRAW;
+    game.save_game(&mut writer);
+    writer.flush()?;
+
+    let mut reader = BufReader::new(File::open("test.games")?);
+    let mut read_game = Game::new();
+    read_game.read_game(&mut reader);
+    read_game.start_pos.print_position();
+    for index in read_game.moves.iter() {
+        println!("{index}");
+    }
+    println!("Result: {:?}", game.result);
 
     Ok(())
 }
