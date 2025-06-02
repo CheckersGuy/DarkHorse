@@ -497,17 +497,8 @@ class PolicyNetwork(pl.LightningModule):
         return {"loss": loss}
 
 
-    def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("policybigger2.quant")
-        return super().on_train_epoch_end()
-
-    def on_train_start(self) -> None:
-        self.save_quantized_bucket("policybigger2.quant")
-        return super().on_train_start()
-
-
+   
     def validation_step(self, val_batch, batch_idx):
-        torch.save(self.state_dict(),"policybigger.pt")
         result,policy_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
@@ -517,7 +508,7 @@ class PolicyNetwork(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("policybigger.quant")
+        self.save_quantized_bucket("policybigger6.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -526,7 +517,7 @@ class PolicyNetwork(pl.LightningModule):
         return {"loss": avg_loss, "log": tensorboard_logs}
 
     def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("policybigger.quant")
+        self.save_quantized_bucket("policybigger6.quant")
         return super().on_train_epoch_end()
 
     def save_quantized_bucket(self, output):
