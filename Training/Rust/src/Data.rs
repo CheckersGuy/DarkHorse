@@ -3,7 +3,6 @@ use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample;
 use crate::Sample::Game;
-use crate::Sample::Sample;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
 use bloomfilter::reexports::bit_vec::BitBlock;
@@ -33,7 +32,6 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use string_sum::Sample::Sample;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]
