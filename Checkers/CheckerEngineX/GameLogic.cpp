@@ -22,7 +22,7 @@ uint64_t both_counter = 0;
 
 SearchGlobal glob;
 
-Network<4096, 32, 32, 1> network;
+Network<4096 + 2048, 32, 32, 1> network;
 
 Network<128, 32, 32, 1> mlh_net;
 

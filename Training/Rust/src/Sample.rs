@@ -57,12 +57,14 @@ impl From<i8> for Result {
 }
 
 pub struct Game {
-    start_pos: Position,
-    moves: Vec<u8>,
-    result: Result,
-    current: Position,
+    pub start_pos: Position,
+    pub moves: Vec<u8>,
+    pub result: Result,
+    pub current: Position,
 }
 
+//the game result is from the perspective of the player whose
+//turn it is in the starting position
 impl Game {
     pub fn new() -> Game {
         Game {
@@ -77,37 +79,84 @@ impl Game {
         self.start_pos = pos;
         self.current = pos;
     }
+
+    pub fn set_result(&mut self, res: Result) {
+        self.result = res;
+    }
     //should return an error if the position could not be found
     pub fn add_position(&mut self, pos: Position) -> Option<u8> {
         let mut liste = MoveList::new();
         liste.get_moves(self.current);
+
         for (index, m) in liste.iter().enumerate() {
             let mut copy = self.current;
             copy.make_move(m);
             if copy == pos {
+                self.current = copy;
+                if liste.length > 1 {
+                    self.moves.push(index as u8);
+                }
                 return Some(index as u8);
             }
         }
         None
     }
 
-    pub fn save_game<W: Write>(&self, writer: &mut W) {
+    pub fn get_positions(&self) -> Vec<Position> {
+        let mut current = self.start_pos;
+        let mut positions: Vec<Position> = Vec::new();
+        positions.push(current);
+
+        let mut iter = self.moves.iter();
+        loop {
+            let mut liste = MoveList::new();
+            liste.get_moves(current);
+            if liste.length == 1 {
+                current.make_move(&liste.moves[0]);
+                positions.push(current);
+                continue;
+            }
+
+            if let Some(m) = iter.next() {
+                current.make_move(&liste.moves[*m as usize]);
+                positions.push(current);
+            } else {
+                break;
+            }
+        }
+
+        return positions;
+    }
+    pub fn get_samples(&self) -> Vec<Sample> {
+        let positions = self.get_positions();
+        let pos_iter = positions.iter().skip(1);
+        let mut samples = Vec::new();
+        let mut curr_result = self.result;
+        samples.push(Sample {
+            position: self.start_pos,
+            mlh: -1,
+            result: curr_result,
+        });
+
+        for pos in pos_iter {
+            curr_result = !curr_result;
+            samples.push(Sample {
+                position: *pos,
+                mlh: -1,
+                result: curr_result,
+            });
+        }
+
+        return samples;
+    }
+
+    pub fn save_game<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         //writing the length of the game first
-        writer
-            .write_u16::<LittleEndian>(self.moves.len() as u16)
-            .expect("Could not write game_length");
-        writer
-            .write_u32::<LittleEndian>(self.start_pos.wp)
-            .expect("Could not write wp");
-        writer
-            .write_u32::<LittleEndian>(self.start_pos.bp)
-            .expect("Could not write bp");
-        writer
-            .write_u32::<LittleEndian>(self.start_pos.k)
-            .expect("Could not write k");
-        writer
-            .write_i8(self.start_pos.color)
-            .expect("Could not write color");
+        writer.write_u16::<LittleEndian>(self.moves.len() as u16)?;
+        writer.write_u32::<LittleEndian>(self.start_pos.wp)?;
+        writer.write_u32::<LittleEndian>(self.start_pos.bp)?;
+        writer.write_u32::<LittleEndian>(self.start_pos.k)?;
+        writer.write_i8(self.start_pos.color)?;
         let conv = match self.result {
             Result::LOSS => 1,
             Result::WIN => 2,
@@ -117,30 +166,25 @@ impl Game {
             Result::TBDRAW => 6,
             Result::UNKNOWN => 0,
         };
-        writer.write_i8(conv).expect("Could not write color");
+        writer.write_i8(conv)?;
 
         for ind in self.moves.iter() {
-            writer.write_u8(*ind).expect("Could not write ind");
+            writer.write_u8(*ind)?;
         }
+        Ok(())
     }
 
-    pub fn read_game<R: Read>(&mut self, reader: &mut R) {
+    pub fn read_game<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
         //the length of the game does not include any captures or the starting position of the game
         self.moves.clear();
-        let game_length = reader
-            .read_u16::<LittleEndian>()
-            .expect("Could not read game_length");
-        let wp = reader
-            .read_u32::<LittleEndian>()
-            .expect("Could not read wp");
-        let bp = reader
-            .read_u32::<LittleEndian>()
-            .expect("Could not read bp");
-        let k = reader.read_u32::<LittleEndian>().expect("Could not read k");
-        let color = reader.read_i8().expect("Could not read color");
+        let game_length = reader.read_u16::<LittleEndian>()?;
+        let wp = reader.read_u32::<LittleEndian>()?;
+        let bp = reader.read_u32::<LittleEndian>()?;
+        let k = reader.read_u32::<LittleEndian>()?;
+        let color = reader.read_i8()?;
         //reading the game_result;
 
-        let result_index = reader.read_i8().expect("Could not read result_index");
+        let result_index = reader.read_i8()?;
         self.result = match result_index {
             1 => Result::LOSS,
             2 => Result::WIN,
@@ -160,9 +204,10 @@ impl Game {
         self.start_pos = pos;
 
         for _ in 0..game_length {
-            let move_index = reader.read_u8().expect("Could not read move_index");
+            let move_index = reader.read_u8()?;
             self.moves.push(move_index);
         }
+        Ok(())
     }
 }
 
@@ -199,6 +244,20 @@ impl FromStr for Result {
             "win" | "won" => Ok(Result::WIN),
             "draw" | "drew" => Ok(Result::DRAW),
             _ => Err(anyhow::anyhow!("Could not parse sample")),
+        }
+    }
+}
+
+impl ToString for Result {
+    fn to_string(&self) -> String {
+        match self {
+            Result::WIN => String::from("WIN"),
+            Result::LOSS => String::from("LOSS"),
+            Result::DRAW => String::from("DRAW"),
+            Result::TBLOSS => String::from("TB_LOSS"),
+            Result::TBWIN => String::from("TB_WIN"),
+            Result::TBDRAW => String::from("TB_DRAW"),
+            _ => String::from("UNKNOWN"),
         }
     }
 }
@@ -314,7 +373,7 @@ impl SampleType {
     }
 }
 
-#[derive(Default, Clone, Hash, PartialEq, Debug)]
+#[derive(Clone, Hash, PartialEq, Debug)]
 //there always should be a mlh-value for every sample <- sounds like I need to add an assert
 //somewhere
 
@@ -323,7 +382,15 @@ pub struct Sample {
     pub mlh: i16,
     pub result: Result,
 }
-
+impl Default for Sample {
+    fn default() -> Self {
+        Sample {
+            position: Position::empty(),
+            mlh: -1,
+            result: Result::UNKNOWN,
+        }
+    }
+}
 impl Sample {
     pub fn write_fen<W: Write>(&self, writer: &mut W) -> std::io::Result<()> {
         writer.write_u32::<LittleEndian>(self.position.wp)?;
@@ -395,27 +462,14 @@ impl<'a> Iterator for SampleIterator<'a> {
     }
 }
 impl<'a> Iterator for GameIterator<'a> {
-    type Item = Vec<Sample>;
+    type Item = Game;
     fn next(&mut self) -> Option<Self::Item> {
-        let mut prev_count = 0;
-        loop {
-            let mut sample = Sample::default();
+        let mut game = Game::new();
 
-            match sample.read_into(&mut self.reader) {
-                Ok(_) => {}
-                Err(_) => break,
-            };
+        let result = game.read_game(&mut self.reader);
 
-            let piece_count = sample.position.bp.count_ones() + sample.position.wp.count_ones();
-            if piece_count >= prev_count {
-                self.game.push(sample);
-            } else {
-                let ret_val = Some(self.game.clone());
-                self.game.clear();
-                self.game.push(sample);
-                return ret_val;
-            }
-            prev_count = piece_count;
+        if result.is_ok() {
+            return Some(game);
         }
         return None;
     }
