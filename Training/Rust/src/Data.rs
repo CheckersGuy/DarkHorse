@@ -2,7 +2,6 @@ use crate::Move;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample::Game;
-use crate::Sample::Sample;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
 use bloomfilter::reexports::bit_vec::BitBlock;
