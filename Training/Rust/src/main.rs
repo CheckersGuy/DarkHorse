@@ -13,6 +13,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::Write;
+use std::iter::zip;
 use std::path::Path;
 use std::usize;
 use Data::count_unique_samples;
@@ -73,7 +74,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 6).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -120,25 +121,111 @@ fn main() -> anyhow::Result<()> {
         println!("Encoding: {}", result);
     */
     //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
-    let mut writer = BufWriter::new(File::create("test.games")?);
+    /*let mut writer = BufWriter::new(File::create("test.games")?);
     let mut game = Game::new();
-    game.start_pos = Position::get_start_position();
-    game.moves.push(0);
-    game.moves.push(0);
-    game.moves.push(3);
-    game.moves.push(10);
-    game.result = Result::DRAW;
-    game.save_game(&mut writer);
-    writer.flush()?;
+    game.set_start_position(Position::get_start_position());
 
-    let mut reader = BufReader::new(File::open("test.games")?);
-    let mut read_game = Game::new();
-    read_game.read_game(&mut reader);
-    read_game.start_pos.print_position();
-    for index in read_game.moves.iter() {
-        println!("{index}");
+    let fen_strings = vec![
+        "W:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
+        "B:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
+        "W:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,14,15",
+        "B:W18,19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,14,15",
+        "W:W19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,15,23",
+        "B:W11,19,21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12",
+        "W:W21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,8,10,12,23",
+        "B:W19,21,24,25,28,29,30,31,32:B1,2,3,4,5,6,8,10,12",
+    ];
+
+    for fen in fen_strings.iter() {
+        let position = Position::try_from(*fen).expect("Could not parse fen_string");
+        position.print_position();
+        println!();
     }
-    println!("Result: {:?}", game.result);
+    for fen in fen_strings.iter() {
+        let position = Position::try_from(*fen).expect("Could not parse fen_string");
+        let added = game.add_position(position);
+        if added.is_none() {
+            println!("Could not add the position");
+        }
+    }
+    println!("Reading the positions from the game");
+
+    for position in game.get_positions().iter() {
+        position.print_position();
+        println!();
+    }
+
+
+    */
+    //iterating over all game in my current dataset
+    //and see if the 'game' implementation works
+    /*
+    let mut game_reader = BufReader::new(File::open("/mnt/e/Iamhere8.samples")?);
+    let mut counter: usize = 0;
+    //5484 had that particular issue listed below
+    //let mut game = game_reader.iter_games().nth(5484).unwrap();
+    'outer: for (game_index, game) in game_reader.iter_games().enumerate() {
+        let mut test_game = Game::new();
+
+        let pos_iter = game.iter().rev();
+        //Looks like there is a data-integrity problem
+        //found some positions, that can not belong to the game
+        //see below
+        //this happens because of they way I am splitting of games from the stream of samples
+        //the next starting position just happend to have as many pieces as the last position
+        //from the previous game !!!!
+        //Those kinds of errors will go away with the new game_format
+        //
+
+        //TODO
+        //1. I am curious and I am going to count how many games are effected by that bug (which is
+        //   just because of my poor judgement)
+        //2. Check once again if result and position are consistent
+        //3. Transfer the entire dataset to the new format
+        //4. Implement functions to rescore the new dataset
+
+        //I will analyze this again and look at more games !
+        //IDEA: Printing a small window around the positions, where the error occurs !!!
+        for (index, sample) in pos_iter.enumerate() {
+            if index == 0 {
+                test_game.set_result(sample.result);
+                test_game.set_start_position(sample.position);
+            } else {
+                let added = test_game.add_position(sample.position);
+                if added == None {
+                    counter += 1;
+                    if (counter % 10 == 0) {
+                        println!("Counter: {}", (counter as f32) / (game_index as f32));
+                    }
+                    continue 'outer;
+                }
+            }
+            //sample.position.print_position();
+            //println!();
+        }
+    }
+    println!("Number of effected games is given by {}", counter);
+    /*
+    let test_game_samples = test_game.get_samples();
+    for (sample_new, sample_old) in zip(test_game_samples.iter(), game.iter().rev()) {
+        if sample_new.result != sample_old.result || sample_new.position != sample_old.position {
+            println!("Error, samples are not the same");
+        }
+    }
+    */
+
+    //if this works we can dump the new games to a file
+    //then we can rework the game iterator
+    //
+    */
+
+    // Data::convert_samples_to_games("/mnt/e/Iamhere8.samples", "/mnt/e/Iamhere8.games");
+    //Data::print_samples_new_game_format("/mnt/e/Iamhere8.games")?;
+    Data::rescore_games(
+        "E:\\Iamhere8.games",
+        "E:\\nextformattest.rescored.samples",
+        &base,
+    )?;
 
     Ok(())
 }

@@ -604,9 +604,9 @@ impl MoveList {
     pub fn get_moves(&mut self, pos: Position) {
         if pos.has_jumps() {
             self.loop_captures(pos);
-        } else {
-            self.get_silent_moves(pos);
+            return;
         }
+        self.get_silent_moves(pos);
     }
 }
 pub fn perft_count(depth: i32, position: Position) -> size_t {

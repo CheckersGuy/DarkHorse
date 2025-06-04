@@ -2,6 +2,8 @@ use crate::Move;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample;
+use crate::Sample::Game;
+use crate::Sample::Sample;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
 use bloomfilter::reexports::bit_vec::BitBlock;
@@ -9,12 +11,14 @@ use bloomfilter::Bloom;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
 use indicatif::{ProgressBar, ProgressStyle};
+use itertools::Itertools;
 use libc::abs;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 use rayon::prelude::*;
 use rip_shuffle::RipShuffleParallel;
+use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs::File;
@@ -29,6 +33,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use string_sum::Sample::Sample;
 use Sample::{Result, SampleType};
 //Generator produces fen_strings
 #[derive(Debug)]
@@ -113,7 +118,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     Ok(())
 }
 
-pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
+/*pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(output)?);
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut total_count = 0;
@@ -155,6 +160,7 @@ pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()
 
     Ok(())
 }
+*/
 
 pub fn shuffle_data_external<const partitions: usize>(
     input: &str,
@@ -302,7 +308,7 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
     })
 }
 //#[cfg(target_os = "windows")]
-pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+/*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
 
@@ -359,6 +365,46 @@ pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std:
     writer.flush()?;
     Ok(())
 }
+*/
+
+/*pub fn convert_samples_to_games(path: &str, output: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let mut writer = BufWriter::new(File::create(output)?);
+
+    'outer: for game in reader.iter_games() {
+        //old format - samples are in reverse order
+        let mut new_game = Game::new();
+        for (index, sample) in game.iter().rev().enumerate() {
+            if index == 0 {
+                new_game.set_start_position(sample.position);
+                new_game.set_result(sample.result);
+            } else {
+                let added = new_game.add_position(sample.position);
+                if added == None {
+                    continue 'outer;
+                }
+            }
+        }
+        //now we can write the game to a file
+        new_game.save_game(&mut writer)?;
+    }
+    Ok(())
+}
+*/
+
+pub fn print_samples_new_game_format(path: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+
+    for game in reader.iter_games() {
+        let samples = game.get_samples();
+        samples.iter().foreach(|sample| {
+            println!("------------------");
+            println!("{}", sample.result.to_string());
+            sample.position.print_position()
+        });
+    }
+    Ok(())
+}
 
 //#[cfg(target_os = "windows")]
 pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
@@ -368,14 +414,12 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     let mut total_count = 0;
     let mut written_count: u64 = 0;
     for game in reader.iter_games() {
-        if game.first().unwrap().result == Result::UNKNOWN {
+        if game.result == Result::UNKNOWN {
             continue;
         }
+        let samples = rescore_game(&game, base)?;
 
-        let mut borrow_game = game.clone();
-
-        rescore_game(&mut borrow_game, base);
-        for sample in borrow_game {
+        for sample in samples {
             if sample.position.has_capture() {
                 continue;
             }
@@ -408,10 +452,16 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
     Ok(())
 }
 
-pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
-    let last = game.first().unwrap().clone();
+pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<Sample::Sample>> {
+    let mut game_samples = game.get_samples();
+    let last_position = game_samples.last().unwrap().position;
+    if last_position.bp == 0 || last_position.wp == 0 {
+        game_samples.pop().expect("Game was empty");
+    }
+
+    let last = game_samples.last().expect("Game was empty");
     let mut local_result = last.result;
-    for sample in game.iter_mut() {
+    for sample in game_samples.iter_mut().rev() {
         let mover = sample.position.color;
         if mover == -1 {
             sample.position = sample.position.get_color_flip();
@@ -435,20 +485,11 @@ pub fn rescore_game(game: &mut Vec<Sample::Sample>, base: &TableBase::Base) {
             _ => local_result,
         };
     }
-    /*
-    if last.result == Result::WIN {
-        for sample in game.iter().rev() {
-            sample.position.print_position();
-            println!("Result: {:?}", sample.result);
-            println!("--------------------------------")
-        }
-        println!();
-        println!();
-    }
-    */
+
+    Ok(game_samples)
 }
 
-pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
+/*pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
     for game in reader.iter_games() {
@@ -489,6 +530,7 @@ pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
 
     Ok(())
 }
+*/
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
