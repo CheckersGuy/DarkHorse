@@ -48,11 +48,11 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/master1.samples",
         )?;
     */
-    /*let mut generator = Generator::new(
+    let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/Iamhere8.samples"),
+        String::from("/mnt/e/Iamhere10.samples"),
         14,
-        2000000000,
+        2000000,
     );
 
     generator.time = 1;
@@ -60,7 +60,6 @@ fn main() -> anyhow::Result<()> {
     generator.depth = 70;
 
     generator.generate_games()?;
-    */
 
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
@@ -84,10 +83,11 @@ fn main() -> anyhow::Result<()> {
 
     */
     //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
-    Data::shuffle_data_external::<16>(
+    /*Data::shuffle_data_external::<16>(
         "/mnt/e/nextformattest.rescored.samples",
         "/mnt/e/nextformattest.rescored.shuffled.samples",
     );
+    */
     /*
             Data::merge_rescored_data(
                 vec![
