@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "moesuper.quant");
+INCBIN(network, "finalformshuffled.quant");
 INCBIN(policy, "policybigger3.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -223,14 +223,13 @@ int main(int argl, const char **argc) {
     std::uniform_real_distribution<float> distrib(0, 1);
 
     std::string next_line;
-    TT.resize_in_mb(128);
+    TT.resize_in_mb(8);
     std::vector<Position> rep_history;
 
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
     while (std::getline(std::cin, next_line)) {
-      value_history.clear();
       if (next_line == "terminate") {
         std::exit(-1);
       }
@@ -258,12 +257,6 @@ int main(int argl, const char **argc) {
           // Just in case search could not finish
           result = UNKNOWN;
           break;
-        }
-        value_history.emplace_back(value);
-
-        const auto kings = board.get_position().K;
-        if (best.is_capture() || best.is_pawn_move(kings)) {
-          value_history.clear();
         }
 
         board.play_move(best);
@@ -295,12 +288,6 @@ int main(int argl, const char **argc) {
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
       for (int i = rep_history.size() - 1; i >= 0; --i) {
-        // skipping terminal positions
-        MoveListe check_liste;
-        get_moves(rep_history[i], check_liste);
-        if (check_liste.length() == 0)
-          continue;
-
         std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
                   << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
                   << res_to_string(result, rep_history[i].color) << std::endl;

@@ -1,6 +1,7 @@
 use crate::Move;
 use crate::Pos::Position;
 use crate::Pos::Square;
+use crate::Sample;
 use crate::Sample::Game;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
@@ -680,7 +681,8 @@ impl<'a> Generator<'a> {
             handles.push(handle);
         }
         'game: for game in rx {
-            for value in game {
+            let mut save_game = Game::new();
+            for (index, value) in game.iter().rev().enumerate() {
                 let splits: Vec<&str> = value.split("!").collect();
                 let wp: u32 = splits[0].parse().expect("Could not parse white-pieces");
                 let bp: u32 = splits[1].parse().expect("Could not parse black-pieces");
@@ -707,28 +709,36 @@ impl<'a> Generator<'a> {
                         println!("Error {result_string}");
                     }
                 }
-                if sample.result != Sample::Result::UNKNOWN {
-                    if result_string.starts_with("TB_") {
-                        if !filter.check(&sample.position) {
-                            sample.write_fen::<BufWriter<File>>(&mut writer)?;
-                        }
-                    } else {
-                        sample.write_fen::<BufWriter<File>>(&mut writer)?;
+                if sample.result == Sample::Result::UNKNOWN {
+                    continue 'game;
+                }
+                total_count += 1;
+                if index == 0 {
+                    //setting the initial position and result for the game
+                    save_game.set_start_position(sample.position);
+                    save_game.result = sample.result;
+                    //println!("----------------------");
+                    //sample.position.print_position();
+                } else {
+                    if save_game.add_position(sample.position).is_none() {
+                        println!("Could not add the position");
+                        continue 'game;
                     }
-                    total_count += 1;
-                    if !filter.check(&sample.position) && !sample.position.has_capture() {
-                        unique_count += 1;
-                        bar.inc(1);
-                        filter.set(&sample.position);
-                        thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-                        if thread_counter.load(std::sync::atomic::Ordering::Relaxed)
-                            >= self.max_samples
-                        {
-                            break 'game;
-                        }
+                }
+                if !filter.check(&sample.position) && !sample.position.has_capture() {
+                    unique_count += 1;
+                    bar.inc(1);
+                    filter.set(&sample.position);
+                    thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+                    if thread_counter.load(std::sync::atomic::Ordering::Relaxed) >= self.max_samples
+                    {
+                        break 'game;
                     }
                 }
             }
+            save_game
+                .save_game(&mut writer)
+                .expect("Could not save the game");
         }
 
         for handle in handles {

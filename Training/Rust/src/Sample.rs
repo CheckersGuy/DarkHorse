@@ -99,6 +99,7 @@ impl Game {
                 return Some(index as u8);
             }
         }
+
         None
     }
 
