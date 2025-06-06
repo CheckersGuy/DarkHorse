@@ -48,7 +48,7 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/master1.samples",
         )?;
     */
-    let mut generator = Generator::new(
+    /*let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
         String::from("/mnt/e/Iamhere10.samples"),
         14,
@@ -60,6 +60,7 @@ fn main() -> anyhow::Result<()> {
     generator.depth = 70;
 
     generator.generate_games()?;
+    */
 
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
@@ -73,7 +74,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
@@ -103,12 +104,11 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
 
-    /* Data::rescore_games(
-        "E:\\Iamhere8.samples",
-        "E:\\Iamhere9rescored.samples",
+    Data::rescore_games(
+        "E:\\Iamhere10.samples",
+        "E:\\Iamhere10rescored.samples",
         &base,
     )?;
-    */
 
     /*
         let result = base
