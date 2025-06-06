@@ -50,9 +50,9 @@ fn main() -> anyhow::Result<()> {
     */
     /*let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/Iamhere10.samples"),
+        String::from("/mnt/e/Iamhere11.samples"),
         14,
-        2000000,
+        100000000,
     );
 
     generator.time = 1;
