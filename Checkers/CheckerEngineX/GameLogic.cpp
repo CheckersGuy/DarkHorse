@@ -605,7 +605,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       net_val = static_eval;
     } else {
       net_val = evaluate(board.get_position(), ply);
-      TT.store_hash(in_pv, INFINITE,
+      TT.store_hash(in_pv, -INFINITE,
                     value_to_tt(net_val, ply, board.get_position()), key,
                     TT_LOWER, 0, Move{}, is_tt_pv);
     }
@@ -674,10 +674,10 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
 
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
-        margin *= 2;
+        margin += margin / 2;
         alpha = std::max(last_score - margin, -EVAL_INFINITE);
       } else if (score >= beta) {
-        margin *= 2;
+        margin += margin / 2;
         beta = std::min(last_score + margin, int(EVAL_INFINITE));
       } else {
         best_score = score;
