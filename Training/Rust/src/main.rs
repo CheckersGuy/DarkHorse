@@ -74,8 +74,19 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    let base2 = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 200, 8)
+        .expect("Error loading database");
 
+    let position =
+        Position::try_from("B:WK21,25:BK3,K2").expect("Could not convert the fen_string");
+    let result = base2
+        .probe_dtw_recursive(position, position.color, 0)
+        .expect("Could not probe position");
+
+    //W:W5:BK32,K31
+    //
+    println!("Result : {:?}", result);
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
@@ -104,11 +115,7 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
 
-    Data::rescore_games(
-        "E:\\Iamhere10.samples",
-        "E:\\Iamhere10rescored.samples",
-        &base,
-    )?;
+    //Data::rescore_games("E:\\cloud1.games", "E:\\coud1.rescored.samples", &base)?;
 
     /*
         let result = base
