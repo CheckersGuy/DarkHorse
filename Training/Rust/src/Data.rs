@@ -27,6 +27,7 @@ use std::fs::OpenOptions;
 use std::hash::Hash;
 use std::io::{BufRead, Write};
 use std::io::{BufReader, BufWriter};
+use std::ops::Div;
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::atomic::AtomicUsize;
@@ -476,6 +477,9 @@ pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::i
 
 pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<Sample::Sample>> {
     let mut game_samples = game.get_samples();
+    let mut rng = thread_rng();
+    let mut adj_prob = 0.9;
+    let mut uniform = Uniform::new(0.0, 1.0);
     let last_position = game_samples.last().unwrap().position;
     if last_position.bp == 0 || last_position.wp == 0 {
         game_samples.pop().expect("Game was empty");
@@ -507,8 +511,43 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
             _ => local_result,
         };
     }
+    //doing some sort of draw-adjudication
+    let mut filter_samples = Vec::new();
+    let mut count = 0;
+    let mut sum_last = 0;
+    const adj_moves: i32 = 10;
+    for sample in game_samples.iter().cloned() {
+        let piece_count = sample.position.piece_count();
+        if piece_count <= 10 {
+            sum_last += sample.value.abs() as i32;
+            count += 1;
+        }
 
-    Ok(game_samples)
+        if count >= adj_moves {
+            let avg = sum_last.div(count);
+            if avg.abs() <= 1 && sample.result == Result::DRAW {
+                let uni_num = uniform.sample(&mut rng);
+                if uni_num <= adj_prob {
+                    break;
+                }
+            }
+            count = 0;
+            sum_last = 0;
+        }
+        if sample.result == Result::TB_WIN{
+            println!("Eval rescored with tb-win")
+            sample.value = 10000.0;
+        }else if sample.result == Result::TB_LOSS{
+            println!("Eval rescored with tb-loss");
+            sample.value = -10000.0;
+        }else if sample.result == Result::TB_DRAW{
+            println!("Rescored eval to draw");
+            sample.value = 0.0;
+        }
+      
+        filter_samples.push(sample);
+    }
+    Ok(filter_samples)
 }
 
 /*pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
