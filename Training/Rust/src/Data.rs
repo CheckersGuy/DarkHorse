@@ -12,6 +12,7 @@ use byteorder::ReadBytesExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use libc::abs;
+use rand::distributions::Uniform;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -20,6 +21,7 @@ use rip_shuffle::RipShuffleParallel;
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::hash::Hash;
@@ -116,34 +118,32 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     Ok(())
 }
 
-/*pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
+pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(output)?);
     let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
     let mut total_count = 0;
     let mut unique_count = 0;
     for path in input.iter() {
         let mut reader = BufReader::new(File::open(path)?);
-        for game in reader.iter_games() {
-            for sample in game.iter() {
-                match sample.result {
-                    Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
-                        if !filter.check(&sample.position) {
-                            filter.set(&sample.position);
-                            sample.write_fen(&mut writer)?;
-                            unique_count += 1;
-                            total_count += 1;
-                        }
-                    }
-                    Result::UNKNOWN => {}
-                    _ => {
-                        if !filter.check(&sample.position) {
-                            filter.set(&sample.position);
-                            unique_count += 1;
-                        }
-
-                        total_count += 1;
+        for sample in reader.iter_samples() {
+            match sample.result {
+                Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
+                    if !filter.check(&sample.position) {
+                        filter.set(&sample.position);
                         sample.write_fen(&mut writer)?;
+                        unique_count += 1;
+                        total_count += 1;
                     }
+                }
+                Result::UNKNOWN => {}
+                _ => {
+                    if !filter.check(&sample.position) {
+                        filter.set(&sample.position);
+                        unique_count += 1;
+                    }
+
+                    total_count += 1;
+                    sample.write_fen(&mut writer)?;
                 }
             }
         }
@@ -158,7 +158,6 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
 
     Ok(())
 }
-*/
 
 pub fn shuffle_data_external<const partitions: usize>(
     input: &str,
@@ -305,6 +304,21 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
         (pos.bp.count_ones() + pos.wp.count_ones()) as usize <= count
     })
 }
+
+pub fn print_samples(path: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+    let game_iter = reader.iter_games();
+
+    for game in game_iter {
+        let samples = game.get_samples();
+        for sample in samples.iter() {
+            println!("-------------------");
+            sample.position.print_position();
+            println!("Mover: {} Value: {}", sample.position.color, sample.value);
+        }
+    }
+    Ok(())
+}
 //#[cfg(target_os = "windows")]
 /*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
@@ -390,17 +404,27 @@ pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<u
 }
 */
 
-pub fn print_samples_new_game_format(path: &str) -> std::io::Result<()> {
+pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
+    let thresh_hold = 0.1;
     let mut reader = BufReader::new(File::open(path)?);
+    let mut writer = BufWriter::new(File::create(out)?);
+    let mut counter = 0;
+    let mut sample_iter = reader.iter_samples();
+    let mut rng = thread_rng();
+    let distrib: Uniform<f64> = Uniform::new(0.0, 1.0);
+    for sample in sample_iter {
+        let p_bp = sample.position.bp.count_ones();
+        let p_wp = sample.position.wp.count_ones();
+        let rand = distrib.sample(&mut rng);
 
-    for game in reader.iter_games() {
-        let samples = game.get_samples();
-        samples.iter().foreach(|sample| {
-            println!("------------------");
-            println!("{}", sample.result.to_string());
-            sample.position.print_position()
-        });
+        if p_bp.abs_diff(p_wp) >= 1 && (rand > thresh_hold) {
+            counter += 1;
+            continue;
+        }
+
+        sample.write_fen(&mut writer)?;
     }
+    println!("{}", counter);
     Ok(())
 }
 
@@ -688,6 +712,7 @@ impl<'a> Generator<'a> {
                 let bp: u32 = splits[1].parse().expect("Could not parse black-pieces");
                 let k: u32 = splits[2].parse().expect("Could not parse king-pieces");
                 let color: i32 = splits[3].parse().expect("Could not parse color");
+                let value: i32 = splits[5].parse().expect("Could not parse value");
 
                 let mut position = Position::default();
                 position.wp = wp;
@@ -695,7 +720,7 @@ impl<'a> Generator<'a> {
                 position.k = k;
                 position.color = color as i8;
 
-                let result_string = String::from(splits.last().unwrap().replace("\n", "").trim());
+                let result_string = String::from(splits[4].replace("\n", "").trim());
                 if cfg!(debug_assertions) {
                     println!("{}", value);
                 }
@@ -710,17 +735,22 @@ impl<'a> Generator<'a> {
                     }
                 }
                 if sample.result == Sample::Result::UNKNOWN {
+                    println!("Error UNKNOWN result");
+                    println!("{:?}", game.first().unwrap());
                     continue 'game;
                 }
                 total_count += 1;
                 if index == 0 {
                     //setting the initial position and result for the game
-                    save_game.set_start_position(sample.position);
+                    save_game.set_start_position(sample.position, value as i16);
                     save_game.result = sample.result;
                     //println!("----------------------");
                     //sample.position.print_position();
                 } else {
-                    if save_game.add_position(sample.position).is_none() {
+                    if save_game
+                        .add_position(sample.position, value as i16)
+                        .is_none()
+                    {
                         println!("Could not add the position");
                         continue 'game;
                     }

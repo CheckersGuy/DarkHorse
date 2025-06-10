@@ -11,6 +11,10 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::str::FromStr;
+
+//all positions with abs(eval)>=EXCLUDE_EVAL should be removed
+pub const EXCLUDE_EVAL: i16 = 1000;
+
 #[derive(Debug, Clone, Hash, PartialEq)]
 pub enum SampleType {
     Fen(String), //a not yet converted FenString
@@ -59,6 +63,7 @@ impl From<i8> for Result {
 pub struct Game {
     pub start_pos: Position,
     pub moves: Vec<u8>,
+    pub values: Vec<i16>,
     pub result: Result,
     pub current: Position,
 }
@@ -70,21 +75,23 @@ impl Game {
         Game {
             start_pos: Position::empty(),
             moves: Vec::new(),
+            values: Vec::new(),
             result: Result::UNKNOWN,
             current: Position::empty(),
         }
     }
 
-    pub fn set_start_position(&mut self, pos: Position) {
+    pub fn set_start_position(&mut self, pos: Position, value: i16) {
         self.start_pos = pos;
         self.current = pos;
+        self.values.push(value);
     }
 
     pub fn set_result(&mut self, res: Result) {
         self.result = res;
     }
     //should return an error if the position could not be found
-    pub fn add_position(&mut self, pos: Position) -> Option<u8> {
+    pub fn add_position(&mut self, pos: Position, value: i16) -> Option<u8> {
         let mut liste = MoveList::new();
         liste.get_moves(self.current);
 
@@ -96,6 +103,7 @@ impl Game {
                 if liste.length > 1 {
                     self.moves.push(index as u8);
                 }
+                self.values.push(value);
                 return Some(index as u8);
             }
         }
@@ -128,8 +136,10 @@ impl Game {
 
         return positions;
     }
+    //to be continued
     pub fn get_samples(&self) -> Vec<Sample> {
         let positions = self.get_positions();
+        let mut value_iter = self.values.iter().cloned();
         let pos_iter = positions.iter().skip(1);
         let mut samples = Vec::new();
         let mut curr_result = self.result;
@@ -137,6 +147,7 @@ impl Game {
             position: self.start_pos,
             mlh: -1,
             result: curr_result,
+            value: value_iter.next().unwrap_or(1000),
         });
 
         for pos in pos_iter {
@@ -145,6 +156,7 @@ impl Game {
                 position: *pos,
                 mlh: -1,
                 result: curr_result,
+                value: value_iter.next().unwrap_or(1000),
             });
         }
 
@@ -172,6 +184,11 @@ impl Game {
         for ind in self.moves.iter() {
             writer.write_u8(*ind)?;
         }
+        writer.write_u16::<LittleEndian>(self.values.len() as u16)?;
+        for ind in self.values.iter() {
+            writer.write_i16::<LittleEndian>(*ind)?;
+        }
+        //need to save the values as well
         Ok(())
     }
 
@@ -207,6 +224,11 @@ impl Game {
         for _ in 0..game_length {
             let move_index = reader.read_u8()?;
             self.moves.push(move_index);
+        }
+
+        let value_len = reader.read_u16::<LittleEndian>()?;
+        for _ in 0..value_len {
+            self.values.push(reader.read_i16::<LittleEndian>()?);
         }
         Ok(())
     }
@@ -382,6 +404,7 @@ pub struct Sample {
     pub position: Position,
     pub mlh: i16,
     pub result: Result,
+    pub value: i16,
 }
 impl Default for Sample {
     fn default() -> Self {
@@ -389,6 +412,7 @@ impl Default for Sample {
             position: Position::empty(),
             mlh: -1,
             result: Result::UNKNOWN,
+            value: 1000,
         }
     }
 }
@@ -409,6 +433,7 @@ impl Sample {
             Result::UNKNOWN => 0,
         };
         writer.write_i8(conv)?;
+        writer.write_i16::<LittleEndian>(self.value)?;
 
         Ok(())
     }
@@ -430,6 +455,7 @@ impl Sample {
             6 => Result::TBDRAW,
             _ => Result::UNKNOWN,
         };
+        self.value = reader.read_i16::<LittleEndian>()?;
 
         Ok(())
     }

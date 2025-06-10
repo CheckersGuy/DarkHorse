@@ -12,8 +12,8 @@ import torch
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 605
-    model = Experimental.Network()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/Iamhere10rescored.samples",
+    model = Experimental.Network(run_name ="filtered")
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/filtereddata.samples",
     val_data="/mnt/e/validation.samples",
     batch_size=batch_size, buffer_size=300000000)
     
@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback],limit_val_batches=0)
 
-    trainer.fit(model, data_loader);
+    trainer.fit(model, data_loader,ckpt_path="Networks/filtered.ckpt");
 
 
 
