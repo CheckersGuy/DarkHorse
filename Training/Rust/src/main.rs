@@ -27,6 +27,7 @@ use Sample::SampleType;
 use TableBase::Base;
 
 fn main() -> anyhow::Result<()> {
+    println!("Starting process");
     //Need to check why get-color-flip is not working as expected
     /*let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
@@ -74,19 +75,10 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
-    let base2 = Base::new_dtw("E:\\kr_english_wld", "E:\\kr_english_dtw", 200, 8)
-        .expect("Error loading database");
-
-    let position =
-        Position::try_from("B:WK21,25:BK3,K2").expect("Could not convert the fen_string");
-    let result = base2
-        .probe_dtw_recursive(position, position.color, 0)
-        .expect("Could not probe position");
+    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //W:W5:BK32,K31
     //
-    println!("Result : {:?}", result);
     //Data::create_mlh_data("E:/Iamhere7.samples", "E:/mlh4.samples", &base)?;
     /*Data::dump_mlh_samples(
             "/mnt/e/newtry11rescoredmlhshuffled.samples",
@@ -140,7 +132,7 @@ fn main() -> anyhow::Result<()> {
         "B:W11,19,21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12",
         "W:W21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,8,10,12,23",
         "B:W19,21,24,25,28,29,30,31,32:B1,2,3,4,5,6,8,10,12",
-    ];
+    /];
 
     for fen in fen_strings.iter() {
         let position = Position::try_from(*fen).expect("Could not parse fen_string");
@@ -169,12 +161,12 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/coud1.rescored.shuffled.samples",
         "/mnt/e/filtereddata.samples",
     )?;*/
-    /*Data::rescore_games(
-        "E:\\Iamhere8.games",
-        "E:\\nextformattest.rescored.samples",
+    Data::rescore_games(
+        "E:\\evalfilter.games",
+        "E:\\evaltbrescored.rescored.samples",
         &base,
     )?;
-    */
+
     /* let fen_strings = vec![
          "W:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
          "B:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
