@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "1mill_unique_113.quant");
 INCBIN(policy, "policybigger3.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -223,9 +223,8 @@ int main(int argl, const char **argc) {
     std::uniform_real_distribution<float> distrib(0, 1);
 
     std::string next_line;
-    TT.resize_in_mb(64);
+    TT.resize_in_mb(8);
     std::vector<Position> rep_history;
-    std::vector<int> rep_values;
 
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
@@ -238,7 +237,6 @@ int main(int argl, const char **argc) {
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
-      rep_values.clear();
 
       board = start_pos;
       Result result = UNKNOWN;
@@ -260,7 +258,7 @@ int main(int argl, const char **argc) {
           result = UNKNOWN;
           break;
         }
-        const Position previous = board.get_position();
+
         board.play_move(best);
         auto count =
             std::count(rep_history.begin(), rep_history.end(),
@@ -270,8 +268,7 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        rep_history.emplace_back(previous);
-        rep_values.emplace_back(value);
+        rep_history.emplace_back(board.get_position());
       }
 
       auto res_to_string = [](Result result, Color color) {
@@ -293,8 +290,7 @@ int main(int argl, const char **argc) {
       for (int i = rep_history.size() - 1; i >= 0; --i) {
         std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
                   << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
-                  << res_to_string(result, rep_history[i].color) << "!"
-                  << rep_values[i] << std::endl;
+                  << res_to_string(result, rep_history[i].color) << std::endl;
       }
       std::cout << "END" << std::endl;
     }

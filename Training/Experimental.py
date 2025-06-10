@@ -14,7 +14,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from AdEMAMix import AdEMAMix
-L1 =2*2048
+L1 =2*4096
 L2 =32
 L3 = 32
 
@@ -24,13 +24,14 @@ L3 = 32
 
 class Network(pl.LightningModule):
 
-    def __init__(self):
+    def __init__(self, run_name = "moesuper"):
         super(Network, self).__init__()
         self.layers = []
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.98
+        self.gamma = 0.985
+        self.run_name = run_name
 
 
         self.num_buckets =12
@@ -138,7 +139,6 @@ class Network(pl.LightningModule):
         return {"val_loss": loss.detach()}
 
     def on_validation_epoch_end(self):
-        self.save_quantized_bucket("moesuper.quant")
         avg_loss = torch.stack(self.val_outputs).mean()
         self.val_outputs.clear()
         tensorboard_logs = {"avg_val_loss": avg_loss}
@@ -146,7 +146,8 @@ class Network(pl.LightningModule):
         return {"loss": avg_loss, "log": tensorboard_logs}
 
     def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("moesuper.quant")
+        display = "{name_run}_{epoch_count}".format(name_run = self.run_name, epoch_count = self.current_epoch) 
+        self.save_quantized_bucket(display)
         return 
 
     def save_quantized_bucket(self, output):
@@ -293,7 +294,8 @@ class MLHNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
+        #optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
+        optimizer = torch.optim.AdamW(self.parameters(),lr = 1e-2)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
