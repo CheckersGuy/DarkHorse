@@ -58,7 +58,6 @@ impl DataLoader {
 
     pub fn get_next(&mut self) -> std::io::Result<Sample::Sample> {
         if self.shuff_buf.is_empty() {
-            let now = Instant::now();
             for _ in 0..self.capa {
                 let result = self.read()?;
                 self.shuff_buf.push(result);

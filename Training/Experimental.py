@@ -30,7 +30,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.985
+        self.gamma = 0.93
         self.run_name = run_name
 
 
@@ -122,10 +122,10 @@ class Network(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,evalu, move,buckets,psqt_buckets, x,legal_moves = train_batch
-        evalu = torch.sigmoid(evalu.to(dtype=torch.float32)/64.0)
+        result,eval, move,buckets, x,legal_moves = train_batch
+        eval = 0.5 * torch.sigmoid(eval/128.0) + 0.5*result
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-result),2).mean()
+        loss =torch.pow(torch.abs(out-eval),2).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
@@ -602,15 +602,15 @@ class BatchDataSet(torch.utils.data.IterableDataset):
     def __next__(self):
         input_size = 120
         results = np.zeros(self.batch_size, dtype=np.float32)
-        evals =  np.zeros(self.batch_size, dtype=np.int16)
+        evals =  np.zeros(self.batch_size, dtype=np.float32)
+        mlh = np.zeros(self.batch_size, dtype=np.float32)
         moves = np.zeros(self.batch_size, dtype=np.int64)
         buckets = np.zeros(self.batch_size, dtype=np.int64)
-        psqt_buckets = np.zeros(self.batch_size, dtype=np.int64)
         inputs = np.zeros(self.batch_size*input_size, dtype=np.float32)
         legal_moves = np.zeros(self.batch_size * 128, dtype=bool)
-        self.loader.testing(inputs,legal_moves,results,evals,buckets,psqt_buckets)
+        self.loader.testing(inputs,legal_moves,results,evals,mlh,buckets)
 
-        return results.reshape(self.batch_size,1),evals.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1), psqt_buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size),legal_moves.reshape(self.batch_size,128)
+        return results.reshape(self.batch_size,1),evals.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size),legal_moves.reshape(self.batch_size,128)
 
 
 

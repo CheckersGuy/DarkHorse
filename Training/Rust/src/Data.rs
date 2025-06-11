@@ -413,16 +413,15 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut sample_iter = reader.iter_samples();
     let mut rng = thread_rng();
     let distrib: Uniform<f64> = Uniform::new(0.0, 1.0);
-    for sample in sample_iter {
-        let p_bp = sample.position.bp.count_ones();
-        let p_wp = sample.position.wp.count_ones();
-        let rand = distrib.sample(&mut rng);
-
-        if p_bp.abs_diff(p_wp) >= 1 && (rand > thresh_hold) {
-            counter += 1;
-            continue;
+    for s in sample_iter {
+        let mut sample = s;
+        if sample.result == Result::TBWIN {
+            sample.value = 10000;
+        } else if sample.result == Result::TBLOSS {
+            sample.value = -10000;
+        } else if sample.result == Result::TBDRAW {
+            sample.value = 0;
         }
-
         sample.write_fen(&mut writer)?;
     }
     println!("{}", counter);
@@ -516,7 +515,8 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     let mut count = 0;
     let mut sum_last = 0;
     const adj_moves: i32 = 10;
-    for sample in game_samples.iter().cloned() {
+    for s in game_samples.iter().cloned() {
+        let mut sample = s;
         let piece_count = sample.position.piece_count();
         if piece_count <= 10 {
             sum_last += sample.value.abs() as i32;
@@ -534,17 +534,14 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
             count = 0;
             sum_last = 0;
         }
-        if sample.result == Result::TB_WIN{
-            println!("Eval rescored with tb-win")
-            sample.value = 10000.0;
-        }else if sample.result == Result::TB_LOSS{
-            println!("Eval rescored with tb-loss");
-            sample.value = -10000.0;
-        }else if sample.result == Result::TB_DRAW{
-            println!("Rescored eval to draw");
-            sample.value = 0.0;
+        if sample.result == Result::TBWIN {
+            sample.value = 10000;
+        } else if sample.result == Result::TBLOSS {
+            sample.value = -10000;
+        } else if sample.result == Result::TBDRAW {
+            sample.value = 0;
         }
-      
+
         filter_samples.push(sample);
     }
     Ok(filter_samples)
