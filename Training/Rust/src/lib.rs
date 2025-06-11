@@ -7,7 +7,7 @@ pub mod Sample;
 pub mod dataloader;
 use dataloader::DataLoader;
 use itertools::Itertools;
-use numpy::PyArray1;
+use numpy::{PyArray, PyArray1, PyArrayMethods};
 //Wrapper for the dataloader
 #[pyclass]
 struct BatchProvider {
@@ -27,7 +27,7 @@ fn print_fen_string(fen_string: &str) -> PyResult<()> {
 }
 
 #[pyfunction]
-fn input_from_fen(input: &PyArray1<f32>, fen_string: &str) -> PyResult<i32> {
+fn input_from_fen(input: Bound<'_, PyArray1<f32>>, fen_string: &str) -> PyResult<i32> {
     let mut position =
         Position::try_from(fen_string).expect("Could not create position from fen_string");
     //need to invert to the correct color
@@ -93,12 +93,12 @@ impl BatchProvider {
     fn testing(
         &mut self,
         _py: Python<'_>,
-        input: &PyArray1<f32>,
-        legal_mask: &PyArray1<bool>,
-        result: &PyArray1<f32>,
-        mlh: &PyArray1<i16>,
-        bucket: &PyArray1<i64>,
-        psqt_buckets: &PyArray1<i64>,
+        input: Bound<'_, PyArray1<f32>>,
+        legal_mask: Bound<'_, PyArray1<bool>>,
+        result: Bound<'_, PyArray1<f32>>,
+        eval: Bound<'_, PyArray1<f32>>,
+        mlh: Bound<'_, PyArray1<f32>>,
+        bucket: Bound<'_, PyArray1<i64>>,
     ) -> PyResult<()> {
         unsafe {
             //make sure that on the python side
@@ -106,8 +106,8 @@ impl BatchProvider {
             let mut in_array = input.as_array_mut();
             let mut legal_array = legal_mask.as_array_mut();
             let mut res_array = result.as_array_mut();
+            let mut eval_array = eval.as_array_mut();
             let mut bucket_array = bucket.as_array_mut();
-            let mut psqt_array = psqt_buckets.as_array_mut();
             let mut mlh_array = mlh.as_array_mut();
             for i in 0..self.batch_size {
                 let mut indices = Vec::with_capacity(128);
@@ -116,12 +116,12 @@ impl BatchProvider {
 
                 let mut liste = Pos::MoveList::new();
                 liste.get_moves(sample.position);
-                for legal in liste.iter().dedup() {
-                    indices.push(legal.get_move_encoding());
+                for legal in liste.iter() {
+                    indices.push(legal.get_move_encoding() as usize);
                 }
 
                 for index in indices {
-                    legal_array[128 * i + index as usize] = true;
+                    legal_array[128 * i + index] = true;
                 }
 
                 let piece_count = sample.position.piece_count();
@@ -148,10 +148,9 @@ impl BatchProvider {
                     _ => (), //need to add error handling just go to the nex sample in that case
                 }
 
-                mlh_array[i] = sample.mlh;
+                mlh_array[i] = sample.mlh as f32;
+                eval_array[i] = sample.value as f32;
 
-                let psqt_index = (piece_count - 1) / 4;
-                psqt_array[i] = psqt_index as i64;
                 let sub_two;
                 match piece_count {
                     24 | 23 | 22 | 21 | 20 | 19 => sub_two = 0,
@@ -179,7 +178,7 @@ impl BatchProvider {
 /// the `lib.name` setting in the `Cargo.toml`, else Python will not be able to
 /// import the module.
 #[pymodule]
-fn string_sum(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn string_sum<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<BatchProvider>()?;
     m.add_function(wrap_pyfunction!(print_fen_string, m)?)?;
     m.add_function(wrap_pyfunction!(input_from_fen, m)?)?;
