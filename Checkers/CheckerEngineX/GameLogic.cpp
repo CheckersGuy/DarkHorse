@@ -104,12 +104,13 @@ Value evaluate(Position pos, Ply ply) {
 }
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
-                  bool print, std::ostream &stream) {
+                  bool print, std::ostream &stream, bool skip_singular) {
   return searchValue(board, best, depth, time, 18446744073709551615ull, print,
-                     stream);
+                     stream, skip_singular);
 }
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
-                  size_t max_nodes, bool print, std::ostream &stream) {
+                  size_t max_nodes, bool print, std::ostream &stream,
+                  bool skip_singular) {
 
   const Position start_pos = board.get_position();
   max_nodes_search = max_nodes;
@@ -121,7 +122,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   mainPV.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
-  if (liste.length() == 1) {
+  if (liste.length() == 1 && skip_singular) {
     best = liste[0];
     return last_eval;
   }

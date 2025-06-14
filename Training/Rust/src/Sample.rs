@@ -396,9 +396,7 @@ impl SampleType {
     }
 }
 
-#[derive(Clone, Hash, PartialEq, Debug)]
-//there always should be a mlh-value for every sample <- sounds like I need to add an assert
-//somewhere
+#[derive(Clone, Hash, PartialEq, Debug, Copy)]
 
 pub struct Sample {
     pub position: Position,
@@ -406,6 +404,37 @@ pub struct Sample {
     pub result: Result,
     pub value: i16,
 }
+
+//old Sample-struct to convert some of the old data to the new format
+#[derive(Default, Clone, Hash, PartialEq, Debug, Copy)]
+pub struct OldSample {
+    pub position: Position,
+    pub mlh: i16,
+    pub result: Result,
+}
+impl OldSample {
+    pub fn read_into<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
+        // to be added
+        self.position.wp = reader.read_u32::<LittleEndian>()?;
+        self.position.bp = reader.read_u32::<LittleEndian>()?;
+        self.position.k = reader.read_u32::<LittleEndian>()?;
+        self.position.color = reader.read_i8()?;
+        self.mlh = reader.read_i16::<LittleEndian>()?;
+        let conv = reader.read_i8()?;
+        self.result = match conv {
+            1 => Result::LOSS,
+            2 => Result::WIN,
+            3 => Result::DRAW,
+            4 => Result::TBLOSS,
+            5 => Result::TBWIN,
+            6 => Result::TBDRAW,
+            _ => Result::UNKNOWN,
+        };
+
+        Ok(())
+    }
+}
+
 impl Default for Sample {
     fn default() -> Self {
         Sample {
