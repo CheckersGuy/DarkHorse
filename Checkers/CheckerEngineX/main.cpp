@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "evalrescored_44.quant");
+INCBIN(network, "finalformshuffled.quant");
 INCBIN(policy, "policybigger3.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -133,11 +133,6 @@ int main(int argl, const char **argc) {
   size_t max_nodes = 18446744073709551615ull;
   std::string net_file;
 
-  if (parser.has_option("network")) {
-    net_file = parser.as<std::string>("network");
-    network.load_bucket(net_file);
-  }
-
   if (parser.has_option("time")) {
     time = parser.as<int>("time");
   } else {
@@ -164,7 +159,6 @@ int main(int argl, const char **argc) {
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
-
     if (parser.has_option("position")) {
       auto pos_string = parser.as<std::string>("position");
       board.get_position() = Position::pos_from_fen(pos_string);
@@ -185,15 +179,22 @@ int main(int argl, const char **argc) {
   }
 
   if (parser.has_option("eval-loop")) {
-
+    TT.resize_in_mb(hash_size);
     std::string current;
     while (std::getline(std::cin, current)) {
       if (current == "terminate") {
         std::exit(-1);
       }
+
+      TT.clear();
       const auto pos = Position::pos_from_fen(current);
-      const auto net_eval = network.evaluate(pos, 0, 0);
-      std::cout << net_eval << std::endl;
+
+      board = Board(pos);
+      Move best;
+      auto eval = searchValue(board, best, depth, time, max_nodes, false,
+                              std::cout, false);
+
+      std::cout << eval << std::endl;
     }
     return 0;
   }
@@ -253,8 +254,8 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        auto value =
-            searchValue(board, best, depth, time, max_nodes, false, std::cout);
+        auto value = searchValue(board, best, depth, time, max_nodes, false,
+                                 std::cout, false);
         if (best.is_empty()) {
           // Just in case search could not finish
           result = UNKNOWN;
