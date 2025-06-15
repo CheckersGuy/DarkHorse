@@ -14,7 +14,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from splus import SPlus
-L1 =2*8192
+L1 =2*4096
 L2 =32
 L3 = 32
 
@@ -30,7 +30,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.93
+        self.gamma = 0.985
         self.run_name = run_name
 
 
