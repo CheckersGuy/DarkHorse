@@ -8,7 +8,6 @@ pub mod Sample;
 pub mod TableBase;
 pub mod dataloader;
 use anyhow::Context;
-use arrayvec::ArrayVec;
 use bloomfilter::reexports::bit_vec::BitBlock;
 use itertools::Itertools;
 use std::fs::File;
@@ -97,11 +96,11 @@ fn main() -> anyhow::Result<()> {
 
     */
     //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
-    /*Data::shuffle_data_external::<16>(
-        "/mnt/e/coud1.rescored.samples",
-        "/mnt/e/coud1.rescored.shuffled.samples",
+    Data::shuffle_data_external::<7>(
+        "/mnt/e/evalcloudbig.rescored.samples",
+        "/mnt/e/evalcloudbig.rescored.shuffled.samples",
     )
-    .expect("Could not shuffle the training data");*/
+    .expect("Could not shuffle the training data");
 
     /* Data::merge_rescored_data(
          vec![
@@ -220,7 +219,7 @@ fn main() -> anyhow::Result<()> {
 
     //testing how array-chunks works
 
-    Data::rescore_old_data("/mnt/e/coud1.rescored.shuffled.samples")?;
+    //Data::rescore_old_data("/mnt/e/coud1.rescored.shuffled.samples")?;
 
     Ok(())
 }
