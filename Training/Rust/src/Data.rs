@@ -516,6 +516,9 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     let mut sum_last = 0;
     const adj_moves: i32 = 10;
     for s in game_samples.iter().cloned() {
+        if s.value.abs()>=15000{
+            continue;
+        }
         let mut sample = s;
         let piece_count = sample.position.piece_count();
         if piece_count <= 10 {
