@@ -67,10 +67,11 @@ Depth reduce(int move_index, Depth depth, Board &board, Move, bool in_pv);
 } // namespace Search
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
-                  size_t max_nodes, bool print, std::ostream &stream);
+                  size_t max_nodes, bool print, std::ostream &stream,
+                  bool skip_singular = true);
 
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
-                  bool print, std::ostream &stream);
+                  bool print, std::ostream &stream, bool skip_singular = true);
 
 int get_mlh_estimate(Position pos);
 

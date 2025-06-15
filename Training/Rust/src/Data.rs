@@ -1,8 +1,10 @@
+#![feature(iter_array_chunks)]
 use crate::Move;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample;
 use crate::Sample::Game;
+use crate::Sample::OldSample;
 use crate::Sample::SampleIteratorTrait;
 use crate::TableBase;
 use bloomfilter::reexports::bit_vec::BitBlock;
@@ -16,7 +18,6 @@ use rand::distributions::Uniform;
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use rayon::prelude::*;
 use rip_shuffle::RipShuffleParallel;
 use std::borrow::BorrowMut;
 use std::cell::RefCell;
@@ -36,7 +37,6 @@ use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use Sample::{Result, SampleType};
-//Generator produces fen_strings
 #[derive(Debug)]
 pub struct Generator<'a> {
     book: String,
@@ -114,6 +114,75 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
             filter.set(&val);
         } else if trimmed == "done" {
             bar.inc(1);
+        }
+    }
+    Ok(())
+}
+
+pub fn rescore_old_data(path: &str) -> std::io::Result<()> {
+    let out_path = String::from(path) + ".evaluated";
+    let mut reader = BufReader::new(File::open(path)?);
+    let num_workers = 7;
+
+    //processing the file in 10 big-chunks
+
+    //now we got our data and can distribute the work among all the threads
+    loop {
+        let r = thread::scope(|s| {
+            let (tx, rx): (Sender<Sample::Sample>, Receiver<Sample::Sample>) = mpsc::channel();
+
+            for ind in 0..num_workers {
+                let mut test = Vec::new();
+                for _ in 0..10000 {
+                    let mut old_sample = OldSample::default();
+                    match old_sample.read_into(&mut reader) {
+                        Err(_) => break,
+                        _ => {}
+                    }
+                    test.push(old_sample);
+                }
+                s.spawn(move || {
+                    //processing samples here
+                    println!("Worker {ind} started");
+                    let mut command = Command::new("./generator2")
+                        .args(["--eval-loop --time 1 --hash_size 4"])
+                        .stdin(Stdio::piped())
+                        .stdout(Stdio::piped())
+                        .spawn()
+                        .expect("Failed to start process");
+                    let mut stdin = command.stdin.take().unwrap();
+                    let stdout = command.stdout.take().unwrap();
+                    let mut f = BufReader::new(stdout);
+
+                    //Looping over all the samples we can get from the vec
+
+                    for (i, old_n) in test.iter().enumerate() {
+                        let fen_string = old_n.position.get_fen_string();
+                        stdin
+                            .write_all((fen_string.clone() + "\n").as_bytes())
+                            .unwrap();
+                        let mut buffer = String::new();
+                        match f.read_line(&mut buffer) {
+                            Ok(_) => {}
+                            Err(e) => {
+                                println!("{:?}", e)
+                            }
+                        }
+                        buffer = buffer.trim().replace("\n", "");
+                        let eval: i16 = buffer.parse().unwrap_or(-15000);
+                        //println!("Position: {}", i);
+                    }
+                    println!("Trying to terminate child-process");
+                    stdin
+                        .write_all((String::from("terminate\n")).as_bytes())
+                        .unwrap();
+                    command.wait().expect("Could not wait for the child");
+                    println!("Terminated child-process");
+                });
+            }
+        });
+        if !reader.has_data_left().expect("Error") {
+            break;
         }
     }
     Ok(())
@@ -412,19 +481,27 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut counter = 0;
     let mut sample_iter = reader.iter_samples();
     let mut rng = thread_rng();
-    let distrib: Uniform<f64> = Uniform::new(0.0, 1.0);
     for s in sample_iter {
-        let mut sample = s;
-        if sample.result == Result::TBWIN {
-            sample.value = 10000;
-        } else if sample.result == Result::TBLOSS {
-            sample.value = -10000;
-        } else if sample.result == Result::TBDRAW {
-            sample.value = 0;
-        }
-        sample.write_fen(&mut writer)?;
+        //sample.write_fen(&mut writer)?;
     }
     println!("{}", counter);
+    Ok(())
+}
+
+pub fn read_old_sapmles(path: &str) -> std::io::Result<()> {
+    let mut reader = BufReader::new(File::open(path)?);
+
+    loop {
+        let mut old_sample = OldSample::default();
+        match old_sample.read_into(&mut reader) {
+            Err(_) => break,
+            _ => {}
+        };
+        println!("------------");
+        old_sample.position.print_position();
+        println!("{:?}", old_sample.result);
+    }
+
     Ok(())
 }
 
@@ -516,7 +593,7 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     let mut sum_last = 0;
     const adj_moves: i32 = 10;
     for s in game_samples.iter().cloned() {
-        if s.value.abs()>=15000{
+        if s.value.abs() >= 15000 {
             continue;
         }
         let mut sample = s;

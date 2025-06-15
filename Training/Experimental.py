@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-from AdEMAMix import AdEMAMix
+from splus import SPlus
 L1 =2*4096
 L2 =32
 L3 = 32
@@ -30,7 +30,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.93
+        self.gamma = 0.985
         self.run_name = run_name
 
 
@@ -113,8 +113,6 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
-        #optimizer = AdEMAMix(self.parameters())
-        #optimizer = AdamW(self.parameters(),lr=3e-3,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -146,7 +144,7 @@ class Network(pl.LightningModule):
         return {"loss": avg_loss, "log": tensorboard_logs}
 
     def on_train_epoch_end(self) -> None:
-        display = "{name_run}_{epoch_count}".format(name_run = self.run_name, epoch_count = self.current_epoch) 
+        display = "{name_run}_{epoch_count}.quant".format(name_run = self.run_name, epoch_count = self.current_epoch) 
         self.save_quantized_bucket(display)
         return 
 

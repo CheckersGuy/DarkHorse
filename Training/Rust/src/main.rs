@@ -1,20 +1,27 @@
 #![feature(buf_read_has_data_left)]
 #![feature(iter_next_chunk)]
+#![feature(iter_array_chunks)]
+#![feature(core_intrinsics)]
 pub mod Data;
 pub mod Pos;
 pub mod Sample;
 pub mod TableBase;
 pub mod dataloader;
 use anyhow::Context;
-use arrayvec::ArrayVec;
 use bloomfilter::reexports::bit_vec::BitBlock;
 use itertools::Itertools;
 use std::fs::File;
+use std::intrinsics::size_of;
+use std::io::BufRead;
 use std::io::BufReader;
 use std::io::BufWriter;
 use std::io::Write;
 use std::iter::zip;
 use std::path::Path;
+use std::process::Command;
+use std::process::Stdio;
+use std::sync::mpsc;
+use std::time::Instant;
 use std::usize;
 use Data::count_unique_samples;
 use Data::Generator;
@@ -25,6 +32,8 @@ use Sample::Result;
 use Sample::SampleIteratorTrait;
 use Sample::SampleType;
 use TableBase::Base;
+
+use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
@@ -51,18 +60,17 @@ fn main() -> anyhow::Result<()> {
     */
     /*let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/evalfilter.games"),
+        String::from("/mnt/e/evalnexttest.games"),
         14,
-        100000000,
+        400000000,
     );
 
     generator.time = 1;
     generator.max_nodes = 250000000;
     generator.depth = 70;
-
     generator.generate_games()?;
-    */
 
+    */
     //generator.prev_file = Some("/mnt/e/finalrescored/paritysuperiorityshuffled.samples");
 
     /*Data::create_subset(
@@ -87,11 +95,11 @@ fn main() -> anyhow::Result<()> {
 
     */
     //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
-    /*Data::shuffle_data_external::<16>(
-        "/mnt/e/coud1.rescored.samples",
-        "/mnt/e/coud1.rescored.shuffled.samples",
+    Data::shuffle_data_external::<7>(
+        "/mnt/e/evalcloudbig.rescored.samples",
+        "/mnt/e/evalcloudbig.rescored.shuffled.samples",
     )
-    .expect("Could not shuffle the training data");*/
+    .expect("Could not shuffle the training data");
 
     /* Data::merge_rescored_data(
          vec![
@@ -199,6 +207,18 @@ fn main() -> anyhow::Result<()> {
      }
     */
     //Data::print_samples("/mnt/e/evalfilter.games")?;
+
+    /*Data::filter_training_data(
+        "/mnt/e/evalfilter3.rescored.samples",
+        "/mnt/e/evalfilter3.tbeval.rescored.samples",
+    )?;
+    */
+    //Data::read_old_sapmles("/mnt/e/coud1.rescored.shuffled.samples")
+    //   .expect("That did not work at all");
+
+    //testing how array-chunks works
+
+    //Data::rescore_old_data("/mnt/e/coud1.rescored.shuffled.samples")?;
 
     Ok(())
 }
