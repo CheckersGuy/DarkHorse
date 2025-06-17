@@ -507,7 +507,7 @@ pub fn read_old_sapmles(path: &str) -> std::io::Result<()> {
 
 //#[cfg(target_os = "windows")]
 pub fn rescore_games(
-    paths: Vec<String>,
+    paths: Vec<&str>,
     output: &str,
     base: &TableBase::Base,
 ) -> std::io::Result<()> {
@@ -516,8 +516,9 @@ pub fn rescore_games(
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut total_count = 0;
     let mut written_count: u64 = 0;
-
+    println!("Starting to write files");
     for path in paths {
+        println!("Starting with file: {}",path);
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
             if game.result == Result::UNKNOWN {
