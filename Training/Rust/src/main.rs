@@ -95,12 +95,12 @@ fn main() -> anyhow::Result<()> {
 
     */
     //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
-    Data::shuffle_data_external::<7>(
-        "/mnt/e/evalcloudbig.rescored.samples",
-        "/mnt/e/evalcloudbig.rescored.shuffled.samples",
-    )
-    .expect("Could not shuffle the training data");
-
+    /* Data::shuffle_data_external::<7>(
+            "/mnt/e/evalcloudbig.rescored.samples",
+            "/mnt/e/evalcloudbig.rescored.shuffled.samples",
+        )
+        .expect("Could not shuffle the training data");
+    */
     /* Data::merge_rescored_data(
          vec![
              "/mnt/e/coud1.rescored.shuffled.samples",
@@ -170,11 +170,16 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/filtereddata.samples",
     )?;*/
     Data::rescore_games(
-        "E:\\evalcloudbig.games",
-        "E:\\evalcloudbig.rescored.samples",
+        vec![
+            "E:\\finaldataset0.games",
+            "E:\\finaldataset1.games",
+            "E:\\finaldataset2.games",
+            "E:\\finaldataset3.games",
+            "E:\\finaldataset4.games",
+        ],
+        "E:\\finaldataset.rescored.samples",
         &base,
-    )?;
-
+    );
     /* let fen_strings = vec![
          "W:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
          "B:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
