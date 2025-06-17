@@ -510,15 +510,24 @@ pub fn rescore_games(
     paths: Vec<&str>,
     output: &str,
     base: &TableBase::Base,
+    partitions: usize,
 ) -> std::io::Result<()> {
     //let mut reader = BufReader::new(File::open(path)?);
-    let mut writer = BufWriter::new(File::create(output)?);
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut total_count = 0;
     let mut written_count: u64 = 0;
+
+    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        files.push(BufWriter::new(File::create(file_name)?));
+    }
+
     println!("Starting to write files");
     for path in paths {
-        println!("Starting with file: {}",path);
+        println!("Starting with file: {}", path);
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
             if game.result == Result::UNKNOWN {
@@ -538,20 +547,36 @@ pub fn rescore_games(
                     Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
                         if !filter.check(&sample.position) {
                             filter.set(&sample.position);
-                            sample.write_fen(&mut writer)?;
+                            let partition = rand::thread_rng().gen::<usize>() % partitions;
+                            sample.write_fen(&mut files[partition])?;
                             written_count += 1;
                         }
                     }
                     Result::UNKNOWN => {}
                     _ => {
-                        sample.write_fen(&mut writer)?;
+                        let partition = rand::thread_rng().gen::<usize>() % partitions;
+                        sample.write_fen(&mut files[partition])?;
                         written_count += 1;
                     }
                 }
             }
         }
-        writer.flush()?;
     }
+    //
+    println!("Done rescoring and creating partitions\n Now we are shuffling and merging the files");
+    files.clear(); //that should flush the buffers as well
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        let mut read_local = BufReader::new(File::open(file_name)?);
+        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
+        samples.par_shuffle(&mut rng);
+        println!("Done shuffling partition {i}");
+        for sample in samples {
+            sample.write_fen(&mut writer)?;
+        }
+    }
+
+    writer.flush()?;
     println!(
         "Got back a total of {} while processing {} samples",
         written_count, total_count
