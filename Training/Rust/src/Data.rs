@@ -506,44 +506,51 @@ pub fn read_old_sapmles(path: &str) -> std::io::Result<()> {
 }
 
 //#[cfg(target_os = "windows")]
-pub fn rescore_games(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
+pub fn rescore_games(
+    paths: Vec<String>,
+    output: &str,
+    base: &TableBase::Base,
+) -> std::io::Result<()> {
+    //let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(output)?);
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut total_count = 0;
     let mut written_count: u64 = 0;
-    for game in reader.iter_games() {
-        if game.result == Result::UNKNOWN {
-            continue;
-        }
-        let samples = rescore_game(&game, base)?;
 
-        for sample in samples {
-            if sample.position.has_capture() {
+    for path in paths {
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            if game.result == Result::UNKNOWN {
                 continue;
             }
-            if (sample.position.bp == 0) || (sample.position.wp == 0) {
-                continue;
-            }
-            total_count += 1;
-            match sample.result {
-                Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
-                    if !filter.check(&sample.position) {
-                        filter.set(&sample.position);
+            let samples = rescore_game(&game, base)?;
+
+            for sample in samples {
+                if sample.position.has_capture() {
+                    continue;
+                }
+                if (sample.position.bp == 0) || (sample.position.wp == 0) {
+                    continue;
+                }
+                total_count += 1;
+                match sample.result {
+                    Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
+                        if !filter.check(&sample.position) {
+                            filter.set(&sample.position);
+                            sample.write_fen(&mut writer)?;
+                            written_count += 1;
+                        }
+                    }
+                    Result::UNKNOWN => {}
+                    _ => {
                         sample.write_fen(&mut writer)?;
                         written_count += 1;
                     }
                 }
-                Result::UNKNOWN => {}
-                _ => {
-                    sample.write_fen(&mut writer)?;
-                    written_count += 1;
-                }
             }
         }
+        writer.flush()?;
     }
-    writer.flush()?;
-
     println!(
         "Got back a total of {} while processing {} samples",
         written_count, total_count
@@ -595,11 +602,20 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     for s in game_samples.iter().cloned() {
         let mut sample = s;
         let piece_count = sample.position.piece_count();
+
+        filter_samples.push(sample);
+
+        if sample.result == Result::TBWIN {
+            sample.value = 10000;
+        } else if sample.result == Result::TBLOSS {
+            sample.value = -10000;
+        } else if sample.result == Result::TBDRAW {
+            sample.value = 0;
+        }
         if piece_count <= 10 {
             sum_last += sample.value.abs() as i32;
             count += 1;
         }
-
         if count >= adj_moves {
             let avg = sum_last.div(count);
             if avg.abs() <= 1 && sample.result == Result::DRAW {
@@ -611,15 +627,6 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
             count = 0;
             sum_last = 0;
         }
-        if sample.result == Result::TBWIN {
-            sample.value = 10000;
-        } else if sample.result == Result::TBLOSS {
-            sample.value = -10000;
-        } else if sample.result == Result::TBDRAW {
-            sample.value = 0;
-        }
-
-        filter_samples.push(sample);
     }
     Ok(filter_samples)
 }
