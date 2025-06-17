@@ -14,12 +14,19 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from splus import SPlus
+
+#below will be moved into the network
+
 L1 =2*4096
 L2 =32
 L3 = 32
 
 
-        
+
+class NNZHistogramm:
+
+    def __init__(self):
+
 
 
 class Network(pl.LightningModule):
