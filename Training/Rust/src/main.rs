@@ -83,7 +83,7 @@ fn main() -> anyhow::Result<()> {
     //Data::create_book("../Positions/drawbook.book", "differentbook2.pos", 10)?;
 
     //let fen_string = "B:W30,29:B4,24";
-    let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("E:\\kr_english_wld", 2000, 10).unwrap();
 
     //W:W5:BK32,K31
     //
@@ -169,18 +169,6 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/coud1.rescored.shuffled.samples",
         "/mnt/e/filtereddata.samples",
     )?;*/
-    Data::rescore_games(
-        vec![
-            "E:\\finaldataset0.games",
-            "E:\\finaldataset1.games",
-            "E:\\finaldataset2.games",
-            "E:\\finaldataset3.games",
-            "E:\\finaldataset4.games",
-        ],
-        "E:\\finaldataset.rescored.samples",
-        &base,
-        32,
-    )?;
     /* let fen_strings = vec![
          "W:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
          "B:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
@@ -214,11 +202,11 @@ fn main() -> anyhow::Result<()> {
     */
     //Data::print_samples("/mnt/e/evalfilter.games")?;
 
-    /*Data::filter_training_data(
-        "/mnt/e/evalfilter3.rescored.samples",
-        "/mnt/e/evalfilter3.tbeval.rescored.samples",
+    Data::filter_training_data(
+        "/mnt/e/finaldataset.rescored.samples",
+        "/mnt/e/finalunique.samples",
     )?;
-    */
+
     //Data::read_old_sapmles("/mnt/e/coud1.rescored.shuffled.samples")
     //   .expect("That did not work at all");
 

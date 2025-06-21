@@ -475,16 +475,17 @@ pub fn print_samples(path: &str) -> std::io::Result<()> {
 */
 
 pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
-    let thresh_hold = 0.1;
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(out)?);
-    let mut counter = 0;
-    let mut sample_iter = reader.iter_samples();
-    let mut rng = thread_rng();
+    let sample_iter = reader.iter_samples();
+    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.01);
+
     for s in sample_iter {
-        //sample.write_fen(&mut writer)?;
+        if !filter.check(&s.position) {
+            filter.set(&s.position);
+            s.write_fen(&mut writer)?;
+        }
     }
-    println!("{}", counter);
     Ok(())
 }
 
