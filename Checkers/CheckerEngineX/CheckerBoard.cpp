@@ -9,6 +9,7 @@ int hash_size_in_mb = 8;
 int db_size_in_mb = 256;
 int max_db_pieces = 6;
 bool enable_wld = false;
+int last_total_pieces = -1;
 Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
@@ -56,7 +57,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
-
   if (!engine_initialized) {
     if (enable_wld) {
       tablebase.num_pieces = max_db_pieces;
@@ -80,23 +80,30 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // CheckerBoard Bug
   auto m = Position::get_move(game_board.get_position(), temp);
 
-  if (!m.has_value() ||
-      (temp.piece_count() > game_board.get_position().piece_count())) {
-    // debug << "New Game or Bug" << std::endl;
-    //  ISSUE PROBABLY HERE PAY ATTENTION
+  if ((temp.piece_count() > game_board.get_position().piece_count())) {
+    write_to_logfile("ERROR CHECKERBOARD_BUG");
     TT.clear();
     game_board = Board(temp);
     TT.age_counter = 0;
     num_draw_scores = 0;
   } else if (m.has_value()) {
-    TT.age_counter = (TT.age_counter + 1) & 63ull;
+    TT.age_counter = TT.age_counter + 1;
     game_board.play_move(m.value());
   }
 
-  uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0));
+  uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0 * 0.985));
+
+  write_to_logfile("Time to use" + std::to_string(time_to_use));
   Move best;
+  // measuring the time it took to find the move
+  auto t1 = std::chrono::high_resolution_clock::now();
   auto value =
       searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
+  auto t2 = std::chrono::high_resolution_clock::now();
+  auto duration = (t2 - t1);
+  auto time_searched =
+      std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+  write_to_logfile("TimeSearched: " + std::to_string(time_searched));
 
   game_board.play_move(best);
   Position c = game_board.get_position();
@@ -123,7 +130,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
   }
 
-  if (isWinningEval(value)) {
+  if (std::abs(value) >= 700 && isEval(value)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
   return CB_UNKNOWN;
@@ -215,9 +222,9 @@ int enginecommand(char str[256], char reply[1024]) {
     write_to_logfile("Get-Command is: " + std::string(param1));
     if (strcmp(param1, "hashsize") == 0) {
       write_to_logfile("Read the hashsize with a value of: " +
-                       std::to_string(TT.get_size_in_mb()));
+                       std::to_string(hash_size_in_mb));
       snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
-      engine_initialized = false;
+      // engine_initialized = false;
       return 1;
     }
 

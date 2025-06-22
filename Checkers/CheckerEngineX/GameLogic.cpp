@@ -116,8 +116,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   max_nodes_search = max_nodes;
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
-  network.accumulator.refresh();
-  mlh_net.accumulator.refresh();
+
   nodeCounter = 0;
   mainPV.clear();
   MoveListe liste;
@@ -143,6 +142,8 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   nodeCounter = 0;
   for (i = 1; i <= depth; i += 2) {
     network.accumulator.refresh();
+    mlh_net.accumulator.refresh();
+    policy.accumulator.refresh();
     auto start_time = std::chrono::high_resolution_clock::now();
     std::stringstream ss;
     size_t prev_nodes = nodeCounter;
