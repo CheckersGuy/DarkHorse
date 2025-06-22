@@ -17,7 +17,7 @@ from splus import SPlus
 
 #below will be moved into the network
 
-L1 =2*256
+L1 =2*4096
 L2 =32
 L3 = 32
 
@@ -113,7 +113,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-3, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1e-1, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 

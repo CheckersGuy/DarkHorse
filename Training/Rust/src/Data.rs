@@ -478,7 +478,7 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(out)?);
     let sample_iter = reader.iter_samples();
-    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.01);
+    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.1);
 
     for s in sample_iter {
         if !filter.check(&s.position) {
