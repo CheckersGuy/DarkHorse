@@ -9,7 +9,6 @@ int hash_size_in_mb = 8;
 int db_size_in_mb = 256;
 int max_db_pieces = 6;
 bool enable_wld = false;
-int last_total_pieces = -1;
 Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
@@ -29,7 +28,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     num_draw_scores = 0;
   }
   // dunno if this is going to work
-
+  write_to_logfile("PlayNowParameter: " + std::to_string(*playnow));
   Position temp;
   for (auto i = 0; i < 32; ++i) {
     const auto cb_index = To64[i];
@@ -76,19 +75,26 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     write_to_logfile("init engine with a hashsize of " +
                      std::to_string(TT.get_size_in_mb()));
   }
-
   // CheckerBoard Bug
   auto m = Position::get_move(game_board.get_position(), temp);
 
-  if ((temp.piece_count() > game_board.get_position().piece_count())) {
+  if (temp.piece_count() > game_board.get_position().piece_count()) {
     write_to_logfile("ERROR CHECKERBOARD_BUG");
     TT.clear();
     game_board = Board(temp);
     TT.age_counter = 0;
     num_draw_scores = 0;
+    last_eval = -INFINITE;
   } else if (m.has_value()) {
     TT.age_counter = TT.age_counter + 1;
     game_board.play_move(m.value());
+  } else {
+    game_board = Board(temp);
+    TT.age_counter = 0;
+    num_draw_scores = 0;
+    last_eval = -INFINITE;
+
+    write_to_logfile("Could not find the move !!!!");
   }
 
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0 * 0.985));
@@ -129,7 +135,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       board[col][row] = CB_FREE;
     }
   }
-
   if (std::abs(value) >= 700 && isEval(value)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
@@ -210,7 +215,7 @@ int enginecommand(char str[256], char reply[1024]) {
       auto val = strtol(param2, &stopstring, 10);
       if (val != db_size_in_mb) {
         engine_initialized = false;
-        val = db_size_in_mb;
+        db_size_in_mb = val;
       }
 
       sprintf(reply, "dbmbytes set to %d", db_size_in_mb);
