@@ -111,7 +111,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   size_t max_nodes, bool print, std::ostream &stream,
                   bool skip_singular) {
-
+  write_to_logfile("Calling search here");
   const Position start_pos = board.get_position();
   max_nodes_search = max_nodes;
   glob.sel_depth = 0u;

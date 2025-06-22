@@ -28,6 +28,7 @@ inline TableBase tablebase;
 extern uint64_t nodeCounter;
 extern uint64_t counter;
 extern uint64_t both_counter;
+extern int last_eval;
 enum NodeType {
   ROOT,
   PV,
