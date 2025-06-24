@@ -6,13 +6,13 @@
 #include "Perft.h"
 #include "Transposition.h"
 #include "incbin.h"
+#include "registry.h"
 #include "types.h"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
-#include <hash_set>
 #include <iterator>
 #include <random>
 #include <sstream>
@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "dumb_6.quant");
+INCBIN(network, "registry_79.quant");
 INCBIN(policy, "policybigger3.quant");
 inline Position posFromString(const std::string &pos) {
   Position result;
@@ -87,15 +87,8 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
   recurse(board, hashset, depth, min_value, max_value);
 }
 
-#define DB_PATH "E:\\kr_english_wld"
-#define DTW_PATH "E:\\kr_english_dtw"
-
 int main(int argl, const char **argc) {
-
-#ifdef _WIN32
-  tablebase.load_table_base(DB_PATH);
-  write_to_logfile("Writing a log-entry");
-#endif
+  std::cout << "Test" << std::endl;
   /*
     Position test =
         Position::pos_from_fen("W:W32,30,28,27,26,25,19,15:B18,17,14,12,7,6,3,1");
@@ -112,6 +105,15 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
+
+  // testing the windows registry
+
+  // setting an integer valeu to be used later
+
+  // setting the db_size
+
+  // Testing if the debug-mode actually works
+
   /*
     network.print_layers();
     policy.print_layers();
@@ -220,11 +222,8 @@ int main(int argl, const char **argc) {
     // const int adj_threshold = 350;
     // const float adj_percentage = 0.8f; // 80% of all games will be
     // adjudicated
-    std::mt19937_64 generator(getSystemTime() ^ getpid());
-    std::uniform_real_distribution<float> distrib(0, 1);
-
     std::string next_line;
-    TT.resize_in_mb(64);
+    TT.resize_in_mb(4);
     std::vector<Position> rep_history;
     std::vector<int> rep_values;
 
@@ -240,7 +239,7 @@ int main(int argl, const char **argc) {
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
       rep_values.clear();
-
+      last_eval = -INFINITE;
       board = start_pos;
       Result result = UNKNOWN;
       for (auto i = 0; i < 600; ++i) {
@@ -312,6 +311,7 @@ int main(int argl, const char **argc) {
       std::cout << "init_ready"
                 << "\n";
     } else if (current == "new_game") {
+      last_eval = -INFINITE;
       TT.clear();
       TT.age_counter = 0u;
       std::string position;
