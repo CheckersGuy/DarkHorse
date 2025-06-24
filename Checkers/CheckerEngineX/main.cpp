@@ -87,19 +87,6 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 }
 
 int main(int argl, const char **argc) {
-  std::cout << "Test" << std::endl;
-  /*
-    Position test =
-        Position::pos_from_fen("W:W32,30,28,27,26,25,19,15:B18,17,14,12,7,6,3,1");
-
-    MoveL/diste liste;
-    get_moves(test, liste);
-
-    for (auto m : liste) {
-      std::cout << m.get_move_encoding() << std::endl;
-    }
-    return 0;
-  */
 
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);

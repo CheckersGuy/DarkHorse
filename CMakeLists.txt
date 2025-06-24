@@ -53,7 +53,7 @@ if (UNIX)
   list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/registry.cpp)
 endif()
 
-list(REMOVE_ITEM CHeaders "${CMAKE_//CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
+list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
 list(REMOVE_ITEM CSources "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp")
 
 if(UNIX)

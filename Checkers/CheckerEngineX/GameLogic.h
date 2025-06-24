@@ -29,6 +29,7 @@ extern uint64_t nodeCounter;
 extern uint64_t counter;
 extern uint64_t both_counter;
 extern int last_eval;
+extern bool stop_search;
 enum NodeType {
   ROOT,
   PV,

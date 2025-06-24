@@ -1,0 +1,87 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Release-d0094a50bb2071803777.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.9"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "reading",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Dark::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Dark-Release-82c929a878e0bf7e7378.json",
+					"name" : "Dark",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "MainEngine::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-MainEngine-Release-7a4ce87899f3fecd2f3b.json",
+					"name" : "MainEngine",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "RustDll::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-RustDll-Release-fbc20e4a31dee4e819e2.json",
+					"name" : "RustDll",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "generator::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-generator-Release-1f332a238efe2f3ebefa.json",
+					"name" : "generator",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/leagu/DarkHorse",
+		"source" : "C:/Users/leagu/DarkHorse"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 4
+	}
+}
