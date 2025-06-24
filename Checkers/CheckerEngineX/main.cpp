@@ -6,7 +6,6 @@
 #include "Perft.h"
 #include "Transposition.h"
 #include "incbin.h"
-#include "registry.h"
 #include "types.h"
 #include <algorithm>
 #include <chrono>
