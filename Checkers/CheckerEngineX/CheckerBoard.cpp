@@ -1,5 +1,6 @@
 #include "CheckerBoard.h"
 #include "GameLogic.h"
+#include "registry.h"
 #include "types.h"
 bool engine_initialized = false;
 Board game_board;
@@ -13,7 +14,7 @@ Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "finalformshuffled.quant");
+INCBIN(network, "registry_79.quant");
 INCBIN(policy, "policybigger2.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
@@ -84,7 +85,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     game_board = Board(temp);
     TT.age_counter = 0;
     num_draw_scores = 0;
-    last_eval = -INFINITE;
+    last_eval = -INFINITE; // external variable here
   } else if (m.has_value()) {
     TT.age_counter = TT.age_counter + 1;
     game_board.play_move(m.value());
@@ -167,6 +168,8 @@ int enginecommand(char str[256], char reply[1024]) {
       const int numMBs = strtol(param2, &stopstring, 10);
       TT.resize_in_mb(numMBs);
       hash_size_in_mb = numMBs;
+      // saving the hash_size in the registry
+      Registry::set_hash_size(hash_size_in_mb);
       write_to_logfile("Trying to set the hashsize");
       engine_initialized = false;
       return 1;
@@ -182,8 +185,10 @@ int enginecommand(char str[256], char reply[1024]) {
         engine_initialized = false;
         db_path = p;
         write_to_logfile("DBPath was set to : " + db_path);
+        // saving the db_path
       }
 
+      Registry::set_db_path(db_path);
       sprintf(reply, "dbpath set to %s", db_path.c_str());
       return 1;
     }
@@ -191,10 +196,12 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "enable_wld") == 0) {
       auto val = strtol(param2, &stopstring, 10);
       write_to_logfile("EnableWldDebug: " + std::to_string(val));
-      if (static_cast<bool>(val) != enable_wld) {
+      if ((val != 0) != enable_wld) {
         engine_initialized = false;
-        enable_wld = true;
+        enable_wld = (val != 0);
       }
+
+      Registry::set_enable_wld(enable_wld);
 
       snprintf(reply, REPLY_MAX, "enable_wld set to %d", val);
       return (1);
@@ -205,7 +212,9 @@ int enginecommand(char str[256], char reply[1024]) {
         engine_initialized = false;
         max_db_pieces = val;
       }
+      // saving the number of db-pieces in the registry
 
+      Registry::set_max_db_pieces(max_db_pieces);
       sprintf(reply, "max_dbpieces set to %d", max_db_pieces);
 
       return (1);
@@ -217,6 +226,9 @@ int enginecommand(char str[256], char reply[1024]) {
         engine_initialized = false;
         db_size_in_mb = val;
       }
+      // setting the db_size
+
+      Registry::set_db_size(db_size_in_mb);
 
       sprintf(reply, "dbmbytes set to %d", db_size_in_mb);
       return (1);
@@ -228,6 +240,7 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "hashsize") == 0) {
       write_to_logfile("Read the hashsize with a value of: " +
                        std::to_string(hash_size_in_mb));
+      hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
       snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
       // engine_initialized = false;
       return 1;
@@ -245,22 +258,25 @@ int enginecommand(char str[256], char reply[1024]) {
     }
 
     if (strcmp(param1, "dbpath") == 0) {
+      db_path = Registry::get_db_path().value_or(db_path);
       snprintf(reply, REPLY_MAX, db_path.c_str());
       return 1;
     }
 
     if (strcmp(param1, "enable_wld") == 0) {
-      // get_enable_wld(&checkerBoard.enable_wld);
+      enable_wld = Registry::use_wld_db();
       snprintf(reply, REPLY_MAX, "%d", enable_wld);
       return (1);
     }
 
     if (strcmp(param1, "max_dbpieces") == 0) {
+      max_db_pieces = Registry::get_max_db_pieces().value_or(max_db_pieces);
       sprintf(reply, "%d", max_db_pieces);
       return (1);
     }
 
     if (strcmp(param1, "dbmbytes") == 0) {
+      db_size_in_mb = Registry::get_db_size().value_or(db_size_in_mb);
       sprintf(reply, "%d", db_size_in_mb);
       return (1);
     }

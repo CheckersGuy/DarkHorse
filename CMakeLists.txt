@@ -49,6 +49,8 @@ if (UNIX)
   list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Endgame.cpp)
   list(REMOVE_ITEM CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.h)
   list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.cpp)
+  list(REMOVE_ITEM CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/registry.h)
+  list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/registry.cpp)
 endif()
 
 list(REMOVE_ITEM CHeaders "${CMAKE_//CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
