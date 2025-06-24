@@ -74,7 +74,7 @@ target_compile_definitions(generator PUBLIC "GENERATOR")
 if (UNIX)
 add_executable(testing ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
-set_target_properties(MainEngine PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+set_target_properties(MainEngine PROPERTIES  INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 endif()
 
