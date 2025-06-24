@@ -28,6 +28,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.clear();
     num_draw_scores = 0;
   }
+  stop_search = (*playnow) != 0;
   // dunno if this is going to work
   write_to_logfile("PlayNowParameter: " + std::to_string(*playnow));
   Position temp;
@@ -62,8 +63,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       tablebase.num_pieces = max_db_pieces;
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
-      write_to_logfile("Loaded the database. Path is " + db_path +
-                       " the cache-size is: " + std::to_string(db_size_in_mb));
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
@@ -72,15 +71,11 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     engine_initialized = true;
     glob.reply = str;
     num_draw_scores = 0;
-
-    write_to_logfile("init engine with a hashsize of " +
-                     std::to_string(TT.get_size_in_mb()));
   }
   // CheckerBoard Bug
   auto m = Position::get_move(game_board.get_position(), temp);
 
   if (temp.piece_count() > game_board.get_position().piece_count()) {
-    write_to_logfile("ERROR CHECKERBOARD_BUG");
     TT.clear();
     game_board = Board(temp);
     TT.age_counter = 0;
@@ -94,13 +89,10 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.age_counter = 0;
     num_draw_scores = 0;
     last_eval = -INFINITE;
-
-    write_to_logfile("Could not find the move !!!!");
   }
 
   uint32_t time_to_use = static_cast<int>(std::round(maxtime * 1000.0 * 0.985));
 
-  write_to_logfile("Time to use" + std::to_string(time_to_use));
   Move best;
   // measuring the time it took to find the move
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -110,7 +102,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto duration = (t2 - t1);
   auto time_searched =
       std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-  write_to_logfile("TimeSearched: " + std::to_string(time_searched));
 
   game_board.play_move(best);
   Position c = game_board.get_position();
@@ -163,14 +154,12 @@ int enginecommand(char str[256], char reply[1024]) {
   }
 
   if (strcmp(command, "set") == 0) {
-    write_to_logfile("Trying to set anything at all");
     if (strcmp(param1, "hashsize") == 0) {
       const int numMBs = strtol(param2, &stopstring, 10);
       TT.resize_in_mb(numMBs);
       hash_size_in_mb = numMBs;
       // saving the hash_size in the registry
       Registry::set_hash_size(hash_size_in_mb);
-      write_to_logfile("Trying to set the hashsize");
       engine_initialized = false;
       return 1;
     }
@@ -195,7 +184,6 @@ int enginecommand(char str[256], char reply[1024]) {
     // TODO checking if we want to use tablebases
     if (strcmp(param1, "enable_wld") == 0) {
       auto val = strtol(param2, &stopstring, 10);
-      write_to_logfile("EnableWldDebug: " + std::to_string(val));
       if ((val != 0) != enable_wld) {
         engine_initialized = false;
         enable_wld = (val != 0);
@@ -236,10 +224,8 @@ int enginecommand(char str[256], char reply[1024]) {
   }
   // GETTING ENGINE INFORMATION
   if (strcmp(command, "get") == 0) {
-    write_to_logfile("Get-Command is: " + std::string(param1));
+
     if (strcmp(param1, "hashsize") == 0) {
-      write_to_logfile("Read the hashsize with a value of: " +
-                       std::to_string(hash_size_in_mb));
       hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
       snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
       // engine_initialized = false;
@@ -253,7 +239,6 @@ int enginecommand(char str[256], char reply[1024]) {
 
     if (strcmp(param1, "gametype") == 0) {
       snprintf(reply, REPLY_MAX, "%d", GT_ENGLISH);
-      write_to_logfile("Giving the gametype: " + std::string(reply));
       return 1;
     }
 
