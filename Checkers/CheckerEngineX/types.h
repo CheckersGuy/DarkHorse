@@ -167,9 +167,9 @@ inline Value tbloss(int ply) { return TB_LOSS + ply; };
 
 constexpr Color operator~(Color color) { return static_cast<Color>(-color); }
 
-inline bool isLoss(Value val) { return val <= TB_LOSS_MAX_PLY; }
+inline bool isLoss(Value val) { return val <= TB_LOSS && isEval(val); }
 
-inline bool isWin(Value val) { return val >= -TB_LOSS_MAX_PLY; }
+inline bool isWin(Value val) { return val >= -TB_LOSS && isEval(val); }
 
 inline bool isWinningEval(Value val) { return val >= 500; };
 inline bool isLosingEval(Value val) { return val <= -500; };

@@ -86,6 +86,22 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
   recurse(board, hashset, depth, min_value, max_value);
 }
 
+struct SearchThread {
+
+  std::thread local_thread;
+  bool is_thinking = false // if true, there is a search in progress
+      Board search_board;
+  bool stop_thread = false;
+
+  void init() {
+
+    while (!stop_thread) {
+      // should accept some sort of search object
+    }
+  }
+
+}
+
 int main(int argl, const char **argc) {
 
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
@@ -111,7 +127,8 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-
+  std::cout << "Testing stuff" << std::endl;
+  return 0;
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
