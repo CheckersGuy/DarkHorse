@@ -171,7 +171,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
       ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
       ss << "Nodes: " << nodeCounter << " | ";
       ss << "Time: " << time_seconds << "\n";
-      ss << "Speed: " << (int)(speed) << " " << mainPV.toString() << "\n\n";
+      ss << "Speed: " << (int)(speed) << "KN/s " << mainPV.toString() << "\n\n";
       stream << ss.str();
     }
 #ifdef CHECKERBOARD
@@ -180,7 +180,8 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
       reply_stream << "depth " << i << "/" << glob.sel_depth;
       reply_stream << " eval " << eval;
       reply_stream << " time " << time_seconds;
-      reply_stream << " speed " << (int)(1000000.0 * speed);
+      reply_stream << " speed " << (int)(speed);
+      reply_stream << "KN/s ";
       reply_stream << " pv " << mainPV.toString();
       strcpy(glob.reply, reply_stream.str().c_str());
     }
@@ -196,7 +197,8 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   reply_stream << "depth " << i << "/" << glob.sel_depth;
   reply_stream << " eval " << eval;
   reply_stream << " time " << time_seconds;
-  reply_stream << " speed " << (int)(1000000.0 * speed);
+  reply_stream << " speed " << speed);
+  reply_stream << "KN/s ";
   reply_stream << " pv " << mainPV.toString();
   strcpy(glob.reply, reply_stream.str().c_str());
 #endif
