@@ -14,14 +14,7 @@ namespace Bits {
 
 enum class IndexType { INNER, PROMO };
 
-inline uint32_t bitscan_foward(uint32_t bits) {
-
-#ifdef _WIN32
-  return __tzcnt_u32(bits);
-#else
-  return __builtin_ctz(bits);
-#endif
-}
+inline uint32_t bitscan_foward(uint32_t bits) { return __builtin_ctz(bits); }
 
 inline uint32_t pop_count(uint32_t val) {
 #ifndef _WIN32
