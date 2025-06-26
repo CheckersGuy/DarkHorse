@@ -14,7 +14,7 @@ Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_112.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger2.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
@@ -142,11 +142,17 @@ int enginecommand(char str[256], char reply[1024]) {
   param1[0] = 0;
   param2[0] = 0;
   sscanf(str, "%s %s %s", command, param1, param2);
-
+#ifdef AVX256
+  if (strcmp(command, "name") == 0) {
+    snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v1.0");
+    return 1;
+  }
+#else
   if (strcmp(command, "name") == 0) {
     snprintf(reply, REPLY_MAX, "DarkHorse v1.0");
     return 1;
   }
+#endif
 
   if (strcmp(command, "about") == 0) {
     snprintf(reply, REPLY_MAX, "Created by Robin Messemer");
