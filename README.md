@@ -20,12 +20,7 @@ This project began quite some time ago, but I eventually stopped working on it s
 
 
 
-## Usage
-
-The engine is designed to work with the excellent [CheckerBoard GUI](http://www.fierz.ch/checkerboard.php) by *Martin Fierz*. To use it:
-
-1. Place the `DarkHorse.dll` file into the `engines` subdirectory of your CheckerBoard installation.  
-2. Launch CheckerBoard, go to Engines->Select and select **DarkHorse** from the list of available engines.
+## You can find the engine on the release page !
 
 ---
 
