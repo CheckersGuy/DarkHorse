@@ -1,6 +1,6 @@
 # ![logo](https://github.com/user-attachments/assets/46571f61-95c9-4a27-942d-f4e438d76a19) 
 
-# DarkHorse – Checkers Engine (First Release)
+# DarkHorse – Checkers Engine
 
 **DarkHorse** is a checkers engine powered by three neural networks to enhance its decision-making:
 
