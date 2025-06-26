@@ -16,10 +16,10 @@ enum class IndexType { INNER, PROMO };
 
 inline uint32_t bitscan_foward(uint32_t bits) {
 
-#ifndef _WIN32
+#ifdef _WIN32
   return __tzcnt_u32(bits);
 #else
-  return _tzcnt_u32(bits);
+  return __builtin_ctz(bits);
 #endif
 }
 

@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_112.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger3.quant");
 
 inline Position posFromString(const std::string &pos) {

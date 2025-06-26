@@ -15,7 +15,7 @@
 // finding nonzero values very quickly
 
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_109.quant");
+INCBIN(network, "shuffled_21.quant");
 INCBIN(policy, "policybigger3.quant");
 int main() {
   // generate random numbers and measure
