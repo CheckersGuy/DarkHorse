@@ -8,10 +8,6 @@
 
 namespace Perft {
 
-// only counting the non-capturing moves to see
-// if the rest implementation does anything wrong there
-//
-
 uint64_t perft_check(Position pos, int depth) {
   MoveListe liste;
   get_moves(pos, liste);
@@ -23,11 +19,6 @@ uint64_t perft_check(Position pos, int depth) {
   for (int i = 0; i < liste.length(); ++i) {
     Position copy = pos;
     copy.make_move(liste[i]);
-    if (depth == 1) {
-      std::cout << "----------------------" << std::endl;
-      pos.print_position();
-      copy.print_position();
-    }
     counter += perft_check(copy, depth - 1);
   }
 

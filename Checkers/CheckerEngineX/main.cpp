@@ -21,8 +21,9 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_79.quant");
+INCBIN(network, "registry_112.quant");
 INCBIN(policy, "policybigger3.quant");
+
 inline Position posFromString(const std::string &pos) {
   Position result;
   for (uint32_t i = 0; i < 32u; ++i) {
@@ -89,8 +90,8 @@ void generate_book(int depth, Position pos, Value min_value, Value max_value) {
 struct SearchThread {
 
   std::thread local_thread;
-  bool is_thinking = false // if true, there is a search in progress
-      Board search_board;
+  bool is_thinking = false; // if true, there is a search in progress
+  Board search_board;
   bool stop_thread = false;
 
   void init() {
@@ -99,8 +100,7 @@ struct SearchThread {
       // should accept some sort of search object
     }
   }
-
-}
+};
 
 int main(int argl, const char **argc) {
 
@@ -127,8 +127,7 @@ int main(int argl, const char **argc) {
     std::cout << network.evaluate(pos, 0, 0);
     return 0;
     */
-  std::cout << "Testing stuff" << std::endl;
-  return 0;
+
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;

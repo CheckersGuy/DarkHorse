@@ -40,9 +40,9 @@ struct SearchGlobal {
   uint32_t sel_depth;
 #ifdef CHECKERBOARD
   char *reply;
+  int *playnow;
 #endif
 
-  bool stop_search = false;
   // will be called whenever we find a new move
   void new_move();
 

@@ -13,7 +13,6 @@ size_t max_nodes_search = 18446744073709551615ull;
 uint64_t nodeCounter = 0u;
 int rootDepth = 0;
 Value last_eval = -INFINITE;
-bool stop_search = false;
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
 
@@ -111,7 +110,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   size_t max_nodes, bool print, std::ostream &stream,
                   bool skip_singular) {
-  stop_search = false;
   const Position start_pos = board.get_position();
   max_nodes_search = max_nodes;
   glob.sel_depth = 0u;
@@ -235,9 +233,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   pv.clear();
   nodeCounter++;
 
-  if ((nodeCounter & 1023) == 0u && getSystemTime() >= endTime || stop_search) {
+  if ((nodeCounter & 1023) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
+#ifdef CHECKERBOARD
+  if ((*glob.playnow) != 0) {
+    throw std::string{"Checkerboard requested stop_search"};
+  }
+#endif
   if (nodeCounter >= max_nodes_search) {
     throw std::string{"Time_out"};
   }
@@ -554,10 +557,14 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime ||
-      stop_search) {
+  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
     throw std::string{"Time_out"};
   }
+#ifdef CHECKERBOARD
+  if ((*glob.playnow) != 0) {
+    throw std::string{"Checkerboard requested stop_search"};
+  }
+#endif
   if (nodeCounter >= max_nodes_search) {
     throw std::string{"Time_out"};
   }

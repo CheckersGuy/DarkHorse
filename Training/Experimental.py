@@ -17,7 +17,7 @@ from splus import SPlus
 
 #below will be moved into the network
 
-L1 =2*4096
+L1 =2*(4096+2048)
 L2 =32
 L3 = 32
 
