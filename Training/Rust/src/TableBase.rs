@@ -136,49 +136,6 @@ impl Base {
         }
     }
 
-    pub fn probe_dtw_recursive(
-        &self,
-        position: Position,
-        orig_mover: i8,
-        ply: i32,
-    ) -> Result<Option<i32>, Box<dyn std::error::Error>> {
-        let result = self
-            .probe_dtw_with_position(position)
-            .expect("Could not probe the position");
-
-        if let Some(val) = result {
-            return Ok(Some(val + ply));
-        }
-
-        let mut liste = MoveList::new();
-        liste.get_moves(position);
-
-        let mut best_value: i32 = 1000;
-
-        for m in liste.iter() {
-            let mut copy = position;
-            copy.make_move(m);
-            let res = self.probe_dtw_with_position(copy).expect("Could not probe");
-            let mut val;
-            if let Some(v) = res {
-                val = v;
-            } else {
-                val = self
-                    .probe_dtw_recursive(copy, orig_mover, ply + 1)
-                    .expect("Could not probe")
-                    .unwrap_or(1000);
-            }
-            println!("Value {val}");
-            //if orig_mover == pos.color, we are trying to minimize the dtw-value
-            //else we are maximizing because we want to prolong the inevitable loss
-            val = -val;
-            if val < best_value {
-                best_value = val;
-            }
-        }
-        Ok(Some(best_value))
-    }
-
     pub fn print_fen(&self, fen_string: &str) -> Result<(), Box<dyn std::error::Error>> {
         unsafe {
             let func: libloading::Symbol<unsafe extern "C" fn(*const libc::c_char)> =

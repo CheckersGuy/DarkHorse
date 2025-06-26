@@ -489,7 +489,7 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn read_old_sapmles(path: &str) -> std::io::Result<()> {
+pub fn read_old_samples(path: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
 
     loop {
