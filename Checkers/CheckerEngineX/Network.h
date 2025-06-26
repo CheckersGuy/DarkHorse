@@ -99,6 +99,12 @@ Value tempo_black(Position pos);
 constexpr static size_t ALIGNMENT = 64;
 
 template <int OutDim> struct alignas(64) Accumulator {
+  static inline uint32_t num_trials = 0; // used to compute the average
+  static inline uint32_t num_nnz =
+      0; // used to keep track of the number of nonzero activatios
+  static inline uint32_t num_nnz_blocks =
+      0; // counts the number of nonzero blocks
+
   alignas(64) int16_t black_acc[OutDim] = {0};
   alignas(64) int16_t white_acc[OutDim] = {0};
   int16_t *ft_biases;
@@ -122,6 +128,7 @@ template <int OutDim> struct alignas(64) Accumulator {
   void load_weights(std::istream &stream);
 
   uint8_t *forward(uint8_t *in, const Position &next);
+  std::pair<float, float> get_activation_stats();
 };
 
 template <int... lay> struct Network {
@@ -341,10 +348,32 @@ uint8_t *Accumulator<OutDim>::forward(uint8_t *in, const Position &next) {
   }
   update(next.color, next);
   Simd::accum_activation8<OutDim>(z_previous, in);
-
+#ifdef SPARSEOPT
+  for (auto i = 0; i < OutDim / 2; ++i) {
+    num_nnz += (in[i] != 0);
+  }
+  auto *blocks = reinterpret_cast<uint32_t *>(in);
+  for (auto i = 0; i < OutDim / 8; ++i) {
+    num_nnz_blocks += (blocks[i] != 0);
+  }
+  num_trials += 1;
+#endif
   return in;
 }
+// used to gather statistics about the activation
+template <int OutDim>
+std::pair<float, float> Accumulator<OutDim>::get_activation_stats() {
+  // Now we can compute the averag
+  // Need to check if OutDim is 2*L1
+  const auto L1 = OutDim / 2; // OutDim should always be divisible by 2
+  const auto NUM_BLOCKS = L1 / 4;
+  const auto f_nnz =
+      static_cast<float>(num_nnz) / static_cast<float>(num_trials * L1);
+  const auto f_nnz_blocks = static_cast<float>(num_nnz_blocks) /
+                            static_cast<float>(num_trials * NUM_BLOCKS);
 
+  return std::make_pair(f_nnz, f_nnz_blocks);
+}
 template <int... layers>
 void Network<layers...>::load_bucket(std::string file) {
 

@@ -1,4 +1,7 @@
 #include "Bits.h"
+#include "GameLogic.h"
+#include "Network.h"
+#include "Position.h"
 #include "Simd.h"
 #include "incbin.h"
 #include <chrono>
@@ -10,25 +13,33 @@
 #include <iostream>
 #include <random>
 // finding nonzero values very quickly
+
+INCBIN(mlh_net, "mlh3.quant");
+INCBIN(network, "registry_109.quant");
+INCBIN(policy, "policybigger3.quant");
 int main() {
   // generate random numbers and measure
+  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
+  network.load_from_array(gnetworkData, gnetworkSize);
+  policy.load_from_array(gpolicyData, gpolicySize);
+  const auto start_pos = Position::get_start_position();
+  start_pos.print_position();
+  TT.resize_in_mb(128);
+  Board board = Board(start_pos);
+  Move best;
+  const int depth = 25;
+  const auto time = 30000;
+  const auto max_nodes = 1000000000ull;
+  auto value =
+      searchValue(board, best, depth, time, max_nodes, true, std::cout);
 
-  std::mt19937_64 generator(3231423131ull);
-  std::uniform_int_distribution<int16_t> distrib(-5000, 5000);
+  auto stats = network.accumulator.get_activation_stats();
 
-  constexpr int input_size = 0;
-  constexpr int CACHE_LINE_SIZE = 64;
+  std::cout << "NumNNZ: " << stats.first
+            << " and NumNNZ_blocks: " << stats.second << std::endl;
 
-  // getting some
-
-  alignas(CACHE_LINE_SIZE) int16_t input[input_size];
-  alignas(CACHE_LINE_SIZE) uint8_t output[input_size];
-
-  for (auto i = 0; i < input_size; ++i) {
-    input[i] = distrib(generator);
-  }
-
-  Simd::accum_activation8<input_size>(input, output);
-
+#ifdef SPARSEOPT
+  std::cout << "Testing something" << std::endl;
+#endif
   return 0;
 }

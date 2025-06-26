@@ -24,14 +24,14 @@ void Board::reset(Position start_pos) {
   pStack[pCounter] = start_pos;
 }
 
-void Board::print_board() const {
-  Position pos = pStack[pCounter];
-  pos.print_position();
-}
+void Board::print_board() const { pStack[pCounter].print_position(); }
 
 void Board::play_move(Move move) {
   Position copy = get_position();
   copy.make_move(move);
+  if (move.is_capture()) {
+    rep_size = 0;
+  }
   rep_history[rep_size++] = copy;
   pCounter = 0;
   pStack[pCounter] = copy;

@@ -28,7 +28,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     TT.clear();
     num_draw_scores = 0;
   }
-  stop_search = (*playnow) != 0;
+
+  glob.playnow = playnow;
+
   // dunno if this is going to work
   write_to_logfile("PlayNowParameter: " + std::to_string(*playnow));
   Position temp;
