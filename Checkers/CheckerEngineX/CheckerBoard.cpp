@@ -14,7 +14,7 @@ Position previous;
 std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_79.quant");
+INCBIN(network, "registry_112.quant");
 INCBIN(policy, "policybigger2.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
@@ -30,9 +30,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
 
   glob.playnow = playnow;
-
+  glob.reply = str;
   // dunno if this is going to work
-  write_to_logfile("PlayNowParameter: " + std::to_string(*playnow));
   Position temp;
   for (auto i = 0; i < 32; ++i) {
     const auto cb_index = To64[i];
@@ -71,7 +70,6 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     policy.load_from_array(gpolicyData, gpolicySize);
     TT.resize_in_mb(hash_size_in_mb);
     engine_initialized = true;
-    glob.reply = str;
     num_draw_scores = 0;
   }
   // CheckerBoard Bug
@@ -146,12 +144,12 @@ int enginecommand(char str[256], char reply[1024]) {
   sscanf(str, "%s %s %s", command, param1, param2);
 
   if (strcmp(command, "name") == 0) {
-    snprintf(reply, REPLY_MAX, "DarkHorse");
+    snprintf(reply, REPLY_MAX, "DarkHorse v1.0");
     return 1;
   }
 
   if (strcmp(command, "about") == 0) {
-    snprintf(reply, REPLY_MAX, "Written by Robin Messemer");
+    snprintf(reply, REPLY_MAX, "Created by Robin Messemer");
     return 1;
   }
 
@@ -175,7 +173,6 @@ int enginecommand(char str[256], char reply[1024]) {
       if (strcmp(p, db_path.c_str())) {
         engine_initialized = false;
         db_path = p;
-        write_to_logfile("DBPath was set to : " + db_path);
         // saving the db_path
       }
 
@@ -183,7 +180,6 @@ int enginecommand(char str[256], char reply[1024]) {
       sprintf(reply, "dbpath set to %s", db_path.c_str());
       return 1;
     }
-    // TODO checking if we want to use tablebases
     if (strcmp(param1, "enable_wld") == 0) {
       auto val = strtol(param2, &stopstring, 10);
       if ((val != 0) != enable_wld) {
@@ -194,7 +190,7 @@ int enginecommand(char str[256], char reply[1024]) {
       Registry::set_enable_wld(enable_wld);
 
       snprintf(reply, REPLY_MAX, "enable_wld set to %d", val);
-      return (1);
+      return 1;
     }
     if (strcmp(param1, "max_dbpieces") == 0) {
       auto val = strtol(param2, &stopstring, 10);
@@ -207,7 +203,7 @@ int enginecommand(char str[256], char reply[1024]) {
       Registry::set_max_db_pieces(max_db_pieces);
       sprintf(reply, "max_dbpieces set to %d", max_db_pieces);
 
-      return (1);
+      return 1;
     }
 
     if (strcmp(param1, "dbmbytes") == 0) {
@@ -221,7 +217,7 @@ int enginecommand(char str[256], char reply[1024]) {
       Registry::set_db_size(db_size_in_mb);
 
       sprintf(reply, "dbmbytes set to %d", db_size_in_mb);
-      return (1);
+      return 1;
     }
   }
   // GETTING ENGINE INFORMATION
@@ -230,7 +226,6 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "hashsize") == 0) {
       hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
       snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
-      // engine_initialized = false;
       return 1;
     }
 
@@ -253,19 +248,19 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "enable_wld") == 0) {
       enable_wld = Registry::use_wld_db();
       snprintf(reply, REPLY_MAX, "%d", enable_wld);
-      return (1);
+      return 1;
     }
 
     if (strcmp(param1, "max_dbpieces") == 0) {
       max_db_pieces = Registry::get_max_db_pieces().value_or(max_db_pieces);
       sprintf(reply, "%d", max_db_pieces);
-      return (1);
+      return 1;
     }
 
     if (strcmp(param1, "dbmbytes") == 0) {
       db_size_in_mb = Registry::get_db_size().value_or(db_size_in_mb);
       sprintf(reply, "%d", db_size_in_mb);
-      return (1);
+      return 1;
     }
   }
   strcpy(reply, "?");
