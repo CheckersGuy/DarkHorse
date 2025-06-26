@@ -356,36 +356,4 @@ uint32_t Position::get_correction_index() const {
   return 2 * Bits::pext(BP | WP, maske) + (color == BLACK);
 }
 
-int Position::bucket_index() { // return (piece_count() - 1) / 6;
-  const auto has_kings = K != 0;
-  auto pieces = piece_count();
-  if (pieces == 24 || pieces == 23 || pieces == 22) {
-    return 0;
-  } else if (pieces == 21 || pieces == 20 || pieces == 19) {
-    return 0;
-  } else if (pieces == 18 || pieces == 17 || pieces == 16) {
-    return 1;
-  } else if (pieces == 15 || pieces == 14 || pieces == 13) {
-    return 2;
-  } else if (pieces == 12 || pieces == 11) {
-    return 3;
-  } else if (pieces == 10) {
-    return 4;
-  } else if (pieces == 9) {
-    return 5;
-  } else if (pieces == 8) {
-    return 6;
-  } else if (pieces == 7) {
-    return 7;
-  } else if (pieces == 6) {
-    return 8;
-  } else if (pieces == 5) {
-    return 9;
-  } else if (pieces == 4) {
-    return 10;
-  } else if (pieces == 3 || pieces == 2 || pieces == 1) {
-    return 11;
-  } else {
-    return 0;
-  }
-}
+int Position::bucket_index() { return piece_count_to_bucket[piece_count()]; }

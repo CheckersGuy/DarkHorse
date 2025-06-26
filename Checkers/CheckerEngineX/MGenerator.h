@@ -119,17 +119,18 @@ inline void loop_captures(Position &pos, CallBack &&call_back) {
 }
 template <typename Accumulator>
 inline void get_moves(Position &pos, Accumulator &accu) {
-  if (pos.color == BLACK) {
-    if (pos.has_jumps<BLACK>())
+  if (pos.has_jumps(pos.get_color())) {
+    if (pos.get_color() == BLACK) {
       loop_captures<BLACK>(pos, accu);
-    else
-      get_silent_moves<BLACK>(pos, accu);
-
-  } else {
-    if (pos.has_jumps<WHITE>())
+    } else {
       loop_captures<WHITE>(pos, accu);
-    else
+    }
+  } else {
+    if (pos.get_color() == BLACK) {
+      get_silent_moves<BLACK>(pos, accu);
+    } else {
       get_silent_moves<WHITE>(pos, accu);
+    }
   }
 }
 
