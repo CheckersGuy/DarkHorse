@@ -24,7 +24,11 @@ void TableBase::load_table_base(std::string path) {
   }
 
   handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
-                     [](char *msg) {});
+                     [](char *msg) {
+#ifdef CHECKERBOARD
+                       strcpy(reply, msg);
+#endif
+                     });
 
   std::cout << "Loaded WDL with" << num_pieces << " pieces" << std::endl;
 
@@ -158,9 +162,7 @@ std::optional<int> TableBase::probe_dtw(Position pos) {
 }
 
 std::optional<int> TableBase::probe_mtc(Position pos) {
-  // value returned is the correct value or the returned value -1
-  // in that case we have to probe the sucessors and if the best sucessor has
-  // the same value the actual value is ( value -1)
+
   if (pos.has_jumps() || pos.piece_count() > num_pieces ||
       Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
     return std::nullopt;

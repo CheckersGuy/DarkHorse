@@ -97,7 +97,7 @@ impl BatchProvider {
         legal_mask: Bound<'_, PyArray1<bool>>,
         result: Bound<'_, PyArray1<f32>>,
         eval: Bound<'_, PyArray1<f32>>,
-        mlh: Bound<'_, PyArray1<f32>>,
+        mlh: Bound<'_, PyArray1<i64>>,
         bucket: Bound<'_, PyArray1<i64>>,
     ) -> PyResult<()> {
         unsafe {
@@ -148,7 +148,7 @@ impl BatchProvider {
                     _ => (), //need to add error handling just go to the nex sample in that case
                 }
 
-                mlh_array[i] = sample.mlh as f32;
+                mlh_array[i] = sample.mlh as i64;
                 eval_array[i] = sample.value as f32;
 
                 let sub_two;

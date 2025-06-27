@@ -661,48 +661,49 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     Ok(filter_samples)
 }
 
-/*pub fn create_policy_data(path: &str, output: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
+pub fn create_policy_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(output)?);
-    for game in reader.iter_games() {
-        //need to use the chinook format
-        //or keep using fen-strings
-        for window in game.windows(2) {
-            let next_pos = window[0].position;
-            let prev_pos = window[1].position;
-            if prev_pos.has_capture() {
-                continue;
-            }
-            if (prev_pos.bp == 0) || (prev_pos.wp == 0) {
-                continue;
-            }
+    for path in paths {
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            let samples = game.get_samples();
 
-            let move_encoding;
-            if prev_pos.color == -1 {
-                move_encoding = Move::get_move_encoding_from_pos(
-                    prev_pos.get_color_flip(),
-                    next_pos.get_color_flip(),
-                )
-                .unwrap_or(-1);
-            } else {
-                move_encoding = Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
-            }
-
-            if move_encoding >= 0 {
-                let mut sample = window[1].clone();
-                if sample.position.color == -1 {
-                    sample.position = sample.position.get_color_flip();
+            for window in samples.windows(2) {
+                let next_pos = window[1].position;
+                let prev_pos = window[0].position;
+                if prev_pos.has_capture() {
+                    continue;
+                }
+                if (prev_pos.bp == 0) || (prev_pos.wp == 0) {
+                    continue;
                 }
 
-                sample.mlh = move_encoding as i16;
-                sample.write_fen(&mut writer)?;
+                let move_encoding;
+                if prev_pos.color == -1 {
+                    move_encoding = Move::get_move_encoding_from_pos(
+                        prev_pos.get_color_flip(),
+                        next_pos.get_color_flip(),
+                    )
+                    .unwrap_or(-1);
+                } else {
+                    move_encoding =
+                        Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
+                }
+
+                if move_encoding >= 0 {
+                    let mut sample = window[0].clone();
+                    if sample.position.color == -1 {
+                        sample.position = sample.position.get_color_flip();
+                    }
+
+                    sample.mlh = move_encoding as i16;
+                    sample.write_fen(&mut writer)?;
+                }
             }
         }
     }
-
     Ok(())
 }
-*/
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
@@ -741,18 +742,6 @@ impl<'a> Generator<'a> {
             max_nodes: 18446744073709551615usize,
             prev_file: None,
         }
-    }
-
-    //storing bloomfilters instead of scanning the previous file -> need to store total_count and
-    //unique_count as well
-
-    fn store_bloom<S, T>(filter: Bloom<S>, Bloomoutput: &T) -> std::io::Result<()>
-    where
-        T: Write,
-        S: Hash,
-    {
-        //check how to get the state of the bloom-filter
-        Ok(())
     }
 
     pub fn generate_games(&self) -> std::io::Result<()> {

@@ -17,7 +17,7 @@ from splus import SPlus
 
 #below will be moved into the network
 
-L1 =2*(4096+2048)
+L1 =2*(1024)
 L2 =32
 L3 = 32
 
@@ -31,7 +31,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.98  
+        self.gamma = 0.985  
         self.run_name = run_name
 
 
@@ -113,7 +113,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-1, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -400,7 +400,7 @@ class PolicyNetwork(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.95
+        self.gamma = 0.98
 
 
         self.num_buckets =12
@@ -487,7 +487,7 @@ class PolicyNetwork(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,policy_target, move,buckets,psqt_buckets, x,legal_moves = train_batch
+        result,eval, policy_target,buckets, x,legal_moves = train_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
         out = out.masked_fill(~legal_moves,-10000)
@@ -500,7 +500,7 @@ class PolicyNetwork(pl.LightningModule):
 
    
     def validation_step(self, val_batch, batch_idx):
-        result,policy_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
+        result,eval, policy_target,buckets, x,legal_moves = val_batch
         policy_target = policy_target.to(dtype=torch.long)
         out = self.forward(x,buckets)
         loss =self.loss(input=out,target=policy_target.flatten())
@@ -508,14 +508,7 @@ class PolicyNetwork(pl.LightningModule):
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
-    def on_validation_epoch_end(self):
-        self.save_quantized_bucket("policybigger6.quant")
-        avg_loss = torch.stack(self.val_outputs).mean()
-        self.val_outputs.clear()
-        tensorboard_logs = {"avg_val_loss": avg_loss}
-        self.log('loss', avg_loss, prog_bar=True)
-        print(avg_loss)
-        return {"loss": avg_loss, "log": tensorboard_logs}
+
 
     def on_train_epoch_end(self) -> None:
         self.save_quantized_bucket("policybigger6.quant")
@@ -602,12 +595,11 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         input_size = 120
         results = np.zeros(self.batch_size, dtype=np.float32)
         evals =  np.zeros(self.batch_size, dtype=np.float32)
-        mlh = np.zeros(self.batch_size, dtype=np.float32)
         moves = np.zeros(self.batch_size, dtype=np.int64)
         buckets = np.zeros(self.batch_size, dtype=np.int64)
         inputs = np.zeros(self.batch_size*input_size, dtype=np.float32)
         legal_moves = np.zeros(self.batch_size * 128, dtype=bool)
-        self.loader.testing(inputs,legal_moves,results,evals,mlh,buckets)
+        self.loader.testing(inputs,legal_moves,results,evals,moves,buckets)
 
         return results.reshape(self.batch_size,1),evals.reshape(self.batch_size,1), moves.reshape(self.batch_size,1),buckets.reshape(self.batch_size,1),inputs.reshape(self.batch_size,input_size),legal_moves.reshape(self.batch_size,128)
 

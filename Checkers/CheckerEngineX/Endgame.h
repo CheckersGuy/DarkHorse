@@ -8,10 +8,15 @@
 #include <stdio.h>
 #include <string>
 struct TableBase {
+
+#ifdef CHECKERBOARD
+  char *reply;
+#endif
+
   EGDB_DRIVER *handle;
   EGDB_DRIVER *dtw_handle;
   EGDB_DRIVER *mtc_handle;
-  int num_pieces{6}; // only used for the wdl-tablebase
+  int num_pieces{6};
   uint64_t cache_size{2000};
 
   ~TableBase();
