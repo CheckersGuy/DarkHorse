@@ -64,6 +64,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       tablebase.num_pieces = max_db_pieces;
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
+      tablebase.reply = str;
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);

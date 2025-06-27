@@ -95,11 +95,12 @@ fn main() -> anyhow::Result<()> {
 
     */
     //Data::create_mlh_data("E:\\Iamhere8.samples", "E:\\mlh7.samples", &base).expect("Error");
-    Data::shuffle_data_external::<32>(
+    /*Data::shuffle_data_external::<32>(
         "/mnt/e/finalunique.samples",
         "/mnt/e/finalunique.shuffled.samples",
     )
     .expect("Could not shuffle the training data");
+    */
 
     /* Data::merge_rescored_data(
          vec![
@@ -207,6 +208,16 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/finalunique.samples",
         )?;
     */
+
+    Data::create_policy_data(
+        vec![
+            "/mnt/e/finaldataset0.games",
+            "/mnt/e/finaldataset1.games",
+            "/mnt/e/finaldataset2.games",
+            "/mnt/e/finaldataset3.games",
+        ],
+        "/mnt/e/finalpolicy.samples",
+    )?;
 
     //Data::read_old_sapmles("/mnt/e/coud1.rescored.shuffled.samples")
     //   .expect("That did not work at all");

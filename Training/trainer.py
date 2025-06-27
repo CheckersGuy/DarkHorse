@@ -14,10 +14,10 @@ import torch
 
 
 if __name__ == "__main__":
-    batch_size = 16384 
+    batch_size = 8192 
     epochs = 605
-    model = Experimental.Network(run_name="shuffled")
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/finalunique.shuffled.samples",
+    model = Experimental.PolicyNetwork()
+    data_loader = Experimental.LitDataModule(train_data="/mnt/e/finalpolicy.samples",
     val_data="/mnt/e/validation.samples",
     batch_size=batch_size, buffer_size=300000000)
     
