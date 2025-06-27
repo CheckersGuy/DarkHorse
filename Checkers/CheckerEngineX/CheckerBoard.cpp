@@ -15,7 +15,7 @@ std::string db_path;
 #define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "registry_128.quant");
-INCBIN(policy, "policybigger2.quant");
+INCBIN(policy, "policybigger3.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
@@ -60,11 +60,17 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   }
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
   if (!engine_initialized) {
+    hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
+    db_path = Registry::get_db_path().value_or(db_path);
+    max_db_pieces = Registry::get_max_db_pieces().value_or(max_db_pieces);
+    db_size_in_mb = Registry::get_db_size().value_or(db_size_in_mb);
+    enable_wld = Registry::use_wld_db();
+
     if (enable_wld) {
       tablebase.num_pieces = max_db_pieces;
+
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path);
-      tablebase.reply = str;
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
