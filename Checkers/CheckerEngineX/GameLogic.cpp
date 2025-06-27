@@ -197,7 +197,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   reply_stream << "depth " << i << "/" << glob.sel_depth;
   reply_stream << " eval " << eval;
   reply_stream << " time " << time_seconds;
-  reply_stream << " speed " << speed);
+  reply_stream << " speed " << speed;
   reply_stream << "KN/s ";
   reply_stream << " pv " << mainPV.toString();
   strcpy(glob.reply, reply_stream.str().c_str());

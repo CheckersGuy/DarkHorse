@@ -6,6 +6,8 @@
 TableBase::~TableBase() {}
 // change how loading works when num_pieces > max_pieces
 // just default to max_pieces in that case !
+//
+
 void TableBase::load_table_base(std::string path) {
   int i, status, nerrors;
   int max_pieces;
@@ -25,14 +27,13 @@ void TableBase::load_table_base(std::string path) {
 
   handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
                      [](char *msg) {
-#ifdef CHECKERBOARD
-                       strcpy(reply, msg);
-#endif
+
                      });
 
   std::cout << "Loaded WDL with" << num_pieces << " pieces" << std::endl;
 
   if (!handle) {
+    write_to_logfile("Could not load the tablebase");
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
   }

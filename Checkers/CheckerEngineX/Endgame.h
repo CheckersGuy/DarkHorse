@@ -9,10 +9,6 @@
 #include <string>
 struct TableBase {
 
-#ifdef CHECKERBOARD
-  char *reply;
-#endif
-
   EGDB_DRIVER *handle;
   EGDB_DRIVER *dtw_handle;
   EGDB_DRIVER *mtc_handle;
