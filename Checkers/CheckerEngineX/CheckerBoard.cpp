@@ -12,7 +12,6 @@ int max_db_pieces = 6;
 bool enable_wld = false;
 Position previous;
 std::string db_path;
-#define DB_PATH "E:\\kr_english_wld"
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger3.quant");
@@ -151,7 +150,7 @@ int enginecommand(char str[256], char reply[1024]) {
   sscanf(str, "%s %s %s", command, param1, param2);
 #ifdef AVX256
   if (strcmp(command, "name") == 0) {
-    snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v1.0");
+    snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v1.0.1");
     return 1;
   }
 #else
