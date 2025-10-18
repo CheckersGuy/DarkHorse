@@ -11,37 +11,24 @@
 #include <regex>
 #include <string>
 #include <sys/mman.h>
+
+
+//reading the training data here, will be moved to a utility file later
+//computing a histogram of the activations
+//computing average number of nnz-blocks
+
+//Try algorithms to decrease nnz
+
+//1. Simply sorting the activations by the histogram
+//2. measuring the results and implement support for arbitrary permutations
+//3. Look at how stockfish does this
+
+
+
+
+
 int main(int argl, const char **argc) {
-  // Stopped at opening index 561
-  // to be continued later on
-
-  // loading the openings I want to use for data generation
-  /*Utilities::fill_hash("training.pos");
-  TT.resize(2);
-  Statistics::mPicker.init();
-  std::ofstream output("training.pos", std::ios::app);
-  std::ifstream open("../Training/Positions/drawbook.book");
-  network.load_bucket("relu.quant");
-
-  std::string opening;
-  int index = 0;
-  while (std::getline(open, opening)) {
-    index++;
-    if (index < 1240) {
-      continue;
-    }
-    std::cout << "OpeningIndex: " << index << std::endl;
-    TT.clear();
-    Statistics::mPicker.clear_scores();
-    std::cout << opening << std::endl;
-    Board board(Position::pos_from_fen(opening));
-    board.get_position().print_position();
-    ;
-    Utilities::createNMoveBook(output, 9, board, -120, 120);
-  }
-
-  return 0;
-  */
+ 
 
   CmdParser parser;
   parser.parse(argl, argc);
@@ -57,14 +44,6 @@ int main(int argl, const char **argc) {
       if (parser.has_option("num_games")) {
         auto num_games = parser.as<int>("num_games");
         engine_match.setMaxGames(num_games);
-      }
-
-      if (parser.has_option("networks")) {
-        auto networks = parser.as<std::vector<std::string>>("networks");
-        if (!networks[0].empty() && !networks[1].empty()) {
-          engine_match.set_arg1("--network " + networks[0]);
-          engine_match.set_arg2("--network " + networks[1]);
-        }
       }
 
       if (parser.has_option("threads")) {

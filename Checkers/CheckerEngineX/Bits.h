@@ -34,6 +34,7 @@ inline uint32_t pext(uint32_t source, uint32_t mask) {
 
 inline auto leading_zero_count(uint32_t bits) { return __builtin_clz(bits); }
 
+
 } // namespace Bits
 
 #endif // CHECKERENGINEX_BITS_H

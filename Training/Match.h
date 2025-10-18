@@ -18,29 +18,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-inline std::string getPositionString(Position pos) {
-  std::string position;
-  for (uint32_t i = 0; i < 32u; ++i) {
-    uint32_t current = 1u << i;
-    if ((current & (pos.BP & pos.K))) {
-      position += "3";
-    } else if ((current & (pos.WP & pos.K))) {
-      position += "4";
-    } else if ((current & pos.BP)) {
-      position += "1";
-    } else if ((current & pos.WP)) {
-      position += "2";
-    } else {
-      position += "0";
-    }
-  }
-  if (pos.get_color() == BLACK) {
-    position += "B";
-  } else {
-    position += "W";
-  }
-  return position;
-}
+
 
 struct Engine {
   enum class State { Idle, Game_Ready, Init_Ready, Update };

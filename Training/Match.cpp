@@ -50,6 +50,7 @@ void Engine::writeMessage(const std::string &msg) {
   const std::string ex_message = msg + "\n";
   write(engineWrite, (char *)&ex_message.front(),
         sizeof(char) * ex_message.size());
+  
 }
 
 Move Engine::search() {
@@ -88,7 +89,7 @@ void Engine::newGame(const Position &pos) {
   if (state == State::Init_Ready) {
     if (!waiting_response) {
       writeMessage("new_game");
-      writeMessage(getPositionString(pos));
+      writeMessage(pos.get_fen_string());
     }
     waiting_response = true;
     auto answer = readPipe();
@@ -139,7 +140,7 @@ void Engine::new_move(Move move) {
   writeMessage(std::to_string(move.get_to_index()));
   uint32_t captures = move.captures;
   while (captures) {
-    writeMessage(std::to_string(__tzcnt_u32(captures)));
+    writeMessage(std::to_string(Bits::bitscan_foward(captures)));
     captures &= captures - 1u;
   }
   writeMessage("end_move");
@@ -152,25 +153,20 @@ void Interface::process() {
     engine.update();
   }
   const int second_mover = (first_mover == 0) ? 1 : 0;
-
-  // checking if there is only one possible move
-  MoveListe liste;
-  get_moves(pos, liste);
-
-  Move move{};
-
+  Move move;
   move = engines[first_mover].search();
 
-  if (!move.is_empty()) {
-
-    if (!Interface::is_legal_move(move)) {
-      std::exit(EXIT_FAILURE);
-    }
+  if (!move.is_empty() && Interface::is_legal_move(move)) {
     pos.make_move(move);
     history.emplace_back(pos);
     engines[second_mover].new_move(move);
     first_mover = second_mover;
+  }else if (!Interface::is_legal_move(move)){
+
+    std::cout<<"Got an illegal move"<<std::endl;
+   std::exit(EXIT_FAILURE);
   }
+
 }
 
 int Match::getMaxGames() { return maxGames; }
@@ -226,7 +222,6 @@ void Match::start() {
   int mainPipe[num_matches][numEngines][2];
   int enginePipe[num_matches][numEngines][2];
   int game_count = -num_matches;
-  std::cout << "BigTest" << std::endl;
 
   const size_t num_local = positions.size() / num_matches;
   for (int p = 0; p < num_matches; ++p) {
@@ -321,8 +316,8 @@ void Match::start() {
           inter.reset_engines();
           inter.history.clear();
         }
-
         inter.process();
+
       }
     }
   }
