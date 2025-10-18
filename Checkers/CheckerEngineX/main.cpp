@@ -24,29 +24,7 @@ INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger3.quant");
 
-inline Position posFromString(const std::string &pos) {
-  Position result;
-  for (uint32_t i = 0; i < 32u; ++i) {
-    uint32_t current = 1u << i;
-    if (pos[i] == '1') {
-      result.BP |= current;
-    } else if (pos[i] == '2') {
-      result.WP |= current;
-    } else if (pos[i] == '3') {
-      result.K |= current;
-      result.BP |= current;
-    } else if (pos[i] == '4') {
-      result.K |= current;
-      result.WP |= current;
-    }
-  }
-  if (pos[32] == 'B') {
-    result.color = BLACK;
-  } else {
-    result.color = WHITE;
-  }
-  return result;
-}
+
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
@@ -108,26 +86,7 @@ int main(int argl, const char **argc) {
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
 
-  // testing the windows registry
-
-  // setting an integer valeu to be used later
-
-  // setting the db_size
-
-  // Testing if the debug-mode actually works
-
-  /*
-    network.print_layers();
-    policy.print_layers();
-    mlh_net.print_layers();
-
-    Position pos = Position::pos_from_fen("B:WK5,K26:B4,3,1");
-    pos.print_position();
-
-    std::cout << network.evaluate(pos, 0, 0);
-    return 0;
-    */
-
+ 
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
@@ -221,9 +180,6 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-    // const int adj_threshold = 350;
-    // const float adj_percentage = 0.8f; // 80% of all games will be
-    // adjudicated
     std::string next_line;
     TT.resize_in_mb(4);
     std::vector<Position> rep_history;
@@ -318,7 +274,7 @@ int main(int argl, const char **argc) {
       TT.age_counter = 0u;
       std::string position;
       std::cin >> position;
-      Position pos = posFromString(position);
+      Position pos = Position::pos_from_fen(position);
       board = Board(pos);
       std::cout << "game_ready"
                 << "\n";
@@ -368,5 +324,6 @@ int main(int argl, const char **argc) {
       // terminating the program
       break;
     }
+    std::cout.flush();
   }
 }

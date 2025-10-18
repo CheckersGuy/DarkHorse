@@ -582,6 +582,7 @@ FodyWeavers.xsd
 **/*.samples
 **/*.game
 **/*.data
+**/*.games
 
 # Precompiled Headers
 *.gch
