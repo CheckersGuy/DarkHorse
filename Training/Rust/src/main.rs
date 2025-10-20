@@ -37,6 +37,21 @@ use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
+
+    //reading some samples and returning the fens
+
+    let mut reader = BufReader::new(File::open("finaldataset3.games")?);
+    let mut writer = BufWriter::new(File::create("nnzfens.fen")?);
+    for game  in reader.iter_games(){
+        for pos in game.get_positions(){
+        let fen_string = pos.get_fen_string();
+        writer.write_all((fen_string +"\n").as_bytes())?;
+        }
+    
+    }
+
+    
+
     //Need to check why get-color-flip is not working as expected
     /*let mut reader = BufReader::new(File::open("/mnt/e/weirdstuff.samples")?);
 
@@ -209,7 +224,7 @@ fn main() -> anyhow::Result<()> {
         )?;
     */
 
-    Data::create_policy_data(
+    /*Data::create_policy_data(
         vec![
             "/mnt/e/finaldataset0.games",
             "/mnt/e/finaldataset1.games",
@@ -218,6 +233,7 @@ fn main() -> anyhow::Result<()> {
         ],
         "/mnt/e/finalpolicy.samples",
     )?;
+    */
 
     //Data::read_old_sapmles("/mnt/e/coud1.rescored.shuffled.samples")
     //   .expect("That did not work at all");
