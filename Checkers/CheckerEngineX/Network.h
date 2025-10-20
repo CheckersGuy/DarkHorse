@@ -99,14 +99,15 @@ Value tempo_black(Position pos);
 constexpr static size_t ALIGNMENT = 64;
 
 template <int OutDim> struct alignas(64) Accumulator {
+  constexpr static int out_dimension = OutDim;
   static inline uint32_t num_trials = 0; // used to compute the average
   static inline uint32_t num_nnz =
       0; // used to keep track of the number of nonzero activatios
   static inline uint32_t num_nnz_blocks =
       0; // counts the number of nonzero blocks
 
-  alignas(64) int16_t black_acc[OutDim] = {0};
-  alignas(64) int16_t white_acc[OutDim] = {0};
+  alignas(64) int16_t black_acc[OutDim];
+  alignas(64) int16_t white_acc[OutDim];
   int16_t *ft_biases;
   int16_t *ft_weights;
 

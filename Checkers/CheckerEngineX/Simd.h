@@ -26,6 +26,37 @@ inline int32_t hsum_8x32(__m256i v) {
   return hsum_epi32_avx(sum128);
 }
 
+// currently only used for optimizing sparsity -> see permutation.cpp
+template <int input_size>
+inline void accum_clipping8(int16_t *acc, uint8_t *out)
+{
+#ifdef AVX256
+  constexpr int num_chunks = input_size / 16;
+  constexpr int control = 0b11011000;
+
+  auto *in_a = reinterpret_cast<const __m256i *>(acc);
+  auto *output = reinterpret_cast<__m256i *>(out);
+  const auto max_val = _mm256_set1_epi16(127);
+  const auto min_val = _mm256_set1_epi16(0);
+  for (auto i = 0; i < num_chunks / 2; ++i)
+  {
+    auto temp0 = _mm256_load_si256(in_a + 2 * i);
+    auto temp1 = _mm256_load_si256(in_a + 2 * i + 1);
+
+    temp0 = _mm256_max_epi16(temp0, min_val);
+    temp0 = _mm256_min_epi16(temp0, max_val);
+
+    temp1 = _mm256_max_epi16(temp1, min_val);
+    temp1 = _mm256_min_epi16(temp1, max_val);
+
+    auto packed =
+        _mm256_permute4x64_epi64(_mm256_packs_epi16(temp0, temp1), control);
+
+    _mm256_store_si256(output + i, packed);
+  }
+#endif
+}
+
 template <int input_size>
 inline void accum_activation8(int16_t *acc, uint8_t *out) {
 
