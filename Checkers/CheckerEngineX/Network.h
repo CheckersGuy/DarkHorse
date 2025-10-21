@@ -108,6 +108,7 @@ template <int OutDim> struct alignas(64) Accumulator {
 
   alignas(64) int16_t black_acc[OutDim];
   alignas(64) int16_t white_acc[OutDim];
+  // used to improve block sparsity
   int16_t *ft_biases;
   int16_t *ft_weights;
 
@@ -160,6 +161,9 @@ template <int... lay> struct Network {
   }
 
   Accumulator<2 * L1> accumulator;
+  // permutations are needed to improve sparsity
+  // permutation size should be L1
+  std::vector<size_t> permutation;
 
   alignas(64) uint8_t input[(lay + ...) + 128] = {0};
 
