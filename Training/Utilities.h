@@ -6,6 +6,7 @@
 #include <iostream>
 #include "GameLogic.h"
 #include "Simd.h"
+#include <filesystem>
 namespace Utils{
 
     template <typename Net>
@@ -13,8 +14,7 @@ namespace Utils{
     {
         constexpr auto num_activations = network.accumulator.out_dimension / 2;
         constexpr auto num_blocks = num_activations / 4;
-        alignas(64) uint8_t output_buffer[num_activations * 2] = {0};
-        std::vector<size_t> histogram(num_activations * 2,0);
+        std::vector<size_t> histogram(num_activations);
         std::ifstream stream(data_path);
         if (!stream.good())
         {
@@ -39,19 +39,11 @@ namespace Utils{
 
             network.accumulator.forward(network.input, pos);
 
-            if(pos.color == BLACK){
-                accu_buff = network.accumulator.black_acc;
-            }else{
-                accu_buff = network.accumulator.white_acc;
-            }
-
-            Simd::accum_clipping8<2*num_activations>(accu_buff, &output_buffer[0]);
-
             int32_t *acc_out = reinterpret_cast<int32_t *>(network.input);
 
-            for (auto i = 0; i < num_activations * 2; ++i)
+            for (auto i = 0; i < num_activations; ++i)
             {
-                histogram[i] += (output_buffer[i] != 0);
+                histogram[i] += (network.input[i] != 0);
             }
 
             for (auto i = 0; i < network.accumulator.out_dimension / 2; ++i)
@@ -74,6 +66,25 @@ namespace Utils{
         return histogram;
     }
 
+    // TODO check if type t is integral
+    template <typename T>
+    void save_vector_data(std::vector<T> data, std::string path)
+    {
+        std::ofstream stream(path, std::ios::binary);
+        stream.write((char *)&data[0], sizeof(T) * data.size());
+    }
+
+    template <typename T>
+    std::vector<T> read_vector_data(std::string path)
+    {
+        std::filesystem::path p(path);
+        const auto file_size = std::filesystem::file_size(p);
+        const auto num_items = file_size / sizeof(T);
+        std::ifstream stream(path, std::ios::binary);
+
+        std::vector<T> result(num_items);
+        stream.read((char *)&result[0], file_size);
+    }
 
     //returns a permutation which will hopefully improve sparsity
     //very simple idea -> sorting the activations based on a histogram
