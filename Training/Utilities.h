@@ -84,6 +84,7 @@ namespace Utils{
 
         std::vector<T> result(num_items);
         stream.read((char *)&result[0], file_size);
+        return result;
     }
 
     //returns a permutation which will hopefully improve sparsity

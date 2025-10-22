@@ -14,7 +14,7 @@ int main(int argl, const char** argc){
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
     policy.load_from_array(gpolicyData, gpolicySize);
-
+    
     const auto histogram = Utils::compute_histogramm(network, "nnzfens.fen");
     auto perm = Utils::get_permutation_var1(histogram, "evalpermutation.perm");
 
@@ -22,6 +22,7 @@ int main(int argl, const char** argc){
     {
         std::cout << "Index: " << i << "Value: " << histogram[i] << std::endl;
     }
+        
 
     auto permutation = Utils::read_vector_data<size_t>("evalpermutation.perm");
 
