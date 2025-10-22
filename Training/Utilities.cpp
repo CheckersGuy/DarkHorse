@@ -17,7 +17,12 @@ std::vector<size_t> get_permutation_var1(std::vector<size_t> histogram, std::str
 
     std::sort(permutation.begin(), permutation.end(), [&](auto a, auto b)
               { return histogram[a] < histogram[b]; });
-
+    // extending the size of the permutation to match the accumulator;
+    const auto perm_half = permutation.size();
+    for (auto i = 0; i < perm_half; ++i)
+    {
+        permutation.emplace_back(permutation[i] + perm_half);
+    }
 
     std::ofstream out_stream(out_path, std::ios::binary);
     if (!out_stream.good())
