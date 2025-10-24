@@ -14,7 +14,6 @@ std::vector<size_t> get_permutation_var1(std::vector<size_t> histogram, std::str
         permutation.emplace_back(i);
     }
 
-
     std::sort(permutation.begin(), permutation.end(), [&](auto a, auto b)
               { return histogram[a] < histogram[b]; });
     // extending the size of the permutation to match the accumulator;

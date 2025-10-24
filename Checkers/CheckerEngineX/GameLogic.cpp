@@ -40,7 +40,8 @@ inline Value value_to_tt(Value v, int ply, Position pos) {
     return v;
   }
 
-  if (std::abs(v) >= 500 && pos.piece_count() <= 10) {
+  if (std::abs(v) >= 500)
+  {
     return v >= 500 ? v + ply : v <= -500 ? v - ply : v;
   }
   return v >= TB_WIN_MAX_PLY ? v + ply : v <= TB_LOSS_MAX_PLY ? v - ply : v;
@@ -51,7 +52,8 @@ inline Value value_from_tt(Value v, int ply, Position pos) {
     return v;
   }
 
-  if (std::abs(v) >= 500 && pos.piece_count() <= 10) {
+  if (std::abs(v) >= 500)
+  {
     return v >= 500 ? v - ply : v <= -500 ? v + ply : v;
   }
   return v >= TB_WIN_MAX_PLY ? v - ply : v <= TB_LOSS_MAX_PLY ? v + ply : v;
@@ -235,7 +237,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   pv.clear();
   nodeCounter++;
 
-  if ((nodeCounter & 1023) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 511u) == 0u && getSystemTime() >= endTime)
+  {
     throw std::string{"Time_out"};
   }
 #ifdef CHECKERBOARD
@@ -370,9 +373,9 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     return static_eval;
   }
 
-  int32_t *out;
-  std::visit([&](auto &output) { out = &output.buffer[0]; },
-             policy.layers.back());
+  int32_t *out = &policy.out_layer.buffer[0];
+  // std::visit([&](auto &output) { out = &output.buffer[0]; },
+  //            policy.layers.back());
   bool computed = false;
 
   int start_index = 0;
@@ -559,7 +562,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   constexpr NodeType next_type = (type == ROOT) ? PV : type;
   pv.clear();
   nodeCounter++;
-  if ((nodeCounter & 1023u) == 0u && getSystemTime() >= endTime) {
+  if ((nodeCounter & 511u) == 0u && getSystemTime() >= endTime)
+  {
     throw std::string{"Time_out"};
   }
 #ifdef CHECKERBOARD

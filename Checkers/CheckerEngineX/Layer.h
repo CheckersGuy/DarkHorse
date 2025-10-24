@@ -1,4 +1,3 @@
-// #include "Network.h"
 #include "Simd.h"
 #include "types.h"
 #include <algorithm>
@@ -10,11 +9,16 @@
 #include <iostream>
 // for testing purposes
 
-enum Activation { Id, SqRelu };
+enum Activation
+{
+  Id,
+  SqRelu
+};
 
 #define AVX256
 
-constexpr int ceil_to_multi(int numToRound, int multiple) {
+constexpr int ceil_to_multi(int numToRound, int multiple)
+{
   if (multiple == 0)
     return numToRound;
 
@@ -25,7 +29,9 @@ constexpr int ceil_to_multi(int numToRound, int multiple) {
   return numToRound + multiple - remainder;
 }
 
-template <int In, int Out, Activation ac = Id> struct QLayer {
+template <int In, int Out, Activation ac = Id>
+struct QLayer
+{
   static constexpr int InDim = In;
   static constexpr int OutDim = Out;
 
@@ -40,7 +46,8 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
   alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim * NUM_BUCKETS];
   alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
 
-  int get_weight_index(int index) {
+  int get_weight_index(int index)
+  {
 
     const int BLOCK_ROWS = 4;
     const int BLOCK_COLS = 32;
@@ -61,34 +68,50 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
     return out;
   }
 
-  void load_params(std::istream &stream) {
-    for (auto k = 0; k < NUM_BUCKETS; ++k) {
-      if constexpr ((OutDim % 4) == 0) {
+  void load_params(std::istream &stream)
+  {
+    for (auto k = 0; k < NUM_BUCKETS; ++k)
+    {
+      if constexpr ((OutDim % 4) == 0)
+      {
         int8_t temp_weights[PadInDim * OutDim] = {0};
-        for (auto i = 0; i < OutDim; ++i) {
-          for (auto j = 0; j < PadInDim; ++j) {
+        for (auto i = 0; i < OutDim; ++i)
+        {
+          for (auto j = 0; j < PadInDim; ++j)
+          {
             int8_t weight;
-            if (j < InDim) {
+            if (j < InDim)
+            {
               stream.read((char *)&weight, sizeof(int8_t));
-            } else {
+            }
+            else
+            {
               weight = 0;
             }
 
             temp_weights[i * PadInDim + j] = weight;
           }
         }
-        for (int i = 0; i < PadInDim * OutDim; ++i) {
+        for (int i = 0; i < PadInDim * OutDim; ++i)
+        {
           auto index = get_weight_index(i);
           weights[index + k * PadInDim * OutDim] = temp_weights[i];
         }
         stream.read((char *)&biases[0 + k * OutDim], sizeof(int32_t) * OutDim);
-      } else {
-        for (auto i = 0; i < OutDim; ++i) {
-          for (auto j = 0; j < PadInDim; ++j) {
+      }
+      else
+      {
+        for (auto i = 0; i < OutDim; ++i)
+        {
+          for (auto j = 0; j < PadInDim; ++j)
+          {
             int8_t weight;
-            if (j < InDim) {
+            if (j < InDim)
+            {
               stream.read((char *)&weight, sizeof(int8_t));
-            } else {
+            }
+            else
+            {
               weight = 0;
             }
 
@@ -99,16 +122,21 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
       }
     }
   }
-  auto *forward(uint8_t *input, int bucket_index) {
+  auto *forward(uint8_t *input, int bucket_index)
+  {
     const auto w_offset = bucket_index * PadInDim * OutDim;
-    if constexpr ((OutDim % 4) != 0) {
-      for (auto i = 0; i < OutDim; ++i) {
+    if constexpr ((OutDim % 4) != 0)
+    {
+      for (auto i = 0; i < OutDim; ++i)
+      {
         int sum = biases[i + bucket_index * OutDim];
         sum +=
             Simd::flatten8<PadInDim>(weights + PadInDim * i + w_offset, input);
         buffer[i] = sum / 64;
       }
-    } else {
+    }
+    else
+    {
       constexpr int in_chunks = PadInDim / 32; // number of blocks in a  row
       constexpr int out_chunks = OutDim / 4;   // number of blocks in a column
       const auto *in = reinterpret_cast<const __m256i *>(input);
@@ -116,16 +144,19 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
           reinterpret_cast<const __m128i *>(biases + bucket_index * OutDim);
       auto *out = reinterpret_cast<__m128i *>(buffer);
 
-      for (auto i = 0; i < out_chunks; ++i) {
+      for (auto i = 0; i < out_chunks; ++i)
+      {
         __m256i acc[4] = {_mm256_setzero_si256()};
         int block_index = i * PadInDim * 4;
-        for (auto j = 0; j < in_chunks; ++j) {
+        for (auto j = 0; j < in_chunks; ++j)
+        {
           const auto in_reg = _mm256_load_si256(in + j);
           const auto weight_index = block_index + j * 128;
 
           const auto *weight_vec = reinterpret_cast<const __m256i *>(
               weights + weight_index + w_offset);
-          for (auto k = 0; k < 4; ++k) {
+          for (auto k = 0; k < 4; ++k)
+          {
             const auto weight = _mm256_load_si256(&weight_vec[k]);
             Simd::m256_add_dpbusd_epi32(acc[k], in_reg, weight);
           }
@@ -137,9 +168,12 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
       }
     }
 
-    if constexpr (ac == Id) {
+    if constexpr (ac == Id)
+    {
       return &buffer[0];
-    } else {
+    }
+    else
+    {
       // computing the activation
       auto *out = input + PadInDim;
       Simd::clipped8<PadOutDim>(&buffer[0], out);
@@ -147,19 +181,23 @@ template <int In, int Out, Activation ac = Id> struct QLayer {
     }
   }
 
-  friend std::ostream &operator<<(std::ostream &stream, const QLayer &layer) {
+  friend std::ostream &operator<<(std::ostream &stream, const QLayer &layer)
+  {
     std::cout << "PadInDim: " << PadInDim << std::endl;
     std::cout << "InDim: " << InDim << std::endl;
     std::cout << "OutDim: " << OutDim << std::endl;
-    for (auto i = 0; i < OutDim; ++i) {
-      for (auto j = 0; j < PadInDim; ++j) {
+    for (auto i = 0; i < OutDim; ++i)
+    {
+      for (auto j = 0; j < PadInDim; ++j)
+      {
         auto weight = layer.weights[i * PadInDim + j];
         std::cout << (int)weight << ", ";
       }
       std::cout << "\n";
     }
     std::cout << "BIAS" << std::endl;
-    for (auto i = 0; i < OutDim; ++i) {
+    for (auto i = 0; i < OutDim; ++i)
+    {
       std::cout << layer.biases[i] << std::endl;
     }
     return stream;

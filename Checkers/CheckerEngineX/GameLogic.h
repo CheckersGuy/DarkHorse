@@ -76,6 +76,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
                   bool print, std::ostream &stream, bool skip_singular = true);
 
 int get_mlh_estimate(Position pos);
+Value evaluate(Position pos, Ply ply);
 
 extern Network<4096 + 2048, 32, 32, 1> network;
 

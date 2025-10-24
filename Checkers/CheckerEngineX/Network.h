@@ -13,13 +13,16 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <fstream>
 #include <immintrin.h>
 #include <iostream>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <tuple>
 #include <utility>
 #include <variant>
+#include <vector>
 
 template <typename Check, typename... Types> constexpr auto get_unique() {
 
@@ -127,45 +130,37 @@ template <int OutDim> struct alignas(64) Accumulator {
 
   void refresh();
 
-  void load_weights(std::istream &stream);
+  void load_weights(std::istream &stream, std::vector<size_t> permutation);
 
   uint8_t *forward(uint8_t *in, const Position &next);
   std::pair<float, float> get_activation_stats();
 };
 
-template <int... lay> struct Network {
+template <int L1, int L2, int L3, int Out>
+struct Network
+{
 
-  static constexpr auto tuple = get_window_tuple<0, lay...>();
   int max_units{0};
-  static constexpr int L1 = std::get<0>(std::make_tuple(lay...));
-  std::array<VariantLayerType<lay...>, std::tuple_size_v<decltype(tuple)>>
-      layers;
-
   Network() {
-    [this]<size_t... indices>(std::index_sequence<indices...>) {
-      int index = 0;
-      ((layers[index++] = std::tuple_element_t<indices, decltype(tuple)>{}),
-       ...);
-    }(std::make_index_sequence<std::tuple_size_v<decltype(tuple)>>{});
-  }
-
-  void print_layers() {
-    for (auto &var : layers) {
-      std::visit(
-          [](auto layer) {
-            std::cout << "InDim: " << layer.InDim << "OutDim: " << layer.OutDim
-                      << std::endl;
-          },
-          var);
+    for (auto i = 0; i < 2 * L1; ++i)
+    {
+      permutation.emplace_back(i);
     }
   }
 
   Accumulator<2 * L1> accumulator;
+  SparseLayer<L1, L2> first_layer;
+  QLayer<L2, L3, Activation::SqRelu> second_layer;
+  QLayer<L3, Out, Activation::Id> out_layer;
+
   // permutations are needed to improve sparsity
-  // permutation size should be L1
+  // permutation size should be 2*L1
   std::vector<size_t> permutation;
 
-  alignas(64) uint8_t input[(lay + ...) + 128] = {0};
+  alignas(64) uint8_t input[(L1 + L2 + L3 + Out) + 128] = {0};
+
+  void load_permutation(std::string file);
+  void load_permutation_from_array(const unsigned char *, size_t size);
 
   void load_bucket(std::string file);
 
@@ -192,13 +187,47 @@ template <int OutDim> void Accumulator<OutDim>::refresh() {
 }
 
 template <int OutDim>
-void Accumulator<OutDim>::load_weights(std::istream &stream) {
+void Accumulator<OutDim>::load_weights(std::istream &stream,
+                                       std::vector<size_t> permutation)
+{
+  // TODO need proper error handling here and in other places as well
+
+  if (permutation.size() != OutDim)
+  {
+    std::cout << "Permutation Size is not matching OutDim" << std::endl;
+    return;
+  }
+
   ft_weights =
       (int16_t *)std_aligned_alloc(ALIGNMENT, (120 * OutDim) * sizeof(int16_t));
   ft_biases = (int16_t *)std_aligned_alloc(ALIGNMENT, OutDim * sizeof(int16_t));
-  stream.read((char *)ft_weights, sizeof(int16_t) * (OutDim * 120));
-  stream.read((char *)ft_biases, sizeof(int16_t) * (OutDim));
 
+  int16_t *col_buffer = (int16_t *)malloc((OutDim) * sizeof(int16_t));
+  int16_t *buffer_biases = (int16_t *)malloc((OutDim) * sizeof(int16_t));
+
+  // permutating the rows first
+  size_t index = 0;
+  for (auto col = 0; col < 120; col++)
+  {
+    stream.read((char *)col_buffer, sizeof(int16_t) * (OutDim));
+    for (auto row = 0; row < OutDim; row++)
+    {
+      ft_weights[index] = col_buffer[permutation[row]];
+      index++;
+    }
+  }
+  stream.read((char *)buffer_biases, sizeof(int16_t) * (OutDim));
+
+  // shuffling the biases
+
+  for (auto i = 0; i < OutDim; i++)
+  {
+    // std::cout<<permutation[i]<<std::endl;
+    ft_biases[i] = buffer_biases[permutation[i]];
+  }
+
+  free(col_buffer);
+  free(buffer_biases);
   for (auto i = 0; i < OutDim; ++i) {
     black_acc[i] = ft_biases[i];
     white_acc[i] = ft_biases[i];
@@ -379,70 +408,97 @@ std::pair<float, float> Accumulator<OutDim>::get_activation_stats() {
 
   return std::make_pair(f_nnz, f_nnz_blocks);
 }
-template <int... layers>
-void Network<layers...>::load_bucket(std::string file) {
+
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_permutation(std::string file)
+{
+  std::filesystem::path p(file);
+  const auto file_size = std::filesystem::file_size(p);
+  const auto num_items = file_size / sizeof(size_t);
+  std::ifstream stream(file, std::ios::binary);
+
+  if (!stream.good())
+  {
+    std::cout << "Could not set up the stream" << std::endl;
+    return;
+  }
+
+  std::vector<size_t> result(num_items);
+  stream.read((char *)&result[0], file_size);
+  permutation = result;
+}
+
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_permutation_from_array(
+    const unsigned char *data, size_t size)
+{
+  memstream stream(data, size);
+  const auto file_size = size;
+  const auto num_items = file_size / sizeof(size_t);
+  std::vector<size_t> result(num_items);
+  stream.read((char *)&result[0], file_size);
+
+  permutation = result;
+}
+
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_bucket(std::string file)
+{
 
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
     std::cerr << "Could not load network file, path " << file << std::endl;
     std::exit(-1);
   }
-  accumulator.load_weights(stream);
-  for (auto &var : layers) {
-    std::visit([&](auto &&layer) { layer.load_params(stream); }, var);
-  }
+  accumulator.load_weights(stream, permutation);
+  first_layer.load_params(stream, permutation);
+  second_layer.load_params(stream);
+  out_layer.load_params(stream);
 }
-template <int... layers>
-void Network<layers...>::load_from_array(const unsigned char *data,
-                                         size_t size) {
+template <int L1, int L2, int L3, int Out>
+void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
+                                               size_t size)
+{
   memstream stream(data, size);
-  accumulator.load_weights(stream);
-  for (auto &var : layers) {
-    std::visit([&](auto &&layer) { layer.load_params(stream); }, var);
-  }
+  accumulator.load_weights(stream, permutation);
+  first_layer.load_params(stream, permutation);
+  second_layer.load_params(stream);
+  out_layer.load_params(stream);
 }
 
-template <int... layers>
-int32_t *Network<layers...>::compute_incre_forward_pass(Position next) {
+template <int L1, int L2, int L3, int Out>
+int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next)
+{
 
   auto bucket_index = next.bucket_index();
   uint8_t *out = accumulator.forward(input, next);
 
   int32_t *output = nullptr;
 
-  for (auto &variant : layers) {
-    std::visit(overloaded{[&]<int L1, int L2>(SparseLayer<L1, L2> &layer) {
-                            out = layer.forward(out, bucket_index);
-                          },
-                          [&]<int L1, int L2, Activation act>(
-                              QLayer<L1, L2, act> &layer) {
-                            if constexpr (act == Activation::SqRelu) {
-                              out = layer.forward(out, bucket_index);
-                            } else {
-                              // That has to be the output layer
-                              output = layer.forward(out, bucket_index);
-                            }
-                          }},
-               variant);
-  }
-
+  out = first_layer.forward(out, bucket_index);
+  out = second_layer.forward(out, bucket_index);
+  output = out_layer.forward(out, bucket_index);
   return output;
 }
 
-template <int... layers> int Network<layers...>::operator[](int index) {
+template <int L1, int L2, int L3, int Out>
+int Network<L1, L2, L3, Out>::operator[](int index)
+{
   return input[index];
 }
 
-template <int... layers>
-int Network<layers...>::evaluate(Position pos, int ply, int shuffle) {
+template <int L1, int L2, int L3, int Out>
+int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle)
+{
 
   auto nnue = *compute_incre_forward_pass(pos);
 
   return nnue;
 }
 
-template <int... layers>
-int32_t *Network<layers...>::get_raw_eval(Position pos) {
+template <int L1, int L2, int L3, int Out>
+int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos)
+{
 
   return compute_incre_forward_pass(pos);
 }
