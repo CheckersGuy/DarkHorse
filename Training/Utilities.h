@@ -7,14 +7,35 @@
 #include "GameLogic.h"
 #include "Simd.h"
 #include <filesystem>
+#include "Position.h"
 namespace Utils{
+
+    template <typename Net>
+    void dump_evals(Net &net, std::string fen_strings)
+    {
+        std::ifstream stream(fen_strings);
+        if (!stream.good())
+        {
+            std::cout << "Could not load stream" << std::endl;
+            return;
+        }
+        std::string fen_string;
+        while (std::getline(stream, fen_string))
+        {
+            const auto pos = Position::pos_from_fen(fen_string);
+            const auto evaluation = net.evaluate(pos, 0, 0);
+            std::cout << fen_string << " " << std::to_string(evaluation) << std::endl;
+        }
+
+        std::cout.flush();
+    }
 
     template <typename Net>
     std::vector<size_t> compute_histogramm(Net &net, std::string data_path)
     {
-        constexpr auto num_activations = network.accumulator.out_dimension / 2;
+        constexpr auto num_activations = net.accumulator.out_dimension / 2;
         constexpr auto num_blocks = num_activations / 4;
-        std::vector<size_t> histogram(num_activations);
+        std::vector<size_t> histogram(num_activations, 0);
         std::ifstream stream(data_path);
         if (!stream.good())
         {
@@ -37,21 +58,21 @@ namespace Utils{
 
             int16_t *accu_buff;
 
-            network.accumulator.forward(network.input, pos);
+            net.accumulator.forward(net.input, pos);
 
-            int32_t *acc_out = reinterpret_cast<int32_t *>(network.input);
+            int32_t *acc_out = reinterpret_cast<int32_t *>(net.input);
 
             for (auto i = 0; i < num_activations; ++i)
             {
-                histogram[i] += (network.input[i] != 0);
+                histogram[i] += (net.input[i] != 0);
             }
 
-            for (auto i = 0; i < network.accumulator.out_dimension / 2; ++i)
+            for (auto i = 0; i < net.accumulator.out_dimension / 2; ++i)
             {
-                num_active += (network.input[i] != 0);
+                num_active += (net.input[i] != 0);
             }
 
-            for (auto i = 0; i < network.accumulator.out_dimension / 8; ++i)
+            for (auto i = 0; i < net.accumulator.out_dimension / 8; ++i)
             {
                 block_num_active += (acc_out[i] != 0);
             }

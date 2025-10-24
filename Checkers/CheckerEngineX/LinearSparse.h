@@ -12,6 +12,7 @@
 #include <fstream>
 #include <immintrin.h>
 #include <iostream>
+#include <vector>
 // for testing purposes
 
 static constexpr int lsb_constexpr(std::uint32_t v) {
@@ -128,15 +129,29 @@ template <int In, int Out> struct SparseLayer {
            i / PadInDim * CHUNKSIZE + i % CHUNKSIZE;
   }
 
-  void load_params(std::istream &stream) {
+  void load_params(std::istream &stream, std::vector<size_t> permutation)
+  {
     for (auto k = 0; k < NUM_BUCKETS; ++k) {
       int8_t temp_weights[PadInDim * OutDim] = {0};
-      for (auto i = 0; i < OutDim; ++i) {
-        for (auto j = 0; j < PadInDim; ++j) {
+
+      for (auto i = 0; i < OutDim; ++i)
+      {
+        int8_t buffer_row[InDim];
+        int8_t permuted_row[InDim];
+        stream.read((char *)&buffer_row[0], sizeof(int8_t) * InDim);
+        for (auto p = 0; p < InDim; ++p)
+        {
+          permuted_row[p] = buffer_row[permutation[p]];
+        }
+        for (auto j = 0; j < PadInDim; ++j)
+        {
           int8_t weight;
-          if (j < InDim) {
-            stream.read((char *)&weight, sizeof(int8_t));
-          } else {
+          if (j < InDim)
+          {
+            weight = permuted_row[j];
+          }
+          else
+          {
             weight = 0;
           }
 
