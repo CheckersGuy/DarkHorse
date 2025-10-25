@@ -79,6 +79,7 @@ fn input_from_fen(input: Bound<'_, PyArray1<f32>>, fen_string: &str) -> PyResult
 impl BatchProvider {
     #[new]
     fn new(path: String, size: usize, bsize: usize, shuffle: bool) -> Self {
+                println!("{}",path);
         let result = BatchProvider {
             loader: DataLoader::new(path, size, shuffle).expect("Error could not load"),
             batch_size: bsize,

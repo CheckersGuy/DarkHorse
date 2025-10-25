@@ -38,17 +38,12 @@ use crate::Sample::OldSample;
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
 
-    //reading some samples and returning the fens
+    Data::create_policy_data(vec![
+        "/home/robin/Downloads/finaldataset0.games",
 
-    let mut reader = BufReader::new(File::open("finaldataset3.games")?);
-    let mut writer = BufWriter::new(File::create("nnzfens.fen")?);
-    for game  in reader.iter_games(){
-        for pos in game.get_positions(){
-        let fen_string = pos.get_fen_string();
-        writer.write_all((fen_string +"\n").as_bytes())?;
-        }
-    
-    }
+    ], "/home/robin/Downloads/policy.data").expect("Error creating policy data");
+
+ 
 
     
 

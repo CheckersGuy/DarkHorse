@@ -17,9 +17,9 @@ if __name__ == "__main__":
     batch_size = 8192 
     epochs = 605
     model = Experimental.PolicyNetwork()
-    data_loader = Experimental.LitDataModule(train_data="/mnt/e/finalpolicy.samples",
-    val_data="/mnt/e/validation.samples",
-    batch_size=batch_size, buffer_size=300000000)
+    data_loader = Experimental.LitDataModule(train_data="/home/robin/Downloads/policy.data",
+    val_data="/home/robin/Downloads/another1msbatch.samples",
+    batch_size=batch_size, buffer_size=50000000)
     
 
     

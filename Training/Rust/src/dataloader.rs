@@ -23,6 +23,7 @@ pub struct DataLoader {
 
 impl DataLoader {
     pub fn new(path: String, capacity: usize, shuffle: bool) -> std::io::Result<DataLoader> {
+
         let file = File::open(path.clone())?;
         let file_length = file.metadata().unwrap().len();
         let mut data_loader = DataLoader {
