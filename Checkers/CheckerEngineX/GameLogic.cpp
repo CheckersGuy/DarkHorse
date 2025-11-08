@@ -25,7 +25,7 @@ Network<4096 + 2048, 32, 32, 1> network;
 
 Network<128, 32, 32, 1> mlh_net;
 
-Network<512, 32, 32, 128> policy;
+Network<1024, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
   auto out = mlh_net.evaluate(pos, 0, 0);

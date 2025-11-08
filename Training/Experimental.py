@@ -13,7 +13,7 @@ import struct
 import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
-from splus import SPlus
+from muon import MuonWithAuxAdam
 
 #below will be moved into the network
 
@@ -25,7 +25,7 @@ L3 = 32
 
 class Network(pl.LightningModule):
 
-    def __init__(self, run_name = "moesuper"):
+    def __init__(self, run_name = "square_relu"):
         super(Network, self).__init__()
         self.layers = []
         self.val_outputs=[] 
@@ -39,8 +39,8 @@ class Network(pl.LightningModule):
         self.accu = nn.Linear(120,L1)
 
         self.layer_one =nn.Linear(L1//2,L2*self.num_buckets)
-        self.layer_sec = nn.Linear(L2,L3*self.num_buckets);
-        self.output = nn.Linear(L3,1*self.num_buckets)
+        self.layer_sec = nn.Linear(2*L2,L3*self.num_buckets);
+        self.output = nn.Linear(2*L3,1*self.num_buckets)
         self.layers = [self.accu,self.layer_one,self.layer_sec,self.output]
         self.init_layers()
 
@@ -58,12 +58,21 @@ class Network(pl.LightningModule):
 
         l1s = self.layer_one(ac_out).reshape((-1,self.num_buckets,L2))
         l1c = l1s.view(-1,L2)[indices]
-        l1c = torch.clamp(l1c,0.0,1.0)
+        l1c_next = l1s.view(-1,L2)[indices]
         
+        l1c = (127.0/128.0)*torch.clamp(l1c,0.0,1.0)**2
+        l1_next = torch.clamp(l1c_next,0.0,1.0)
+
+        l1c = torch.cat((l1c, l1_next),dim =1)
+        
+
         l2s = self.layer_sec(l1c).reshape((-1,self.num_buckets,L3))
         l2c = l2s.view(-1,L3)[indices]
-        l2c = torch.clamp(l2c,0.0,1.0)
+        l2_next = l2s.view(-1,L3)[indices]
 
+        l2c = (127.0/128.0)*torch.clamp(l2c,0.0,1.0)**2
+        l2_next = torch.clamp(l2_next,0.0,1.0)
+        l2c = torch.cat((l2c,l2_next),dim=1)
 
         l5s = self.output(l2c).reshape((-1,self.num_buckets,1))
         l5c = l5s.view(-1,1)[indices]
@@ -114,6 +123,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
