@@ -78,7 +78,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 int get_mlh_estimate(Position pos);
 Value evaluate(Position pos, Ply ply);
 
-extern Network<256, 32, 32, 1> network;
+extern Network<16384, 32, 32, 1> network;
 
 extern Network<128, 32, 32, 1> mlh_net;
 

@@ -17,7 +17,7 @@ from muon import MuonWithAuxAdam
 
 #below will be moved into the network
 
-L1 =2*(16384)
+L1 =2*(4096)
 L2 =32
 L3 = 32
 
