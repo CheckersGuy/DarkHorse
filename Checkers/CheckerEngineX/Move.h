@@ -6,7 +6,6 @@
 #define CHECKERSTEST_MOVE_H
 #include "Bits.h"
 #include "types.h"
-
 struct Move {
   uint32_t from{0u};
   uint32_t to{0u};

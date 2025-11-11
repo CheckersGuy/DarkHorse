@@ -589,7 +589,7 @@ FodyWeavers.xsd
 **/*.perm
 **/*.perms
 **/*.hist
-
+**/*.clangd
 # Precompiled Headers
 *.gch
 *.pch
