@@ -10,14 +10,12 @@
 #include "Network.h"
 #include "Transposition.h"
 #include "types.h"
-#include <Network.h>
 #include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-#include <types.h>
 
 #ifdef _WIN32
 #include "Endgame.h"
@@ -78,7 +76,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 int get_mlh_estimate(Position pos);
 Value evaluate(Position pos, Ply ply);
 
-extern Network<16384, 32, 32, 1> network;
+extern Network<4096, 32, 32, 1> network;
 
 extern Network<128, 32, 32, 1> mlh_net;
 
