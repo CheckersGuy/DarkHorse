@@ -136,14 +136,11 @@ template <int OutDim> struct alignas(64) Accumulator {
   std::pair<float, float> get_activation_stats();
 };
 
-template <int L1, int L2, int L3, int Out>
-struct Network
-{
+template <int L1, int L2, int L3, int Out> struct Network {
 
   int max_units{0};
   Network() {
-    for (auto i = 0; i < 2 * L1; ++i)
-    {
+    for (auto i = 0; i < 2 * L1; ++i) {
       permutation.emplace_back(i);
     }
   }
@@ -188,12 +185,10 @@ template <int OutDim> void Accumulator<OutDim>::refresh() {
 
 template <int OutDim>
 void Accumulator<OutDim>::load_weights(std::istream &stream,
-                                       std::vector<size_t> permutation)
-{
+                                       std::vector<size_t> permutation) {
   // TODO need proper error handling here and in other places as well
 
-  if (permutation.size() != OutDim)
-  {
+  if (permutation.size() != OutDim) {
     std::cout << "Permutation Size is not matching OutDim" << std::endl;
     return;
   }
@@ -207,11 +202,9 @@ void Accumulator<OutDim>::load_weights(std::istream &stream,
 
   // permutating the rows first
   size_t index = 0;
-  for (auto col = 0; col < 120; col++)
-  {
+  for (auto col = 0; col < 120; col++) {
     stream.read((char *)col_buffer, sizeof(int16_t) * (OutDim));
-    for (auto row = 0; row < OutDim; row++)
-    {
+    for (auto row = 0; row < OutDim; row++) {
       ft_weights[index] = col_buffer[permutation[row]];
       index++;
     }
@@ -220,8 +213,7 @@ void Accumulator<OutDim>::load_weights(std::istream &stream,
 
   // shuffling the biases
 
-  for (auto i = 0; i < OutDim; i++)
-  {
+  for (auto i = 0; i < OutDim; i++) {
     // std::cout<<permutation[i]<<std::endl;
     ft_biases[i] = buffer_biases[permutation[i]];
   }
@@ -241,6 +233,8 @@ template <int OutDim> Accumulator<OutDim>::~Accumulator() {
 
 template <int OutDim>
 void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
+  // assert(before.is_legal());
+  // assert(after.is_legal());
   int16_t *input = ((perp == BLACK) ? black_acc : white_acc);
 
   auto WP_O =
@@ -335,7 +329,6 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
     for (auto i = 0; i < num_active; ++i) {
       const __m256i *weights =
           reinterpret_cast<__m256i *>(ft_weights + OutDim * active_features[i]);
-
       for (auto j = 0; j < num_regs; ++j) {
         regs[j] = _mm256_add_epi16(
             _mm256_load_si256(weights + j + k * num_regs), regs[j]);
@@ -410,15 +403,13 @@ std::pair<float, float> Accumulator<OutDim>::get_activation_stats() {
 }
 
 template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_permutation(std::string file)
-{
+void Network<L1, L2, L3, Out>::load_permutation(std::string file) {
   std::filesystem::path p(file);
   const auto file_size = std::filesystem::file_size(p);
   const auto num_items = file_size / sizeof(size_t);
   std::ifstream stream(file, std::ios::binary);
 
-  if (!stream.good())
-  {
+  if (!stream.good()) {
     std::cout << "Could not set up the stream" << std::endl;
     return;
   }
@@ -430,8 +421,7 @@ void Network<L1, L2, L3, Out>::load_permutation(std::string file)
 
 template <int L1, int L2, int L3, int Out>
 void Network<L1, L2, L3, Out>::load_permutation_from_array(
-    const unsigned char *data, size_t size)
-{
+    const unsigned char *data, size_t size) {
   memstream stream(data, size);
   const auto file_size = size;
   const auto num_items = file_size / sizeof(size_t);
@@ -442,8 +432,7 @@ void Network<L1, L2, L3, Out>::load_permutation_from_array(
 }
 
 template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_bucket(std::string file)
-{
+void Network<L1, L2, L3, Out>::load_bucket(std::string file) {
 
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
@@ -457,8 +446,7 @@ void Network<L1, L2, L3, Out>::load_bucket(std::string file)
 }
 template <int L1, int L2, int L3, int Out>
 void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
-                                               size_t size)
-{
+                                               size_t size) {
   memstream stream(data, size);
   accumulator.load_weights(stream, permutation);
   first_layer.load_params(stream, permutation);
@@ -467,8 +455,7 @@ void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
 }
 
 template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next)
-{
+int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
 
   auto bucket_index = next.bucket_index();
   uint8_t *out = accumulator.forward(input, next);
@@ -482,14 +469,12 @@ int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next)
 }
 
 template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::operator[](int index)
-{
+int Network<L1, L2, L3, Out>::operator[](int index) {
   return input[index];
 }
 
 template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle)
-{
+int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle) {
 
   auto nnue = *compute_incre_forward_pass(pos);
 
@@ -497,8 +482,7 @@ int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle)
 }
 
 template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos)
-{
+int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos) {
 
   return compute_incre_forward_pass(pos);
 }

@@ -357,13 +357,3 @@ uint32_t Position::get_correction_index() const {
 }
 
 int Position::bucket_index() { return piece_count_to_bucket[piece_count()]; }
-
-std::vector<Position> Position::get_capture_sequence(Move capture) {
-  std::vector<Position> capture_sequence;
-
-  if (!has_jumps()) {
-    return capture_sequence;
-  }
-
-  //
-}

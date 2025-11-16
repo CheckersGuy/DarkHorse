@@ -32,6 +32,7 @@ void Board::play_move(Move move) {
   if (move.is_capture()) {
     rep_size = 0;
   }
+  assert(rep_size >= 0);
   rep_history[rep_size++] = copy;
   pCounter = 0;
   pStack[pCounter] = copy;
@@ -106,6 +107,7 @@ uint64_t Board::get_current_key() const {
 }
 
 bool Board::is_repetition() const {
+  return false;
   const auto end = std::max(last_rev[pCounter] - 1, 0);
   const auto current = pStack[pCounter];
   for (int i = pCounter - 2; i >= end; i -= 2) {

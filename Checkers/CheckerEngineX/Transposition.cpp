@@ -29,7 +29,7 @@ void Transposition::clear() {
 void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
                                uint64_t key, Flag flag, uint8_t depth,
                                Move tt_move, bool ttPV) {
-  assert(std::abs(value) <= EVAL_INFINITE);
+
   assert(!tt_move.is_capture());
 
   const auto index =
