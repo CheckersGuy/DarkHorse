@@ -1,37 +1,96 @@
+#include "MGenerator.h"
+#include "Node.h"
+#include "Position.h"
+#include "Search.h"
+#include "incbin.h"
+#include "types.h"
+#include <chrono>
+#include <iostream>
+INCBIN(mlh_net, "mlh3.quant");
+INCBIN(network, "registry_128.quant");
+INCBIN(policy, "policybigger6.quant");
 
-#include "registry.h"
+INCBIN(mlh_perm, "mlh.perm");
+INCBIN(net_perm, "evalpermutation.perm");
 
-void reg_set_int(const char *name, int val) {
-  HKEY hKey;
-  unsigned long result;
-  int stat;
+// printing the probs of all moves in a position
 
-  /* Open registry key. */
-  stat = RegCreateKeyEx(HKEY_CURRENT_USER, GC_REGISTRY_NAME, 0, "gc_key", 0,
-                        KEY_WRITE, NULL, &hKey, &result);
+void print_probs(Position pos) {
+  int32_t *out = &policy.out_layer.buffer[0];
+  MoveListe liste;
+  get_moves(pos, liste);
+  out = policy.get_raw_eval(pos);
+  double total = 0.0;
+  std::vector<double> softmax_values;
+  for (auto move : liste) {
+    Move copy = move;
+    if (pos.color == BLACK) {
+      move = move.flipped();
+    }
+    auto encoding = move.get_move_encoding();
+    auto logit = out[encoding];
+    double logit_f = static_cast<double>(logit) / 128.0;
 
-  stat = RegSetValueEx(hKey, name, 0, REG_DWORD, (LPBYTE)&val, sizeof(DWORD));
+    double temp = std::exp(logit_f);
 
-  /* Close registry key. */
-  stat = RegCloseKey(hKey);
+    softmax_values.emplace_back(temp);
+    total += temp;
+  }
+  for (auto i = 0; i < liste.length(); ++i) {
+
+    softmax_values[i] /= total;
+    std::cout << liste[i] << " " << softmax_values[i] << std::endl;
+  }
 }
 
-int reg_get_int(char *name, int *val) {
-  HKEY hKey;
-  unsigned long datatype = REG_DWORD;
-  DWORD buffersize = sizeof(DWORD);
-  int stat;
+int main(int argl, const char **argc) {
+  mlh_net.load_permutation_from_array(gmlh_permData, gmlh_permSize);
+  // policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
+  // network.load_permutation_from_array(gnet_permData, gnet_permSize);
 
-  /* Open registry key. */
-  stat = RegOpenKeyEx(HKEY_CURRENT_USER, "Software\\DarkHorse", 0, KEY_READ,
-                      &hKey);
-  if (stat)
-    return (stat);
+  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
+  network.load_from_array(gnetworkData, gnetworkSize);
+  policy.load_from_array(gpolicyData, gpolicySize);
+  const auto pos = Position::pos_from_fen(
+      "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16");
+  //  "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16";
 
-  stat = RegQueryValueEx(hKey, name, 0, &datatype, (LPBYTE)val, &buffersize);
+  Board board = Board(pos);
+  board.print_board();
+  /*
+    print_probs(board.get_position());
 
-  /* Close registry key. */
-  RegCloseKey(hKey);
+    MCTSSearch search = MCTSSearch();
+    search.simulate(board);
+    return 0;
+  */
+  for (auto count = 0; count < 1050; count++) {
 
-  return (stat);
+    MCTSSearch search = MCTSSearch();
+    auto iter_count = 1;
+    if (board.get_mover() == WHITE) {
+      iter_count = 1;
+    }
+    search.max_time = iter_count;
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    Move best_move = search.search(board);
+    std::cout << "ARE WE HERE" << std::endl;
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto dur = (t2 - t1);
+    auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur);
+
+    board.make_move(best_move);
+    board.print_board();
+    if (board.is_repetition()) {
+      break;
+    }
+    MoveListe liste;
+    get_moves(board.get_position(), liste);
+    if (liste.length() == 0) {
+      break;
+    }
+  }
+
+  return 0;
 }
