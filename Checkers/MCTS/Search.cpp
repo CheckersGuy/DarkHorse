@@ -1,14 +1,12 @@
 #include "Search.h"
+#include "types.h"
 
 Value evaluate_board(Board &board, int ply) {
-  if (!board.get_position().is_legal()) {
-    board.print_board();
-  }
-  assert(board.get_position().is_legal());
+
+  // assert(board.get_position().is_legal());
   if (board.is_repetition()) {
     return 0;
   }
-  return evaluate(board.get_position(), ply);
   Value bestValue = -INFINITE;
   if (board.get_position().is_end()) {
     return loss(ply);
@@ -17,7 +15,7 @@ Value evaluate_board(Board &board, int ply) {
   get_captures(board.get_position(), moves);
 
   if (moves.length() == 0) {
-    return evaluate_board(board, ply);
+    return evaluate(board.get_position(), ply);
   }
   for (int i = 0; i < moves.length(); ++i) {
 
@@ -41,6 +39,7 @@ double value_to_float(Value value) {
 }
 
 void MCTSSearch::simulate(Board board) {
+  auto p = board.get_position();
   std::vector<Node *> visited;
   simul_count++;
   Node *current = root.get();
@@ -48,8 +47,9 @@ void MCTSSearch::simulate(Board board) {
   current->visits++;
   while (!current->is_leaf()) {
     // node should have at least 1 child
-    Node *next = current->select_best_uct();
+    Node *next = current->select_best_uct(board);
     assert(next != nullptr);
+    assert(!next->move.is_empty());
     board.make_move(next->move);
     visited.emplace_back(next);
 
@@ -57,30 +57,37 @@ void MCTSSearch::simulate(Board board) {
     if (current->is_terminal) {
       break;
     }
+    if (board.is_repetition()) {
+      break;
+    }
   }
 
-  // expanding the node
-  const bool is_loss = current->expand(board.get_position());
-  // handling terminal states
-  if (!is_loss) {
-    current = current->select_best_prior();
-    visited.emplace_back(current);
-    board.make_move(current->move);
-  } else if (is_loss) {
-    current->is_terminal = true;
-    current->value = -1.0;
+  if (visited.size() + 10 < MAX_PLY) {
+    const bool is_loss = current->expand(board.get_position());
+    // handling terminal states
+    if (!is_loss) {
+      current = current->select_best_prior();
+      visited.emplace_back(current);
+      assert(!current->move.is_empty());
+      board.make_move(current->move);
+    } else if (is_loss) {
+      current->is_terminal = true;
+      current->value = -1.0;
+    }
   }
-  assert(current != nullptr);
+
+  assert(board.get_position().is_legal());
+
   double backup_value;
   if (current->is_terminal) {
     backup_value = current->value;
   } else {
     backup_value = value_to_float(evaluate_board(board, visited.size()));
   }
-
   for (int i = visited.size() - 1; i >= 0; i--) {
+
     visited[i]->visits++;
-    visited[i]->value += backup_value;
+    visited[i]->value += (board.is_repetition()) ? 0 : backup_value;
     backup_value = -backup_value;
     board.undo_move();
   }
@@ -108,8 +115,7 @@ Move MCTSSearch::search(Board board) {
       break;
     }
   }
-  std::cout << root->select_best_child()->move << std::endl;
-  return Move{};
+  return root->select_best_child()->move;
 }
 
 std::vector<Move> MCTSSearch::get_pv() {

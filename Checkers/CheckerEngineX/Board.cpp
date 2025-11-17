@@ -40,11 +40,16 @@ void Board::play_move(Move move) {
 }
 
 void Board::make_move(Move move) {
+  assert(!move.is_empty());
   if (move.is_capture() || move.is_pawn_move(get_position().K)) {
     last_rev[pCounter + 1] = pCounter;
   } else {
     last_rev[pCounter + 1] = last_rev[pCounter];
   }
+  /*if ((pCounter + 1) >= MAX_PLY) {
+    std::cout << (pCounter + 1) << std::endl;
+    std::cout << "ERROR" << std::endl;
+  }*/
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
 

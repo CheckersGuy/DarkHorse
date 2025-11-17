@@ -21,7 +21,7 @@ public:
 
   Node *
   select_best_child(); // selects the best child according to the uct-formula
-  Node *select_best_uct();
+  Node *select_best_uct(Board &board);
   Node *select_best_prior();
   double q_value();
   double uct(Node *parent);
