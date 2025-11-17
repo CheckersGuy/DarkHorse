@@ -1,96 +1,137 @@
-#include "MGenerator.h"
-#include "Node.h"
-#include "Position.h"
 #include "Search.h"
-#include "incbin.h"
-#include "types.h"
-#include <chrono>
-#include <iostream>
-INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_128.quant");
-INCBIN(policy, "policybigger6.quant");
 
-INCBIN(mlh_perm, "mlh.perm");
-INCBIN(net_perm, "evalpermutation.perm");
+Value evaluate_board(Board &board, int ply) {
 
-// printing the probs of all moves in a position
+  // assert(board.get_position().is_legal());
+  if (board.is_repetition()) {
+    return 0;
+  }
+  Value bestValue = -INFINITE;
+  if (board.get_position().is_end()) {
+    return loss(ply);
+  }
+  MoveListe moves;
+  get_captures(board.get_position(), moves);
 
-void print_probs(Position pos) {
-  int32_t *out = &policy.out_layer.buffer[0];
-  MoveListe liste;
-  get_moves(pos, liste);
-  out = policy.get_raw_eval(pos);
-  double total = 0.0;
-  std::vector<double> softmax_values;
-  for (auto move : liste) {
-    Move copy = move;
-    if (pos.color == BLACK) {
-      move = move.flipped();
+  if (moves.length() == 0) {
+    return evaluate(board.get_position(), ply);
+  }
+  for (int i = 0; i < moves.length(); ++i) {
+
+    Move move = moves[i];
+    board.make_move(move);
+    Value value;
+    value = -evaluate_board(board, ply + 1);
+    board.undo_move();
+
+    if (value > bestValue) {
+      bestValue = value;
     }
-    auto encoding = move.get_move_encoding();
-    auto logit = out[encoding];
-    double logit_f = static_cast<double>(logit) / 128.0;
-
-    double temp = std::exp(logit_f);
-
-    softmax_values.emplace_back(temp);
-    total += temp;
   }
-  for (auto i = 0; i < liste.length(); ++i) {
 
-    softmax_values[i] /= total;
-    std::cout << liste[i] << " " << softmax_values[i] << std::endl;
-  }
+  return bestValue;
 }
 
-int main(int argl, const char **argc) {
-  mlh_net.load_permutation_from_array(gmlh_permData, gmlh_permSize);
-  // policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
-  // network.load_permutation_from_array(gnet_permData, gnet_permSize);
+double value_to_float(Value value) {
+  const double temp = static_cast<double>(value) / 128.0;
+  return 2.0 * sigmoid(temp) - 1.0;
+}
 
-  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
-  network.load_from_array(gnetworkData, gnetworkSize);
-  policy.load_from_array(gpolicyData, gpolicySize);
-  const auto pos = Position::pos_from_fen(
-      "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16");
-  //  "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16";
+void MCTSSearch::simulate(Board board) {
+  std::vector<Node *> visited;
+  simul_count++;
+  Node *current = root.get();
+  assert(current != nullptr);
+  current->visits++;
+  while (!current->is_leaf()) {
+    // node should have at least 1 child
+    Node *next = current->select_best_uct();
+    assert(next != nullptr);
+    assert(!next->move.is_empty());
+    board.make_move(next->move);
+    visited.emplace_back(next);
 
-  Board board = Board(pos);
-  board.print_board();
-  /*
-    print_probs(board.get_position());
-
-    MCTSSearch search = MCTSSearch();
-    search.simulate(board);
-    return 0;
-  */
-  for (auto count = 0; count < 1050; count++) {
-
-    MCTSSearch search = MCTSSearch();
-    auto iter_count = 1;
-    if (board.get_mover() == WHITE) {
-      iter_count = 1;
-    }
-    search.max_time = iter_count;
-    auto t1 = std::chrono::high_resolution_clock::now();
-
-    Move best_move = search.search(board);
-    std::cout << "ARE WE HERE" << std::endl;
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto dur = (t2 - t1);
-    auto time_ms = std::chrono::duration_cast<std::chrono::milliseconds>(dur);
-
-    board.make_move(best_move);
-    board.print_board();
-    if (board.is_repetition()) {
-      break;
-    }
-    MoveListe liste;
-    get_moves(board.get_position(), liste);
-    if (liste.length() == 0) {
+    current = next;
+    if (current->is_terminal) {
       break;
     }
   }
 
-  return 0;
+  // expanding the node
+  const bool is_loss = current->expand(board.get_position());
+  // handling terminal states
+  if (!is_loss) {
+    current = current->select_best_prior();
+    visited.emplace_back(current);
+    assert(!current->move.is_empty());
+    board.make_move(current->move);
+  } else if (is_loss) {
+    current->is_terminal = true;
+    current->value = -1.0;
+  }
+  if (!board.get_position().is_legal()) {
+    // auto test = Position::get_start_position();
+    // test.print_position();
+    // std::cout << std::endl;
+
+    board.print_board();
+
+    // test.print_position();
+
+    // std::cout << "BOARD" << std::endl;
+    // board.get_position().print_position();
+  }
+  assert(board.get_position().is_legal());
+
+  double backup_value;
+  if (current->is_terminal) {
+    backup_value = current->value;
+  } else {
+    backup_value = value_to_float(evaluate_board(board, visited.size()));
+  }
+  for (int i = visited.size() - 1; i >= 0; i--) {
+    visited[i]->visits++;
+    visited[i]->value += backup_value;
+    backup_value = -backup_value;
+    board.undo_move();
+  }
+  root->value += backup_value;
+}
+
+Move MCTSSearch::search(Board board) {
+
+  MoveListe liste;
+  get_moves(board.get_position(), liste);
+  if (liste.length() == 1) {
+    return liste[0];
+  }
+
+  auto start = std::chrono::high_resolution_clock::now();
+
+  while (true) {
+    auto end = std::chrono::high_resolution_clock::now();
+    auto dur = end - start;
+    auto time_taken =
+        std::chrono::duration_cast<std::chrono::milliseconds>(dur);
+    simulate(board);
+
+    if (time_taken.count() >= max_time) {
+      break;
+    }
+  }
+  return root->select_best_child()->move;
+}
+
+std::vector<Move> MCTSSearch::get_pv() {
+  std::vector<Move> moves;
+
+  Node *current = root.get();
+
+  while (!current->is_leaf()) {
+    Node *next = current->select_best_child();
+    moves.emplace_back(next->move);
+    current = next;
+  }
+
+  return moves;
 }

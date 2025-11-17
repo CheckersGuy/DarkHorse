@@ -51,26 +51,21 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-  const auto pos = Position::pos_from_fen("W:W5,29:BK3,K12");
+  const auto pos = Position::get_start_position();
   //  "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16";
 
   Board board = Board(pos);
   board.print_board();
-  /*
-    print_probs(board.get_position());
 
-    MCTSSearch search = MCTSSearch();
-    search.simulate(board);
-    return 0;
-  */
-  for (auto count = 0; count < 1; count++) {
+  for (auto count = 0; count < 431; count++) {
     std::cout << "Startin search" << std::endl;
     MCTSSearch search = MCTSSearch();
 
-    auto best_move = search.search(board.get_position());
+    auto best_move = search.search(board);
 
     std::cout << "RootValue: " << search.root->q_value() << std::endl;
     std::cout << "Count: " << search.simul_count << std::endl;
+    std::cout << "BestMove: " << best_move << std::endl;
     std::cout.flush();
     board.play_move(best_move);
     board.print_board();
