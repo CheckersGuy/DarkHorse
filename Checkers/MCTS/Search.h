@@ -16,7 +16,7 @@ public:
   std::unique_ptr<Node> root;
   uint32_t simul_count = 0;
   uint32_t max_nodes = 1000;
-  size_t max_time = 3000;
+  size_t max_time = 1;
   std::mt19937_64 generator; // better do something else to seed the generator
 
 public:

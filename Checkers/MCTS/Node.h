@@ -24,7 +24,7 @@ public:
   Node *select_best_uct(Board &board);
   Node *select_best_prior();
   double q_value();
-  double uct(Node *parent);
+  double uct(Node *parent, Board &board);
 };
 
 #endif

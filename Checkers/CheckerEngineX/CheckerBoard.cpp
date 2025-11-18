@@ -14,7 +14,7 @@ Position previous;
 std::string db_path;
 INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "registry_128.quant");
-INCBIN(policy, "policybigger3.quant");
+INCBIN(policy, "policybigger6.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
