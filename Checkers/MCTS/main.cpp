@@ -52,7 +52,6 @@ int main(int argl, const char **argc) {
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
   const auto pos = Position::get_start_position();
-  //  "B:W20,21,22,23,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,11,16";
 
   Board board = Board(pos);
   board.print_board();
@@ -60,18 +59,24 @@ int main(int argl, const char **argc) {
   for (auto count = 0; count < 431; count++) {
     std::cout << "Startin search" << std::endl;
     MCTSSearch search = MCTSSearch();
+    if (board.get_mover() == BLACK) {
+      search.max_time = 1500;
+    } else {
+      search.max_time = 1;
+    }
 
     auto best_move = search.search(board);
 
     std::cout << "RootValue: " << search.root->q_value() << std::endl;
     std::cout << "Count: " << search.simul_count << std::endl;
     std::cout << "BestMove: " << best_move << std::endl;
+    std::cout << "FenString:" << board.get_position().get_fen_string()
+              << std::endl;
+
     std::cout.flush();
     board.play_move(best_move);
     board.print_board();
-    if (board.is_repetition()) {
-      break;
-    }
+
     MoveListe liste;
     get_moves(board.get_position(), liste);
     if (liste.length() == 0) {

@@ -1,7 +1,7 @@
 # cmake_minimum_required(VERSION 3.9)
 project(reading)
 SET(CMAKE_CXX_STANDARD 20)
-SET(CMAKE_BUILD_TYPE "Debug")
+SET(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_C_FLAGS -m64)
 set(CMAKE_CXX_FLAGS -m64)

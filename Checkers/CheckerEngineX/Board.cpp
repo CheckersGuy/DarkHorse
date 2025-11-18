@@ -1,5 +1,4 @@
 //
-//
 // Created by Robin on 09.05.2017.
 //
 
@@ -27,16 +26,26 @@ void Board::reset(Position start_pos) {
 void Board::print_board() const { pStack[pCounter].print_position(); }
 
 void Board::play_move(Move move) {
-  Position copy = get_position();
-  copy.make_move(move);
-  if (move.is_capture()) {
+
+  if (move.is_capture() || move.is_pawn_move(get_position().K)) {
+    Position copy = get_position();
+    copy.make_move(move);
+
     rep_size = 0;
+    pCounter = 0;
+    last_rev[pCounter] = 0;
+    pStack[pCounter] = copy;
+    return;
   }
   assert(rep_size >= 0);
-  rep_history[rep_size++] = copy;
-  pCounter = 0;
-  pStack[pCounter] = copy;
-  last_rev[pCounter] = 0;
+
+  pStack[pCounter + 1] = pStack[pCounter];
+  this->pCounter++;
+
+  pStack[pCounter].make_move(move);
+
+  std::cout << "pCounter: " << pCounter << std::endl;
+  std::cout << "lastRev:" << last_rev[pCounter] << std::endl;
 }
 
 void Board::make_move(Move move) {
@@ -46,10 +55,7 @@ void Board::make_move(Move move) {
   } else {
     last_rev[pCounter + 1] = last_rev[pCounter];
   }
-  /*if ((pCounter + 1) >= MAX_PLY) {
-    std::cout << (pCounter + 1) << std::endl;
-    std::cout << "ERROR" << std::endl;
-  }*/
+
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
 
@@ -112,7 +118,6 @@ uint64_t Board::get_current_key() const {
 }
 
 bool Board::is_repetition() const {
-  return false;
   const auto end = std::max(last_rev[pCounter] - 1, 0);
   const auto current = pStack[pCounter];
   for (int i = pCounter - 2; i >= end; i -= 2) {

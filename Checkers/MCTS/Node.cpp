@@ -66,12 +66,20 @@ double Node::q_value() {
   return value / f_visits;
 }
 
-double Node::uct(Node *parent) {
+double Node::uct(Node *parent, Board &board) {
   assert(parent != nullptr);
   const double f_child_visits = (double)visits;
   const double f_parent_visits = (double)parent->visits;
 
   const double cpuct = 1.0 * 0.74; // some guessing here
+
+  board.make_move(move);
+  if (board.is_repetition()) {
+    board.undo_move();
+    return 0;
+  }
+  board.undo_move();
+
   const double explore =
       cpuct * prob * (std::sqrt(std::log(f_parent_visits) / f_child_visits));
 
@@ -86,12 +94,7 @@ Node *Node::select_best_uct(Board &board) {
       return node.get();
     }
 
-    auto value = node->uct(this);
-    board.make_move(node->move);
-    if (board.is_repetition()) {
-      value = -100000.0;
-    }
-    board.undo_move();
+    auto value = node->uct(this, board);
     if (value > max_value) {
       max_child = node.get();
       max_value = value;
