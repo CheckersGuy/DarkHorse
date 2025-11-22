@@ -43,9 +43,6 @@ void Board::play_move(Move move) {
   this->pCounter++;
 
   pStack[pCounter].make_move(move);
-
-  std::cout << "pCounter: " << pCounter << std::endl;
-  std::cout << "lastRev:" << last_rev[pCounter] << std::endl;
 }
 
 void Board::make_move(Move move) {

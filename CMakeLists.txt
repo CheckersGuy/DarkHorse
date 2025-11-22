@@ -29,7 +29,6 @@ find_package(Threads REQUIRED)
   endif()
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/MCTS")
 
 
 if (UNIX)
@@ -46,8 +45,7 @@ endif ()
 
 file(GLOB CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.h)
 file(GLOB CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/*.cpp)
-file(GLOB MCTSHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/MCTS/*.h)
-file(GLOB MCTSSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/MCTS/*.cpp)
+
 if (UNIX)
   list(REMOVE_ITEM CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Endgame.h)
   list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Endgame.cpp)
@@ -56,7 +54,6 @@ if (UNIX)
   list(REMOVE_ITEM CHeaders ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/registry.h)
   list(REMOVE_ITEM CSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/registry.cpp)
 endif()
-list(REMOVE_ITEM MCTSSources ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/MCTS/main.cpp)
 
 
 list(REMOVE_ITEM CHeaders "${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h")
@@ -99,7 +96,6 @@ endif()
 add_executable(sparse_opt ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
 target_compile_definitions(sparse_opt PUBLIC "SPARSEOPT")
 
-add_executable(MCTSEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/MCTS/main.cpp ${CHeaders} ${CSources} ${MCTSHeaders} ${MCTSSources})
 
 if (UNIX)
     add_library(RustDll SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.h ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.cpp ${CHeaders} ${CSources})
@@ -111,7 +107,6 @@ if (UNIX)
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-set_target_properties(MCTSEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 if(UNIX)
 target_link_libraries(MainEngine PRIVATE Threads::Threads)
 endif()
