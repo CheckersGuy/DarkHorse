@@ -1,5 +1,4 @@
 //
-//
 // Created by Robin on 09.05.2017.
 //
 
@@ -27,23 +26,33 @@ void Board::reset(Position start_pos) {
 void Board::print_board() const { pStack[pCounter].print_position(); }
 
 void Board::play_move(Move move) {
-  Position copy = get_position();
-  copy.make_move(move);
-  if (move.is_capture()) {
+
+  if (move.is_capture() || move.is_pawn_move(get_position().K)) {
+    Position copy = get_position();
+    copy.make_move(move);
+
     rep_size = 0;
+    pCounter = 0;
+    last_rev[pCounter] = 0;
+    pStack[pCounter] = copy;
+    return;
   }
-  rep_history[rep_size++] = copy;
-  pCounter = 0;
-  pStack[pCounter] = copy;
-  last_rev[pCounter] = 0;
+  assert(rep_size >= 0);
+
+  pStack[pCounter + 1] = pStack[pCounter];
+  this->pCounter++;
+
+  pStack[pCounter].make_move(move);
 }
 
 void Board::make_move(Move move) {
+  assert(!move.is_empty());
   if (move.is_capture() || move.is_pawn_move(get_position().K)) {
     last_rev[pCounter + 1] = pCounter;
   } else {
     last_rev[pCounter + 1] = last_rev[pCounter];
   }
+
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
 
