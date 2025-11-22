@@ -100,7 +100,7 @@ using Depth = int;
 using Ply = int;
 using Value = int;
 
-enum SEARCH : int { MAX_PLY = 128 };
+enum SEARCH : int { MAX_PLY = 256 };
 enum Score : int {
   INFINITE = 15001,
   EVAL_INFINITE = 13000,
@@ -111,7 +111,7 @@ enum Score : int {
   TB_LOSS = -10000,
 };
 
-enum Color : char { BLACK = -1, WHITE = 1 };
+enum Color : int { BLACK = -1, WHITE = 1 };
 enum PieceType : int {
   BPAWN = 0,
   WPAWN = 1,
