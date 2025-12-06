@@ -21,11 +21,11 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "newcpu.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger6.quant");
 
 INCBIN(mlh_perm, "mlh.perm");
-// INCBIN(net_perm, "evalpermutation.perm");
+INCBIN(net_perm, "evalpermutation.perm");
 //  INCBIN(policy_perm, "policy.perm");
 
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
