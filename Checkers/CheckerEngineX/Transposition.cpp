@@ -69,7 +69,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     replace.ttPv = ttPV;
     return;
   }
-  if (replace.key == key && replace.best_move.get_move().is_empty()) {
+  if (replace.key == lock && replace.best_move.get_move().is_empty()) {
     replace.best_move = store_move;
     replace.static_eval = static_eval;
     replace.ttPv = ttPV;
