@@ -18,7 +18,7 @@ uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
-
+HistoryTable history_table;
 SearchGlobal glob;
 
 Network<4096 + 2048, 32, 32, 1> network;
@@ -117,6 +117,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
   nodeCounter = 0;
   mainPV.clear();
+  history_table.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
   if (liste.length() == 1 && skip_singular) {
@@ -138,7 +139,7 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
   double speed = 0;
   Value best_score = -INFINITE;
   nodeCounter = 0;
-  for (i = 1; i <= depth; i += 2) {
+  for (i = 1; i <= depth; i += 1) {
     network.accumulator.refresh();
     mlh_net.accumulator.refresh();
     policy.accumulator.refresh();
@@ -381,6 +382,32 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     start_index += (liste[0] == tt_move);
   }
 
+  PolicyHistoryCombiner combiner(history_table);
+  const Color current_color = board.get_mover();
+  /*
+    auto oracle = [&](Move move) {
+      if (move.is_capture()) {
+        const uint32_t kings_captured = move.captures & board.get_position().K;
+        const uint32_t pawns_captured = move.captures &
+    (~board.get_position().K); return (int)(Bits::pop_count(kings_captured) * 14
+    + Bits::pop_count(pawns_captured) * 10);
+      }
+
+      if (!computed) {
+        out = policy.get_raw_eval(board.get_position());
+        computed = true;
+      }
+
+      if (board.get_position().color == BLACK) {
+        move = move.flipped();
+      }
+      auto encoding = move.get_move_encoding();
+      auto score = out[encoding];
+      return score;
+    };
+    */
+
+  static constexpr int POLICY_SCALE = 256;
   auto oracle = [&](Move move) {
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
@@ -394,13 +421,18 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       computed = true;
     }
 
+    Move scored_move = move;
     if (board.get_position().color == BLACK) {
-      move = move.flipped();
+      scored_move = move.flipped();
     }
-    auto encoding = move.get_move_encoding();
-    auto score = out[encoding];
-    return score;
+
+    auto policy_score = out[scored_move.get_move_encoding()];
+
+    // use combiner to gate policy with history
+    return combiner.combine_scaled(move, current_color, policy_score,
+                                   POLICY_SCALE);
   };
+
   const Value old_alpha = alpha;
   const Value prob_beta = beta + prob_cut;
   for (auto i = 0; i < liste.length(); ++i) {
@@ -525,6 +557,19 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
+          if (!move.is_capture()) {
+            // reward the move that caused the cutoff
+            history_table.update_good(move, current_color, depth);
+
+            // penalize moves tried before the cutoff move
+            for (auto j = 0; j < i; ++j) {
+              if (!liste[j].is_capture()) {
+                history_table.update_bad(liste[j], current_color, depth);
+              }
+            }
+          }
+          best_move = move;
+          best_score = val;
           break;
         }
 

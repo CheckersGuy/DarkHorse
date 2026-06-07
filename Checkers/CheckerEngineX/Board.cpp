@@ -115,7 +115,7 @@ uint64_t Board::get_current_key() const {
 }
 
 bool Board::is_repetition() const {
-  const auto end = std::max(last_rev[pCounter] - 1, 0);
+  const auto end = std::max(last_rev[pCounter] - 2, 0);
   const auto current = pStack[pCounter];
   for (int i = pCounter - 2; i >= end; i -= 2) {
     if (pStack[i] == current) {

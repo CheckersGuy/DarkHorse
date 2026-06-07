@@ -4,6 +4,7 @@
 #define CHECKERSTEST_GAMELOGIC_H
 #include "Bits.h"
 #include "Board.h"
+#include "HistoryTable.h"
 #include "Line.h"
 #include "MGenerator.h"
 #include "Move.h"
@@ -16,7 +17,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
-
 #ifdef _WIN32
 #include "Endgame.h"
 #include "egdb.h"
