@@ -82,7 +82,7 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
   const uint32_t currKey = key >> 32u;
 
   for (auto i = 0; i < bucket_size; ++i) {
-    if (this->entries[index].ent[i].key == key) {
+    if (this->entries[index].ent[i].key == currKey) {
       this->entries[index].ent[i].age = age_counter;
     }
   }
