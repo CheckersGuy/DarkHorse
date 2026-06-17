@@ -479,13 +479,22 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut writer = BufWriter::new(File::create(out)?);
     let sample_iter = reader.iter_samples();
     let mut filter = Bloom::new_for_fp_rate(5000000000, 0.1);
-
+    let mut unique_counter = 0;
+    let mut rescoreable_posititions = 0;
     for s in sample_iter {
         if !filter.check(&s.position) {
             filter.set(&s.position);
             s.write_fen(&mut writer)?;
+            unique_counter += 1;
+            rescoreable_posititions += match s.result {
+                Result::TBWIN => 0,
+                Result::TBLOSS => 0,
+                Result::TBDRAW => 0,
+                _ => 1,
+            };
         }
     }
+    println!("There are a total of {} positions in the new dataset. Of the {} positions, {} are rescored tablebase positions", unique_counter,unique_counter,rescoreable_posititions);
     Ok(())
 }
 
