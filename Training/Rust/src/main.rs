@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/finalpolicy.samples",
     )?;
     */
-    let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
+    /*let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
     Data::rescore_games(
         vec![
             "/mnt/c/TrainData/finaldataset0.games",
@@ -118,6 +118,12 @@ fn main() -> anyhow::Result<()> {
         "/mnt/c/TrainData/value.samples",
         &base,
         32,
+    )?;
+    */
+
+    Data::filter_training_data(
+        "c:/TrainData/value.samples",
+        "c:/TrainData/valuefiltered.samples",
     )?;
 
     Ok(())
