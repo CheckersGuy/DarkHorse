@@ -467,6 +467,12 @@ impl Sample {
         Ok(())
     }
 
+    pub fn is_tb_position(&self) -> bool {
+        return self.result == Result::TBWIN
+            || self.result == Result::TBLOSS
+            || self.result == Result::TBDRAW;
+    }
+
     pub fn read_into<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
         // to be added
         self.position.wp = reader.read_u32::<LittleEndian>()?;

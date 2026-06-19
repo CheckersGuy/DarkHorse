@@ -49,6 +49,46 @@ pub struct Generator<'a> {
     pub prev_file: Option<&'a str>,
 }
 
+pub fn rescoring_data(input: &str, time: i32) -> std::io::Result<()> {
+    let samples = Arc::new(Mutex::new(BufReader::new(File::open(input)?)));
+    let (tx, rx): (Sender<Sample::Sample>, Receiver<Sample::Sample>) = mpsc::channel();
+    let num_threads = 5;
+    {
+        let mut reader = samples.lock().unwrap();
+        let mut sample = Sample::Sample::default();
+        sample.read_into(&mut *reader)?;
+
+        for ind in 0..num_threads {
+            let sender = tx.clone();
+            thread::spawn(move || {
+                //buffer for the samples
+
+                //let mut buffer = Vec::new();
+
+                for _ in 0..10000 {}
+
+                let mut command = Command::new("./generator2")
+                    .args([format!("--eval-loop --time {} --hash_size 64", time)])
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .spawn()
+                    .expect("Failed to start process");
+
+                let mut stdin = command.stdin.take().unwrap();
+                let stdout = command.stdout.take().unwrap();
+
+                stdin
+                    .write_all((String::from("terminate\n")).as_bytes())
+                    .unwrap();
+
+                command.kill().unwrap();
+            });
+        }
+    }
+
+    return Ok(());
+}
+
 pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Result<()> {
     //create an opening book
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
@@ -119,8 +159,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
     Ok(())
 }
 
-pub fn rescore_old_data(path: &str) -> std::io::Result<()> {
-    let out_path = String::from(path) + ".evaluated";
+pub fn rescore_data(path: &str, out_path: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let num_workers = 7;
 
@@ -457,7 +496,7 @@ pub fn print_samples(path: &str) -> std::io::Result<()> {
         //old format - samples are in reverse order
         let mut new_game = Game::new();
         for (index, sample) in game.iter().rev().enumerate() {
-            if index == 0 {
+          if index == 0 {
                 new_game.set_start_position(sample.position);
                 new_game.set_result(sample.result);
             } else {
@@ -478,12 +517,30 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(out)?);
     let sample_iter = reader.iter_samples();
-    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.1);
+    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.05);
     let mut unique_counter = 0;
     let mut rescoreable_posititions = 0;
+
+    //filtering positions where the material imbalance is too high
+    //might be a good idea as well
+    //
     for s in sample_iter {
-        if !filter.check(&s.position) {
-            filter.set(&s.position);
+        if s.value.abs() >= 650 && !s.is_tb_position() {
+            continue;
+        }
+
+        let from_white_pov = s.position;
+
+        let white_material = from_white_pov.wp.count_ones() as i32
+            + (from_white_pov.k & from_white_pov.wp).count_ones() as i32;
+        let black_material = from_white_pov.bp.count_ones() as i32
+            + (from_white_pov.k & from_white_pov.bp).count_ones() as i32;
+        let diff = white_material - black_material;
+        if diff.abs() >= 2 {
+            continue;
+        }
+        if !filter.check(&from_white_pov) {
+            filter.set(&from_white_pov);
             s.write_fen(&mut writer)?;
             unique_counter += 1;
             rescoreable_posititions += match s.result {
@@ -495,23 +552,6 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
         }
     }
     println!("There are a total of {} positions in the new dataset. Of the {} positions, {} are rescored tablebase positions", unique_counter,unique_counter,rescoreable_posititions);
-    Ok(())
-}
-
-pub fn read_old_samples(path: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
-
-    loop {
-        let mut old_sample = OldSample::default();
-        match old_sample.read_into(&mut reader) {
-            Err(_) => break,
-            _ => {}
-        };
-        println!("------------");
-        old_sample.position.print_position();
-        println!("{:?}", old_sample.result);
-    }
-
     Ok(())
 }
 

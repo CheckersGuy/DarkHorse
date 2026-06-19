@@ -171,10 +171,6 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   if (mtc_handle == nullptr) {
     return std::nullopt;
   }
-  auto wdl = probe(pos);
-  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
-    return std::nullopt;
-  }
 
   EGDB_NORMAL_BITBOARD board;
   board.white = pos.WP;
@@ -189,6 +185,4 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   if (val == EGDB_UNKNOWN) {
     return std::nullopt;
   }
-
-  // to be continued
 }
