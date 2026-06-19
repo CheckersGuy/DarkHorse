@@ -11,6 +11,11 @@ pub struct Base {
     library: libloading::Library,
 }
 
+pub struct DTWResult {
+    winning: bool, // can the side to move force a win from here?
+    plies: i32,    // plies until the result is decided
+}
+
 fn foo(fen_string: &str) -> Result<u32, Box<dyn std::error::Error>> {
     unsafe {
         let lib = libloading::Library::new("libRustDll.dll")?;

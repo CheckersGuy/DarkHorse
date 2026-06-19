@@ -17,7 +17,7 @@ from muon import MuonWithAuxAdam
 
 #below will be moved into the network
 
-L1 =2*(4096)
+L1 =2*(4096 + 2048)
 L2 =32
 L3 = 32
 
@@ -31,7 +31,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.92
+        self.gamma = 0.9
         self.run_name = run_name
 
 
@@ -114,7 +114,7 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-1, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
 
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
@@ -124,7 +124,7 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         self.step()
         result,eval, move,buckets, x,legal_moves = train_batch
-        eval = 1.0* torch.sigmoid(eval/128.0) # + 0.5*result
+        eval = 1.0* torch.sigmoid(eval/128.0)  #+ 0.5*result
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-eval),2).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
@@ -134,7 +134,8 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result,evalu, move,buckets,psqt_buckets, x,legal_moves = val_batch
         out = self.forward(x,buckets)
-        loss = torch.pow(torch.abs(out - result), 2).mean()
+        eval = 1.0* torch.sigmoid(eval/128.0) 
+        loss = torch.pow(torch.abs(out - eval), 2).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
@@ -209,7 +210,7 @@ class Network(pl.LightningModule):
         return
 
 
-class MLHNetwork(pl.LightningModule):
+class MLHNetwork(pl.LightningModule): 
 
     def __init__(self):
         super(MLHNetwork, self).__init__()
