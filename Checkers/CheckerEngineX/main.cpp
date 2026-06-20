@@ -95,6 +95,13 @@ int main(int argl, const char **argc) {
 
   // testing mtc to conversion database
 
+  tablebase.load_table_base("C:\\kr_english_wld");
+  tablebase.load_mtc_base("D:\\kr_english_mtc");
+
+  Position test_position = Position::pos_from_fen("B:WK14,29:BK23,K27.");
+
+  test_position.print_position();
+
   return 0;
 
   CmdParser parser;

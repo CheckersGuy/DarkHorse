@@ -2,6 +2,7 @@
 #include "MGenerator.h"
 #include "egdb.h"
 #include "types.h"
+#include <optional>
 
 TableBase::~TableBase() {}
 // change how loading works when num_pieces > max_pieces
@@ -185,4 +186,6 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   if (val == EGDB_UNKNOWN) {
     return std::nullopt;
   }
+
+  return val;
 }
