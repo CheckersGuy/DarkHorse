@@ -85,6 +85,7 @@ constexpr std::array<uint32_t, 8> MASK_ROWS = {
 constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
+
 constexpr int prob_cut = 27; // 27;
 
 constexpr int asp_wind = 15; // 15;

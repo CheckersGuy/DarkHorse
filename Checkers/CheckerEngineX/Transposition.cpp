@@ -36,43 +36,43 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
       reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
   Cluster &cluster = this->entries[index];
   const uint32_t lock = (key >> 32u);
-  auto &replace = cluster.ent[0];
+  auto *replace = &cluster.ent[0];
   int best_score = 100000;
 
   for (auto i = 0; i < bucket_size; ++i) {
     auto &entry = cluster.ent[i];
     if (entry.flag == Flag::None || entry.key == lock) {
-      replace = entry;
+      replace = &entry;
       break;
     }
     const int age_entry = age_counter - entry.age;
     int score = 5 * entry.depth - 7 * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
-      replace = entry;
+      replace = &entry;
     }
   }
   // the move we are storing
-  MoveEncoding store_move = replace.best_move;
-  if (replace.key != lock || !tt_move.is_empty()) {
+  MoveEncoding store_move = replace->best_move;
+  if (replace->key != lock || !tt_move.is_empty()) {
     store_move = MoveEncoding(tt_move);
   }
-  if (flag == TT_EXACT || replace.key != lock ||
-      depth + 4 + 2 * in_pv > replace.depth) {
-    replace.key = lock;
-    replace.best_move = store_move;
-    replace.flag = flag;
-    replace.depth = depth;
-    replace.age = age_counter;
-    replace.value = value;
-    replace.static_eval = static_eval;
-    replace.ttPv = ttPV;
+  if (flag == TT_EXACT || replace->key != lock ||
+      depth + 4 + 2 * in_pv > replace->depth) {
+    replace->key = lock;
+    replace->best_move = store_move;
+    replace->flag = flag;
+    replace->depth = depth;
+    replace->age = age_counter;
+    replace->value = value;
+    replace->static_eval = static_eval;
+    replace->ttPv = ttPV;
     return;
   }
-  if (replace.key == lock && replace.best_move.get_move().is_empty()) {
-    replace.best_move = store_move;
-    replace.static_eval = static_eval;
-    replace.ttPv = ttPV;
+  if (replace->key == lock && replace->best_move.get_move().is_empty()) {
+    replace->best_move = store_move;
+    replace->static_eval = static_eval;
+    replace->ttPv = ttPV;
   }
 }
 

@@ -14,7 +14,7 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from muon import MuonWithAuxAdam
-
+from rangerlite import RangerLite
 #below will be moved into the network
 
 L1 =2*(4096 + 2048)
@@ -114,8 +114,8 @@ class Network(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
-
+        #optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        optimizer = RangerLite(self.parameters(), lr=1.0, eps=1.0e-3,weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -591,8 +591,7 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         return self
 
     def __len__(self):
-    #return self.num_samples//self.batch_size
-        return 100000000//self.batch_size
+        return self.num_samples//self.batch_size
 
     def __next__(self):
         input_size = 120

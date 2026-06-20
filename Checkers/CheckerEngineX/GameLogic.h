@@ -4,7 +4,6 @@
 #define CHECKERSTEST_GAMELOGIC_H
 #include "Bits.h"
 #include "Board.h"
-#include "HistoryTable.h"
 #include "Line.h"
 #include "MGenerator.h"
 #include "Move.h"

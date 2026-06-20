@@ -38,7 +38,7 @@ void Board::play_move(Move move) {
     return;
   }
   assert(rep_size >= 0);
-
+  last_rev[pCounter + 1] = last_rev[pCounter];
   pStack[pCounter + 1] = pStack[pCounter];
   this->pCounter++;
 

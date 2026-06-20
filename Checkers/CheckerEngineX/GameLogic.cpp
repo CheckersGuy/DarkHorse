@@ -18,7 +18,6 @@ uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
-HistoryTable history_table;
 SearchGlobal glob;
 
 Network<4096 + 2048, 32, 32, 1> network;
@@ -117,7 +116,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
 
   nodeCounter = 0;
   mainPV.clear();
-  history_table.clear();
   MoveListe liste;
   get_moves(board.get_position(), liste);
   if (liste.length() == 1 && skip_singular) {
@@ -382,32 +380,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     start_index += (liste[0] == tt_move);
   }
 
-  PolicyHistoryCombiner combiner(history_table);
   const Color current_color = board.get_mover();
-  /*
-    auto oracle = [&](Move move) {
-      if (move.is_capture()) {
-        const uint32_t kings_captured = move.captures & board.get_position().K;
-        const uint32_t pawns_captured = move.captures &
-    (~board.get_position().K); return (int)(Bits::pop_count(kings_captured) * 14
-    + Bits::pop_count(pawns_captured) * 10);
-      }
-
-      if (!computed) {
-        out = policy.get_raw_eval(board.get_position());
-        computed = true;
-      }
-
-      if (board.get_position().color == BLACK) {
-        move = move.flipped();
-      }
-      auto encoding = move.get_move_encoding();
-      auto score = out[encoding];
-      return score;
-    };
-    */
-
-  static constexpr int POLICY_SCALE = 256;
   auto oracle = [&](Move move) {
     if (move.is_capture()) {
       const uint32_t kings_captured = move.captures & board.get_position().K;
@@ -421,16 +394,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       computed = true;
     }
 
-    Move scored_move = move;
     if (board.get_position().color == BLACK) {
-      scored_move = move.flipped();
+      move = move.flipped();
     }
-
-    auto policy_score = out[scored_move.get_move_encoding()];
-
-    // use combiner to gate policy with history
-    return combiner.combine_scaled(move, current_color, policy_score,
-                                   POLICY_SCALE);
+    auto encoding = move.get_move_encoding();
+    auto score = out[encoding];
+    return score;
   };
 
   const Value old_alpha = alpha;
@@ -461,13 +430,13 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     Value val = -INFINITE;
     if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
-      Line local_pv;
+      Line sing_pv;
       Value sing_beta = sing_value - 25;
       Value sing_depth = std::max(1, depth - 4);
 
-      auto val = Search::search<NONPV>(cutnode, board, ply + 1, local_pv,
-                                       sing_beta - 1, sing_beta, sing_depth,
-                                       sing_move, true);
+      auto val =
+          Search::search<NONPV>(cutnode, board, ply + 1, sing_pv, sing_beta - 1,
+                                sing_beta, sing_depth, sing_move, true);
 
       if (val < sing_beta) {
         extension = 1;
@@ -557,17 +526,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       if (val > alpha) {
         best_move = move;
         if (val >= beta) {
-          if (!move.is_capture()) {
-            // reward the move that caused the cutoff
-            history_table.update_good(move, current_color, depth);
-
-            // penalize moves tried before the cutoff move
-            for (auto j = 0; j < i; ++j) {
-              if (!liste[j].is_capture()) {
-                history_table.update_bad(liste[j], current_color, depth);
-              }
-            }
-          }
           best_move = move;
           best_score = val;
           break;
@@ -719,6 +677,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
 Value search_asp(Board &board, Value last_score, Depth depth) {
   Value best_score = -INFINITE;
+  const int MAX_RESEARCHES = 4;
   if (depth >= 3 && isEval(last_score)) {
     Value margin = asp_wind;
     Value alpha = last_score - margin;
@@ -732,10 +691,10 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
         margin += margin / 2;
-        alpha = std::max(last_score - margin, -EVAL_INFINITE);
+        alpha = std::max(score - margin, -EVAL_INFINITE);
       } else if (score >= beta) {
         margin += margin / 2;
-        beta = std::min(last_score + margin, int(EVAL_INFINITE));
+        beta = std::min(score + margin, int(EVAL_INFINITE));
       } else {
         best_score = score;
         mainPV = line;
