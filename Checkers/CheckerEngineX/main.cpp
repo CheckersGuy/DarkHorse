@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "WasIWrongAgain_20.quant");
+INCBIN(network, "RangerLite_10.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
@@ -92,10 +92,6 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-
-  // testing mtc to conversion database
-
-  return 0;
 
   CmdParser parser;
   parser.parse(argl, argc);
@@ -195,6 +191,20 @@ int main(int argl, const char **argc) {
     std::vector<Position> rep_history;
     std::vector<int> rep_values;
 
+    // --- draw adjudication settings (all opt-in) ---
+    const int adj_draw_count = parser.has_option("adj_draw_count")
+                                   ? parser.as<int>("adj_draw_count")
+                                   : 0; // 0 => disabled
+    const int adj_draw_score = parser.has_option("adj_draw_score")
+                                   ? parser.as<int>("adj_draw_score")
+                                   : 0;
+    const int adj_draw_min_ply = parser.has_option("adj_draw_min_ply")
+                                     ? parser.as<int>("adj_draw_min_ply")
+                                     : 0;
+    const int adj_draw_max_pieces = parser.has_option("adj_draw_max_pieces")
+                                        ? parser.as<int>("adj_draw_max_pieces")
+                                        : 24;
+
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
@@ -202,7 +212,6 @@ int main(int argl, const char **argc) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
-      // bool do_adjudicate = (distrib(generator) < adj_percentage);
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
@@ -210,13 +219,13 @@ int main(int argl, const char **argc) {
       last_eval = -INFINITE;
       board = start_pos;
       Result result = UNKNOWN;
+      int draw_streak = 0;
+
       for (auto i = 0; i < 600; ++i) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
         if (liste.length() == 0) {
-          // we dont want those positions in our history
-          // since they are not evaluated by the network anyways
           result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
           break;
         }
@@ -224,10 +233,24 @@ int main(int argl, const char **argc) {
         auto value = searchValue(board, best, depth, time, max_nodes, false,
                                  std::cout, false);
         if (best.is_empty()) {
-          // Just in case search could not finish
           result = UNKNOWN;
           break;
         }
+
+        // --- draw adjudication: track consecutive near-zero evals ---
+        if (adj_draw_count > 0 && i >= adj_draw_min_ply &&
+            board.get_position().piece_count() <= adj_draw_max_pieces &&
+            std::abs(value) <= adj_draw_score) {
+          draw_streak++;
+        } else {
+          draw_streak = 0;
+        }
+
+        if (adj_draw_count > 0 && draw_streak >= adj_draw_count) {
+          result = DRAW;
+          break;
+        }
+
         const Position previous = board.get_position();
         board.play_move(best);
         auto count =
