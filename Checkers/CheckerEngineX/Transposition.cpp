@@ -62,7 +62,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     replace->key = lock;
     replace->best_move = store_move;
     replace->flag = flag;
-    replace->depth = depth;
+    replace->depth = static_cast<uint8_t>(std::min(depth, uint8_t{127}));
     replace->age = age_counter;
     replace->value = value;
     replace->static_eval = static_eval;
@@ -101,7 +101,8 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
 }
 
 void Transposition::prefetch(uint64_t key) {
-  auto index = key & (capacity - 1);
+  const auto index =
+      reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
 #if defined(_MSC_VER)
   _mm_prefetch((char *)&entries[index(key)], _MM_HINT_T0);
 #else

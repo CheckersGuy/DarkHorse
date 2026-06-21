@@ -13,7 +13,7 @@ use std::io::BufReader;
 use std::str::FromStr;
 
 //all positions with abs(eval)>=EXCLUDE_EVAL should be removed
-pub const EXCLUDE_EVAL: i16 = 1000;
+pub const EXCLUDE_EVAL: i16 = 15000;
 
 #[derive(Debug, Clone, Hash, PartialEq)]
 pub enum SampleType {
@@ -147,7 +147,7 @@ impl Game {
             position: self.start_pos,
             mlh: -1,
             result: curr_result,
-            value: value_iter.next().unwrap_or(1000),
+            value: value_iter.next().unwrap_or(EXCLUDE_EVAL),
         });
 
         for pos in pos_iter {
@@ -156,7 +156,7 @@ impl Game {
                 position: *pos,
                 mlh: -1,
                 result: curr_result,
-                value: value_iter.next().unwrap_or(1000),
+                value: value_iter.next().unwrap_or(EXCLUDE_EVAL),
             });
         }
 
@@ -195,6 +195,7 @@ impl Game {
     pub fn read_game<R: Read>(&mut self, reader: &mut R) -> std::io::Result<()> {
         //the length of the game does not include any captures or the starting position of the game
         self.moves.clear();
+        self.values.clear();
         let game_length = reader.read_u16::<LittleEndian>()?;
         let wp = reader.read_u32::<LittleEndian>()?;
         let bp = reader.read_u32::<LittleEndian>()?;

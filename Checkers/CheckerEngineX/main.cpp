@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "RangerLite_10.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
@@ -99,27 +99,30 @@ int main(int argl, const char **argc) {
   tablebase.load_mtc_base("D:\\kr_english_mtc");
 
   Position test_position =
-      Position::pos_from_fen("W:W12,18,K20,K26,K29:BK2,K4,K17,K19,K27");
+      Position::pos_from_fen("B:WK13,K23,K31,K29:BK4,K8,K12,21,K25");
 
   test_position.print_position();
 
   auto result = tablebase.probe_mtc(test_position);
 
+  if (result.has_value()) {
+    std::cout << "Position is already in the mtc-database" << std::endl;
+  } else {
+    std::cout << "Position is not in the mtc-database" << std::endl;
+  }
+
   Solver solver(tablebase);
 
-  // auto solve_result = solver.solve_mtc(test_position, 10000);
+  auto solve_result = solver.solve_mtc(test_position, 10000);
 
-  auto moves = solver.playout_mtc(test_position, 5, 5);
-
-  std::cout << "Number of moves found: " << moves.size() << std::endl;
-
-  for (auto move : moves) {
-    test_position.make_move(move);
-    test_position.print_position();
-    std::cout << std::endl;
-    std::cout << std::endl;
+  if (solve_result.has_value()) {
+    std::cout << "MTC-Value: " << solve_result->plies << std::endl;
+    auto best_move = solve_result->move;
+    std::cout << ((best_move.has_value()) ? "We found a best_move"
+                                          : "We did not find a best_move")
+              << std::endl;
   }
-  // solve_result = solver.solve_mtc(test_position, 10000);
+
   return 0;
 
   CmdParser parser;

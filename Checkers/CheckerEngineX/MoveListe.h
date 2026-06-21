@@ -100,11 +100,9 @@ void MoveListe::sort(Position current, Depth depth, Ply ply, Move ttMove,
 
 template <typename Oracle>
 void MoveListe::move_to_front(int start_index, Oracle func) {
-  // finds the best move according to our oracle and swaps it to the front
 
   int max_score = -10000;
-  int max_index = 0;
-
+  int max_index = start_index;
   for (auto i = start_index; i < moveCounter; ++i) {
     const auto score = func(liste[i]);
     if (score > max_score) {
@@ -112,7 +110,7 @@ void MoveListe::move_to_front(int start_index, Oracle func) {
       max_index = i;
     }
   }
-  // swap moves to front
+
   const Move temp = liste[start_index];
   liste[start_index] = liste[max_index];
   liste[max_index] = temp;

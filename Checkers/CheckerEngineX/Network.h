@@ -116,7 +116,7 @@ template <int OutDim> struct alignas(64) Accumulator {
   int16_t *ft_weights;
 
   int size;
-  Position previous_black, previous_white;
+  Position previous_black_flipped, previous_white;
   std::array<int, 32> removed_features;
   std::array<int, 32> active_features;
 
@@ -179,7 +179,7 @@ template <int OutDim> void Accumulator<OutDim>::refresh() {
     white_acc[i] = ft_biases[i];
     black_acc[i] = ft_biases[i];
   }
-  previous_black = Position{};
+  previous_black_flipped = Position{};
   previous_white = Position{};
 }
 
@@ -329,6 +329,7 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
     for (auto i = 0; i < num_active; ++i) {
       const __m256i *weights =
           reinterpret_cast<__m256i *>(ft_weights + OutDim * active_features[i]);
+
       for (auto j = 0; j < num_regs; ++j) {
         regs[j] = _mm256_add_epi16(
             _mm256_load_si256(weights + j + k * num_regs), regs[j]);
@@ -352,8 +353,9 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
 template <int OutDim>
 void Accumulator<OutDim>::update(Color perp, Position after) {
   if (perp == BLACK) {
-    apply(perp, previous_black.get_color_flip(), after.get_color_flip());
-    previous_black = after;
+    const Position after_flipped = after.get_color_flip();
+    apply(perp, previous_black_flipped, after.get_color_flip());
+    previous_black_flipped = after_flipped;
   } else {
     apply(perp, previous_white, after);
     previous_white = after;

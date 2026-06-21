@@ -10,17 +10,23 @@
 // std::ofstream debug("debug.txt");
 Position &Board::get_position() { return pStack[pCounter]; }
 
-size_t Board::history_length() const { return pStack.size(); }
+size_t Board::history_length() const { return pCounter + 1; }
 
 Board::Board(Position pos) {
   this->pCounter = 0;
   get_position() = pos;
   rep_size = 0;
+  for (auto i = 0; i < 1000; ++i) {
+    last_rev[i] = 0;
+  }
 }
 
 void Board::reset(Position start_pos) {
   pCounter = 0;
   pStack[pCounter] = start_pos;
+  for (auto i = 0; i < 1000; ++i) {
+    last_rev[i] = 0;
+  }
 }
 
 void Board::print_board() const { pStack[pCounter].print_position(); }

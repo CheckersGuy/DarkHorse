@@ -184,7 +184,10 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   auto val = mtc_handle->lookup(
       mtc_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
-  if (val == EGDB_UNKNOWN) {
+  // Could be changed so the caller knows, if we are less than threshhold
+  // This is just a quick fix
+  if (val == MTC_UNKNOWN || val == MTC_LESS_THAN_THRESHOLD ||
+      val == MTC_THRESHOLD) {
     return std::nullopt;
   }
 
@@ -196,12 +199,19 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
 std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
   auto wdl_probe = base.probe(pos);
 
+  if (wdl_probe == TB_RESULT::DRAW) {
+    TBConversionResult r{Outcome::DRAW, 0};
+    return r;
+  }
+
   if (wdl_probe == TB_RESULT::WIN || wdl_probe == TB_RESULT::LOSS) {
 
     auto mtc_probe = base.probe_mtc(pos);
 
     if (mtc_probe.has_value()) {
-      return TBConversionResult{wdl_probe == TB_RESULT::WIN, mtc_probe.value()};
+      return TBConversionResult{(wdl_probe == TB_RESULT::WIN) ? Outcome::WIN
+                                                              : Outcome::LOSS,
+                                mtc_probe.value(), std::nullopt};
     }
   }
 
@@ -210,7 +220,8 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
 
   if (liste.length() == 0) {
     TBConversionResult r{
-        false, 0, std::nullopt}; // no legal moves -> immediate, 0-ply loss
+        Outcome::LOSS, 0,
+        std::nullopt}; // no legal moves -> immediate, 0-ply loss
     // proven.emplace(pos, r);
     return r;
   }
@@ -219,6 +230,7 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
     return std::nullopt; // out of search depth -- do NOT cache this
   }
 
+  bool draw_available = false;
   bool any_unresolved = false;
   bool found_win = false;
   int best_win_plies = std::numeric_limits<int>::max();
@@ -229,19 +241,21 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
     child.make_move(liste[i]);
 
     auto wdl_probe = base.probe(pos);
-    if (wdl_probe == TB_RESULT::DRAW) {
-      continue;
-    }
 
-    auto child_result = solve_mtc(false, child, budget - 1);
+    auto child_result = solve_mtc(child, budget - 1);
     if (!child_result.has_value()) {
       any_unresolved = true;
       continue;
     }
 
+    if (child_result->outcome == Outcome::DRAW) {
+      draw_available = true;
+      continue;
+    }
+
     const int total_plies = child_result->plies + 1;
 
-    if (!child_result->is_winning) {
+    if (child_result->outcome == Outcome::LOSS) {
       found_win = true;
       best_win_plies = std::min(best_win_plies, total_plies);
       best_move = liste[i];
@@ -252,78 +266,92 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
   }
 
   if (found_win) {
-    TBConversionResult r{true, best_win_plies, best_move};
+    TBConversionResult r{Outcome::WIN, best_win_plies, best_move};
     // proven.emplace(pos, r);
     return r;
   }
   if (any_unresolved) {
     return std::nullopt; // can't rule out a draw, or a win needing more depth
   }
+
+  if (draw_available) {
+    TBConversionResult r{Outcome::DRAW, best_win_plies, best_move};
+    return r;
+  }
+
   if (best_loss_plies >= 0) {
 
-    TBConversionResult r{false, best_loss_plies, best_move};
+    TBConversionResult r{Outcome::LOSS, best_loss_plies, best_move};
     // proven.emplace(pos, r);
     return r;
   }
   return std::nullopt;
 }
 
-// TO BE WORKED ON
-std::optional<Move> Solver::find_best_mtc(Position pos, int budget) {
+std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
+                                             int budget) {
   auto wdl = probe(pos);
-  if (wdl == TB_RESULT::DRAW || wdl == TB_RESULT::UNKNOWN) {
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
     return std::nullopt;
   }
+  const bool we_are_winning = (wdl == TB_RESULT::WIN);
+
   MoveListe liste;
   get_moves(pos, liste);
 
   std::optional<Move> best;
-  int best_mtc = std::numeric_limits<int>::max();
+  int best_child_mtc = we_are_winning ? std::numeric_limits<int>::max() : -1;
 
   for (int i = 0; i < liste.length(); ++i) {
     Position child = pos;
     child.make_move(liste[i]);
 
     auto child_wdl = probe(child);
-    if (child_wdl == TB_RESULT::DRAW) {
-      continue; // only moves that keep the opponent lost are candidates
+    const TB_RESULT wanted_child =
+        we_are_winning ? TB_RESULT::LOSS : TB_RESULT::WIN;
+
+    if (child_wdl == TB_RESULT::UNKNOWN) {
+      auto resolved = solver.solve(child, budget);
+      if (!resolved.has_value()) {
+        continue;
+      }
+      const bool matches = we_are_winning ? (resolved->outcome == Outcome::LOSS)
+                                          : (resolved->outcome == Outcome::WIN);
+      if (!matches) {
+        continue;
+      }
+    } else if (child_wdl != wanted_child) {
+      continue; // a losing side might still have a drawing move available --
+                // skip those too
     }
 
-    auto mtc = solve_mtc(pos, budget);
-    if (!mtc.has_value()) {
+    auto child_mtc = probe_mtc(child);
+    if (!child_mtc.has_value()) {
       continue;
     }
 
-    if (mtc.value() < best_mtc) {
-      best_mtc = mtc.value();
-      best = liste[i];
+    if (we_are_winning) {
+      if (child_mtc.value() < best_child_mtc) {
+        best_child_mtc = child_mtc.value();
+        best = liste[i];
+      }
+    } else {
+      if (child_mtc.value() > best_child_mtc) {
+        best_child_mtc = child_mtc.value();
+        best = liste[i];
+      }
     }
   }
+
+  return best;
 }
 
-std::vector<Move> Solver::playout_mtc(Position pos, int budget, int max_moves) {
-  std::vector<Move> moves;
-  for (auto i = 0; i < max_moves; ++i) {
-
-    auto solve_probe = solve_mtc(pos, budget);
-    if (!solve_probe.has_value()) {
-      break;
-    }
-    if (!solve_probe->move.has_value()) {
-      std::cout << "Did not find a move" << std::endl;
-
-      MoveListe liste;
-      get_moves(pos, liste);
-
-      break;
-    }
-
-    const auto move = solve_probe->move.value();
-
-    moves.emplace_back(move);
-    pos.make_move(move);
-    std::cout << "IsWinning: " << solve_probe->is_winning
-              << " Plies: " << solve_probe->plies << std::endl;
+// separately: the actual distance, using the parity rule from the docs
+int resolve_mtc_distance(int own_mtc, int best_child_mtc) {
+  // "If the best successor value is the same as the position's,
+  //  then the position's true value is 1 less than the returned value."
+  if (best_child_mtc == own_mtc) {
+    return 2 * own_mtc - 1;
   }
-  return moves;
+  return 2 * own_mtc;
 }

@@ -86,6 +86,9 @@ constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
 
+constexpr std::array<int, 9> FUTILITY_MARGIN = {0,   200, 240, 260, 280,
+                                                340, 400, 460, 520};
+
 constexpr int prob_cut = 27; // 27;
 
 constexpr int asp_wind = 15; // 15;
@@ -176,6 +179,8 @@ inline bool isWin(Value val) { return val >= -TB_LOSS && isEval(val); }
 
 inline bool isWinningEval(Value val) { return val >= 500; };
 inline bool isLosingEval(Value val) { return val <= -500; };
+inline bool isDecesive(Value val) { return std::abs(val) >= 500; };
+
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
   if constexpr (color == BLACK) {
     return maske << 4u;

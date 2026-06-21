@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <string>
 #include <unordered_map>
+
+enum class Outcome { WIN, LOSS, DRAW };
+
 struct TableBase {
 
   EGDB_DRIVER *handle;
@@ -38,7 +41,7 @@ struct TableBase {
 };
 
 struct TBConversionResult {
-  bool is_winning; // true if the position is a win for the player to move
+  Outcome outcome; // true if the position is a win for the player to move
   int plies;
   std::optional<Move> move; // the move that leads to the shortest conversion
 };
@@ -55,8 +58,5 @@ struct Solver {
   Solver(TableBase &base) : base(base) {} // constructor for Solver
 
   std::optional<TBConversionResult> solve_mtc(Position pos, int budget);
-
   std::optional<Move> find_best_mtc(Position pos, int budget);
-
-  std::vector<Move> playout_mtc(Position pos, int budget, int max_moves);
 };

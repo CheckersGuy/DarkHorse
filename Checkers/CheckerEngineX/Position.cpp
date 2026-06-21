@@ -220,8 +220,8 @@ bool Position::is_legal() const {
   // no two pieces can occupy the same square
   if ((BP & WP) != 0)
     return false;
-  // ghost king
-  if ((K != 0) && (K & (BP | WP)) == 0)
+
+  if ((K & ~(BP | WP)) != 0)
     return false;
 
   uint32_t num_wp = Bits::pop_count(WP);

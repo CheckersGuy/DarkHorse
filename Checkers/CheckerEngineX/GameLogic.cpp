@@ -33,6 +33,20 @@ int get_mlh_estimate(Position pos) {
   return scaled;
 }
 
+Value blend_mlh(Value eval, Position pos) {
+  const Value abs_eval = std::abs(eval);
+  // ramp factor: 0 below ~275, 1 by ~500, smooth in between
+  const Value ramp_lo = 275, ramp_hi = 500;
+  const float t = std::clamp(
+      static_cast<float>(abs_eval - ramp_lo) / (ramp_hi - ramp_lo), 0.0f, 1.0f);
+
+  const int mlh =
+      get_mlh_estimate(pos); // already cheap -- call unconditionally now
+  const Value bonus = static_cast<Value>(t * (300 - mlh));
+
+  return eval + ((eval >= 0) ? bonus : -bonus);
+}
+
 inline Value value_to_tt(Value v, int ply, Position pos) {
 
   if (!isEval(v)) {
@@ -77,6 +91,7 @@ Value evaluate(Position pos, Ply ply) {
   } else {
     eval = network.evaluate(pos, ply, 0);
     eval = std::clamp(eval, -500, 500);
+    eval = blend_mlh(eval, pos);
   }
 #endif
 
@@ -84,19 +99,9 @@ Value evaluate(Position pos, Ply ply) {
 
   eval = network.evaluate(pos, ply, 0);
   eval = std::clamp(eval, -500, 500);
+  eval = blend_mlh(eval, pos);
 
 #endif
-  if (std::abs(eval) >= 500) {
-    if (eval >= 500) {
-      eval += 300;
-      eval -= get_mlh_estimate(pos);
-    } else {
-      eval -= 300;
-      eval += get_mlh_estimate(pos);
-    }
-
-    return eval;
-  }
 
   return eval;
 }
@@ -263,7 +268,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   Value sing_value = -EVAL_INFINITE;
 
   if (ply >= MAX_PLY) {
-    evaluate(board.get_position(), ply);
+    return evaluate(board.get_position(), ply);
   }
 
   MoveListe liste;
@@ -286,10 +291,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 #ifdef _WIN32
   tab_pieces = tablebase.num_pieces;
 #endif
-
-  const auto outer_bound = [&](Value score) {
-    return !isWinningEval(std::abs(score));
-  };
 
   Value static_eval = -EVAL_INFINITE;
 
@@ -364,7 +365,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
-      !board.get_position().has_jumps() && outer_bound(static_eval) &&
+      !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
       (static_eval - 50 - 30 * (depth - 1) >= beta)) {
     return static_eval;
   }
@@ -409,12 +410,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       liste.sort(board.get_position(), depth, ply, tt_move, start_index,
                  oracle);
     }
-
     const Move move = liste[i];
 
     if (is_sing_search && move == excluded) {
       continue;
     }
+
     const auto kings = board.get_position().K;
     int extension = 0;
     if (liste.length() == 1) {
@@ -435,7 +436,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       Value sing_depth = std::max(1, depth - 4);
 
       auto val =
-          Search::search<NONPV>(cutnode, board, ply + 1, sing_pv, sing_beta - 1,
+          Search::search<NONPV>(cutnode, board, ply, sing_pv, sing_beta - 1,
                                 sing_beta, sing_depth, sing_move, true);
 
       if (val < sing_beta) {
@@ -461,7 +462,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     board.make_move(move);
     TT.prefetch(board.get_current_key());
 
-    if (!in_pv && outer_bound(beta) && depth >= 1 &&
+    if (!in_pv && !isWinningEval(beta) && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
       Depth newDepth = std::max(0, depth - 4);
@@ -479,7 +480,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                         value_to_tt(static_eval, ply, board.get_position()),
                         key, TT_LOWER, newDepth,
                         (!move.is_capture()) ? move : Move{}, is_tt_pv);
-          return outer_bound(value) ? (value - prob_cut) : value;
+          return !isDecesive(value) ? (value - prob_cut) : value;
         }
       }
     }
@@ -592,10 +593,11 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   bool is_tt_pv = in_pv || (found_hash && info.ttPv);
   if (!in_pv && info.depth >= 0 && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
-    if ((info.flag == TT_LOWER && info.score >= beta) ||
-        (info.flag == TT_UPPER && info.score <= alpha) ||
-        info.flag == TT_EXACT) {
-      return value_from_tt(info.score, ply, board.get_position());
+
+    const auto tt_value = value_from_tt(info.score, ply, board.get_position());
+    if ((info.flag == TT_LOWER && tt_value >= beta) ||
+        (info.flag == TT_UPPER && tt_value <= alpha) || info.flag == TT_EXACT) {
+      return tt_value;
     }
   }
   Value static_eval = -INFINITE;
@@ -668,8 +670,8 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       flag = TT_EXACT;
     }
     TT.store_hash(in_pv, tt_value,
-                  value_to_tt(static_eval, ply, board.get_position()),
-                  board.get_current_key(), flag, 0, Move{}, is_tt_pv);
+                  value_to_tt(static_eval, ply, board.get_position()), key,
+                  flag, 0, Move{}, is_tt_pv);
   }
 
   return bestValue;
