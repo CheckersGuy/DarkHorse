@@ -31,7 +31,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.9
+        self.gamma = 0.95
         self.run_name = run_name
 
 
@@ -115,7 +115,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
-        optimizer = RangerLite(self.parameters(), lr=1.0, eps=1.0e-3,weight_decay=0.0)
+        optimizer = RangerLite(self.parameters(), lr=2.0e-3, eps=1.0e-5,weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 

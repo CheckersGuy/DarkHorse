@@ -21,7 +21,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "RangerLite_10.quant");
+INCBIN(network, "LowLR_0.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");

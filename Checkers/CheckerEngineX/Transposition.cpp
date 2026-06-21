@@ -62,7 +62,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     replace->key = lock;
     replace->best_move = store_move;
     replace->flag = flag;
-    replace->depth = depth;
+    replace->depth = static_cast<uint8_t>(std::min(depth, uint8_t{127}));
     replace->age = age_counter;
     replace->value = value;
     replace->static_eval = static_eval;
