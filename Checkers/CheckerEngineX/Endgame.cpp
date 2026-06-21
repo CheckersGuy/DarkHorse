@@ -287,7 +287,7 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
   }
   return std::nullopt;
 }
-
+// will do my own implementation because below sucks ass
 std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
                                              int budget) {
   auto wdl = probe(pos);
