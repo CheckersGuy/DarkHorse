@@ -94,14 +94,32 @@ int main(int argl, const char **argc) {
   policy.load_from_array(gpolicyData, gpolicySize);
 
   // testing mtc to conversion database
-
+  tablebase.num_pieces = 10;
   tablebase.load_table_base("C:\\kr_english_wld");
   tablebase.load_mtc_base("D:\\kr_english_mtc");
 
-  Position test_position = Position::pos_from_fen("B:WK14,29:BK23,K27.");
+  Position test_position =
+      Position::pos_from_fen("W:W12,18,K20,K26,K29:BK2,K4,K17,K19,K27");
 
   test_position.print_position();
 
+  auto result = tablebase.probe_mtc(test_position);
+
+  Solver solver(tablebase);
+
+  // auto solve_result = solver.solve_mtc(test_position, 10000);
+
+  auto moves = solver.playout_mtc(test_position, 5, 5);
+
+  std::cout << "Number of moves found: " << moves.size() << std::endl;
+
+  for (auto move : moves) {
+    test_position.make_move(move);
+    test_position.print_position();
+    std::cout << std::endl;
+    std::cout << std::endl;
+  }
+  // solve_result = solver.solve_mtc(test_position, 10000);
   return 0;
 
   CmdParser parser;
