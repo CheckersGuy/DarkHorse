@@ -222,7 +222,7 @@ int main(int argl, const char **argc) {
   if (parser.has_option("generate")) {
 
     std::string next_line;
-    TT.resize_in_mb(4);
+    TT.resize_in_mb(16);
     std::vector<Position> rep_history;
     std::vector<int> rep_values;
 
