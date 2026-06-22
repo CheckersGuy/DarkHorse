@@ -18,8 +18,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-
-
 struct Engine {
   enum class State { Idle, Game_Ready, Init_Ready, Update };
   std::string engine_name;
@@ -99,6 +97,8 @@ public:
     }
     std::string line;
     while (std::getline(stream, line)) {
+      if (!line.empty() && line.back() == '\r')
+        line.pop_back();
       positions.emplace_back(line);
     }
     std::mt19937_64 generator(getSystemTime());
