@@ -268,19 +268,17 @@ impl Position {
 
         black_pieces_string = black_pieces_string.trim_end_matches(",").to_string();
         white_pieces_string = white_pieces_string.trim_end_matches(",").to_string();
-            
 
-        if self.wp !=0{
-        fen_string.push_str(":W");
-        fen_string.push_str(white_pieces_string.as_str());
+        if self.wp != 0 {
+            fen_string.push_str(":W");
+            fen_string.push_str(white_pieces_string.as_str());
         }
 
-       
-        if self.bp !=0{
-        fen_string.push_str(":B");
-        fen_string.push_str(black_pieces_string.as_str());
+        if self.bp != 0 {
+            fen_string.push_str(":B");
+            fen_string.push_str(black_pieces_string.as_str());
         }
-  
+
         return fen_string.trim_end_matches(",").to_string();
     }
 
@@ -334,23 +332,23 @@ impl Position {
         let kings = current & self.k;
 
         let mut movers = 0;
-        let temp = default_shift(-self.color, nocc) & opp;
+        let temp = default_shift(-COLOR, nocc) & opp;
         if temp != 0 {
-            movers |= forward_mask(-self.color, temp) & current;
+            movers |= forward_mask(-COLOR, temp) & current;
         }
-        let mut temp = forward_mask(-self.color, nocc) & opp;
+        let mut temp = forward_mask(-COLOR, nocc) & opp;
         if temp != 0 {
-            movers |= default_shift(-self.color, temp) & current;
+            movers |= default_shift(-COLOR, temp) & current;
         }
         if kings != 0 {
-            temp = default_shift(self.color, nocc) & opp;
+            temp = default_shift(COLOR, nocc) & opp;
             if temp != 0 {
-                movers |= forward_mask(self.color, temp) & kings;
+                movers |= forward_mask(COLOR, temp) & kings;
             }
-            temp = forward_mask(self.color, nocc) & opp;
+            temp = forward_mask(COLOR, nocc) & opp;
 
             if temp != 0 {
-                movers |= default_shift(self.color, temp) & kings;
+                movers |= default_shift(COLOR, temp) & kings;
             }
         }
         return movers;

@@ -94,37 +94,40 @@ int main(int argl, const char **argc) {
   policy.load_from_array(gpolicyData, gpolicySize);
 
   // testing mtc to conversion database
-  tablebase.num_pieces = 10;
-  tablebase.load_table_base("C:\\kr_english_wld");
-  tablebase.load_mtc_base("D:\\kr_english_mtc");
 
-  Position test_position =
-      Position::pos_from_fen("B:WK13,K23,K31,K29:BK4,K8,K12,21,K25");
+  /*
 
-  test_position.print_position();
+    tablebase.num_pieces = 10;
+    tablebase.load_table_base("C:\\kr_english_wld");
+    tablebase.load_mtc_base("D:\\kr_english_mtc");
 
-  auto result = tablebase.probe_mtc(test_position);
+    Position test_position =
+        Position::pos_from_fen("B:WK13,K23,K31,K29:BK4,K8,K12,21,K25");
 
-  if (result.has_value()) {
-    std::cout << "Position is already in the mtc-database" << std::endl;
-  } else {
-    std::cout << "Position is not in the mtc-database" << std::endl;
-  }
+    test_position.print_position();
 
-  Solver solver(tablebase);
+    auto result = tablebase.probe_mtc(test_position);
 
-  auto solve_result = solver.solve_mtc(test_position, 10000);
+    if (result.has_value()) {
+      std::cout << "Position is already in the mtc-database" << std::endl;
+    } else {
+      std::cout << "Position is not in the mtc-database" << std::endl;
+    }
 
-  if (solve_result.has_value()) {
-    std::cout << "MTC-Value: " << solve_result->plies << std::endl;
-    auto best_move = solve_result->move;
-    std::cout << ((best_move.has_value()) ? "We found a best_move"
-                                          : "We did not find a best_move")
-              << std::endl;
-  }
+    Solver solver(tablebase);
 
-  return 0;
+    auto solve_result = solver.solve_mtc(test_position, 10000);
 
+    if (solve_result.has_value()) {
+      std::cout << "MTC-Value: " << solve_result->plies << std::endl;
+      auto best_move = solve_result->move;
+      std::cout << ((best_move.has_value()) ? "We found a best_move"
+                                            : "We did not find a best_move")
+                << std::endl;
+    }
+
+    return 0;
+  */
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;

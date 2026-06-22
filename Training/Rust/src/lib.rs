@@ -79,7 +79,7 @@ fn input_from_fen(input: Bound<'_, PyArray1<f32>>, fen_string: &str) -> PyResult
 impl BatchProvider {
     #[new]
     fn new(path: String, size: usize, bsize: usize, shuffle: bool) -> Self {
-                println!("{}",path);
+        println!("{}", path);
         let result = BatchProvider {
             loader: DataLoader::new(path, size, shuffle).expect("Error could not load"),
             batch_size: bsize,
@@ -113,7 +113,11 @@ impl BatchProvider {
             for i in 0..self.batch_size {
                 let mut indices = Vec::with_capacity(128);
                 //need to add continue for not valid samples
-                let sample = self.loader.get_next().expect("Error loading sample");
+                let mut sample = self.loader.get_next().expect("Error loading sample");
+
+                if sample.position.color == -1 {
+                    sample.position = sample.position.get_color_flip();
+                }
 
                 let mut liste = Pos::MoveList::new();
                 liste.get_moves(sample.position);

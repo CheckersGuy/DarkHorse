@@ -50,7 +50,6 @@ void Engine::writeMessage(const std::string &msg) {
   const std::string ex_message = msg + "\n";
   write(engineWrite, (char *)&ex_message.front(),
         sizeof(char) * ex_message.size());
-  
 }
 
 Move Engine::search() {
@@ -161,12 +160,16 @@ void Interface::process() {
     history.emplace_back(pos);
     engines[second_mover].new_move(move);
     first_mover = second_mover;
-  }else if (!Interface::is_legal_move(move)){
+  } else if (!Interface::is_legal_move(move)) {
 
-    std::cout<<"Got an illegal move"<<std::endl;
-   std::exit(EXIT_FAILURE);
+    std::cout << "Got an illegal move" << std::endl;
+    if (move.is_empty()) {
+      std::cout << "The move was empty" << std::endl;
+    }
+    pos.print_position();
+
+    std::exit(EXIT_FAILURE);
   }
-
 }
 
 int Match::getMaxGames() { return maxGames; }
@@ -317,7 +320,6 @@ void Match::start() {
           inter.history.clear();
         }
         inter.process();
-
       }
     }
   }
