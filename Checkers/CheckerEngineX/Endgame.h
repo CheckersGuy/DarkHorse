@@ -59,5 +59,6 @@ struct Solver {
 
   std::optional<TBConversionResult> solve_mtc(bool is_root, Position pos,
                                               int budget);
+
   std::optional<Move> find_best_mtc(Position pos, int budget);
 };

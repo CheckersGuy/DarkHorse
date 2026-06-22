@@ -106,6 +106,7 @@ int main(int argl, const char **argc) {
 
   Position test_position =
       Position::pos_from_fen("B:W12,K19,22,K31:BK3,K13,K14,K20");
+  test_position = Position::pos_from_fen("B:W12,K9,K21:BK4,1,8,10");
   test_position.print_position();
 
   auto wdl_probe = tablebase.probe(test_position);
@@ -123,7 +124,11 @@ int main(int argl, const char **argc) {
 
   Solver solver(tablebase);
 
-  for (auto i = 0; i < 1; ++i) {
+  bool is_decesive = false;
+
+  size_t total_time = 0;
+
+  for (auto i = 0; i < 60; ++i) {
 
     MoveListe liste;
     get_moves(test_position, liste);
@@ -133,14 +138,15 @@ int main(int argl, const char **argc) {
       test_position.print_position();
       continue;
     }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    const auto solve_result = solver.solve_mtc(true, test_position, 10000);
+    auto t2 = std::chrono::high_resolution_clock::now();
+    auto diff = t2 - t1;
+    const auto elapsed_time_in_ns =
+        std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count();
 
-    auto wdl_probe = tablebase.probe(test_position);
+    total_time += elapsed_time_in_ns;
 
-    if (wdl_probe != TB_RESULT::WIN && wdl_probe != TB_RESULT::LOSS) {
-      std::cout << "no WDL-value for that position" << std::endl;
-      break;
-    }
-    auto solve_result = solver.solve_mtc(true, test_position, 10000);
     if (!solve_result.has_value()) {
       break;
     }
@@ -154,7 +160,7 @@ int main(int argl, const char **argc) {
     std::cout << "Found a new move. Number of plies left: "
               << solve_result->plies << std::endl;
 
-    if (solve_result->plies <= MTC_THRESHOLD) {
+    if (solve_result->plies <= MTC_THRESHOLD + 1) {
       break;
     }
 
@@ -165,6 +171,7 @@ int main(int argl, const char **argc) {
     test_position.print_position();
     std::cout << std::endl;
   }
+  std::cout << "Time needed: " << total_time << std::endl;
 
   return 0;
   CmdParser parser;
@@ -260,6 +267,15 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
+#ifdef _WIN32
+    // loading tablebases
+    tablebase.num_pieces = 10;
+    tablebase.load_table_base("C:\\kr_english_wld");
+    tablebase.load_mtc_base("D:\\kr_english_mtc");
+
+    Solver solver{tablebase};
+#endif
+
     std::string next_line;
     TT.resize_in_mb(16);
     std::vector<Position> rep_history;
@@ -286,6 +302,7 @@ int main(int argl, const char **argc) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
+
       TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
@@ -337,6 +354,49 @@ int main(int argl, const char **argc) {
 
         rep_history.emplace_back(previous);
         rep_values.emplace_back(value);
+
+        const auto wdl_probe = solver.base.probe(board.get_position());
+        const bool is_decesive =
+            (wdl_probe == TB_RESULT::WIN || wdl_probe == TB_RESULT::LOSS);
+#ifdef _WIN32
+        for (auto k = 0; k < 200 && is_decesive; ++k) {
+
+          const auto solve_result =
+              solver.solve_mtc(true, test_position, 10000);
+
+          if (!solve_result.has_value()) {
+            break;
+          }
+          if (solve_result->outcome == Outcome::DRAW) {
+            break;
+          }
+          if (!solve_result->move.has_value()) {
+            break;
+          }
+
+          if (solve_result->plies <= MTC_THRESHOLD + 1) {
+            break;
+          }
+          std::cout << "Debugging found mtc-move" << std::endl;
+          board.play_move(solve_result->move);
+
+          auto count = std::count(rep_history.begin(), rep_history.end(),
+                                  (rep_history.empty()) ? Position{}
+                                                        : rep_history.back());
+          // if for some reason we run into a loop and cant finish the game
+
+          if (count >= 3) {
+            result =
+                (solve_result->outcome == Outcome::WIN)
+                    ? ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON)
+                    : ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
+            break;
+          }
+          rep_history.emplace_back(previous);
+          rep_values.emplace_back(
+              (solve_result->outcome == Outcome::WIN) ? 10000 : -10000);
+        }
+#endif
       }
 
       auto res_to_string = [](Result result, Color color) {

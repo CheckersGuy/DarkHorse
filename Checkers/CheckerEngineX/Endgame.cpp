@@ -243,7 +243,7 @@ std::optional<TBConversionResult> Solver::solve_mtc(bool is_root, Position pos,
   bool found_win = false;
   int best_win_plies = std::numeric_limits<int>::max();
   int best_loss_plies = -1000;
-  Move best_move;
+  Move best_win_move, best_loss_move;
 
   for (auto move : liste) {
     Position child = pos;
@@ -264,24 +264,21 @@ std::optional<TBConversionResult> Solver::solve_mtc(bool is_root, Position pos,
 
     if (child_result->outcome == Outcome::LOSS) {
       found_win = true;
-      if (is_root) {
-        child.print_position();
-        std::cout << total_plies << std::endl;
-      }
+
       if (total_plies < best_win_plies) {
         best_win_plies = total_plies;
-        best_move = move;
+        best_win_move = move;
       }
     } else {
       if (total_plies > best_loss_plies) {
         best_loss_plies = total_plies;
-        best_move = move;
+        best_loss_move = move;
       }
     }
   }
 
   if (found_win) {
-    TBConversionResult r{Outcome::WIN, best_win_plies, best_move};
+    TBConversionResult r{Outcome::WIN, best_win_plies, best_win_move};
     // proven.emplace(pos, r);
     return r;
   }
@@ -290,13 +287,13 @@ std::optional<TBConversionResult> Solver::solve_mtc(bool is_root, Position pos,
   }
 
   if (draw_available) {
-    TBConversionResult r{Outcome::DRAW, best_win_plies, best_move};
+    TBConversionResult r{Outcome::DRAW, best_win_plies, best_win_move};
     return r;
   }
 
   if (best_loss_plies >= 0) {
 
-    TBConversionResult r{Outcome::LOSS, best_loss_plies, best_move};
+    TBConversionResult r{Outcome::LOSS, best_loss_plies, best_loss_move};
     // proven.emplace(pos, r);
     return r;
   }
