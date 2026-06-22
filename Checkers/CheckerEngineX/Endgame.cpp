@@ -288,7 +288,7 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
   return std::nullopt;
 }
 // will do my own implementation because below sucks ass
-std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
+/*std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
                                              int budget) {
   auto wdl = probe(pos);
   if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
@@ -345,6 +345,7 @@ std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
 
   return best;
 }
+*/
 
 // separately: the actual distance, using the parity rule from the docs
 int resolve_mtc_distance(int own_mtc, int best_child_mtc) {
