@@ -59,9 +59,8 @@ struct Scanner {
       index++;
       return token;
     }
-
-    throw std::domain_error(
-        std::format("Invalid input for the msg: {} at index: {}", msg, index));
+    throw std::domain_error(std::format(
+        "Invalid input for the msg: {} at index: {}", msg.c_str(), index));
   }
 
   bool is_square(std::string token) {
@@ -73,8 +72,7 @@ struct Scanner {
     if (1 <= num_square && num_square <= 32)
       return true;
     else {
-      std::cout << "INPUT: " << msg << std::endl;
-      throw std::domain_error("Invalid input for fen");
+      throw std::domain_error(std::format("Invalid token {}", token));
     }
   }
 };

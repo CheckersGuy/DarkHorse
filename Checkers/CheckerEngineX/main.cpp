@@ -5,6 +5,7 @@
 #include "Network.h"
 #include "Perft.h"
 #include "Transposition.h"
+#include "egdb.h"
 #include "incbin.h"
 #include "types.h"
 #include <algorithm>
@@ -95,39 +96,77 @@ int main(int argl, const char **argc) {
 
   // testing mtc to conversion database
 
-  /*
+  tablebase.num_pieces = 10;
+  tablebase.load_table_base("C:\\kr_english_wld");
+  tablebase.load_mtc_base("D:\\kr_english_mtc");
 
-    tablebase.num_pieces = 10;
-    tablebase.load_table_base("C:\\kr_english_wld");
-    tablebase.load_mtc_base("D:\\kr_english_mtc");
+  // Position test_position = Position::pos_from_fen("W:WK10,29:BK23,K27");
+  // Position test_position =
+  // Position::pos_from_fen("W:W12,22,K25,K30:BK3,K6,K5,K14");
 
-    Position test_position =
-        Position::pos_from_fen("B:WK13,K23,K31,K29:BK4,K8,K12,21,K25");
+  Position test_position =
+      Position::pos_from_fen("B:W12,K19,22,K31:BK3,K13,K14,K20");
+  test_position.print_position();
 
+  auto wdl_probe = tablebase.probe(test_position);
+
+  if (wdl_probe != TB_RESULT::WIN && wdl_probe != TB_RESULT::LOSS) {
+    std::cout << "no WDL-value for that position" << std::endl;
+  }
+  auto result = tablebase.probe_mtc(test_position);
+
+  if (result.has_value()) {
+    std::cout << "Position is already in the mtc-database" << std::endl;
+  } else {
+    std::cout << "Position is not in the mtc-database" << std::endl;
+  }
+
+  Solver solver(tablebase);
+
+  for (auto i = 0; i < 1; ++i) {
+
+    MoveListe liste;
+    get_moves(test_position, liste);
+
+    if (liste.length() == 1) {
+      test_position.make_move(liste[0]);
+      test_position.print_position();
+      continue;
+    }
+
+    auto wdl_probe = tablebase.probe(test_position);
+
+    if (wdl_probe != TB_RESULT::WIN && wdl_probe != TB_RESULT::LOSS) {
+      std::cout << "no WDL-value for that position" << std::endl;
+      break;
+    }
+    auto solve_result = solver.solve_mtc(true, test_position, 10000);
+    if (!solve_result.has_value()) {
+      break;
+    }
+    if (solve_result->outcome == Outcome::DRAW) {
+      break;
+    }
+    if (!solve_result->move.has_value()) {
+      break;
+    }
+
+    std::cout << "Found a new move. Number of plies left: "
+              << solve_result->plies << std::endl;
+
+    if (solve_result->plies <= MTC_THRESHOLD) {
+      break;
+    }
+
+    std::cout << "FenString before making that move: "
+              << test_position.get_fen_string() << std::endl;
+
+    test_position.make_move(solve_result->move.value());
     test_position.print_position();
+    std::cout << std::endl;
+  }
 
-    auto result = tablebase.probe_mtc(test_position);
-
-    if (result.has_value()) {
-      std::cout << "Position is already in the mtc-database" << std::endl;
-    } else {
-      std::cout << "Position is not in the mtc-database" << std::endl;
-    }
-
-    Solver solver(tablebase);
-
-    auto solve_result = solver.solve_mtc(test_position, 10000);
-
-    if (solve_result.has_value()) {
-      std::cout << "MTC-Value: " << solve_result->plies << std::endl;
-      auto best_move = solve_result->move;
-      std::cout << ((best_move.has_value()) ? "We found a best_move"
-                                            : "We did not find a best_move")
-                << std::endl;
-    }
-
-    return 0;
-  */
+  return 0;
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;

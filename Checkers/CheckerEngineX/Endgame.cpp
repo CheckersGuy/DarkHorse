@@ -184,8 +184,14 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
   auto val = mtc_handle->lookup(
       mtc_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
 
-  // Could be changed so the caller knows, if we are less than threshhold
-  // This is just a quick fix
+  if (val == MTC_LESS_THAN_THRESHOLD) {
+    return 9;
+  }
+
+  if (val == MTC_THRESHOLD) {
+    return 10;
+  }
+
   if (val == MTC_UNKNOWN || val == MTC_LESS_THAN_THRESHOLD ||
       val == MTC_THRESHOLD) {
     return std::nullopt;
@@ -196,7 +202,9 @@ std::optional<int> TableBase::probe_mtc(Position pos) {
 
 // needs to be reworked before working on the other functions
 // see claude code for more info
-std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
+std::optional<TBConversionResult> Solver::solve_mtc(bool is_root, Position pos,
+                                                    int budget) {
+
   auto wdl_probe = base.probe(pos);
 
   if (wdl_probe == TB_RESULT::DRAW) {
@@ -208,7 +216,7 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
 
     auto mtc_probe = base.probe_mtc(pos);
 
-    if (mtc_probe.has_value()) {
+    if (mtc_probe.has_value() && !is_root) {
       return TBConversionResult{(wdl_probe == TB_RESULT::WIN) ? Outcome::WIN
                                                               : Outcome::LOSS,
                                 mtc_probe.value(), std::nullopt};
@@ -234,15 +242,14 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
   bool any_unresolved = false;
   bool found_win = false;
   int best_win_plies = std::numeric_limits<int>::max();
-  int best_loss_plies = -1;
+  int best_loss_plies = -1000;
   Move best_move;
-  for (int i = 0; i < liste.length(); ++i) {
+
+  for (auto move : liste) {
     Position child = pos;
-    child.make_move(liste[i]);
+    child.make_move(move);
 
-    auto wdl_probe = base.probe(pos);
-
-    auto child_result = solve_mtc(child, budget - 1);
+    auto child_result = solve_mtc(false, child, budget - 1);
     if (!child_result.has_value()) {
       any_unresolved = true;
       continue;
@@ -257,11 +264,19 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
 
     if (child_result->outcome == Outcome::LOSS) {
       found_win = true;
-      best_win_plies = std::min(best_win_plies, total_plies);
-      best_move = liste[i];
+      if (is_root) {
+        child.print_position();
+        std::cout << total_plies << std::endl;
+      }
+      if (total_plies < best_win_plies) {
+        best_win_plies = total_plies;
+        best_move = move;
+      }
     } else {
-      best_loss_plies = std::max(best_loss_plies, total_plies);
-      best_move = liste[i];
+      if (total_plies > best_loss_plies) {
+        best_loss_plies = total_plies;
+        best_move = move;
+      }
     }
   }
 
@@ -285,8 +300,37 @@ std::optional<TBConversionResult> Solver::solve_mtc(Position pos, int budget) {
     // proven.emplace(pos, r);
     return r;
   }
+
   return std::nullopt;
 }
+
+/*
+d::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
+                                             int budget) {
+
+
+  //can only probe the mtc if we have a wdl value
+  auto wdl = probe(pos);
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
+    return std::nullopt;
+  }
+
+  std::optional<Move> best_move;
+
+
+  MoveListe liste;
+  get_moves(pos, liste);
+
+  for (auto move : liste){
+
+    Position child_pos = pos;
+    child_pos.make_move(move);
+  }
+
+  return std::nullopt;
+}
+*/
+
 // will do my own implementation because below sucks ass
 /*std::optional<Move> TableBase::find_best_mtc(Position pos, DTWSolver &solver,
                                              int budget) {
