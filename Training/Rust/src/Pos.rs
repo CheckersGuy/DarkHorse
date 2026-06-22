@@ -242,8 +242,8 @@ impl Position {
 
         let mut fen_string = String::new();
         fen_string.push_str(match self.color {
-            1 => "W:",
-            -1 => "B:",
+            1 => "W",
+            -1 => "B",
             _ => "",
         });
 
@@ -268,10 +268,19 @@ impl Position {
 
         black_pieces_string = black_pieces_string.trim_end_matches(",").to_string();
         white_pieces_string = white_pieces_string.trim_end_matches(",").to_string();
-        fen_string.push_str("W");
+            
+
+        if self.wp !=0{
+        fen_string.push_str(":W");
         fen_string.push_str(white_pieces_string.as_str());
+        }
+
+       
+        if self.bp !=0{
         fen_string.push_str(":B");
         fen_string.push_str(black_pieces_string.as_str());
+        }
+  
         return fen_string.trim_end_matches(",").to_string();
     }
 
