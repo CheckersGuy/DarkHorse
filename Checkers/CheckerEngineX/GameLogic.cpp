@@ -27,6 +27,7 @@ Network<128, 32, 32, 1> mlh_net;
 Network<1024, 32, 32, 128> policy;
 
 int get_mlh_estimate(Position pos) {
+
   auto out = mlh_net.evaluate(pos, 0, 0);
   auto scaled = static_cast<float>(out) / 127.0;
   scaled = std::max(0, (int)std::round(scaled * 300));
@@ -40,8 +41,8 @@ Value blend_mlh(Value eval, Position pos) {
   const float t = std::clamp(
       static_cast<float>(abs_eval - ramp_lo) / (ramp_hi - ramp_lo), 0.0f, 1.0f);
 
-  const int mlh =
-      get_mlh_estimate(pos); // already cheap -- call unconditionally now
+  const int mlh = get_mlh_estimate(pos);
+
   const Value bonus = static_cast<Value>(t * (300 - mlh));
 
   return eval + ((eval >= 0) ? bonus : -bonus);
@@ -83,25 +84,30 @@ Value evaluate(Position pos, Ply ply) {
   Value eval;
 #ifdef _WIN32
   auto result = tablebase.probe(pos);
+
+  // should probably add the mlh estimate here as well
+
+  const auto mlh = get_mlh_estimate(pos);
+
   if (result != TB_RESULT::UNKNOWN) {
-    auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply)
-                    : (result == TB_RESULT::LOSS) ? tbloss(ply)
+
+    auto dtw = tablebase.probe_dtw(pos);
+
+    if (dtw.has_value()) {
+      auto actual_dtw = ply + dtw.value();
+      return (result == TB_RESULT::WIN) ? -loss(actual_dtw) : loss(actual_dtw);
+    }
+
+    auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply) + (300 - mlh)
+                    : (result == TB_RESULT::LOSS) ? tbloss(ply) - (300 - mlh)
                                                   : 0;
-    eval = tb_value;
-  } else {
-    eval = network.evaluate(pos, ply, 0);
-    eval = std::clamp(eval, -500, 500);
-    eval = blend_mlh(eval, pos);
+    return tb_value;
   }
 #endif
-
-#ifdef __linux__
 
   eval = network.evaluate(pos, ply, 0);
   eval = std::clamp(eval, -500, 500);
   eval = blend_mlh(eval, pos);
-
-#endif
 
   return eval;
 }
@@ -190,10 +196,6 @@ Value searchValue(Board &board, Move &best, int depth, uint32_t time,
       strcpy(glob.reply, reply_stream.str().c_str());
     }
 #endif
-
-    if (isMateVal(best_score)) {
-      break;
-    }
   }
 #ifdef CHECKERBOARD
   double time_seconds = (double)total_time / 1000.0;
@@ -339,6 +341,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!is_root && excluded.is_empty() &&
       ((result = tablebase.probe(board.get_position())) !=
        TB_RESULT::UNKNOWN)) {
+
     auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply)
                     : (result == TB_RESULT::LOSS) ? tbloss(ply)
                                                   : 0;
@@ -350,12 +353,21 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
       if (board.get_position().piece_count() <= tab_pieces &&
           std::abs(tb_value) >= 500) {
+
+        auto dtw = tablebase.probe_dtw(board.get_position());
+
+        if (dtw.has_value()) {
+          auto actual_dtw = ply + dtw.value();
+          return (result == TB_RESULT::WIN) ? -loss(actual_dtw)
+                                            : loss(actual_dtw);
+        }
+
         if (tb_value >= 500) {
           tb_value += 300;
-          tb_value -= get_mlh_estimate(board.get_position());
+          tb_value -= get_mlh_estimate(board.get_position()) - ply;
         } else {
           tb_value -= 300;
-          tb_value += get_mlh_estimate(board.get_position());
+          tb_value += get_mlh_estimate(board.get_position()) + ply;
         }
         return tb_value;
       }

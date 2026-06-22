@@ -93,87 +93,16 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-
   // testing mtc to conversion database
 
-  tablebase.num_pieces = 10;
+#ifdef _WIN32
+
+  tablebase.num_pieces = 8;
+  tablebase.load_dtw_base("D:\\kr_english_dtw");
   tablebase.load_table_base("C:\\kr_english_wld");
-  tablebase.load_mtc_base("D:\\kr_english_mtc");
 
-  // Position test_position = Position::pos_from_fen("W:WK10,29:BK23,K27");
-  // Position test_position =
-  // Position::pos_from_fen("W:W12,22,K25,K30:BK3,K6,K5,K14");
+#endif
 
-  Position test_position =
-      Position::pos_from_fen("B:W12,K19,22,K31:BK3,K13,K14,K20");
-  test_position = Position::pos_from_fen("B:W12,K9,K21:BK4,1,8,10");
-  test_position.print_position();
-
-  auto wdl_probe = tablebase.probe(test_position);
-
-  if (wdl_probe != TB_RESULT::WIN && wdl_probe != TB_RESULT::LOSS) {
-    std::cout << "no WDL-value for that position" << std::endl;
-  }
-  auto result = tablebase.probe_mtc(test_position);
-
-  if (result.has_value()) {
-    std::cout << "Position is already in the mtc-database" << std::endl;
-  } else {
-    std::cout << "Position is not in the mtc-database" << std::endl;
-  }
-
-  Solver solver(tablebase);
-
-  bool is_decesive = false;
-
-  size_t total_time = 0;
-
-  for (auto i = 0; i < 60; ++i) {
-
-    MoveListe liste;
-    get_moves(test_position, liste);
-
-    if (liste.length() == 1) {
-      test_position.make_move(liste[0]);
-      test_position.print_position();
-      continue;
-    }
-    auto t1 = std::chrono::high_resolution_clock::now();
-    const auto solve_result = solver.solve_mtc(true, test_position, 10000);
-    auto t2 = std::chrono::high_resolution_clock::now();
-    auto diff = t2 - t1;
-    const auto elapsed_time_in_ns =
-        std::chrono::duration_cast<std::chrono::nanoseconds>(diff).count();
-
-    total_time += elapsed_time_in_ns;
-
-    if (!solve_result.has_value()) {
-      break;
-    }
-    if (solve_result->outcome == Outcome::DRAW) {
-      break;
-    }
-    if (!solve_result->move.has_value()) {
-      break;
-    }
-
-    std::cout << "Found a new move. Number of plies left: "
-              << solve_result->plies << std::endl;
-
-    if (solve_result->plies <= MTC_THRESHOLD + 1) {
-      break;
-    }
-
-    std::cout << "FenString before making that move: "
-              << test_position.get_fen_string() << std::endl;
-
-    test_position.make_move(solve_result->move.value());
-    test_position.print_position();
-    std::cout << std::endl;
-  }
-  std::cout << "Time needed: " << total_time << std::endl;
-
-  return 0;
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
@@ -267,15 +196,6 @@ int main(int argl, const char **argc) {
   }
   if (parser.has_option("generate")) {
 
-#ifdef _WIN32
-    // loading tablebases
-    tablebase.num_pieces = 10;
-    tablebase.load_table_base("C:\\kr_english_wld");
-    tablebase.load_mtc_base("D:\\kr_english_mtc");
-
-    Solver solver{tablebase};
-#endif
-
     std::string next_line;
     TT.resize_in_mb(16);
     std::vector<Position> rep_history;
@@ -348,55 +268,13 @@ int main(int argl, const char **argc) {
             std::count(rep_history.begin(), rep_history.end(),
                        (rep_history.empty()) ? Position{} : rep_history.back());
         if (count >= 3) {
+          std::cout << "Draw by repetition" << std::endl;
           result = DRAW;
           break;
         }
 
         rep_history.emplace_back(previous);
         rep_values.emplace_back(value);
-
-        const auto wdl_probe = solver.base.probe(board.get_position());
-        const bool is_decesive =
-            (wdl_probe == TB_RESULT::WIN || wdl_probe == TB_RESULT::LOSS);
-#ifdef _WIN32
-        for (auto k = 0; k < 200 && is_decesive; ++k) {
-
-          const auto solve_result =
-              solver.solve_mtc(true, test_position, 10000);
-
-          if (!solve_result.has_value()) {
-            break;
-          }
-          if (solve_result->outcome == Outcome::DRAW) {
-            break;
-          }
-          if (!solve_result->move.has_value()) {
-            break;
-          }
-
-          if (solve_result->plies <= MTC_THRESHOLD + 1) {
-            break;
-          }
-          std::cout << "Debugging found mtc-move" << std::endl;
-          board.play_move(solve_result->move);
-
-          auto count = std::count(rep_history.begin(), rep_history.end(),
-                                  (rep_history.empty()) ? Position{}
-                                                        : rep_history.back());
-          // if for some reason we run into a loop and cant finish the game
-
-          if (count >= 3) {
-            result =
-                (solve_result->outcome == Outcome::WIN)
-                    ? ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON)
-                    : ((board.get_mover() == BLACK) ? BLACK_WON : WHITE_WON);
-            break;
-          }
-          rep_history.emplace_back(previous);
-          rep_values.emplace_back(
-              (solve_result->outcome == Outcome::WIN) ? 10000 : -10000);
-        }
-#endif
       }
 
       auto res_to_string = [](Result result, Color color) {
