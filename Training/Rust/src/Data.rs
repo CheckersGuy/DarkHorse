@@ -110,7 +110,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
         let sender = tx.clone();
         let my_chunk = chunk.to_owned();
         thread::spawn(move || {
-            let mut command = Command::new("./generator2")
+            let mut command = Command::new("./MainEngine")
                 .args(["--book"])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -821,6 +821,8 @@ impl<'a> Generator<'a> {
         )
         .unwrap()
         .progress_chars("##-"),
+
+        
     );
         let max_samples = self.max_samples;
         for _id in 0..self.num_workers {
@@ -828,7 +830,7 @@ impl<'a> Generator<'a> {
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
-                let mut command = Command::new("./generator2")
+                let mut command = Command::new("./MainEngine")
                     .args([format!(
                         "--generate --time {} --nodes {} --depth {}",
                         time, max_nodes, depth

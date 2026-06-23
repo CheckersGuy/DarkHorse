@@ -45,7 +45,7 @@ fn main() -> anyhow::Result<()> {
             "/mnt/e/master1.samples",
         )?;
     */
-    /*let mut generator = Generator::new(
+    let mut generator = Generator::new(
         String::from("../Positions/ultrabook2.pos"),
         String::from("/mnt/e/evalnexttest.games"),
         14,
@@ -57,7 +57,7 @@ fn main() -> anyhow::Result<()> {
     generator.depth = 70;
     generator.generate_games()?;
 
-    */
+    
 
     //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
     /*let mut writer = BufWriter::new(File::create("test.games")?);
@@ -107,7 +107,7 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/finalpolicy.samples",
     )?;
     */
-    let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
+    //let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
     /*
     Data::rescore_games(
         vec![
@@ -129,10 +129,9 @@ fn main() -> anyhow::Result<()> {
         )?;
     */
 
-    let position = Position::try_from("W:W7:BK5").unwrap();
-    let result = base.probe_dtw_with_position(position);
+    //let position = Position::try_from("W:W7:BK5").unwrap();
+    //let result = base.probe_dtw_with_position(position);
 
-    println!("DTWResult: {:?}", result);
 
     Ok(())
 }
