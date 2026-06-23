@@ -23,6 +23,7 @@ use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::fmt::format;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::hash::Hash;
@@ -822,8 +823,10 @@ impl<'a> Generator<'a> {
         .unwrap()
         .progress_chars("##-"),
 
-        
     );
+
+        let mut average_game_length: f32 = 0.0;
+        let mut game_count: f32 = 0.0;
         let max_samples = self.max_samples;
         for _id in 0..self.num_workers {
             let open = Arc::clone(&openings);
@@ -959,6 +962,10 @@ impl<'a> Generator<'a> {
             save_game
                 .save_game(&mut writer)
                 .expect("Could not save the game");
+            average_game_length += save_game.moves.len() as f32;
+            game_count += 1.0;
+            let average = average_game_length / (game_count + 0.0001);
+            bar.println(format!("average game length is {}", average));
         }
 
         for handle in handles {
