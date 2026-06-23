@@ -10,7 +10,7 @@ TableBase::~TableBase() {}
 // just default to max_pieces in that case !
 //
 
-void TableBase::load_table_base(std::string path) {
+void TableBase::load_table_base(std::string path, int num_pieces) {
   int i, status, nerrors;
   int max_pieces;
 
@@ -21,6 +21,7 @@ void TableBase::load_table_base(std::string path) {
   // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
 
   num_pieces = std::min(num_pieces, max_pieces);
+  this->num_pieces = num_pieces;
 
   if (status) {
     printf("No database found at %s\n", path.c_str());
@@ -41,7 +42,7 @@ void TableBase::load_table_base(std::string path) {
   }
 }
 
-void TableBase::load_dtw_base(std::string path) {
+void TableBase::load_dtw_base(std::string path, int num_pieces) {
   int i, status, nerrors;
   int max_pieces;
 
@@ -67,7 +68,7 @@ void TableBase::load_dtw_base(std::string path) {
   }
 }
 
-void TableBase::load_mtc_base(std::string path) {
+void TableBase::load_mtc_base(std::string path, int num_pieces) {
   int i, status, nerrors;
   int max_pieces;
 

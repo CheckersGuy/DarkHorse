@@ -112,12 +112,12 @@ Value evaluate(Position pos, Ply ply) {
   return eval;
 }
 
-Value searchValue(Board &board, Move &best, int depth, uint32_t time,
-                  bool print, std::ostream &stream, bool skip_singular) {
+Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
+                  std::ostream &stream, bool skip_singular) {
   return searchValue(board, best, depth, time, 18446744073709551615ull, print,
                      stream, skip_singular);
 }
-Value searchValue(Board &board, Move &best, int depth, uint32_t time,
+Value searchValue(Board board, Move &best, int depth, uint32_t time,
                   size_t max_nodes, bool print, std::ostream &stream,
                   bool skip_singular) {
   const Position start_pos = board.get_position();
@@ -364,10 +364,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
         if (tb_value >= 500) {
           tb_value += 300;
-          tb_value -= get_mlh_estimate(board.get_position()) - ply;
+          tb_value -= get_mlh_estimate(board.get_position());
         } else {
           tb_value -= 300;
-          tb_value += get_mlh_estimate(board.get_position()) + ply;
+          tb_value += get_mlh_estimate(board.get_position());
         }
         return tb_value;
       }

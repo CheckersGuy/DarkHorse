@@ -5,13 +5,13 @@ extern "C" void load(char *path, int cache_size, int num_pieces) {
   // would need seperate caches for both
   base.cache_size = cache_size;
   base.num_pieces = num_pieces;
-  base.load_table_base(path);
+  base.load_table_base(path, num_pieces);
 }
 
 extern "C" void load_dtw(char *dtw_path, int cache_size, int num_pieces) {
   base.cache_size = cache_size;
   base.num_pieces = num_pieces;
-  base.load_dtw_base(dtw_path);
+  base.load_dtw_base(dtw_path, num_pieces);
 }
 
 extern "C" int probe(char *fen_string) {

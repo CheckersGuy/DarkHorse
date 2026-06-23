@@ -11,19 +11,19 @@
 
 struct TableBase {
 
+  int num_pieces = 0;
   EGDB_DRIVER *handle;
   EGDB_DRIVER *dtw_handle;
   EGDB_DRIVER *mtc_handle;
-  int num_pieces{6};
   uint64_t cache_size{2000};
 
   ~TableBase();
 
-  void load_table_base(std::string path);
+  void load_table_base(std::string path, int num_pieces);
 
-  void load_dtw_base(std::string path);
+  void load_dtw_base(std::string path, int num_pieces);
 
-  void load_mtc_base(std::string path);
+  void load_mtc_base(std::string path, int num_pieces);
 
   TB_RESULT probe(Position pos);
 

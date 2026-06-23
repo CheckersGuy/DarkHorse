@@ -23,6 +23,7 @@ Board::Board(Position pos) {
 
 void Board::reset(Position start_pos) {
   pCounter = 0;
+  rep_size = 0;
   pStack[pCounter] = start_pos;
   for (auto i = 0; i < 1000; ++i) {
     last_rev[i] = 0;
@@ -69,7 +70,10 @@ void Board::undo_move() { this->pCounter--; }
 
 Board &Board::operator=(Position pos) {
   this->pCounter = 0;
-  get_position() = pos;
+  pStack[pCounter] = pos;
+  for (auto i = 0; i < 1000; ++i) {
+    last_rev[i] = 0;
+  }
   rep_size = 0;
 
   return *this;

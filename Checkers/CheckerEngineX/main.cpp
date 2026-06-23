@@ -97,9 +97,9 @@ int main(int argl, const char **argc) {
 
 #ifdef _WIN32
 
-  tablebase.num_pieces = 8;
-  tablebase.load_dtw_base("D:\\kr_english_dtw");
-  tablebase.load_table_base("C:\\kr_english_wld");
+  tablebase.cache_size = 1500;
+  tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+  tablebase.load_table_base("C:\\kr_english_wld", 10);
 
 #endif
 
@@ -268,7 +268,6 @@ int main(int argl, const char **argc) {
             std::count(rep_history.begin(), rep_history.end(),
                        (rep_history.empty()) ? Position{} : rep_history.back());
         if (count >= 3) {
-          std::cout << "Draw by repetition" << std::endl;
           result = DRAW;
           break;
         }
