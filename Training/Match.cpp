@@ -318,6 +318,7 @@ void Match::start() {
 
           inter.reset_engines();
           inter.history.clear();
+          continue;
         }
         inter.process();
       }
