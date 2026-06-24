@@ -46,8 +46,8 @@ fn main() -> anyhow::Result<()> {
         )?;
     */
     let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/evalnexttest.games"),
+        String::from("../Positions/testbook.book"),
+        String::from("D:/TrainData/windows.games"),
         14,
         400000000,
     );

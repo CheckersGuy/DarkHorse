@@ -215,6 +215,14 @@ int main(int argl, const char **argc) {
                                         ? parser.as<int>("adj_draw_max_pieces")
                                         : 24;
 
+    const float adj_draw_prob =
+        parser.has_option("adj_draw_prob")
+            ? std::stof(parser.as<std::string>("adj_draw_prob"))
+            : 1.0f; // default: always active, preserves old behavior
+
+    std::mt19937 adj_rng(std::random_device{}());
+    std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
+
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
@@ -231,6 +239,7 @@ int main(int argl, const char **argc) {
       board = start_pos;
       Result result = UNKNOWN;
       int draw_streak = 0;
+      const bool adj_enabled_this_game = adj_prob_dist(adj_rng) < adj_draw_prob;
 
       for (auto i = 0; i < 600; ++i) {
         Move best;
@@ -242,14 +251,15 @@ int main(int argl, const char **argc) {
         }
 
         auto value = searchValue(board, best, depth, time, max_nodes, false,
-                                 std::cout, false);
+                                 std::cout, true);
         if (best.is_empty()) {
           result = UNKNOWN;
           break;
         }
 
         // --- draw adjudication: track consecutive near-zero evals ---
-        if (adj_draw_count > 0 && i >= adj_draw_min_ply &&
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            i >= adj_draw_min_ply &&
             board.get_position().piece_count() <= adj_draw_max_pieces &&
             std::abs(value) <= adj_draw_score) {
           draw_streak++;
@@ -257,7 +267,8 @@ int main(int argl, const char **argc) {
           draw_streak = 0;
         }
 
-        if (adj_draw_count > 0 && draw_streak >= adj_draw_count) {
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            draw_streak >= adj_draw_count) {
           result = DRAW;
           break;
         }

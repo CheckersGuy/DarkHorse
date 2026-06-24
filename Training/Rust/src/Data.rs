@@ -795,7 +795,7 @@ impl<'a> Generator<'a> {
     }
 
     pub fn generate_games(&self) -> std::io::Result<()> {
-        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
+        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.1);
         let mut unique_count = 0;
         let mut total_count = 0;
         let time = self.time;
@@ -835,7 +835,13 @@ impl<'a> Generator<'a> {
             let handle = std::thread::spawn(move || {
                 let mut command = Command::new("./MainEngine")
                     .args([format!(
-                        "--generate --time {} --nodes {} --depth {}",
+                        "--generate --time {} --nodes {} --depth {}
+                         --adj_draw_count 20
+                         --adj_draw_score 5
+                         --adj_draw_min_ply 20
+                         --adj_draw_max_pieces 10
+                         --adj_draw_prob 0.85
+                        ",
                         time, max_nodes, depth
                     )])
                     .stdin(Stdio::piped())
@@ -912,6 +918,12 @@ impl<'a> Generator<'a> {
                 position.bp = bp;
                 position.k = k;
                 position.color = color as i8;
+                
+                /*position.print_position();
+                println!("Value: {}",value);
+                println!("Fenstring: {}",position.get_fen_string());
+                println!("\n");
+                */
 
                 let result_string = String::from(splits[4].replace("\n", "").trim());
                 if cfg!(debug_assertions) {
