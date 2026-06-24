@@ -5,7 +5,9 @@
 #include "Network.h"
 #include "Perft.h"
 #include "Transposition.h"
+#ifdef _WIN32
 #include "egdb.h"
+#endif
 #include "incbin.h"
 #include "types.h"
 #include <algorithm>
@@ -22,7 +24,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_128.quant");
+INCBIN(network, "Windows_17.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");

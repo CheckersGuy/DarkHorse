@@ -107,20 +107,13 @@ fn main() -> anyhow::Result<()> {
         "/mnt/e/finalpolicy.samples",
     )?;
     */
-    let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
-    /*
-    Data::rescore_games(
-        vec![
-            "/mnt/c/TrainData/finaldataset0.games",
-            "/mnt/c/TrainData/finaldataset1.games",
-            "/mnt/c/TrainData/finaldataset2.games",
-            "/mnt/c/TrainData/finaldataset3.games",
-        ],
-        "/mnt/c/TrainData/value.samples",
-        &base,
+    //let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
+
+    Data::get_unique_samples(
+        vec!["/mnt/d/TrainData/windows.games"],
+        "/mnt/d/TrainData/windows.samples",
         32,
     )?;
-    */
 
     /*
         Data::filter_training_data(
@@ -129,10 +122,8 @@ fn main() -> anyhow::Result<()> {
         )?;
     */
 
-    let position = Position::try_from("W:W7:BK5").unwrap();
-    let result = base.probe_dtw_with_position(position);
-
-    println!("DTWResult: {:?}", result);
+    //let position = Position::try_from("W:W7:BK5").unwrap();
+    //let result = base.probe_dtw_with_position(position);
 
     Ok(())
 }

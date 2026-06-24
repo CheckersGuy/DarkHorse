@@ -635,6 +635,77 @@ pub fn rescore_games(
     Ok(())
 }
 
+pub fn get_unique_samples(
+    paths: Vec<&str>,
+    output: &str,
+    partitions: usize,
+) -> std::io::Result<()> {
+    //let mut reader = BufReader::new(File::open(path)?);
+    let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
+    let mut total_count = 0;
+    let mut written_count: u64 = 0;
+
+    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        files.push(BufWriter::new(File::create(file_name)?));
+    }
+
+    println!("Starting to write files");
+    for path in paths {
+        println!("Starting with file: {}", path);
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            if game.result == Result::UNKNOWN {
+                continue;
+            }
+            let samples = game.get_samples();
+
+            for sample in samples {
+                if sample.position.has_capture() {
+                    continue;
+                }
+                if (sample.position.bp == 0) || (sample.position.wp == 0) {
+                    continue;
+                }
+                if sample.value.abs() >= 15000 {
+                    continue;
+                }
+
+                if !filter.check(&sample.position) {
+                    filter.set(&sample.position);
+                    let partition = rand::thread_rng().gen::<usize>() % partitions;
+                    sample.write_fen(&mut files[partition])?;
+                    written_count += 1;
+                }
+                total_count += 1;
+            }
+        }
+    }
+    //
+    println!("Done sampling unique positions and creating partitions\n Now we are shuffling and merging the files");
+    files.clear(); //that should flush the buffers as well
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        let mut read_local = BufReader::new(File::open(file_name)?);
+        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
+        samples.par_shuffle(&mut rng);
+        println!("Done shuffling partition {i}");
+        for sample in samples {
+            sample.write_fen(&mut writer)?;
+        }
+    }
+
+    writer.flush()?;
+    println!(
+        "Got back a total of {} while processing {} samples",
+        written_count, total_count
+    );
+    Ok(())
+}
+
 pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<Sample::Sample>> {
     let mut game_samples = game.get_samples();
     let mut rng = thread_rng();
@@ -803,6 +874,8 @@ impl<'a> Generator<'a> {
         let depth = self.depth;
         let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
+        let opening_counter = Arc::new(Mutex::new(0));
+
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
         let openings = Arc::new(Mutex::new(Vec::new()));
@@ -851,10 +924,19 @@ impl<'a> Generator<'a> {
                 'outer: loop {
                     let mut start_pos = String::new();
                     {
-                        while start_pos.is_empty() {
+                        if start_pos.is_empty() {
                             let guard = open.lock().unwrap();
-                            let opening = guard.choose(&mut rand::thread_rng()).unwrap();
+                            let mut counter = opening_counter.lock().unwrap();
+                            if *counter >= guard.len() {
+                                *counter = 0;
+                            }
+
+                            let opening = guard.get(*counter).unwrap();
                             start_pos = opening.clone();
+                            let position = Position::try_from(start_pos.as_str())
+                                .expect("Could not parse position");
+                            position.print_position();
+                            println!("Counter: {}", counter);
                         }
                         if cfg!(debug_assertions) {
                             println!("Using the opening {start_pos}");

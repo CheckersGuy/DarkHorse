@@ -1,6 +1,10 @@
 #include "MGenerator.h"
 #include "Move.h"
 #include "Position.h"
+
+#ifdef _WIN32
+#include "egdb.h"
+#endif
 #include "egdb.h"
 #include "types.h"
 #include <cstdint>
