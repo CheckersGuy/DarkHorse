@@ -108,12 +108,14 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
     //let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
+    /*
+        Data::get_unique_samples(
+            vec!["/mnt/d/TrainData/windows.games"],
+            "/mnt/d/TrainData/windows.samples",
+            32,
+        )?;
 
-    Data::get_unique_samples(
-        vec!["/mnt/d/TrainData/windows.games"],
-        "/mnt/d/TrainData/windows.samples",
-        32,
-    )?;
+    */
 
     /*
         Data::filter_training_data(

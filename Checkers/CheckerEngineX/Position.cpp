@@ -271,9 +271,58 @@ bool Position::is_end() const {
   return (color == BLACK && get_movers<BLACK>() == 0u) ||
          (color == WHITE && get_movers<WHITE>() == 0u);
 }
-
 void Position::print_position() const {
-  std::cout << get_pos_string() << std::endl;
+  // ANSI escape codes for a colorized board in the terminal.
+  // Works in any ANSI-capable terminal (Linux/macOS terminals, Windows
+  // Terminal, or cmd.exe with VT100 processing enabled).
+  constexpr const char *RESET = "\033[0m";
+  constexpr const char *DARK_SQUARE =
+      "\033[40m"; // black background  -> playable square
+  constexpr const char *LIGHT_SQUARE =
+      "\033[47m"; // white background -> non-playable square
+  constexpr const char *BLACK_PIECE =
+      "\033[1;31m"; // bold red text     -> black pieces
+  constexpr const char *WHITE_PIECE =
+      "\033[1;37m"; // bold white text   -> white pieces
+
+  std::cout << "\n";
+  for (int row = 7; row >= 0; row--) {
+    for (int col = 3; col >= 0; col--) {
+      const auto bit_index = 4 * row + col;
+      const uint32_t maske = 1u << bit_index;
+
+      std::string cell = "[ ]";
+      const char *fg = "";
+
+      if (((BP & K) & maske) == maske) {
+        cell = "[B]";
+        fg = BLACK_PIECE;
+      } else if ((BP & maske) == maske) {
+        cell = "[0]";
+        fg = BLACK_PIECE;
+      } else if (((WP & K) & maske) == maske) {
+        cell = "[W]";
+        fg = WHITE_PIECE;
+      } else if ((WP & maske) == maske) {
+        cell = "[X]";
+        fg = WHITE_PIECE;
+      }
+
+      const std::string dark_cell =
+          std::string(DARK_SQUARE) + fg + cell + RESET;
+      const std::string light_cell = std::string(LIGHT_SQUARE) + "   " + RESET;
+
+      if (row % 2 == 1) {
+        std::cout << light_cell;
+      }
+      std::cout << dark_cell;
+      if (row % 2 == 0) {
+        std::cout << light_cell;
+      }
+    }
+    std::cout << "\n";
+  }
+  std::cout << RESET << std::endl;
 }
 
 std::string Position::get_pos_string() const {
