@@ -903,6 +903,7 @@ impl<'a> Generator<'a> {
         let max_samples = self.max_samples;
         for _id in 0..self.num_workers {
             let open = Arc::clone(&openings);
+            let op_counter = Arc::clone(&opening_counter);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
@@ -932,17 +933,14 @@ impl<'a> Generator<'a> {
                     {
                         if start_pos.is_empty() {
                             let guard = open.lock().unwrap();
-                            let mut counter = opening_counter.lock().unwrap();
+                            let mut counter = op_counter.lock().unwrap();
                             if *counter >= guard.len() {
                                 *counter = 0;
                             }
 
                             let opening = guard.get(*counter).unwrap();
                             start_pos = opening.clone();
-                            let position = Position::try_from(start_pos.as_str())
-                                .expect("Could not parse position");
-                            position.print_position();
-                            println!("Counter: {}", counter);
+                            *counter += 1;
                         }
                         if cfg!(debug_assertions) {
                             println!("Using the opening {start_pos}");
@@ -1000,7 +998,7 @@ impl<'a> Generator<'a> {
                 position.bp = bp;
                 position.k = k;
                 position.color = color as i8;
-                
+
                 /*position.print_position();
                 println!("Value: {}",value);
                 println!("Fenstring: {}",position.get_fen_string());
@@ -1042,10 +1040,16 @@ impl<'a> Generator<'a> {
                         continue 'game;
                     }
                 }
-                if !filter.check(&sample.position) && !sample.position.has_capture() {
+                let flipped_position = if sample.position.color == -1 {
+                    sample.position.get_color_flip()
+                } else {
+                    sample.position
+                };
+
+                if !filter.check(&flipped_position) && !sample.position.has_capture() {
                     unique_count += 1;
                     bar.inc(1);
-                    filter.set(&sample.position);
+                    filter.set(&flipped_position);
                     thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     if thread_counter.load(std::sync::atomic::Ordering::Relaxed) >= self.max_samples
                     {

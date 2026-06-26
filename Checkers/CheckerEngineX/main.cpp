@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "Windows_17.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
@@ -34,15 +34,14 @@ INCBIN(policy, "policybigger6.quant");
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0 || board.get_position().piece_count() <= 16) {
+  if (depth == 0) {
     Move bestMove;
-    TT.clear();
     Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
     Value value = -INFINITE;
     if (it == hashset.end()) {
-      value = searchValue(copy, bestMove, 0, 100000, false, std::cout);
+      value = searchValue(copy, bestMove, 0, 1000, false, std::cout);
       hashset.insert(board.get_position());
     }
 
@@ -96,14 +95,6 @@ int main(int argl, const char **argc) {
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
   // testing mtc to conversion database
-
-#ifdef _WIN32
-
-  tablebase.cache_size = 1500;
-  tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
-  tablebase.load_table_base("C:\\kr_english_wld", 10);
-
-#endif
 
   CmdParser parser;
   parser.parse(argl, argc);
@@ -160,6 +151,15 @@ int main(int argl, const char **argc) {
   }
 
   if (parser.has_option("eval-loop")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1000;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
+
     TT.resize_in_mb(hash_size);
     std::string current;
     while (std::getline(std::cin, current)) {
@@ -190,13 +190,21 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(8, pos, -100, 100);
+      generate_book(9, pos, -85, 85);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
     return 0;
   }
   if (parser.has_option("generate")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1500;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
 
     std::string next_line;
     TT.resize_in_mb(16);

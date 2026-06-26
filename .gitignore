@@ -574,6 +574,8 @@ FodyWeavers.xsd
 **/output_file2
 **/*.train
 **/*.match
+**/*.book
+**/*.pos
 
 **/*.so
 **/*.weights

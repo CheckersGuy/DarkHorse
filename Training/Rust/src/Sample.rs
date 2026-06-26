@@ -160,6 +160,12 @@ impl Game {
             });
         }
 
+        for sample in samples.iter_mut() {
+            if (*sample).position.color == -1 {
+                (*sample).position = sample.position.get_color_flip();
+            }
+        }
+
         return samples;
     }
 
