@@ -111,7 +111,7 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
         let sender = tx.clone();
         let my_chunk = chunk.to_owned();
         thread::spawn(move || {
-            let mut command = Command::new("./generator2")
+            let mut command = Command::new("./MainEngine")
                 .args(["--book"])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -866,7 +866,7 @@ impl<'a> Generator<'a> {
     }
 
     pub fn generate_games(&self) -> std::io::Result<()> {
-        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.01);
+        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.1);
         let mut unique_count = 0;
         let mut total_count = 0;
         let time = self.time;
@@ -903,12 +903,19 @@ impl<'a> Generator<'a> {
         let max_samples = self.max_samples;
         for _id in 0..self.num_workers {
             let open = Arc::clone(&openings);
+            let op_counter = Arc::clone(&opening_counter);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
             let handle = std::thread::spawn(move || {
-                let mut command = Command::new("./generator2")
+                let mut command = Command::new("./MainEngine")
                     .args([format!(
-                        "--generate --time {} --nodes {} --depth {}",
+                        "--generate --time {} --nodes {} --depth {}
+                         --adj_draw_count 20
+                         --adj_draw_score 5
+                         --adj_draw_min_ply 20
+                         --adj_draw_max_pieces 10
+                         --adj_draw_prob 0.85
+                        ",
                         time, max_nodes, depth
                     )])
                     .stdin(Stdio::piped())
@@ -926,17 +933,14 @@ impl<'a> Generator<'a> {
                     {
                         if start_pos.is_empty() {
                             let guard = open.lock().unwrap();
-                            let mut counter = opening_counter.lock().unwrap();
+                            let mut counter = op_counter.lock().unwrap();
                             if *counter >= guard.len() {
                                 *counter = 0;
                             }
 
                             let opening = guard.get(*counter).unwrap();
                             start_pos = opening.clone();
-                            let position = Position::try_from(start_pos.as_str())
-                                .expect("Could not parse position");
-                            position.print_position();
-                            println!("Counter: {}", counter);
+                            *counter += 1;
                         }
                         if cfg!(debug_assertions) {
                             println!("Using the opening {start_pos}");
@@ -995,6 +999,12 @@ impl<'a> Generator<'a> {
                 position.k = k;
                 position.color = color as i8;
 
+                /*position.print_position();
+                println!("Value: {}",value);
+                println!("Fenstring: {}",position.get_fen_string());
+                println!("\n");
+                */
+
                 let result_string = String::from(splits[4].replace("\n", "").trim());
                 if cfg!(debug_assertions) {
                     println!("{}", value);
@@ -1030,10 +1040,16 @@ impl<'a> Generator<'a> {
                         continue 'game;
                     }
                 }
-                if !filter.check(&sample.position) && !sample.position.has_capture() {
+                let flipped_position = if sample.position.color == -1 {
+                    sample.position.get_color_flip()
+                } else {
+                    sample.position
+                };
+
+                if !filter.check(&flipped_position) && !sample.position.has_capture() {
                     unique_count += 1;
                     bar.inc(1);
-                    filter.set(&sample.position);
+                    filter.set(&flipped_position);
                     thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     if thread_counter.load(std::sync::atomic::Ordering::Relaxed) >= self.max_samples
                     {

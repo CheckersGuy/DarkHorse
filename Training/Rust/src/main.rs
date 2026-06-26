@@ -37,17 +37,9 @@ use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
-
-    /*
-        Data::remove_samples(
-            "/mnt/e/newtry11rescoredmlhshuffledx.samples",
-            "/mnt/e/validation.samples",
-            "/mnt/e/master1.samples",
-        )?;
-    */
     /*let mut generator = Generator::new(
-        String::from("../Positions/ultrabook2.pos"),
-        String::from("/mnt/e/evalnexttest.games"),
+        String::from("../Positions/training2.book"),
+        String::from("D:/TrainData/training-book3.games"),
         14,
         400000000,
     );
@@ -56,76 +48,36 @@ fn main() -> anyhow::Result<()> {
     generator.max_nodes = 250000000;
     generator.depth = 70;
     generator.generate_games()?;
+    */
+    /*
+        Data::create_book(
+            "C:/Users/leagu/DarkHorse/Training/Positions/drawbook.book",
+            "C:/Users/leagu/DarkHorse/Training/Positions/training2.book",
+            14,
+        )
+        .expect("Failed");
 
     */
 
-    //Data::create_policy_data("E:\\Iamhere8.samples", "E:\\Iamhere8policy.samples");
-    /*let mut writer = BufWriter::new(File::create("test.games")?);
-    let mut game = Game::new();
-    game.set_start_position(Position::get_start_position());
 
-    let fen_strings = vec![
-        "W:W21,22,23,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
-        "B:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,9,10,12,15",
-        "W:W19,21,22,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,14,15",
-        "B:W18,19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,14,15",
-        "W:W19,21,24,25,26,27,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12,15,23",
-        "B:W11,19,21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,7,8,10,12",
-        "W:W21,24,25,26,28,29,30,31,32:B1,2,3,4,5,6,8,10,12,23",
-        "B:W19,21,24,25,28,29,30,31,32:B1,2,3,4,5,6,8,10,12",
-    /];
-
-    for fen in fen_strings.iter() {
-        let position = Position::try_from(*fen).expect("Could not parse fen_string");
-        position.print_position();
-        println!();
-    }
-    for fen in fen_strings.iter() {
-        let position = Position::try_from(*fen).expect("Could not parse fen_string");
-        let added = game.add_position(position);
-        if added.is_none() {
-            println!("Could not add the position");
-        }
-    }
-    println!("Reading the positions from the game");
-
-    for position in game.get_positions().iter() {
-        position.print_position();
-        println!();
-    }
-
-
-    */
-
-    /*Data::create_policy_data(
+    Data::get_unique_samples(
         vec![
-            "/mnt/e/finaldataset0.games",
-            "/mnt/e/finaldataset1.games",
-            "/mnt/e/finaldataset2.games",
-            "/mnt/e/finaldataset3.games",
+            "D:/TrainData/Games/training-book.games",
+            "D:/TrainData/Games/training-book2.games",
+            "D:/TrainData/Games/training-book3.games",
         ],
-        "/mnt/e/finalpolicy.samples",
+        "D:/TrainData/Samples/training-book.samples",
+        32,
     )?;
-    */
-    //let base = Base::new("/mnt/c/kr_english_wld", 2000, 10).unwrap();
-    /*
-        Data::get_unique_samples(
-            vec!["/mnt/d/TrainData/windows.games"],
-            "/mnt/d/TrainData/windows.samples",
-            32,
-        )?;
-
-    */
 
     /*
-        Data::filter_training_data(
-            "/mnt/c//TrainData/valuefiltered.samples",
-            "/mnt/c/TrainData/valuefiltered2.samples",
-        )?;
+        let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);
+
+        for sample in reader.iter_samples().take(1000) {
+            if sample.position.color == -1 {
+                println!("Wrong sample in dataset");
+            }
+        }
     */
-
-    //let position = Position::try_from("W:W7:BK5").unwrap();
-    //let result = base.probe_dtw_with_position(position);
-
     Ok(())
 }

@@ -34,15 +34,14 @@ INCBIN(policy, "policybigger6.quant");
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
-  if (depth == 0 || board.get_position().piece_count() <= 16) {
+  if (depth == 0) {
     Move bestMove;
-    TT.clear();
     Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
     Value value = -INFINITE;
     if (it == hashset.end()) {
-      value = searchValue(copy, bestMove, 0, 100000, false, std::cout);
+      value = searchValue(copy, bestMove, 0, 1000, false, std::cout);
       hashset.insert(board.get_position());
     }
 
@@ -96,14 +95,6 @@ int main(int argl, const char **argc) {
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
   // testing mtc to conversion database
-
-#ifdef _WIN32
-
-  tablebase.cache_size = 1500;
-  tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
-  tablebase.load_table_base("C:\\kr_english_wld", 10);
-
-#endif
 
   CmdParser parser;
   parser.parse(argl, argc);
@@ -160,6 +151,15 @@ int main(int argl, const char **argc) {
   }
 
   if (parser.has_option("eval-loop")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1000;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
+
     TT.resize_in_mb(hash_size);
     std::string current;
     while (std::getline(std::cin, current)) {
@@ -190,13 +190,21 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(8, pos, -100, 100);
+      generate_book(9, pos, -85, 85);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
     return 0;
   }
   if (parser.has_option("generate")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1500;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
 
     std::string next_line;
     TT.resize_in_mb(16);
@@ -217,6 +225,14 @@ int main(int argl, const char **argc) {
                                         ? parser.as<int>("adj_draw_max_pieces")
                                         : 24;
 
+    const float adj_draw_prob =
+        parser.has_option("adj_draw_prob")
+            ? std::stof(parser.as<std::string>("adj_draw_prob"))
+            : 1.0f; // default: always active, preserves old behavior
+
+    std::mt19937 adj_rng(std::random_device{}());
+    std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
+
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
@@ -233,6 +249,7 @@ int main(int argl, const char **argc) {
       board = start_pos;
       Result result = UNKNOWN;
       int draw_streak = 0;
+      const bool adj_enabled_this_game = adj_prob_dist(adj_rng) < adj_draw_prob;
 
       for (auto i = 0; i < 600; ++i) {
         Move best;
@@ -244,14 +261,15 @@ int main(int argl, const char **argc) {
         }
 
         auto value = searchValue(board, best, depth, time, max_nodes, false,
-                                 std::cout, false);
+                                 std::cout, true);
         if (best.is_empty()) {
           result = UNKNOWN;
           break;
         }
 
         // --- draw adjudication: track consecutive near-zero evals ---
-        if (adj_draw_count > 0 && i >= adj_draw_min_ply &&
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            i >= adj_draw_min_ply &&
             board.get_position().piece_count() <= adj_draw_max_pieces &&
             std::abs(value) <= adj_draw_score) {
           draw_streak++;
@@ -259,7 +277,8 @@ int main(int argl, const char **argc) {
           draw_streak = 0;
         }
 
-        if (adj_draw_count > 0 && draw_streak >= adj_draw_count) {
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            draw_streak >= adj_draw_count) {
           result = DRAW;
           break;
         }

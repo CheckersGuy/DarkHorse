@@ -131,7 +131,7 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time,
   get_moves(board.get_position(), liste);
   if (liste.length() == 1 && skip_singular) {
     best = liste[0];
-    return last_eval;
+    return -last_eval;
   }
 
   Value eval = -INFINITE;
