@@ -23,7 +23,6 @@ use std::process::Stdio;
 use std::sync::mpsc;
 use std::time::Instant;
 use std::usize;
-use Data::count_unique_samples;
 use Data::Generator;
 use Pos::Square;
 use Pos::*;
@@ -37,9 +36,9 @@ use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
-    /*let mut generator = Generator::new(
-        String::from("../Positions/training2.book"),
-        String::from("D:/TrainData/training-book3.games"),
+    let mut generator = Generator::new(
+        String::from("../Positions/debugging.book"),
+        String::from("D:/TrainData/debugging.games"),
         14,
         400000000,
     );
@@ -48,7 +47,7 @@ fn main() -> anyhow::Result<()> {
     generator.max_nodes = 250000000;
     generator.depth = 70;
     generator.generate_games()?;
-    */
+
     /*
         Data::create_book(
             "C:/Users/leagu/DarkHorse/Training/Positions/drawbook.book",
@@ -70,16 +69,18 @@ fn main() -> anyhow::Result<()> {
             32,
         )?;
     */
+    /*
+        Data::create_policy_data(
+            vec![
+                "/mnt/d/TrainData/Games/training-book.games",
+                "/mnt/d/TrainData/Games/training-book2.games",
+                "/mnt/d/TrainData/Games/training-book3.games",
+            ],
+            "/mnt/d/TrainData/Samples/policy.samples",
+            32,
+        )?;
 
-    Data::create_policy_data(
-        vec![
-            "/mnt/d/TrainData/Games/training-book.games",
-            "/mnt/d/TrainData/Games/training-book2.games",
-            "/mnt/d/TrainData/Games/training-book3.games",
-        ],
-        "/mnt/d/TrainData/Samples/policy.samples",
-        32,
-    )?;
+    */
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);
