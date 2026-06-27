@@ -100,8 +100,14 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   Move best;
   // measuring the time it took to find the move
   auto t1 = std::chrono::high_resolution_clock::now();
-  auto value =
-      searchValue(game_board, best, MAX_PLY, time_to_use, false, std::cout);
+  size_t max_nodes = 18446744073709551615ull;
+  // auto root_moves = searchValueMultiPV(board, 1, MAX_PLY, time_to_use,
+  //                                    max_nodes, false, std::cout);
+
+  auto root_moves =
+      searchValueMultiPV(board, 1, MAX_PLY, time, max_nodes, false, std::cout);
+  auto value = root_moves.front().score;
+  best = root_moves.front().move;
   auto t2 = std::chrono::high_resolution_clock::now();
   auto duration = (t2 - t1);
   auto time_searched =

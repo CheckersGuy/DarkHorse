@@ -42,7 +42,9 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
     // if we havent evaluated the position before, evaluate it now
     Value value = -INFINITE;
     if (it == hashset.end()) {
-      value = searchValue(copy, bestMove, 0, 1000, false, std::cout);
+      auto root_moves =
+          searchValueMultiPV(board, 1, 0, 1000, 10000000, false, std::cout);
+      value = root_moves.front().score;
       hashset.insert(board.get_position());
     }
 
@@ -118,13 +120,24 @@ int main(int argl, const char **argc) {
 
     return 0;
     */
+  /*TT.resize_in_mb(16);
+  Board test_board = Board(Position::get_start_position());
+
+  searchValueMultiPV(test_board, 12, 100, 10000, 100000000, true, std::cout);
+
+  return 0;
+  */
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
 
   std::vector<int> value_history;
-  int time, depth, hash_size;
+  int time, depth, hash_size, multipv;
   size_t max_nodes = 18446744073709551615ull;
+  uint64_t adj_seed = getSystemTime();
+  if (parser.has_option("seed")) {
+    adj_seed ^= std::stoull(parser.as<std::string>("seed"));
+  }
   std::string net_file;
 
   if (parser.has_option("time")) {
@@ -150,6 +163,12 @@ int main(int argl, const char **argc) {
     depth = parser.has_option("bench") ? 27 : MAX_PLY;
   }
 
+  if (parser.has_option("multipv")) {
+    multipv = parser.as<int>("multipv");
+  } else {
+    multipv = 1;
+  }
+
   if (parser.has_option("search") || parser.has_option("bench"))
 
   {
@@ -164,9 +183,12 @@ int main(int argl, const char **argc) {
     TT.resize_in_mb(hash_size);
     Move best;
     if (parser.has_option("bench")) {
-      searchValue(board, best, depth, time, max_nodes, false, std::cout);
+      searchValueMultiPV(board, multipv, depth, time, max_nodes, false,
+                         std::cout);
+
     } else {
-      searchValue(board, best, depth, time, max_nodes, true, std::cout);
+      searchValueMultiPV(board, multipv, depth, time, max_nodes, true,
+                         std::cout);
     }
 
     return 0;
@@ -194,8 +216,11 @@ int main(int argl, const char **argc) {
 
       board = Board(pos);
       Move best;
-      auto eval = searchValue(board, best, depth, time, max_nodes, false,
-                              std::cout, false);
+
+      auto root_moves = searchValueMultiPV(board, 1, MAX_PLY, time, max_nodes,
+                                           false, std::cout);
+
+      auto eval = root_moves.front().score;
 
       std::cout << eval << std::endl;
     }
@@ -252,7 +277,7 @@ int main(int argl, const char **argc) {
             ? std::stof(parser.as<std::string>("adj_draw_prob"))
             : 1.0f; // default: always active, preserves old behavior
 
-    std::mt19937 adj_rng(std::random_device{}());
+    std::mt19937 adj_rng(adj_seed);
     std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
 
     auto color_to_result = [](Color color) {
@@ -282,8 +307,11 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        auto value = searchValue(board, best, depth, time, max_nodes, false,
-                                 std::cout, true);
+        auto root_moves = searchValueMultiPV(board, 1, depth, time, max_nodes,
+                                             false, std::cout);
+
+        auto value = root_moves.front().score;
+
         if (best.is_empty()) {
           result = UNKNOWN;
           break;
@@ -390,8 +418,20 @@ int main(int argl, const char **argc) {
       std::string time_string;
       std::cin >> time_string;
       Move bestMove;
-      searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false,
-                  std::cout);
+      /*searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false,
+                  std::cout);*/
+
+      auto root_moves =
+          searchValueMultiPV(board, multipv, MAX_PLY, std::stoi(time_string),
+                             max_nodes, false, std::cout);
+      bestMove = root_moves[0].move;
+      if (root_moves.size() > 1) {
+        auto diff = std::abs(root_moves[0].score - root_moves[1].score);
+        if (diff < 5) {
+          bestMove = root_moves.back().move;
+        }
+      }
+
       std::cout << "new_move"
                 << "\n";
       std::cout << std::to_string(bestMove.get_from_index()) << "\n";

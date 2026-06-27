@@ -33,6 +33,13 @@ enum NodeType {
   NONPV,
 };
 
+struct RootMove {
+  Move move{};
+  Value score{-INFINITE};
+  Value previous_score{-INFINITE};
+  Line pv;
+};
+
 struct SearchGlobal {
   uint32_t sel_depth;
 #ifdef CHECKERBOARD
@@ -66,12 +73,9 @@ Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
 
 } // namespace Search
 
-Value searchValue(Board board, Move &best, int depth, uint32_t time,
-                  size_t max_nodes, bool print, std::ostream &stream,
-                  bool skip_singular = true);
-
-Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
-                  std::ostream &stream, bool skip_singular = true);
+std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
+                                         uint32_t time, size_t max_nodes,
+                                         bool print, std::ostream &stream);
 
 int get_mlh_estimate(Position pos);
 Value evaluate(Position pos, Ply ply);

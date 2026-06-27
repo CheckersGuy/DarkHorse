@@ -796,22 +796,24 @@ impl<'a> Generator<'a> {
         let mut average_game_length: f32 = 0.0;
         let mut game_count: f32 = 0.0;
         let max_samples = self.max_samples;
-        for _id in 0..self.num_workers {
+        for id in 0..self.num_workers {
             let open = Arc::clone(&openings);
             let op_counter = Arc::clone(&opening_counter);
             let sender = tx.clone();
             let counter = Arc::clone(&thread_counter);
+            let worker_seed: u64 =
+                rand::thread_rng().gen::<u64>() ^ (id as u64).wrapping_mul(0x9E3779B97F4A7C15);
             let handle = std::thread::spawn(move || {
                 let mut command = Command::new("./MainEngine")
                     .args([format!(
-                        "--generate --time {} --nodes {} --depth {}
+                        "--generate --time {} --nodes {} --depth {} --seed {}
                          --adj_draw_count 20
                          --adj_draw_score 5
                          --adj_draw_min_ply 20
                          --adj_draw_max_pieces 10
                          --adj_draw_prob 0.85
                         ",
-                        time, max_nodes, depth
+                        time, max_nodes, depth, worker_seed
                     )])
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
