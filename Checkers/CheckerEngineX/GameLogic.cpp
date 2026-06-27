@@ -20,6 +20,9 @@ uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
+
+
+
 SearchGlobal glob;
 
 Network<4096 + 2048, 32, 32, 1> network;
@@ -148,10 +151,10 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
   get_moves(board.get_position(), rootList);
 
   if (rootList.length() == 1) {
-    RootMove move;
-    move.move = rootList[0];
-    move.score = -last_eval;
-    return {move};
+    RootMove root;
+    root.score =-last_eval;
+    root.move = rootList[0];
+   return {root}; 
   }
 
   const int actualPV = std::min(numPV, rootList.length());
@@ -217,6 +220,8 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
       std::cout << std::endl;
     }
   }
+
+  last_eval = results[0].score; 
 
   num_pv_excluded = 0;
   return results;
