@@ -104,8 +104,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   // auto root_moves = searchValueMultiPV(board, 1, MAX_PLY, time_to_use,
   //                                    max_nodes, false, std::cout);
 
-  auto root_moves =
-      searchValueMultiPV(board, 1, MAX_PLY, time, max_nodes, false, std::cout);
+  auto root_moves = searchValueMultiPV(game_board, 1, MAX_PLY, time_to_use,
+                                       max_nodes, false, std::cout);
   auto value = root_moves.front().score;
   best = root_moves.front().move;
   auto t2 = std::chrono::high_resolution_clock::now();

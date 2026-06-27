@@ -138,6 +138,10 @@ Value evaluate(Position pos, Ply ply) {
 std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
                                          uint32_t time, size_t max_nodes,
                                          bool print, std::ostream &stream) {
+
+#ifdef CHECKERBOARD
+  tablebase.reply = glob.reply;
+#endif
   max_nodes_search = max_nodes;
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
@@ -221,8 +225,6 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
   num_pv_excluded = 0;
   return results;
 }
-
-
 
 namespace Search {
 

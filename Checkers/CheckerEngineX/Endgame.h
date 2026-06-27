@@ -20,7 +20,9 @@ struct TableBase {
   EGDB_DRIVER *dtw_handle;
   EGDB_DRIVER *mtc_handle;
   uint64_t cache_size{2000};
-
+#ifdef CHECKERBOARD
+  char *reply;
+#endif
   ~TableBase();
 
   void load_table_base(std::string path, int num_pieces);

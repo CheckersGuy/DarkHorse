@@ -3,6 +3,7 @@
 //
 #include "Move.h"
 #include "Position.h"
+#include <sstream>
 
 bool Move::is_pawn_move(const uint32_t kings) const {
   return (from & kings) == 0;
@@ -38,7 +39,10 @@ std::ostream &operator<<(std::ostream &stream, Move other) {
 }
 
 std::string Move::get_move_as_string() const {
-  return std::format("From: {} To: {}", get_from_index(), get_to_index());
+  std::ostringstream stream;
+
+  stream << "From: " << get_from_index() << " To: " << get_to_index();
+  return stream.str();
 }
 
 int Move::get_move_encoding() const {

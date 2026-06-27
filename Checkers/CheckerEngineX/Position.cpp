@@ -5,6 +5,7 @@
 #include "MoveListe.h"
 #include "types.h"
 #include <cstdint>
+#include <sstream>
 
 std::optional<Move> Position::get_move(Position orig, Position next) {
   // returns the move leading from position org to next
@@ -59,8 +60,10 @@ struct Scanner {
       index++;
       return token;
     }
-    throw std::domain_error(std::format(
-        "Invalid input for the msg: {} at index: {}", msg.c_str(), index));
+
+    std::ostringstream stream;
+    stream << "Invalid input for the msg: " << msg << " at index: " << index;
+    throw std::domain_error(stream.str());
   }
 
   bool is_square(std::string token) {
@@ -72,7 +75,9 @@ struct Scanner {
     if (1 <= num_square && num_square <= 32)
       return true;
     else {
-      throw std::domain_error(std::format("Invalid token {}", token));
+      std::ostringstream stream;
+      stream << "Invalid token: " << token;
+      throw std::domain_error(stream.str());
     }
   }
 };

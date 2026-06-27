@@ -34,7 +34,6 @@ void TableBase::load_table_base(std::string path, int num_pieces) {
                      });
 
   if (!handle) {
-    write_to_logfile("Could not load the tablebase");
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
   }
@@ -84,6 +83,7 @@ void TableBase::load_mtc_base(std::string path, int num_pieces) {
 
   mtc_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
                          [](char *msg) {});
+  std::cout << "Loaded MTC with" << num_pieces << " pieces" << std::endl;
   if (!mtc_handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);

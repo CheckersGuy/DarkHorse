@@ -5,7 +5,6 @@
 #include "Network.h"
 #include "Perft.h"
 #include "Transposition.h"
-#include <format>
 #ifdef _WIN32
 #include "egdb.h"
 #endif
@@ -176,8 +175,10 @@ int main(int argl, const char **argc) {
   }
 
 #ifdef _WIN32
-  tablebase.cache_size = 1000;
-  tablebase.load_table_base("C:\\kr_english_wld", maxdb);
+  if (maxdb > 0) {
+    tablebase.cache_size = 1000;
+    tablebase.load_table_base("C:\\kr_english_wld", maxdb);
+  }
 
 #endif
 
