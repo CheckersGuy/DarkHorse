@@ -324,6 +324,7 @@ int main(int argl, const char **argc) {
                                              false, std::cout);
 
         auto value = root_moves.front().score;
+        best = root_moves.front().move;
 
         if (best.is_empty()) {
           result = UNKNOWN;
@@ -435,15 +436,9 @@ int main(int argl, const char **argc) {
                   std::cout);*/
 
       auto root_moves =
-          searchValueMultiPV(board, multipv, MAX_PLY, std::stoi(time_string),
+          searchValueMultiPV(board, 1, MAX_PLY, std::stoi(time_string),
                              max_nodes, false, std::cout);
       bestMove = root_moves[0].move;
-      if (root_moves.size() > 1) {
-        auto diff = std::abs(root_moves[0].score - root_moves[1].score);
-        if (diff < 5) {
-          bestMove = root_moves.back().move;
-        }
-      }
 
       std::cout << "new_move"
                 << "\n";
