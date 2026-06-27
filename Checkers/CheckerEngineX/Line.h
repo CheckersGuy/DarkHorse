@@ -5,7 +5,6 @@
 #ifndef CHECKERENGINEX_LINE_H
 #define CHECKERENGINEX_LINE_H
 
-
 #include "Move.h"
 #include "types.h"
 #include <array>
@@ -14,52 +13,47 @@
 class Line {
 
 private:
-    std::array<Move, MAX_PLY> myArray;
-    int counter{0u};
+  std::array<Move, MAX_PLY> myArray;
+  int counter{0u};
 
 public:
+  Line() = default;
 
+  Line(const Line &other);
 
-	Line()=default;
+  int length() const;
 
-	Line(const Line& other);
+  void addMove(const Move &move);
 
-    int length() const;
+  void concat(const Move &best, const Line &line);
 
-    void addMove(const Move &move);
+  std::string toString() const;
 
-    void concat(const Move &best, const Line &line);
+  std::string toString(int max_length) const;
 
-    std::string toString() const;
+  Move &getFirstMove();
 
-    Move &getFirstMove();
+  void clear();
 
-    void clear();
+  bool operator==(const Line &other) const;
 
-    bool operator==(const Line &other) const;
+  bool operator!=(const Line &other) const;
 
-    bool operator!=(const Line &other) const;
+  Line &operator=(const Line &other);
 
-    Line& operator=(const Line& other);
+  const Move &operator[](int index) const;
 
-    const Move &operator[](int index) const;
+  Move &operator[](int index);
 
-    Move &operator[](int index);
+  auto begin();
 
-    auto begin();
-
-    auto end();
-
+  auto end();
 };
 
-inline auto Line::begin() {
-    return myArray.begin();
-}
+inline auto Line::begin() { return myArray.begin(); }
 
-inline auto Line::end() {
-    return myArray.begin() + counter;
-}
+inline auto Line::end() { return myArray.begin() + counter; }
 
 std::ostream &operator<<(std::ostream &stream, Line &line);
 
-#endif //CHECKERENGINEX_LINE_H
+#endif // CHECKERENGINEX_LINE_H

@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <utility>
 
+std::array<Move, 40> pv_excluded_moves;
+int num_pv_excluded = 0;
 Line mainPV;
 uint64_t endTime = 1000000000;
 size_t max_nodes_search = 18446744073709551615ull;
@@ -133,108 +135,94 @@ Value evaluate(Position pos, Ply ply) {
   return eval;
 }
 
-Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
-                  std::ostream &stream, bool skip_singular) {
-  return searchValue(board, best, depth, time, 18446744073709551615ull, print,
-                     stream, skip_singular);
-}
-Value searchValue(Board board, Move &best, int depth, uint32_t time,
-                  size_t max_nodes, bool print, std::ostream &stream,
-                  bool skip_singular) {
-  const Position start_pos = board.get_position();
+std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
+                                         uint32_t time, size_t max_nodes,
+                                         bool print, std::ostream &stream) {
   max_nodes_search = max_nodes;
   glob.sel_depth = 0u;
   TT.age_counter = (TT.age_counter + 1) & 63ull;
-
   nodeCounter = 0;
   mainPV.clear();
-  MoveListe liste;
-  get_moves(board.get_position(), liste);
-  if (liste.length() == 1 && skip_singular) {
-    best = liste[0];
-    return -last_eval;
+
+  MoveListe rootList;
+  get_moves(board.get_position(), rootList);
+
+  if (rootList.length() == 1) {
+    RootMove move;
+    move.move = rootList[0];
+    move.score = -last_eval;
+    return {move};
   }
 
-  Value eval = -INFINITE;
-  Local local;
-
-  if (depth == 0) {
-    return Search::qs<NONPV>(board, 0, mainPV, -INFINITE, INFINITE, 0, Move{},
-                             false);
+  const int actualPV = std::min(numPV, rootList.length());
+  if (actualPV <= 0) {
+    return {};
   }
+
+  std::vector<RootMove> results(actualPV);
 
   endTime = getSystemTime() + static_cast<uint64_t>(time) * 1000000;
   size_t total_time = 0;
-  int i;
-  double speed = 0;
-  Value best_score = -INFINITE;
-  nodeCounter = 0;
-  for (i = 1; i <= depth; i += 1) {
-    network.accumulator.refresh();
-    mlh_net.accumulator.refresh();
-    policy.accumulator.refresh();
-    auto start_time = std::chrono::high_resolution_clock::now();
-    std::stringstream ss;
-    size_t prev_nodes = nodeCounter;
-    try {
-      rootDepth = i;
-      best_score = Search::search_asp(board, eval, i);
-    } catch (std::string &msg) {
-      break;
-    }
+  num_pv_excluded = 0;
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
+  for (int d = 1; d <= depth; ++d) {
+    bool stopped = false;
+    num_pv_excluded = 0;
+
+    for (int pv_idx = 0; pv_idx < actualPV; ++pv_idx) {
+      network.accumulator.refresh();
+      mlh_net.accumulator.refresh();
+      policy.accumulator.refresh();
+
+      auto start_time = std::chrono::high_resolution_clock::now();
+      try {
+        rootDepth = d;
+        Value score =
+            Search::search_asp(board, results[pv_idx].previous_score, d);
+        results[pv_idx].score = score;
+        results[pv_idx].pv = mainPV;
+        results[pv_idx].move = (mainPV.length() > 0) ? mainPV[0] : Move{};
+      } catch (std::string &msg) {
+        stopped = true;
+        break;
+      }
+      auto end_time = std::chrono::high_resolution_clock::now();
+      total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
                         end_time - start_time)
                         .count();
-    if (duration > 0)
-      speed = (double)(nodeCounter - prev_nodes) / (double)duration;
-    total_time += std::chrono::duration_cast<std::chrono::milliseconds>(
-                      end_time - start_time)
-                      .count();
-    eval = best_score;
-    last_eval = eval;
-    best = mainPV.getFirstMove();
 
-    double time_seconds = (double)total_time / 1000.0;
+      if (!results[pv_idx].move.is_empty()) {
+        pv_excluded_moves[num_pv_excluded++] = results[pv_idx].move;
+      }
+    }
+
+    if (stopped)
+      break;
+
+    for (auto &rm : results)
+      rm.previous_score = rm.score;
+
+    // sort-by-score happens here, strictly before printing
+    std::sort(
+        results.begin(), results.end(),
+        [](const RootMove &a, const RootMove &b) { return a.score > b.score; });
+
     if (print) {
-      std::string temp = std::to_string(eval) + " ";
-      ss << eval << " Depth:" << i << " | " << glob.sel_depth << " | ";
-      ss << "Nodes: " << nodeCounter << " | ";
-      ss << "Time: " << time_seconds << "\n";
-      ss << "Speed: " << (int)(speed) << "KN/s " << mainPV.toString() << "\n\n";
-      stream << ss.str();
+      double time_seconds = (double)total_time / 1000.0;
+      for (int k = 0; k < actualPV; ++k) {
+        stream << "info depth " << d << " multipv " << (k + 1) << " score "
+               << results[k].score << " time " << time_seconds << " pv "
+               << results[k].pv.toString(15) << "\n";
+      }
+      std::cout << std::endl;
     }
-#ifdef CHECKERBOARD
-    if (i >= 7) {
-      std::stringstream reply_stream;
-      reply_stream << "depth " << i << "/" << glob.sel_depth;
-      reply_stream << " eval " << eval;
-      reply_stream << " time " << time_seconds;
-      reply_stream << " speed " << (int)(speed);
-      reply_stream << "KN/s ";
-      reply_stream << " pv " << mainPV.toString();
-      strcpy(glob.reply, reply_stream.str().c_str());
-    }
-#endif
   }
-#ifdef CHECKERBOARD
-  double time_seconds = (double)total_time / 1000.0;
-  std::stringstream reply_stream;
-  reply_stream << "depth " << i << "/" << glob.sel_depth;
-  reply_stream << " eval " << eval;
-  reply_stream << " time " << time_seconds;
-  reply_stream << " speed " << speed;
-  reply_stream << "KN/s ";
-  reply_stream << " pv " << mainPV.toString();
-  strcpy(glob.reply, reply_stream.str().c_str());
-#endif
 
-  // need to reset the board state;
-  board.reset(start_pos);
-
-  return eval;
+  num_pv_excluded = 0;
+  return results;
 }
+
+
 
 namespace Search {
 
@@ -299,6 +287,25 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   get_moves(board.get_position(), liste);
   if (liste.length() == 0) {
     return loss(ply);
+  }
+
+  if constexpr (is_root) {
+    if (num_pv_excluded > 0) {
+      MoveListe filtered;
+      for (int idx = 0; idx < liste.length(); ++idx) {
+        bool excl = false;
+        for (int e = 0; e < num_pv_excluded; ++e) {
+          if (pv_excluded_moves[e] == liste[idx]) {
+            excl = true;
+            break;
+          }
+        }
+        if (!excl) {
+          filtered.add_move(liste[idx]);
+        }
+      }
+      liste = filtered;
+    }
   }
 
   if (!is_root) {

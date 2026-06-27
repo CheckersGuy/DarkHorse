@@ -24,9 +24,11 @@ void Line::concat(const Move &best, const Line &line) {
   this->counter = line.counter + 1;
 }
 
-std::string Line::toString() const {
+std::string Line::toString() const { return toString(length()); }
+
+std::string Line::toString(int max_length) const {
   std::string current;
-  for (int k = 0; k < length(); ++k) {
+  for (int k = 0; k < std::min(max_length, length()); ++k) {
     current += std::to_string(myArray[k].get_from_index() + 1) + "-";
     current += std::to_string(myArray[k].get_to_index() + 1) + " ";
   }
