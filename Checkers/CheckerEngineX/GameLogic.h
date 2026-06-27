@@ -76,6 +76,9 @@ Value searchValue(Board board, Move &best, int depth, uint32_t time, bool print,
 int get_mlh_estimate(Position pos);
 Value evaluate(Position pos, Ply ply);
 
+std::array<float, 40> get_probability_distribution(MoveListe &liste,
+                                                   Position pos);
+
 extern Network<4096 + 2048, 32, 32, 1> network;
 
 extern Network<128, 32, 32, 1> mlh_net;

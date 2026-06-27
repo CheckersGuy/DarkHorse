@@ -100,6 +100,7 @@ void MoveListe::sort(Position current, Depth depth, Ply ply, Move ttMove,
 
 template <typename Oracle>
 void MoveListe::move_to_front(int start_index, Oracle func) {
+  // finds the best move according to our oracle and swaps it to the front
 
   int max_score = -10000;
   int max_index = start_index;

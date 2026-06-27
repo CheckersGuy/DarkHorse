@@ -336,183 +336,41 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
     Ok(())
 }
 
-pub fn create_subset(input: &str, output: &str, num_samples: usize) -> std::io::Result<()> {
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut reader = BufReader::new(File::open(input)?);
-    for sample in reader.iter_samples().take(num_samples) {
-        sample.write_fen(&mut writer)?;
-    }
-    Ok(())
-}
-
-//Refactoring this as well
-pub fn create_unique_fens(in_str: &str, out: &str) -> std::io::Result<()> {
-    //to be implemented
-    let input = Path::new(in_str);
-    let output = Path::new(out);
-    let reader = BufReader::with_capacity(10000000, File::open(&input)?);
-    let mut writer = BufWriter::new(File::create(&output)?);
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.1);
-    let mut line_count: usize = 0;
-    for line in reader.lines() {
-        let fen_string = line?;
-        let pos = Position::try_from(fen_string.as_str()).unwrap_or(Position::default());
-        if pos == Position::default() {
-            continue;
-        }
-
-        if !filter.check(&pos) {
-            writer.write_all((fen_string + "\n").as_str().as_bytes())?;
-            filter.set(&pos);
-            line_count += 1;
-        }
-    }
-    Ok(())
-}
-
-pub fn count_unique_samples(input: &str) -> std::io::Result<usize> {
-    let mut reader = BufReader::new(File::open(input)?);
-    let filter: RefCell<Bloom<Sample::Sample>> =
-        RefCell::new(Bloom::new_for_fp_rate(1000000000, 0.01));
-    Ok(reader
-        .iter_samples()
-        .filter(|sample| !filter.borrow().check(&sample))
-        .map(|sample| filter.borrow_mut().set(&sample))
-        .count())
-}
-
-pub fn count_positions<F: Fn(Position) -> bool>(
-    path: String,
-    predicate: F,
-) -> std::io::Result<usize> {
-    let mut reader = BufReader::new(File::open(path)?);
-    let mut buffer = String::new();
-    reader.read_line(&mut buffer).unwrap();
-    let bar = ProgressBar::new(buffer.replace("\n", "").parse::<u64>().unwrap());
-    bar.set_style(
-        ProgressStyle::with_template(
-            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>7}/{len:7} {msg}",
-        )
-        .unwrap()
-        .progress_chars("##-"),
-    );
-
-    let mut counter: usize = 0;
-    for line in reader.lines() {
-        let pos = Position::try_from(line.unwrap().as_str())?;
-        if predicate(pos) {
-            counter += 1;
-        }
-        bar.inc(1);
-    }
-
-    Ok(counter)
-}
-
-pub fn count_material_less_than(path: String, count: usize) -> std::io::Result<usize> {
-    count_positions(path, |pos| {
-        (pos.bp.count_ones() + pos.wp.count_ones()) as usize <= count
-    })
-}
-
-pub fn print_samples(path: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
-    let game_iter = reader.iter_games();
-
-    for game in game_iter {
-        let samples = game.get_samples();
-        for sample in samples.iter() {
-            println!("-------------------");
-            sample.position.print_position();
-            println!("Mover: {} Value: {}", sample.position.color, sample.value);
-        }
-    }
-    Ok(())
-}
-//#[cfg(target_os = "windows")]
-/*pub fn create_mlh_data(path: &str, output: &str, base: &TableBase::Base) -> std::io::Result<()> {
+pub fn create_mlh_data(path: &str, output: &str) -> std::io::Result<()> {
     let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
 
-    let mut command = Command::new("./generator2")
-        .args(["--eval-loop"])
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
-        .expect("Failed to start process");
-    let mut stdin = command.stdin.take().unwrap();
-    let stdout = command.stdout.take().unwrap();
-    let mut f = BufReader::new(stdout);
+    let mut total_count = 0;
+    let mut written_count: u64 = 0;
+
+    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
 
     for game in reader.iter_games() {
         let mut mlh_counter = 0;
-        for sample in game.iter() {
-            if !sample.position.has_capture() {
-                let probe = base.probe_with_position(sample.position).unwrap();
-                let mut eval: i32 = 0;
 
-                if probe == Result::TBDRAW {
-                    stdin
-                        .write_all((sample.position.clone().get_fen_string() + "\n").as_bytes())
-                        .unwrap();
+        if game.result == Result::DRAW || game.result == Result::UNKNOWN {
+            continue;
+        }
 
-                    let mut buffer = String::new();
-                    match f.read_line(&mut buffer) {
-                        Ok(_) => {}
-                        Err(e) => {
-                            println!("{:?}", e)
-                        }
-                    }
-                    buffer = buffer.trim().replace("\n", "");
-
-                    eval = buffer.parse().unwrap_or(0);
-                } else if probe == Result::TBWIN || probe == Result::TBLOSS {
-                    eval = 1000;
-                    //trying out dtw once again
-                }
-
-                if eval.abs() >= 500 {
-                    let mut copy = sample.clone();
-                    if copy.position.color == -1 {
-                        copy.position = copy.position.get_color_flip();
-                    }
-                    copy.mlh = mlh_counter as i16;
-                    copy.write_fen(&mut writer)
-                        .expect("Error writing sample to a file");
-                }
-            }
+        let samples = game.get_samples();
+        for sample in samples.iter() {
             mlh_counter += 1;
+            if sample.position.has_capture() {
+                continue;
+            }
+            if (sample.position.bp == 0) || (sample.position.wp == 0) {
+                continue;
+            }
+            if sample.value.abs() >= 15000 {
+                continue;
+            }
         }
     }
     writer.flush()?;
     Ok(())
 }
-*/
-
-/*pub fn convert_samples_to_games(path: &str, output: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
-    let mut writer = BufWriter::new(File::create(output)?);
-
-    'outer: for game in reader.iter_games() {
-        //old format - samples are in reverse order
-        let mut new_game = Game::new();
-        for (index, sample) in game.iter().rev().enumerate() {
-          if index == 0 {
-                new_game.set_start_position(sample.position);
-                new_game.set_result(sample.result);
-            } else {
-                let added = new_game.add_position(sample.position);
-                if added == None {
-                    continue 'outer;
-                }
-            }
-        }
-        //now we can write the game to a file
-        new_game.save_game(&mut writer)?;
-    }
-    Ok(())
-}
-*/
 
 pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
@@ -782,15 +640,29 @@ pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<
     Ok(filter_samples)
 }
 
-pub fn create_policy_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
+pub fn create_policy_data(
+    paths: Vec<&str>,
+    output: &str,
+    partitions: usize,
+) -> std::io::Result<()> {
+    let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
+    let mut written_count: usize = 0;
+    let mut total_count: usize = 0;
+    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
     let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        files.push(BufWriter::new(File::create(file_name)?));
+    }
+
     for path in paths {
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
             let samples = game.get_samples();
 
             for window in samples.windows(2) {
-                let next_pos = window[1].position;
+                let next_pos = window[1].position.get_color_flip();
                 let prev_pos = window[0].position;
                 if prev_pos.has_capture() {
                     continue;
@@ -811,18 +683,41 @@ pub fn create_policy_data(paths: Vec<&str>, output: &str) -> std::io::Result<()>
                         Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
                 }
 
-                if move_encoding >= 0 {
+                if move_encoding >= 0 && !filter.check(&prev_pos) {
                     let mut sample = window[0].clone();
                     if sample.position.color == -1 {
                         sample.position = sample.position.get_color_flip();
                     }
 
                     sample.mlh = move_encoding as i16;
-                    sample.write_fen(&mut writer)?;
+                    let partition = rand::thread_rng().gen::<usize>() % partitions;
+                    written_count += 1;
+                    sample.write_fen(&mut files[partition])?;
+                    filter.set(&prev_pos);
                 }
+                total_count += 1;
             }
         }
     }
+
+    println!("Done sampling unique positions and creating partitions\n Now we are shuffling and merging the files");
+    for i in 0..partitions {
+        let file_name = String::from(output) + i.to_string().as_str();
+        let mut read_local = BufReader::new(File::open(file_name)?);
+        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
+        samples.par_shuffle(&mut rng);
+        println!("Done shuffling partition {i}");
+        for sample in samples {
+            sample.write_fen(&mut writer)?;
+        }
+    }
+
+    writer.flush()?;
+    println!(
+        "Got back a total of {} while processing {} samples",
+        written_count, total_count
+    );
+
     Ok(())
 }
 

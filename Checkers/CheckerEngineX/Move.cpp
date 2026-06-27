@@ -37,6 +37,10 @@ std::ostream &operator<<(std::ostream &stream, Move other) {
   return stream;
 }
 
+std::string Move::get_move_as_string() const {
+  return std::format("From: {} To: {}", get_from_index(), get_to_index());
+}
+
 int Move::get_move_encoding() const {
   int dir = 0;
 

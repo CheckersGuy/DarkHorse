@@ -5,6 +5,7 @@
 #include "Network.h"
 #include "Perft.h"
 #include "Transposition.h"
+#include <format>
 #ifdef _WIN32
 #include "egdb.h"
 #endif
@@ -24,7 +25,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "167-data_4.quant");
+INCBIN(network, "registry_128.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
@@ -94,8 +95,29 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-  // testing mtc to conversion database
+  /*
+    Position start_pos = Position::pos_from_fen("W:WK6:B4,3");
+    start_pos.print_position();
+    MoveListe liste;
+    get_moves(start_pos, liste);
 
+    const auto out = policy.get_raw_eval(start_pos);
+
+    auto distribution = get_probability_distribution(liste, start_pos);
+
+    for (auto i = 0; i < liste.length(); ++i) {
+      Move move =
+          (start_pos.color == Color::BLACK) ? liste[i].flipped() : liste[i];
+      const auto index = move.get_move_encoding();
+      std::cout << std::format("Move {} has the following values:  Encoding: {},
+    " "MoveIndex : {} with probability : {}", liste[i].get_move_as_string(),
+
+                               index, i, distribution[i])
+                << std::endl;
+    }
+
+    return 0;
+    */
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;

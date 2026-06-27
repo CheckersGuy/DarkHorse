@@ -6,6 +6,7 @@
 #define CHECKERSTEST_MOVE_H
 #include "Bits.h"
 #include "types.h"
+#include <format>
 struct Move {
   uint32_t from{0u};
   uint32_t to{0u};
@@ -32,6 +33,8 @@ struct Move {
   int get_move_encoding() const;
 
   static Move from_encoding(int encoding);
+
+  std::string get_move_as_string() const;
 
   // flips the move from white to black or vice versa
   Move flipped();

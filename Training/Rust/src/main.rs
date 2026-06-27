@@ -59,14 +59,25 @@ fn main() -> anyhow::Result<()> {
 
     */
 
+    /*
+        Data::get_unique_samples(
+            vec![
+                "D:/TrainData/Games/training-book.games",
+                "D:/TrainData/Games/training-book2.games",
+                "D:/TrainData/Games/training-book3.games",
+            ],
+            "D:/TrainData/Samples/training-book.samples",
+            32,
+        )?;
+    */
 
-    Data::get_unique_samples(
+    Data::create_policy_data(
         vec![
-            "D:/TrainData/Games/training-book.games",
-            "D:/TrainData/Games/training-book2.games",
-            "D:/TrainData/Games/training-book3.games",
+            "/mnt/d/TrainData/Games/training-book.games",
+            "/mnt/d/TrainData/Games/training-book2.games",
+            "/mnt/d/TrainData/Games/training-book3.games",
         ],
-        "D:/TrainData/Samples/training-book.samples",
+        "/mnt/d/TrainData/Samples/policy.samples",
         32,
     )?;
 

@@ -34,6 +34,27 @@ int get_mlh_estimate(Position pos) {
   return scaled;
 }
 
+std::array<float, 40> get_probability_distribution(MoveListe &liste,
+                                                   Position pos) {
+
+  std::array<float, 40> logits;
+  int32_t *out = &policy.out_layer.buffer[0];
+  float sum = 0.0f;
+  for (int i = 0; i < liste.length(); ++i) {
+    if (liste[i].is_capture())
+      continue; // captures already scored separately in oracle
+    Move scored = (pos.color == BLACK) ? liste[i].flipped() : liste[i];
+    const auto index = scored.get_move_encoding();
+    logits[i] = out[index] / 127.0f;
+    logits[i] = std::exp(logits[i]);
+    sum += logits[i];
+  }
+  for (int i = 0; i < liste.length(); ++i) {
+    logits[i] /= sum;
+  }
+  return logits;
+}
+
 Value blend_mlh(Value eval, Position pos) {
   const Value abs_eval = std::abs(eval);
   // ramp factor: 0 below ~275, 1 by ~500, smooth in between
@@ -378,13 +399,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
-      (static_eval - 50 - 30 * (depth - 1) >= beta)) {
+      (static_eval - 20 - 30 * depth >= beta)) {
     return static_eval;
   }
 
   int32_t *out = &policy.out_layer.buffer[0];
-  // std::visit([&](auto &output) { out = &output.buffer[0]; },
-  //            policy.layers.back());
   bool computed = false;
 
   int start_index = 0;
@@ -405,6 +424,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (!computed) {
       out = policy.get_raw_eval(board.get_position());
       computed = true;
+      // need to compute the /lodistribution only once
     }
 
     if (board.get_position().color == BLACK) {
@@ -464,6 +484,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
     Depth reduction =
         Search::reduce(i, depth, ply, board, move, in_pv, cutnode);
+
     if (is_tt_pv && !in_pv) {
       reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);
     } else if (cutnode && move != tt_move && !tt_move.is_empty()) {

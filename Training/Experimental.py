@@ -17,7 +17,8 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 #below will be moved into the network
 
-L1 =2*(4096 + 2048)
+#L1 =2*(4096 + 2048)
+L1 = 2*1024
 L2 =32
 L3 = 32
 
@@ -115,7 +116,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
-        optimizer = RangerLite(self.parameters(), lr=2.0e-3, eps=1.0e-5,weight_decay=0.0)
+        optimizer = RangerLite(self.parameters(), lr=2.0e-2, eps=1.0e-5,weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -124,7 +125,7 @@ class Network(pl.LightningModule):
     def training_step(self, train_batch, batch_idx):
         self.step()
         result,eval, move,buckets, x,legal_moves = train_batch
-        eval = 1.0* torch.sigmoid(eval/128.0)  #+ 0.5*result
+        eval = 1.0* torch.sigmoid(eval/127.0)
         out = self.forward(x,buckets)
         loss =torch.pow(torch.abs(out-eval),2).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
@@ -134,7 +135,7 @@ class Network(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
         result,evalu, move,buckets,psqt_buckets, x,legal_moves = val_batch
         out = self.forward(x,buckets)
-        eval = 1.0* torch.sigmoid(eval/128.0) 
+        eval = 1.0* torch.sigmoid(eval/127.0) 
         loss = torch.pow(torch.abs(out - eval), 2).mean()
         self.log('val_loss', loss.detach())
         self.val_outputs.append(loss)
@@ -397,13 +398,14 @@ class MLHNetwork(pl.LightningModule):
 
 class PolicyNetwork(pl.LightningModule):
 
-    def __init__(self):
+    def __init__(self,run_name):
         super(PolicyNetwork, self).__init__()
         self.layers = []
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
         self.gamma = 0.98
+        self.run_name = run_name
 
 
         self.num_buckets =12
@@ -482,7 +484,8 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def configure_optimizers(self):
-        optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        #optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
+        optimizer = RangerLite(self.parameters(), lr=1.0e-2, eps=1.0e-5,weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -514,7 +517,8 @@ class PolicyNetwork(pl.LightningModule):
 
 
     def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("policybigger6.quant")
+        display = "{name_run}_{epoch_count}.quant".format(name_run = self.run_name, epoch_count = self.current_epoch) 
+        self.save_quantized_bucket(display)
         return super().on_train_epoch_end()
 
     def save_quantized_bucket(self, output):
