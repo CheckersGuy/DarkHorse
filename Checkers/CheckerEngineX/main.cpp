@@ -132,7 +132,7 @@ int main(int argl, const char **argc) {
   Board board;
 
   std::vector<int> value_history;
-  int time, depth, hash_size, multipv;
+  int time, depth, hash_size, multipv, maxdb;
   size_t max_nodes = 18446744073709551615ull;
   uint64_t adj_seed = getSystemTime();
   if (parser.has_option("seed")) {
@@ -168,6 +168,18 @@ int main(int argl, const char **argc) {
   } else {
     multipv = 1;
   }
+
+  if (parser.has_option("maxdb")) {
+    maxdb = parser.as<int>("maxdb");
+  } else {
+    maxdb = 0;
+  }
+
+#ifdef _WIN32
+  tablebase.cache_size = 1000;
+  tablebase.load_table_base("C:\\kr_english_wld", maxdb);
+
+#endif
 
   if (parser.has_option("search") || parser.has_option("bench"))
 
