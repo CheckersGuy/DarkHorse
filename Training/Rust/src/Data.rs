@@ -812,6 +812,9 @@ impl<'a> Generator<'a> {
                          --adj_draw_min_ply 20
                          --adj_draw_max_pieces 10
                          --adj_draw_prob 0.85
+                         --multi-pv-prob 0.25 
+                         --multi-pv-eval-diff 35 
+                         --multi-pv-min-pieces 8
                         ",
                         time, max_nodes, depth, worker_seed
                     )])

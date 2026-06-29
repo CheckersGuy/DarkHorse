@@ -96,36 +96,7 @@ int main(int argl, const char **argc) {
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
   policy.load_from_array(gpolicyData, gpolicySize);
-  /*
-    Position start_pos = Position::pos_from_fen("W:WK6:B4,3");
-    start_pos.print_position();
-    MoveListe liste;
-    get_moves(start_pos, liste);
 
-    const auto out = policy.get_raw_eval(start_pos);
-
-    auto distribution = get_probability_distribution(liste, start_pos);
-
-    for (auto i = 0; i < liste.length(); ++i) {
-      Move move =
-          (start_pos.color == Color::BLACK) ? liste[i].flipped() : liste[i];
-      const auto index = move.get_move_encoding();
-      std::cout << std::format("Move {} has the following values:  Encoding: {},
-    " "MoveIndex : {} with probability : {}", liste[i].get_move_as_string(),
-
-                               index, i, distribution[i])
-                << std::endl;
-    }
-
-    return 0;
-    */
-  /*TT.resize_in_mb(16);
-  Board test_board = Board(Position::get_start_position());
-
-  searchValueMultiPV(test_board, 12, 100, 10000, 100000000, true, std::cout);
-
-  return 0;
-  */
   CmdParser parser;
   parser.parse(argl, argc);
   Board board;
@@ -293,6 +264,23 @@ int main(int argl, const char **argc) {
     std::mt19937 adj_rng(adj_seed);
     std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
 
+    const float multi_pv_prob =
+        parser.has_option("multi-pv-prob")
+            ? std::stof(parser.as<std::string>("multi-pv-prob"))
+            : 0.0f; // 0 => disabled, always plays the best move
+    const int multi_pv_eval_diff =
+        parser.has_option("multi-pv-eval-diff")
+            ? parser.as<int>("multi-pv-eval-diff")
+            : 0; // max cp the 2nd-best move is allowed to lose vs. best
+
+    const int multi_pv_min_pieces =
+        parser.has_option("multi-pv-min-pieces")
+            ? parser.as<int>("multi-pv-min-pieces")
+            : 0; // below this piece count, never deviate from best move
+                 // (keeps us out of tablebase territory)
+
+    std::mt19937 multipv_rng(adj_seed ^ 0x9E3779B97F4A7C15ull);
+
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
     };
@@ -311,7 +299,7 @@ int main(int argl, const char **argc) {
       int draw_streak = 0;
       const bool adj_enabled_this_game = adj_prob_dist(adj_rng) < adj_draw_prob;
 
-      for (auto i = 0; i < 600; ++i) {
+      for (auto i = 0; i < 800; ++i) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
@@ -320,11 +308,48 @@ int main(int argl, const char **argc) {
           break;
         }
 
-        auto root_moves = searchValueMultiPV(board, 1, depth, time, max_nodes,
-                                             false, std::cout);
+        const bool try_multipv_this_move =
+            multi_pv_prob > 0.0f &&
+            adj_prob_dist(multipv_rng) < multi_pv_prob &&
+            board.get_position().piece_count() > multi_pv_min_pieces;
+        const int this_move_pv = try_multipv_this_move ? 2 : 1;
+
+        auto root_moves =
+            searchValueMultiPV(board, this_move_pv, depth, this_move_pv * time,
+                               max_nodes, false, std::cout);
 
         auto value = root_moves.front().score;
         best = root_moves.front().move;
+
+        if (try_multipv_this_move && root_moves.size() > 1) {
+          const Value best_score = root_moves.front().score;
+          std::array<Move, 40> candidates;
+          std::array<Value, 40> candidates_scores;
+          int num_candidates = 0;
+          for (auto &rm : root_moves) {
+            if (rm.move.is_empty())
+              continue;
+            const Value diff = best_score - rm.score;
+            if (diff < multi_pv_eval_diff) {
+              candidates[num_candidates] = rm.move;
+              candidates_scores[num_candidates++] = rm.score;
+            }
+          }
+
+          if (num_candidates > 1) {
+            constexpr double temperature =
+                50.0; // tune this; same units as eval (cp)
+            std::array<double, 40> weights;
+            for (int k = 0; k < num_candidates; ++k) {
+              const Value diff = best_score - candidates_scores[k]; // >= 0
+              weights[k] = std::exp(-static_cast<double>(diff) / temperature);
+            }
+            std::discrete_distribution<int> pick_dist(
+                weights.begin(), weights.begin() + num_candidates);
+            const auto best_index = pick_dist(multipv_rng);
+            best = candidates[best_index];
+          }
+        }
 
         if (best.is_empty()) {
           result = UNKNOWN;
