@@ -3,7 +3,6 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 import numpy as np
 import Experimental
 import string_sum
-import torch
 #import generator_pb2
 
 
@@ -16,8 +15,8 @@ import torch
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 605
-    model = Experimental.PolicyNetwork(run_name="policybaby")
-    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/policy.samples",
+    model = Experimental.Network(run_name="different")
+    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/training-book.samples",
     val_data="/mnt/c/TrainData/finaldataset3.rescored.samples",
     batch_size=batch_size, buffer_size=500000000)
     
@@ -28,7 +27,10 @@ if __name__ == "__main__":
 
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[check_point_callback],limit_val_batches=0)
 
+    #trainer.fit(model, data_loader,ckpt_path="Networks/medium=0.ckpt");
+
     trainer.fit(model, data_loader);
+
 
 
 
