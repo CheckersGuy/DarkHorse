@@ -35,18 +35,19 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
-    println!("Starting process");
-    let mut generator = Generator::new(
-        String::from("../Positions/debugging.book"),
-        String::from("D:/TrainData/debugging.games"),
-        14,
-        400000000,
-    );
+    /* println!("Starting process");
+     let mut generator = Generator::new(
+         String::from("../Positions/training2.book"),
+         String::from("D:/TrainData/Games/multipv.games"),
+         14,
+         400000000,
+     );
 
-    generator.time = 1;
-    generator.max_nodes = 250000000;
-    generator.depth = 70;
-    generator.generate_games()?;
+     generator.time = 1;
+     generator.max_nodes = 250000000;
+     generator.depth = 70;
+     generator.generate_games()?;
+    */
 
     /*
         Data::create_book(
@@ -58,17 +59,16 @@ fn main() -> anyhow::Result<()> {
 
     */
 
-    /*
-        Data::get_unique_samples(
-            vec![
-                "D:/TrainData/Games/training-book.games",
-                "D:/TrainData/Games/training-book2.games",
-                "D:/TrainData/Games/training-book3.games",
-            ],
-            "D:/TrainData/Samples/training-book.samples",
-            32,
-        )?;
-    */
+    Data::get_unique_samples(
+        vec![
+            "D:/TrainData/Games/training-book.games",
+            "D:/TrainData/Games/training-book2.games",
+            "D:/TrainData/Games/training-book3.games",
+            "D:/TrainData/Games/multipv.games",
+        ],
+        "D:/TrainData/Samples/training-book.samples",
+        32,
+    )?;
     /*
         Data::create_policy_data(
             vec![

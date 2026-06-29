@@ -3,20 +3,15 @@ project(reading)
 SET(CMAKE_CXX_STANDARD 20)
 SET(CMAKE_BUILD_TYPE "Release")
 
-set(CMAKE_C_FLAGS -m64)
-set(CMAKE_CXX_FLAGS -m64)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-  add_link_options("-flto")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
   add_compile_options("-march=x86-64-v3")
-  add_compile_options("-fuse-linker-plugin")
   add_compile_options("-O3")
-  if(WIN32)
-    set(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "-static-libgcc -static ")
-    set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-static-libgcc -static-libstdc++ -static")
-    set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static -static-libstdc++")
-    set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ")
-  endif()
 
+add_link_options(
+    -static-libstdc++
+    -static-libgcc
+)
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 
 
@@ -68,7 +63,6 @@ target_compile_definitions(generator PUBLIC "GENERATOR")
 if (UNIX)
 target_compile_definitions(MainEngine PUBLIC "USEDB")
 #add_executable(Simd ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Simd.cpp)
-set_target_properties(MainEngine PROPERTIES  INTERPROCEDURAL_OPTIMIZATION TRUE)
 add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/Checks/perft_check.cpp ${CHeaders} ${CSources})
 endif()
 
@@ -101,6 +95,6 @@ endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 if(UNIX)
-target_link_libraries(MainEngine PRIVATE )
+target_link_libraries(MainEngine PRIVATE Threads::Threads)
 endif()
 
