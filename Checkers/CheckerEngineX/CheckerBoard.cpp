@@ -257,7 +257,7 @@ int enginecommand(char str[256], char reply[1024]) {
 
     if (strcmp(param1, "dbpath") == 0) {
       db_path = Registry::get_db_path().value_or(db_path);
-      snprintf(reply, REPLY_MAX, db_path.c_str());
+      snprintf(reply, REPLY_MAX, "%s", db_path.c_str());
       return 1;
     }
 
