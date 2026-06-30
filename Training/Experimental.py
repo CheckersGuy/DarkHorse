@@ -17,8 +17,8 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 #below will be moved into the network
 
-#L1 =2*(4096 + 2048)
-L1 = 2*1024
+L1 =2*(4096 + 2048)
+#L1 = 2*1024
 L2 =32
 L3 = 32
 
@@ -32,7 +32,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.95
+        self.gamma = 0.99243
         self.run_name = run_name
 
 
@@ -116,7 +116,7 @@ class Network(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
-        optimizer = RangerLite(self.parameters(), lr=2.0e-2, eps=1.0e-5,weight_decay=0.0)
+        optimizer = RangerLite(self.parameters(), lr=5.0e-3, eps=1.0e-5,weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -133,7 +133,7 @@ class Network(pl.LightningModule):
 
 
     def validation_step(self, val_batch, batch_idx):
-        result,evalu, move,buckets,psqt_buckets, x,legal_moves = val_batch
+        result,eval, move,buckets,psqt_buckets, x,legal_moves = val_batch
         out = self.forward(x,buckets)
         eval = 1.0* torch.sigmoid(eval/127.0) 
         loss = torch.pow(torch.abs(out - eval), 2).mean()
@@ -595,7 +595,7 @@ class BatchDataSet(torch.utils.data.IterableDataset):
         return self
 
     def __len__(self):
-        return self.num_samples//self.batch_size
+        return 100000000//self.batch_size
 
     def __next__(self):
         input_size = 120

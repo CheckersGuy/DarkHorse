@@ -12,24 +12,17 @@
 #include <string>
 #include <sys/mman.h>
 
+// reading the training data here, will be moved to a utility file later
+// computing a histogram of the activations
+// computing average number of nnz-blocks
 
-//reading the training data here, will be moved to a utility file later
-//computing a histogram of the activations
-//computing average number of nnz-blocks
+// Try algorithms to decrease nnz
 
-//Try algorithms to decrease nnz
-
-//1. Simply sorting the activations by the histogram
-//2. measuring the results and implement support for arbitrary permutations
-//3. Look at how stockfish does this
-
-
-
-
+// 1. Simply sorting the activations by the histogram
+// 2. measuring the results and implement support for arbitrary permutations
+// 3. Look at how stockfish does this
 
 int main(int argl, const char **argc) {
- 
-  
 
   CmdParser parser;
   parser.parse(argl, argc);

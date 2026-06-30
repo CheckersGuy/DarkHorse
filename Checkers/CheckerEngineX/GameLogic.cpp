@@ -21,8 +21,6 @@ uint64_t diff_counter = 0;
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 
-
-
 SearchGlobal glob;
 
 Network<4096 + 2048, 32, 32, 1> network;
@@ -156,9 +154,9 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
   if (rootList.length() == 1) {
     RootMove root;
-    root.score =-last_eval;
+    root.score = -last_eval;
     root.move = rootList[0];
-   return {root}; 
+    return {root};
   }
 
   const int actualPV = std::min(numPV, rootList.length());
@@ -225,7 +223,7 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
     }
   }
 
-  last_eval = results[0].score; 
+  last_eval = results[0].score;
 
   num_pv_excluded = 0;
   return results;
@@ -396,20 +394,17 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
           return (result == TB_RESULT::WIN) ? -loss(actual_dtw)
                                             : loss(actual_dtw);
         }
+        const auto mlh = get_mlh_estimate(board.get_position());
 
-        if (tb_value >= 500) {
-          tb_value += 300;
-          tb_value -= get_mlh_estimate(board.get_position());
-        } else {
-          tb_value -= 300;
-          tb_value += get_mlh_estimate(board.get_position());
-        }
+        auto tb_value = (result == TB_RESULT::WIN) ? -tbloss(ply) + (300 - mlh)
+                        : (result == TB_RESULT::LOSS)
+                            ? tbloss(ply) - (300 - mlh)
+                            : 0;
         return tb_value;
       }
     }
   }
 #endif
-
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
@@ -438,7 +433,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (!computed) {
       out = policy.get_raw_eval(board.get_position());
       computed = true;
-      // need to compute the /lodistribution only once
     }
 
     if (board.get_position().color == BLACK) {
@@ -555,16 +549,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     if (in_pv && (i == 0 || val > alpha)) {
       val = -Search::search<PV>(false, board, ply + 1, local_pv, -beta, -alpha,
                                 new_depth, Move{}, is_sing_search);
-    }
-
-    if (is_root) {
-      auto last_position = board.get_position();
-      for (auto i = 0; i < board.rep_size; ++i) {
-        if (board.rep_history[i] == last_position) {
-          val = (val) / 2;
-          break;
-        }
-      }
     }
 
     board.undo_move();
