@@ -94,7 +94,4 @@ if (UNIX)
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
-if(UNIX)
-target_link_libraries(MainEngine PRIVATE Threads::Threads)
-endif()
 
