@@ -42,7 +42,7 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
     Value value = -INFINITE;
     if (it == hashset.end()) {
       auto root_moves =
-          searchValueMultiPV(board, 1, 0, 1000, 10000000, false, std::cout);
+          searchValueMultiPV(board, 1, 1, 1000, 10000000, false, std::cout);
       value = root_moves.front().score;
       hashset.insert(board.get_position());
     }
@@ -221,7 +221,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
       const auto pos = Position::pos_from_fen(next_line);
-      generate_book(9, pos, -85, 85);
+      generate_book(6, pos, -55, 55);
       // sending a message, telling "master" to send us another position
       std::cout << "done" << std::endl;
     }
@@ -261,7 +261,7 @@ int main(int argl, const char **argc) {
             ? std::stof(parser.as<std::string>("adj_draw_prob"))
             : 1.0f; // default: always active, preserves old behavior
 
-    std::mt19937 adj_rng(adj_seed);
+    std::mt19937_64 adj_rng(adj_seed);
     std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
 
     const float multi_pv_prob =
@@ -279,7 +279,7 @@ int main(int argl, const char **argc) {
             : 0; // below this piece count, never deviate from best move
                  // (keeps us out of tablebase territory)
 
-    std::mt19937 multipv_rng(adj_seed ^ 0x9E3779B97F4A7C15ull);
+    std::mt19937_64 multipv_rng(adj_seed ^ 0x9E3779B97F4A7C15ull);
 
     auto color_to_result = [](Color color) {
       return ((color == BLACK) ? BLACK_WON : WHITE_WON);
@@ -299,7 +299,7 @@ int main(int argl, const char **argc) {
       int draw_streak = 0;
       const bool adj_enabled_this_game = adj_prob_dist(adj_rng) < adj_draw_prob;
 
-      for (auto i = 0; i < 800; ++i) {
+      for (auto i = 0; i < 500; ++i) {
         Move best;
         MoveListe liste;
         get_moves(board.get_position(), liste);
@@ -338,7 +338,7 @@ int main(int argl, const char **argc) {
 
           if (num_candidates > 1) {
             constexpr double temperature =
-                50.0; // tune this; same units as eval (cp)
+                127.0; // tune this; same units as eval (cp)
             std::array<double, 40> weights;
             for (int k = 0; k < num_candidates; ++k) {
               const Value diff = best_score - candidates_scores[k]; // >= 0

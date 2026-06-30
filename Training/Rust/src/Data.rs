@@ -807,14 +807,14 @@ impl<'a> Generator<'a> {
                 let mut command = Command::new("./MainEngine")
                     .args([format!(
                         "--generate --time {} --nodes {} --depth {} --seed {}
-                         --adj_draw_count 20
+                         --adj_draw_count 8
                          --adj_draw_score 5
-                         --adj_draw_min_ply 20
+                         --adj_draw_min_ply 10
                          --adj_draw_max_pieces 10
-                         --adj_draw_prob 0.85
-                         --multi-pv-prob 0.25 
-                         --multi-pv-eval-diff 35 
-                         --multi-pv-min-pieces 8
+                         --adj_draw_prob 0.9
+                         --multi-pv-prob 0.3 
+                         --multi-pv-eval-diff 55 
+                         --multi-pv-min-pieces 10
                         ",
                         time, max_nodes, depth, worker_seed
                     )])
