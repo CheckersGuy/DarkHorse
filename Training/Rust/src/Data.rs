@@ -516,9 +516,7 @@ pub fn get_unique_samples(
         println!("Starting with file: {}", path);
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
-            if game.result == Result::UNKNOWN {
-                continue;
-            }
+            
             let samples = game.get_samples();
 
             for sample in samples {
@@ -915,15 +913,18 @@ impl<'a> Generator<'a> {
                 sample.result = Sample::Result::from(result_string.as_str());
 
                 if cfg!(debug_assertions) {
-                    if sample.result == Sample::Result::UNKNOWN {
+                    /*if sample.result == Sample::Result::UNKNOWN {
                         println!("Error {result_string}");
                     }
+                    */
                 }
+                /*
                 if sample.result == Sample::Result::UNKNOWN {
                     println!("Error UNKNOWN result");
                     println!("{:?}", game.first().unwrap());
                     continue 'game;
                 }
+                */
                 total_count += 1;
                 if index == 0 {
                     //setting the initial position and result for the game
