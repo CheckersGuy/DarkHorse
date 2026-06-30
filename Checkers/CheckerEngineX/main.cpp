@@ -374,10 +374,9 @@ int main(int argl, const char **argc) {
 
         const Position previous = board.get_position();
         board.play_move(best);
-        auto count =
-            std::count(rep_history.begin(), rep_history.end(),
-                       (rep_history.empty()) ? Position{} : rep_history.back());
-        if (count >= 3) {
+        auto count = std::count(rep_history.begin(), rep_history.end(),
+                                (rep_history.empty()) ? Position{} : previous);
+        if (count >= 2) {
           result = DRAW;
           break;
         }
