@@ -86,7 +86,6 @@ constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
 
-constexpr std::array<int, 4> RAZOR_MARGIN = {0, 140, 280, 400};
 constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
 
 constexpr int prob_cut = 27; // 27;
@@ -209,7 +208,6 @@ constexpr uint32_t get_neighbour_squares(uint32_t maske) {
 }
 
 inline void write_to_logfile(std::string msg) {
-  std::cout << "Das ist ein Test" << std::endl;
 #ifdef _WIN32
   std::ofstream stream("E:\\logfile.txt", std::ios::out | std::ios::app);
 #endif

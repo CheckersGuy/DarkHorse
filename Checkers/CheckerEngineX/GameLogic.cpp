@@ -236,15 +236,16 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
 namespace Search {
 
-Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
-             bool in_pv, bool cutnode) {
+Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
+             Move move, bool in_pv, bool cutnode) {
 
   if (move_index >= 1 && depth >= 2 && !move.is_capture()) {
-    auto red = LMR_TABLE[std::min(depth - 1, 31)];
+    auto red = LMR_TABLE[std::min(depth - 1, (int)LMR_TABLE.size() - 1)];
     if (in_pv) {
       red = std::max(0, red - 1);
     }
     red += (move_index >= 2 + in_pv);
+    red += !improving;
     return red;
   }
   return 0;
@@ -372,6 +373,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       static_eval = evaluate(board.get_position(), ply);
     }
   }
+
   static_evals[ply] = static_eval;
 
   bool improving = false;
@@ -431,6 +433,17 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
       (static_eval - 20 - (30 - 7 * improving) * depth >= beta)) {
     return static_eval;
+  }
+
+  if (!in_pv && isEval(static_eval) &&
+      static_eval + 150 + 10 * depth * depth <= alpha &&
+      !board.get_position().has_jumps()) {
+    return static_eval;
+  }
+
+  if (depth >= 7 && in_pv && tt_move.is_empty() &&
+      !board.get_position().has_jumps()) {
+    depth--;
   }
 
   int32_t *out = &policy.out_layer.buffer[0];
@@ -519,7 +532,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }*/
     Depth reduction =
-        Search::reduce(i, depth, ply, board, move, in_pv, cutnode);
+        Search::reduce(improving, i, depth, ply, board, move, in_pv, cutnode);
 
     if (is_tt_pv && !in_pv) {
       reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);

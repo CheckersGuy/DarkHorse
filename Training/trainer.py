@@ -15,8 +15,8 @@ import string_sum
 if __name__ == "__main__":
     batch_size = 8192 
     epochs = 605
-    model = Experimental.MLHNetwork(run_name="mlh_next")
-    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/mlh.samples",
+    model = Experimental.Network(run_name="cloud")
+    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/cloud.samples",
     val_data="/mnt/c/TrainData/finaldataset3.rescored.samples",
     batch_size=batch_size, buffer_size=500000000)
     

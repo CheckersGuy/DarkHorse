@@ -17,15 +17,11 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 #below will be moved into the network
 
-#L1 =2*(4096 + 2048)
-#L1 = 2*1024
-#L2 =32
-#L3 = 32
-
-L1 =2*128
-#L1 = 2*1024
+L1 =2*(4096 + 2048)
 L2 =32
 L3 = 32
+
+
 
 class Network(pl.LightningModule):
 

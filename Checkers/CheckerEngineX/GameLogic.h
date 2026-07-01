@@ -68,8 +68,8 @@ template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          Move excluded, bool is_sing_search);
 
-Depth reduce(int move_index, Depth depth, Ply ply, Board &board, Move move,
-             bool in_pv, bool cutnode);
+Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
+             Move move, bool in_pv, bool cutnode);
 
 } // namespace Search
 
