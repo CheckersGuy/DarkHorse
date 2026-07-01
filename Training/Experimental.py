@@ -17,12 +17,15 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 #below will be moved into the network
 
-L1 =2*(4096 + 2048)
+#L1 =2*(4096 + 2048)
+#L1 = 2*1024
+#L2 =32
+#L3 = 32
+
+L1 =2*128
 #L1 = 2*1024
 L2 =32
 L3 = 32
-
-
 
 class Network(pl.LightningModule):
 
@@ -213,13 +216,14 @@ class Network(pl.LightningModule):
 
 class MLHNetwork(pl.LightningModule): 
 
-    def __init__(self):
+    def __init__(self,run_name):
         super(MLHNetwork, self).__init__()
         self.layers = []
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.93
+        self.gamma = 0.97
+        self.run_name = run_name
 
 
         self.num_buckets =12
@@ -286,7 +290,7 @@ class MLHNetwork(pl.LightningModule):
             file_out.write(struct.pack("I", layer.in_features))
             file_out.write(struct.pack("I", layer.out_features//self.num_buckets))
 
-
+ 
        
     def step(self):
         with torch.no_grad():
@@ -298,7 +302,9 @@ class MLHNetwork(pl.LightningModule):
 
     def configure_optimizers(self):
         #optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
-        optimizer = torch.optim.AdamW(self.parameters(),lr = 1e-2)
+        optimizer = RangerLite(self.parameters(), lr=1e-5, eps=1.0e-5,weight_decay=0.0)
+        #optimizer = torch.optim.AdamW(self.parameters())
+
         scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=self.gamma)
         return [optimizer],[scheduler]
 
@@ -306,17 +312,17 @@ class MLHNetwork(pl.LightningModule):
 
     def training_step(self, train_batch, batch_idx):
         self.step()
-        result,mlh_target, move,buckets,psqt_buckets, x,legal_moves = train_batch
+        result,eval, mlh_target,buckets, x,legal_moves  = train_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0 #value range from 0 to 60
         out = self.forward(x,buckets)
-        loss =torch.pow(torch.abs(out-mlh_target),2.0).mean()
+        loss =torch.pow(torch.abs(out-mlh_target),1.0).mean()
         self.log('train_loss', loss.detach(),prog_bar=True)
         return {"loss": loss}
 
 
     def validation_step(self, val_batch, batch_idx):
-        result,mlh_target, move,buckets,psqt_buckets, x,legal_moves = val_batch
+        result,eval, mlh_target,buckets, x,legal_moves = val_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32),0,300)
         mlh_target = mlh_target/300.0
         out = self.forward(x,buckets)
@@ -325,16 +331,10 @@ class MLHNetwork(pl.LightningModule):
         self.val_outputs.append(loss)
         return {"val_loss": loss.detach()}
 
-    def on_validation_epoch_end(self):
-        avg_loss = torch.stack(self.val_outputs).mean()
-        self.val_outputs.clear()
-        tensorboard_logs = {"avg_val_loss": avg_loss}
-        self.log('loss', avg_loss, prog_bar=True)
-        print(avg_loss)
-        return {"loss": avg_loss, "log": tensorboard_logs}
 
     def on_train_epoch_end(self) -> None:
-        self.save_quantized_bucket("mlh4.quant")
+        display = "{name_run}_{epoch_count}.quant".format(name_run = self.run_name, epoch_count = self.current_epoch) 
+        self.save_quantized_bucket(display)
         return 
 
 

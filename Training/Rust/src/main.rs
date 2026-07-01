@@ -36,7 +36,7 @@ use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     println!("Starting process");
-    let mut generator = Generator::new(
+    /*let mut generator = Generator::new(
         String::from("../Positions/training2.book"),
         String::from("./cloud.games"),
         14,
@@ -47,6 +47,7 @@ fn main() -> anyhow::Result<()> {
     generator.max_nodes = 250000000;
     generator.depth = 70;
     generator.generate_games()?;
+    */
 
     /*
         Data::create_book(
@@ -67,6 +68,16 @@ fn main() -> anyhow::Result<()> {
             ],
             "D:/TrainData/Samples/training-book.samples",
             32,
+        )?;
+    */
+    /*
+        Data::create_mlh_data(
+            vec![
+                "/mnt/d/TrainData/Games/training-book.games",
+                "/mnt/d/TrainData/Games/training-book2.games",
+                "/mnt/d/TrainData/Games/training-book3.games",
+            ],
+            "/mnt/d/TrainData/Samples/mlh.samples",
         )?;
     */
     /*

@@ -21,6 +21,7 @@ uint64_t diff_counter = 0;
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 
+std::array<Value, MAX_PLY + 10> static_evals;
 SearchGlobal glob;
 
 Network<4096 + 2048, 32, 32, 1> network;
@@ -178,6 +179,10 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
       network.accumulator.refresh();
       mlh_net.accumulator.refresh();
       policy.accumulator.refresh();
+
+      for (auto k = 0; k < static_evals.size(); ++k) {
+        static_evals[k] = -INFINITE;
+      }
 
       auto start_time = std::chrono::high_resolution_clock::now();
       try {
@@ -367,6 +372,22 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       static_eval = evaluate(board.get_position(), ply);
     }
   }
+  static_evals[ply] = static_eval;
+
+  bool improving = false;
+  bool opponentWorsening = false;
+  if (isEval(static_eval)) {
+    if (isEval(static_evals[ply - 2])) {
+      improving = static_eval > static_evals[ply - 2];
+    } else if (isEval(static_evals[ply - 4])) {
+      improving = static_eval > static_evals[ply - 4];
+    }
+    if (isEval(static_evals[ply - 1])) {
+      opponentWorsening = static_eval > -static_evals[ply - 1];
+    } else if (isEval(static_evals[ply - 3])) {
+      opponentWorsening = static_eval > -static_evals[ply - 3];
+    }
+  }
 
 #ifdef _WIN32
 
@@ -408,7 +429,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
-      (static_eval - 20 - 30 * depth >= beta)) {
+      (static_eval - 20 - (30 - 7 * improving) * depth >= beta)) {
     return static_eval;
   }
 
@@ -444,7 +465,8 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   };
 
   const Value old_alpha = alpha;
-  const Value prob_beta = beta + prob_cut;
+  const Value prob_beta = beta + prob_cut + 10 * improving;
+
   for (auto i = 0; i < liste.length(); ++i) {
     if (i == start_index) {
       liste.sort(board.get_position(), depth, ply, tt_move, start_index,
@@ -467,9 +489,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       extension = 1;
     }
 
+    if (!in_pv && depth < LMP_COUNT.size() && i >= LMP_COUNT[depth] &&
+        extension == 0 && !move.is_capture()) {
+      continue;
+    }
+
     Line local_pv;
     Value val = -INFINITE;
-    if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
+    /*if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
         !sing_move.is_empty() && extension == 0) {
       Line sing_pv;
       Value sing_beta = sing_value - 25;
@@ -481,6 +508,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
       if (val < sing_beta) {
         extension = 1;
+        depth++;
       } else if (sing_beta >= beta) {
         return sing_beta;
       } else if (sing_value >= beta &&
@@ -489,7 +517,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       } else if (cutnode) {
         extension = -2;
       }
-    }
+    }*/
     Depth reduction =
         Search::reduce(i, depth, ply, board, move, in_pv, cutnode);
 

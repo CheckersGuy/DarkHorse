@@ -86,8 +86,8 @@ constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
 
-constexpr std::array<int, 9> FUTILITY_MARGIN = {0,   200, 240, 260, 280,
-                                                340, 400, 460, 520};
+constexpr std::array<int, 4> RAZOR_MARGIN = {0, 140, 280, 400};
+constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
 
 constexpr int prob_cut = 27; // 27;
 

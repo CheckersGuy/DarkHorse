@@ -146,6 +146,7 @@ impl BatchProvider {
                         }
                     }
                 }
+
                 match sample.result {
                     Sample::Result::WIN | Sample::Result::TBWIN => res_array[i] = 1.0,
                     Sample::Result::LOSS | Sample::Result::TBLOSS => res_array[i] = 0.0,

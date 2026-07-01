@@ -336,39 +336,54 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
     Ok(())
 }
 
-pub fn create_mlh_data(path: &str, output: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
+pub fn create_mlh_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
-
-    let mut total_count = 0;
+    let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
+    let mut total_count: u64 = 0;
     let mut written_count: u64 = 0;
 
-    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for path in paths {
+        let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
+        for game in reader.iter_games() {
+            let mut mlh_counter = 0;
 
-    for game in reader.iter_games() {
-        let mut mlh_counter = 0;
-
-        if game.result == Result::DRAW || game.result == Result::UNKNOWN {
-            continue;
-        }
-
-        let samples = game.get_samples();
-        for sample in samples.iter() {
-            mlh_counter += 1;
-            if sample.position.has_capture() {
+            if game.result == Result::DRAW || game.result == Result::UNKNOWN {
                 continue;
             }
-            if (sample.position.bp == 0) || (sample.position.wp == 0) {
-                continue;
-            }
-            if sample.value.abs() >= 15000 {
-                continue;
+
+            let samples = game.get_samples();
+            for sample in samples.iter() {
+                mlh_counter += 1;
+                if sample.position.has_capture() {
+                    continue;
+                }
+                if (sample.position.bp == 0) || (sample.position.wp == 0) {
+                    continue;
+                }
+                if sample.value.abs() >= 15000 {
+                    continue;
+                }
+                if sample.value.abs() <= 150 {
+                    continue;
+                }
+                if !filter.check(&sample.position) {
+                    filter.set(&sample.position);
+                    let mut copy = sample.clone();
+                    copy.mlh = mlh_counter;
+                    copy.write_fen(&mut writer)?;
+                    written_count += 1;
+                }
+                total_count += 1;
             }
         }
     }
+
     writer.flush()?;
+
+    println!(
+        "Got back a total of {} while processing {} samples",
+        written_count, total_count
+    );
     Ok(())
 }
 
@@ -497,10 +512,11 @@ pub fn get_unique_samples(
     paths: Vec<&str>,
     output: &str,
     partitions: usize,
+    base: &TableBase::Base,
 ) -> std::io::Result<()> {
     //let mut reader = BufReader::new(File::open(path)?);
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
-    let mut total_count = 0;
+    let mut total_count: u64 = 0;
     let mut written_count: u64 = 0;
 
     let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
@@ -516,7 +532,6 @@ pub fn get_unique_samples(
         println!("Starting with file: {}", path);
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
-            
             let samples = game.get_samples();
 
             for sample in samples {
@@ -532,8 +547,22 @@ pub fn get_unique_samples(
 
                 if !filter.check(&sample.position) {
                     filter.set(&sample.position);
+
+                    //checkinig if the position is in the tb
+
+                    let tb_probe = base
+                        .probe_with_position(sample.position)
+                        .expect("Could not probe the tablebase");
+                    let mut copy = sample.clone();
+                    copy.value = match tb_probe {
+                        Result::TBLOSS => -10000,
+                        Result::TBWIN => 10000,
+                        Result::TBDRAW => 0,
+                        _ => sample.value,
+                    };
+
                     let partition = rand::thread_rng().gen::<usize>() % partitions;
-                    sample.write_fen(&mut files[partition])?;
+                    copy.write_fen(&mut files[partition])?;
                     written_count += 1;
                 }
                 total_count += 1;
@@ -810,7 +839,7 @@ impl<'a> Generator<'a> {
                          --adj_draw_min_ply 10
                          --adj_draw_max_pieces 10
                          --adj_draw_prob 0.9
-                         --multi-pv-prob 0.3 
+                         --multi-pv-prob 0.35 
                          --multi-pv-eval-diff 55 
                          --multi-pv-min-pieces 10
                         ",
