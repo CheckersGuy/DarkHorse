@@ -1,6 +1,7 @@
 #include "GameLogic.h"
 #include "Bits.h"
 #include "Network.h"
+#include "Position.h"
 #include "types.h"
 #include <chrono>
 #include <cstdint>
@@ -378,6 +379,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
   bool improving = false;
   bool opponentWorsening = false;
+
   if (isEval(static_eval)) {
     if (isEval(static_evals[ply - 2])) {
       improving = static_eval > static_evals[ply - 2];
@@ -487,10 +489,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
     const Move move = liste[i];
 
-    if (is_sing_search && move == excluded) {
-      continue;
-    }
-
     const auto kings = board.get_position().K;
     int extension = 0;
     if (liste.length() == 1) {
@@ -501,7 +499,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                board.previous().has_jumps(~board.get_mover())) {
       extension = 1;
     }
-
     if (!in_pv && depth < LMP_COUNT.size() && i >= LMP_COUNT[depth] &&
         extension == 0 && !move.is_capture()) {
       continue;
@@ -509,28 +506,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
     Line local_pv;
     Value val = -INFINITE;
-    /*if (!is_root && move == sing_move && depth >= 2 && !is_sing_search &&
-        !sing_move.is_empty() && extension == 0) {
-      Line sing_pv;
-      Value sing_beta = sing_value - 25;
-      Value sing_depth = std::max(1, depth - 4);
 
-      auto val =
-          Search::search<NONPV>(cutnode, board, ply, sing_pv, sing_beta - 1,
-                                sing_beta, sing_depth, sing_move, true);
-
-      if (val < sing_beta) {
-        extension = 1;
-        depth++;
-      } else if (sing_beta >= beta) {
-        return sing_beta;
-      } else if (sing_value >= beta &&
-                 (std::abs(sing_value) < TB_WIN_MAX_PLY)) {
-        extension = -3;
-      } else if (cutnode) {
-        extension = -2;
-      }
-    }*/
     Depth reduction =
         Search::reduce(improving, i, depth, ply, board, move, in_pv, cutnode);
 
@@ -542,7 +518,6 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
 
     board.make_move(move);
-    TT.prefetch(board.get_current_key());
 
     if (!in_pv && !isWinningEval(beta) && depth >= 1 &&
         board.get_position().piece_count() > tab_pieces) {

@@ -183,6 +183,13 @@ struct Position {
   int bucket_index();
 };
 
+template <Color color> inline bool king_mobility_critical(const Position &pos) {
+  const uint32_t kings = pos.get_pieces<color, KING>();
+  if (!kings)
+    return false;
+  return Bits::pop_count(pos.get_attack_squares<color>(kings)) <= 1;
+}
+
 namespace std {
 template <> struct hash<Position> {
   std::array<std::array<uint64_t, 4>, 32> keys;
