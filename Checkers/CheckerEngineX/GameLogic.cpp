@@ -1,5 +1,6 @@
 #include "GameLogic.h"
 #include "Bits.h"
+#include "MGenerator.h"
 #include "Network.h"
 #include "Position.h"
 #include "types.h"
@@ -280,7 +281,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   }
   if (!is_root && board.is_repetition()) {
     const int sw = nodeCounter & 1;
-    return 2 * sw - 1;
+    return 0;
   }
   Value best_score = -EVAL_INFINITE;
   NodeInfo info;
@@ -515,6 +516,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
       reduction++;
     }
+
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
 
     board.make_move(move);
@@ -622,8 +624,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
     throw std::string{"Time_out"};
   }
   if (board.is_repetition()) {
-    const int sw = nodeCounter & 1;
-    return 2 * sw - 1;
+    return 0;
   }
 
   if (ply >= MAX_PLY) {
@@ -653,13 +654,15 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
   }
 
   Value bestValue = -INFINITE;
+  MoveListe moves;
+  get_captures(board.get_position(), moves);
 
-  if (board.is_silent_position(board.get_mover())) {
+  if (moves.length() == 0) {
     if (board.get_position().is_end()) {
       return loss(ply);
     }
 
-    if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
+     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
       return Search::search<next_type>(false, board, ply, pv, alpha, beta, 1,
                                        Move{}, is_sing_search);
     }
@@ -676,8 +679,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
     return net_val;
   }
-  MoveListe moves;
-  get_captures(board.get_position(), moves);
+
   moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
@@ -738,7 +740,6 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
                                 Move{}, false);
 
       if (score <= alpha) {
-        beta = (alpha + beta) / 2;
         margin += margin / 2;
         alpha = std::max(score - margin, -EVAL_INFINITE);
       } else if (score >= beta) {

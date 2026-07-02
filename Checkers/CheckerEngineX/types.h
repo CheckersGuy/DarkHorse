@@ -84,7 +84,7 @@ constexpr std::array<uint32_t, 8> MASK_ROWS = {
 
 constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-                                           3, 3, 3, 3, 4, 4, 4, 4, 4, 4};
+                                           4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
 constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
 
@@ -238,4 +238,4 @@ inline uint32_t round_nearest_power2(uint32_t v) {
   return v;
 }
 
-#endif // CHECKERSTEST_TYPES_H
+#endif

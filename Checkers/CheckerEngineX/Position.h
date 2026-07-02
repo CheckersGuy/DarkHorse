@@ -123,6 +123,35 @@ struct Position {
     return movers;
   }
 
+  template <Color color> bool creates_shot(uint32_t from, uint32_t to) const {
+    constexpr Color opp_color = ~color;
+    const uint32_t moved = from | to; // from,to are disjoint
+
+    const uint32_t own_after = get_current<color>() ^ moved;
+    const uint32_t nocc_after = (~(BP | WP)) ^ moved;
+    const uint32_t opp = get_current<opp_color>(); // unaffected by our move
+    const uint32_t opp_kings = opp & K;            // unaffected by our move
+
+    uint32_t temp = defaultShift<color>(nocc_after) & own_after;
+    if (temp && (forwardMask<color>(temp) & opp))
+      return true;
+
+    temp = forwardMask<color>(nocc_after) & own_after;
+    if (temp && (defaultShift<color>(temp) & opp))
+      return true;
+
+    if (opp_kings) {
+      temp = defaultShift<opp_color>(nocc_after) & own_after;
+      if (temp && (forwardMask<opp_color>(temp) & opp_kings))
+        return true;
+
+      temp = forwardMask<opp_color>(nocc_after) & own_after;
+      if (temp && (defaultShift<opp_color>(temp) & opp_kings))
+        return true;
+    }
+    return false;
+  }
+
   std::string get_fen_string() const;
 
   Color get_color() const;

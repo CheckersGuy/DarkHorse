@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     #trainer.fit(model, data_loader,ckpt_path="Networks/medium=0.ckpt");
 
-    trainer.fit(model, data_loader);
+    trainer.fit(model, data_loader,ckpt_path = "Networks/medium=0-v13.ckpt");
 
 
 

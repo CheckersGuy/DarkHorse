@@ -23,6 +23,19 @@ struct PerftCallBack {
   }
 };
 
+// MGenerator.h, alongside get_captures
+template <Color color> struct ShotCollector {
+  const Position &pos;
+  MoveListe &liste;
+
+  template <MoveType move_type>
+  inline void visit(uint32_t &maske, uint32_t &next) {
+    if (pos.creates_shot<color>(maske, next)) {
+      liste.add_move(Move{maske, next});
+    }
+  }
+};
+
 template <Color color>
 inline void mask_bits(Position &pos, const uint32_t maske) {
   if constexpr (color == BLACK)
@@ -117,6 +130,18 @@ inline void loop_captures(Position &pos, CallBack &&call_back) {
     pawn_jumpers &= pawn_jumpers - 1u;
   }
 }
+
+inline void get_shot_moves(const Position &pos, MoveListe &liste) {
+  liste.reset();
+  if (pos.get_color() == BLACK) {
+    ShotCollector<BLACK> collector{pos, liste};
+    get_silent_moves<BLACK>(pos, collector);
+  } else {
+    ShotCollector<WHITE> collector{pos, liste};
+    get_silent_moves<WHITE>(pos, collector);
+  }
+}
+
 template <typename Accumulator>
 inline void get_moves(Position &pos, Accumulator &accu) {
   if (pos.has_jumps(pos.get_color())) {
