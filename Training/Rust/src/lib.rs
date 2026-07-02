@@ -118,6 +118,7 @@ impl BatchProvider {
                 if sample.position.color == -1 {
                     sample.position = sample.position.get_color_flip();
                 }
+                sample.value = sample.value.clamp(-500, 500);
 
                 let mut liste = Pos::MoveList::new();
                 liste.get_moves(sample.position);

@@ -63,8 +63,7 @@ std::array<float, 40> get_probability_distribution(MoveListe &liste,
 
 Value blend_mlh(Value eval, Position pos) {
   const Value abs_eval = std::abs(eval);
-  // ramp factor: 0 below ~275, 1 by ~500, smooth in between
-  const Value ramp_lo = 275, ramp_hi = 500;
+  const Value ramp_lo = 275, ramp_hi = MAX_EVAL;
   const float t = std::clamp(
       static_cast<float>(abs_eval - ramp_lo) / (ramp_hi - ramp_lo), 0.0f, 1.0f);
 
@@ -81,8 +80,8 @@ inline Value value_to_tt(Value v, int ply, Position pos) {
     return v;
   }
 
-  if (std::abs(v) >= 500) {
-    return v >= 500 ? v + ply : v <= -500 ? v - ply : v;
+  if (std::abs(v) >= MAX_EVAL) {
+    return v >= MAX_EVAL ? v + ply : v <= -MAX_EVAL ? v - ply : v;
   }
   return v >= TB_WIN_MAX_PLY ? v + ply : v <= TB_LOSS_MAX_PLY ? v - ply : v;
 }
@@ -92,8 +91,8 @@ inline Value value_from_tt(Value v, int ply, Position pos) {
     return v;
   }
 
-  if (std::abs(v) >= 500) {
-    return v >= 500 ? v - ply : v <= -500 ? v + ply : v;
+  if (std::abs(v) >= MAX_EVAL) {
+    return v >= MAX_EVAL ? v - ply : v <= -MAX_EVAL ? v + ply : v;
   }
   return v >= TB_WIN_MAX_PLY ? v - ply : v <= TB_LOSS_MAX_PLY ? v + ply : v;
 }
@@ -133,7 +132,7 @@ Value evaluate(Position pos, Ply ply) {
 #endif
 
   eval = network.evaluate(pos, ply, 0);
-  eval = std::clamp(eval, -500, 500);
+  eval = std::clamp(eval, -MAX_EVAL, MAX_EVAL);
   eval = blend_mlh(eval, pos);
 
   return eval;
@@ -237,16 +236,18 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 }
 
 namespace Search {
-
 Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
              Move move, bool in_pv, bool cutnode) {
 
   if (move_index >= 1 && depth >= 2 && !move.is_capture()) {
-    auto red = LMR_TABLE[std::min(depth - 1, (int)LMR_TABLE.size() - 1)];
+    const int d_idx = std::min(depth - 1, LMR_MAX_DEPTH - 1);
+    const int m_idx = std::min(move_index, LMR_MAX_MOVE_INDEX - 1);
+
+    auto red = LMR_TABLE_2D[d_idx][m_idx];
+
     if (in_pv) {
       red = std::max(0, red - 1);
     }
-    red += (move_index >= 2 + in_pv);
     red += !improving;
     return red;
   }
@@ -411,7 +412,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
         (tb_value < 0 && tb_value <= alpha)) {
 
       if (board.get_position().piece_count() <= tab_pieces &&
-          std::abs(tb_value) >= 500) {
+          std::abs(tb_value) >= MAX_EVAL) {
 
         auto dtw = tablebase.probe_dtw(board.get_position());
 
@@ -662,7 +663,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return loss(ply);
     }
 
-     if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
+    if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
       return Search::search<next_type>(false, board, ply, pv, alpha, beta, 1,
                                        Move{}, is_sing_search);
     }

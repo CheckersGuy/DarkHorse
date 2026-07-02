@@ -31,7 +31,7 @@ class Network(pl.LightningModule):
         self.val_outputs=[] 
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0/ 64.0
-        self.gamma = 0.99243
+        self.gamma = 0.9
         self.run_name = run_name
 
 

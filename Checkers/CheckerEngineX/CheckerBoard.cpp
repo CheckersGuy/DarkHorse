@@ -13,7 +13,7 @@ bool enable_wld = false;
 Position previous;
 std::string db_path;
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "registry_128.quant");
+INCBIN(network, "cloud_231.quant");
 INCBIN(policy, "policybigger6.quant");
 
 extern "C" int getmove(int board[8][8], int color, double maxtime,

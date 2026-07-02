@@ -9,6 +9,7 @@
 #include <array>
 #include <assert.h>
 #include <cassert>
+#include <cmath>
 #include <cstdint>
 #include <fstream>
 #include <iostream>
@@ -86,6 +87,27 @@ constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
                                            3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
                                            4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
 
+constexpr int LMR_MAX_DEPTH = 64;      // depths beyond this reuse the last row
+constexpr int LMR_MAX_MOVE_INDEX = 40; // MoveListe holds at most 40 moves
+
+// LMR_TABLE_2D[d][m] -> base reduction in plies for (depth = d+1, move_index =
+// m+1)
+inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
+    LMR_TABLE_2D = []() {
+      std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH> table{};
+      for (int d = 0; d < LMR_MAX_DEPTH; ++d) {
+        for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
+          const double depth = d + 1;
+          const double move_index = m + 1;
+          // classic log(depth)*log(move_index) shape; base/scale are starting
+          // points only -- these need self-play tuning like everything else
+          const double raw = 0.7 + std::log(depth) * std::log(move_index) * 1.1;
+          table[d][m] = std::max(0, static_cast<int>(raw));
+        }
+      }
+      return table;
+    }();
+
 constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
 
 constexpr int prob_cut = 27; // 27;
@@ -95,7 +117,7 @@ constexpr int asp_wind = 15; // 15;
 constexpr int NUM_BUCKETS = 12;
 constexpr int MAX_ASP = 200;
 constexpr int CORRECTION_SIZE = 512;
-
+constexpr int MAX_EVAL = 500;
 constexpr uint64_t BLACK_RANDOM = 7985716234ull;
 constexpr uint64_t singular_key = 311234512ull;
 
