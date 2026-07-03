@@ -1,0 +1,488 @@
+#include "Bits.h"
+#include "CmdParser.h"
+#include "GameLogic.h"
+#include "MGenerator.h"
+#include "Network.h"
+#include "Perft.h"
+#include "Transposition.h"
+#ifdef _WIN32
+#include "egdb.h"
+#endif
+#include "incbin.h"
+#include "types.h"
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdint>
+#include <cstdlib>
+#include <iterator>
+#include <random>
+#include <sstream>
+#include <string>
+#include <unistd.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+INCBIN(mlh_net, "mlh3.quant");
+INCBIN(network, "small_118.quant");
+INCBIN(policy, "policybigger6.quant");
+
+// INCBIN(mlh_perm, "mlh.perm");
+//  INCBIN(net_perm, "evalpermutation.perm");
+//   INCBIN(policy_perm, "policy.perm");
+
+void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
+             Value min, Value max) {
+
+  if (depth == 0) {
+    Move bestMove;
+    Board copy = board;
+    auto it = hashset.find(board.get_position());
+    // if we havent evaluated the position before, evaluate it now
+    Value value = -INFINITE;
+    if (it == hashset.end()) {
+      auto root_moves =
+          searchValueMultiPV(board, 1, 1, 1000, 10000000, false, std::cout);
+      value = root_moves.front().score;
+      hashset.insert(board.get_position());
+    }
+
+    if (value >= min && value <= max && !board.get_position().has_jumps()) {
+      std::cout << board.get_position().get_fen_string() << std::endl;
+    }
+    return;
+  }
+
+  MoveListe liste;
+  get_moves(board.get_position(), liste);
+
+  for (auto i = 0; i < liste.length(); ++i) {
+    const Move move = liste[i];
+    board.make_move(move);
+    recurse(board, hashset, depth - 1, min, max);
+    board.undo_move();
+  }
+
+  return;
+}
+
+void generate_book(int depth, Position pos, Value min_value, Value max_value) {
+  std::unordered_set<Position> hashset;
+  Board board(pos);
+  recurse(board, hashset, depth, min_value, max_value);
+}
+
+struct SearchThread {
+
+  std::thread local_thread;
+  bool is_thinking = false; // if true, there is a search in progress
+  Board search_board;
+  bool stop_thread = false;
+
+  void init() {
+
+    while (!stop_thread) {
+      // should accept some sort of search object
+    }
+  }
+};
+
+int main(int argl, const char **argc) {
+
+  // mlh_net.load_permutation_from_array(gmlh_permData, gmlh_permSize);
+  //  policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
+  //  network.load_permutation_from_array(gnet_permData, gnet_permSize);
+
+  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
+  network.load_from_array(gnetworkData, gnetworkSize);
+  policy.load_from_array(gpolicyData, gpolicySize);
+
+  CmdParser parser;
+  parser.parse(argl, argc);
+  Board board;
+
+  std::vector<int> value_history;
+  int time, depth, hash_size, multipv, maxdb;
+  size_t max_nodes = 18446744073709551615ull;
+  uint64_t adj_seed = getSystemTime();
+  if (parser.has_option("seed")) {
+    adj_seed ^= std::stoull(parser.as<std::string>("seed"));
+  }
+  std::string net_file;
+
+  if (parser.has_option("time")) {
+    time = parser.as<int>("time");
+  } else {
+    time = 100;
+  }
+  if (parser.has_option("nodes")) {
+    max_nodes = parser.as<int>("nodes");
+  } else {
+    max_nodes = 18446744073709551615ull;
+  }
+
+  if (parser.has_option("hash_size")) {
+    hash_size = parser.as<int>("hash_size");
+  } else {
+    hash_size = 128;
+  }
+
+  if (parser.has_option("depth")) {
+    depth = parser.as<int>("depth");
+  } else {
+    depth = parser.has_option("bench") ? 27 : MAX_PLY;
+  }
+
+  if (parser.has_option("multipv")) {
+    multipv = parser.as<int>("multipv");
+  } else {
+    multipv = 1;
+  }
+
+  if (parser.has_option("maxdb")) {
+    maxdb = parser.as<int>("maxdb");
+  } else {
+    maxdb = 0;
+  }
+
+#ifdef _WIN32
+  if (maxdb > 0) {
+    tablebase.cache_size = 1000;
+    tablebase.load_table_base("C:\\kr_english_wld", maxdb);
+  }
+
+#endif
+
+  if (parser.has_option("search") || parser.has_option("bench"))
+
+  {
+    if (parser.has_option("position")) {
+      auto pos_string = parser.as<std::string>("position");
+      board.get_position() = Position::pos_from_fen(pos_string);
+    } else {
+      board.get_position() = Position::get_start_position();
+    }
+    board.get_position().print_position();
+
+    TT.resize_in_mb(hash_size);
+    Move best;
+    if (parser.has_option("bench")) {
+      searchValueMultiPV(board, multipv, depth, time, max_nodes, false,
+                         std::cout);
+
+    } else {
+      searchValueMultiPV(board, multipv, depth, time, max_nodes, true,
+                         std::cout);
+    }
+
+    return 0;
+  }
+
+  if (parser.has_option("eval-loop")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1000;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
+
+    TT.resize_in_mb(hash_size);
+    std::string current;
+    while (std::getline(std::cin, current)) {
+      if (current == "terminate") {
+        std::exit(-1);
+      }
+
+      TT.clear();
+      const auto pos = Position::pos_from_fen(current);
+
+      board = Board(pos);
+      Move best;
+
+      auto root_moves = searchValueMultiPV(board, 1, MAX_PLY, time, max_nodes,
+                                           false, std::cout);
+
+      auto eval = root_moves.front().score;
+
+      std::cout << eval << std::endl;
+    }
+    return 0;
+  }
+
+  if (parser.has_option("book")) {
+    std::string next_line;
+    TT.resize_in_mb(2);
+    while (std::getline(std::cin, next_line)) {
+      // need to clear statistics all the time
+
+      if (next_line == "terminate") {
+        std::exit(-1);
+      }
+      const auto pos = Position::pos_from_fen(next_line);
+      generate_book(6, pos, -55, 55);
+      // sending a message, telling "master" to send us another position
+      std::cout << "done" << std::endl;
+    }
+    return 0;
+  }
+  if (parser.has_option("generate")) {
+
+#ifdef _WIN32
+
+    tablebase.cache_size = 1500;
+    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 10);
+
+#endif
+
+    std::string next_line;
+    TT.resize_in_mb(16);
+    std::vector<Position> rep_history;
+    std::vector<int> rep_values;
+
+    // --- draw adjudication settings (all opt-in) ---
+    const int adj_draw_count = parser.has_option("adj_draw_count")
+                                   ? parser.as<int>("adj_draw_count")
+                                   : 0; // 0 => disabled
+    const int adj_draw_score = parser.has_option("adj_draw_score")
+                                   ? parser.as<int>("adj_draw_score")
+                                   : 0;
+    const int adj_draw_min_ply = parser.has_option("adj_draw_min_ply")
+                                     ? parser.as<int>("adj_draw_min_ply")
+                                     : 0;
+    const int adj_draw_max_pieces = parser.has_option("adj_draw_max_pieces")
+                                        ? parser.as<int>("adj_draw_max_pieces")
+                                        : 24;
+
+    const float adj_draw_prob =
+        parser.has_option("adj_draw_prob")
+            ? std::stof(parser.as<std::string>("adj_draw_prob"))
+            : 1.0f; // default: always active, preserves old behavior
+
+    std::mt19937_64 adj_rng(adj_seed);
+    std::uniform_real_distribution<float> adj_prob_dist(0.0f, 1.0f);
+
+    const float multi_pv_prob =
+        parser.has_option("multi-pv-prob")
+            ? std::stof(parser.as<std::string>("multi-pv-prob"))
+            : 0.0f; // 0 => disabled, always plays the best move
+    const int multi_pv_eval_diff =
+        parser.has_option("multi-pv-eval-diff")
+            ? parser.as<int>("multi-pv-eval-diff")
+            : 0; // max cp the 2nd-best move is allowed to lose vs. best
+
+    const int multi_pv_min_pieces =
+        parser.has_option("multi-pv-min-pieces")
+            ? parser.as<int>("multi-pv-min-pieces")
+            : 0; // below this piece count, never deviate from best move
+                 // (keeps us out of tablebase territory)
+
+    std::mt19937_64 multipv_rng(adj_seed ^ 0x9E3779B97F4A7C15ull);
+
+    auto color_to_result = [](Color color) {
+      return ((color == BLACK) ? BLACK_WON : WHITE_WON);
+    };
+    while (std::getline(std::cin, next_line)) {
+      if (next_line == "terminate") {
+        std::exit(-1);
+      }
+
+      TT.clear();
+      const auto start_pos = Position::pos_from_fen(next_line);
+      rep_history.clear();
+      rep_values.clear();
+      last_eval = -INFINITE;
+      board = start_pos;
+      Result result = UNKNOWN;
+      int draw_streak = 0;
+      const bool adj_enabled_this_game = adj_prob_dist(adj_rng) < adj_draw_prob;
+
+      for (auto i = 0; i < 500; ++i) {
+        Move best;
+        MoveListe liste;
+        get_moves(board.get_position(), liste);
+        if (liste.length() == 0) {
+          result = ((board.get_mover() == BLACK) ? WHITE_WON : BLACK_WON);
+          break;
+        }
+
+        const bool try_multipv_this_move =
+            multi_pv_prob > 0.0f &&
+            adj_prob_dist(multipv_rng) < multi_pv_prob &&
+            board.get_position().piece_count() > multi_pv_min_pieces;
+        const int this_move_pv = try_multipv_this_move ? 2 : 1;
+
+        auto root_moves =
+            searchValueMultiPV(board, this_move_pv, depth, this_move_pv * time,
+                               max_nodes, false, std::cout);
+
+        auto value = root_moves.front().score;
+        best = root_moves.front().move;
+
+        if (try_multipv_this_move && root_moves.size() > 1) {
+          const Value best_score = root_moves.front().score;
+          std::array<Move, 40> candidates;
+          std::array<Value, 40> candidates_scores;
+          int num_candidates = 0;
+          for (auto &rm : root_moves) {
+            if (rm.move.is_empty())
+              continue;
+            const Value diff = best_score - rm.score;
+            if (diff < multi_pv_eval_diff) {
+              candidates[num_candidates] = rm.move;
+              candidates_scores[num_candidates++] = rm.score;
+            }
+          }
+
+          if (num_candidates > 1) {
+            constexpr double temperature =
+                127.0; // tune this; same units as eval (cp)
+            std::array<double, 40> weights;
+            for (int k = 0; k < num_candidates; ++k) {
+              const Value diff = best_score - candidates_scores[k]; // >= 0
+              weights[k] = std::exp(-static_cast<double>(diff) / temperature);
+            }
+            std::discrete_distribution<int> pick_dist(
+                weights.begin(), weights.begin() + num_candidates);
+            const auto best_index = pick_dist(multipv_rng);
+            best = candidates[best_index];
+          }
+        }
+
+        if (best.is_empty()) {
+          result = UNKNOWN;
+          break;
+        }
+
+        // --- draw adjudication: track consecutive near-zero evals ---
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            i >= adj_draw_min_ply &&
+            board.get_position().piece_count() <= adj_draw_max_pieces &&
+            std::abs(value) <= adj_draw_score) {
+          draw_streak++;
+        } else {
+          draw_streak = 0;
+        }
+
+        if (adj_draw_count > 0 && adj_enabled_this_game &&
+            draw_streak >= adj_draw_count) {
+          result = DRAW;
+          break;
+        }
+
+        const Position previous = board.get_position();
+        board.play_move(best);
+        auto count = std::count(rep_history.begin(), rep_history.end(),
+                                (rep_history.empty()) ? Position{} : previous);
+        if (count >= 2) {
+          result = DRAW;
+          break;
+        }
+
+        rep_history.emplace_back(previous);
+        rep_values.emplace_back(value);
+      }
+
+      auto res_to_string = [](Result result, Color color) {
+        if ((result == BLACK_WON && color == BLACK) ||
+            (result == WHITE_WON && color == WHITE)) {
+          return "WON";
+        } else if ((result == BLACK_WON && color != BLACK) ||
+                   (result == WHITE_WON && color != WHITE)) {
+          return "LOSS";
+        } else if (result == DRAW) {
+          return "DRAW";
+        } else {
+          return "UNKNOWN";
+        }
+      };
+
+      // sending all the the results back in reverse order
+      std::cout << "BEGIN" << std::endl;
+      for (int i = rep_history.size() - 1; i >= 0; --i) {
+        std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
+                  << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
+                  << res_to_string(result, rep_history[i].color) << "!"
+                  << rep_values[i] << std::endl;
+      }
+      std::cout << "END" << std::endl;
+    }
+  }
+
+  std::string current;
+  while (std::cin >> current) {
+    if (current == "init") {
+      TT.age_counter = 0u;
+      std::string hash_string;
+      std::cin >> hash_string;
+      const int hash_size = std::stoi(hash_string);
+      TT.resize_in_mb(hash_size);
+      std::cout << "init_ready"
+                << "\n";
+    } else if (current == "new_game") {
+      last_eval = -INFINITE;
+      TT.clear();
+      TT.age_counter = 0u;
+      std::string position;
+      std::cin >> position;
+      Position pos = Position::pos_from_fen(position);
+      board = Board(pos);
+      std::cout << "game_ready"
+                << "\n";
+    } else if (current == "new_move") {
+      // opponent made a move and we need to update the board
+      Move move;
+      std::vector<uint32_t> squares;
+      std::string line;
+      std::cin >> line;
+      while (!line.empty()) {
+        if (line == "end_move")
+          break;
+        squares.emplace_back(std::stoi(line));
+        std::cin >> line;
+      }
+      move.from = 1u << squares[0];
+      move.to = 1u << squares[1];
+      for (auto i = 2; i < squares.size(); ++i) {
+        move.captures |= 1u << squares[i];
+      }
+
+      board.play_move(move);
+      std::cout << "update_ready"
+                << "\n";
+    } else if (current == "search") {
+      std::string time_string;
+      std::cin >> time_string;
+      Move bestMove;
+      /*searchValue(board, bestMove, MAX_PLY, std::stoi(time_string), false,
+                  std::cout);*/
+
+      auto root_moves =
+          searchValueMultiPV(board, 1, MAX_PLY, std::stoi(time_string),
+                             max_nodes, false, std::cout);
+      bestMove = root_moves[0].move;
+
+      std::cout << "new_move"
+                << "\n";
+      std::cout << std::to_string(bestMove.get_from_index()) << "\n";
+      std::cout << std::to_string(bestMove.get_to_index()) << "\n";
+      uint32_t captures = bestMove.captures;
+      while (captures) {
+        std::cout << std::to_string(Bits::bitscan_foward(captures)) << "\n";
+        captures &= captures - 1u;
+      }
+      std::cout << "end_move"
+                << "\n";
+
+      board.play_move(bestMove);
+      // adding the move to the repetition history for our side
+
+    } else if (current == "terminate") {
+      // terminating the program
+      break;
+    }
+    std::cout.flush();
+  }
+}

@@ -1,0 +1,92 @@
+
+
+#ifndef CHECKERSTEST_GAMELOGIC_H
+#define CHECKERSTEST_GAMELOGIC_H
+#include "Bits.h"
+#include "Board.h"
+#include "Line.h"
+#include "MGenerator.h"
+#include "Move.h"
+#include "Network.h"
+#include "Transposition.h"
+#include "types.h"
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#ifdef _WIN32
+#include "Endgame.h"
+#include "egdb.h"
+inline TableBase tablebase;
+#endif
+
+extern uint64_t nodeCounter;
+extern uint64_t counter;
+extern uint64_t both_counter;
+extern int last_eval;
+extern bool stop_search;
+enum NodeType {
+  ROOT,
+  PV,
+  NONPV,
+};
+
+struct RootMove {
+  Move move{};
+  Value score{-INFINITE};
+  Value previous_score{-INFINITE};
+  Line pv;
+};
+
+struct SearchGlobal {
+  uint32_t sel_depth;
+#ifdef CHECKERBOARD
+  char *reply;
+  int *playnow;
+#endif
+
+  // will be called whenever we find a new move
+  void new_move();
+
+  // will be called when the evaluation changes
+  void score_update();
+};
+
+extern SearchGlobal glob;
+
+namespace Search {
+
+Value search_asp(Board &board, Value last_score, Depth depth);
+
+template <NodeType type>
+Value search(bool cutnode, Board &board, Ply ply, Line &line, Value alpha,
+             Value beta, Depth depth, Move excluded, bool is_sing_search);
+
+template <NodeType type>
+Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
+         Move excluded, bool is_sing_search);
+
+Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
+             Move move, bool in_pv, bool cutnode);
+
+} // namespace Search
+
+std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
+                                         uint32_t time, size_t max_nodes,
+                                         bool print, std::ostream &stream);
+
+int get_mlh_estimate(Position pos);
+Value evaluate(Position pos, Ply ply);
+
+std::array<float, 40> get_probability_distribution(MoveListe &liste,
+                                                   Position pos);
+
+extern Network<2048, 32, 32, 1> network;
+
+extern Network<128, 32, 32, 1> mlh_net;
+
+extern Network<1024, 32, 32, 128> policy;
+
+#endif // CHECKERSTEST_GAMELOGIC_H

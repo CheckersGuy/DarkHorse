@@ -1,0 +1,200 @@
+#include "Endgame.h"
+#include "MGenerator.h"
+#include "egdb.h"
+#include "types.h"
+#include <chrono>
+#include <optional>
+
+TableBase::~TableBase() {}
+// change how loading works when num_pieces > max_pieces
+// just default to max_pieces in that case !
+//
+
+void TableBase::load_table_base(std::string path, int num_pieces) {
+  int i, status, nerrors;
+  int max_pieces;
+
+  EGDB_TYPE egdb_type;
+  /* Check that db files are present, get db type and size. */
+
+  status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  num_pieces = std::min(num_pieces, max_pieces);
+  this->num_pieces = num_pieces;
+
+  if (status) {
+    printf("No database found at %s\n", path.c_str());
+    std::exit(-1);
+  }
+
+  handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                     egdb_message_callback);
+
+  if (!handle) {
+    std::cerr << "Error returned from egdb_open()" << std::endl;
+    std::exit(-1);
+  }
+}
+
+void TableBase::load_dtw_base(std::string path, int num_pieces) {
+  int i, status, nerrors;
+  int max_pieces;
+
+  EGDB_TYPE egdb_type;
+  /* Check that db files are present, get db type and size. */
+
+  status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  num_pieces = std::min(num_pieces, max_pieces);
+
+  if (status) {
+    printf("No database found at %s\n", path.c_str());
+    std::exit(-1);
+  }
+
+  dtw_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                         egdb_message_callback);
+  if (!dtw_handle) {
+    std::cerr << "Error returned from egdb_open()" << std::endl;
+    std::exit(-1);
+  }
+}
+
+void TableBase::load_mtc_base(std::string path, int num_pieces) {
+  int i, status, nerrors;
+  int max_pieces;
+
+  EGDB_TYPE egdb_type;
+  /* Check that db files are present, get db type and size. */
+
+  status = egdb_identify(path.c_str(), &egdb_type, &max_pieces);
+  // std::cout << "MAX_PIECES: " << max_pieces << std::endl;
+
+  num_pieces = std::min(num_pieces, max_pieces);
+
+  if (status) {
+    printf("No database found at %s\n", path.c_str());
+    std::exit(-1);
+  }
+
+  mtc_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
+                         egdb_message_callback);
+  std::cout << "Loaded MTC with" << num_pieces << " pieces" << std::endl;
+  if (!mtc_handle) {
+    std::cerr << "Error returned from egdb_open()" << std::endl;
+    std::exit(-1);
+  }
+}
+
+TB_RESULT TableBase::probe(Position pos) {
+  // the kingsrow wld database does not have a valid value for any positions
+  // where side-to-move can capture the kingsrow database only has valid
+  // values for positions with atmost 5 pieces on one side
+
+  if (handle == nullptr) {
+    return TB_RESULT::UNKNOWN;
+  }
+  if (pos.has_jumps() || pos.piece_count() > num_pieces ||
+      Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
+    return TB_RESULT::UNKNOWN;
+  }
+  if (handle == nullptr) {
+    return TB_RESULT::UNKNOWN;
+  }
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = handle->lookup(
+      handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == EGDB_UNKNOWN)
+    return TB_RESULT::UNKNOWN;
+
+  if (val == EGDB_WIN)
+    return TB_RESULT::WIN;
+
+  if (val == EGDB_LOSS)
+    return TB_RESULT::LOSS;
+
+  if (val == EGDB_DRAW)
+    return TB_RESULT::DRAW;
+
+  return TB_RESULT::UNKNOWN;
+}
+
+std::optional<int> TableBase::probe_dtw(Position pos) {
+  if (dtw_handle == nullptr) {
+    return std::nullopt;
+  }
+
+  if (handle == nullptr) {
+    return std::nullopt;
+  }
+
+  auto wdl = probe(pos);
+  if (wdl != TB_RESULT::WIN && wdl != TB_RESULT::LOSS) {
+    return std::nullopt;
+  }
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = dtw_handle->lookup(
+      dtw_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val > 0) {
+    if (wdl == TB_RESULT::WIN) {
+      return 2 * val + 1;
+    } else {
+      return 2 * val;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<int> TableBase::probe_mtc(Position pos) {
+
+  if (pos.has_jumps() || pos.piece_count() > num_pieces ||
+      Bits::pop_count(pos.BP) > 5 || Bits::pop_count(pos.WP) > 5) {
+    return std::nullopt;
+  }
+  if (mtc_handle == nullptr) {
+    return std::nullopt;
+  }
+
+  EGDB_NORMAL_BITBOARD board;
+  board.white = pos.WP;
+  board.black = pos.BP;
+  board.king = pos.K;
+
+  EGDB_BITBOARD normal;
+  normal.normal = board;
+  auto val = mtc_handle->lookup(
+      mtc_handle, &normal, ((pos.color == BLACK) ? EGDB_BLACK : EGDB_WHITE), 0);
+
+  if (val == MTC_LESS_THAN_THRESHOLD) {
+    return 9;
+  }
+
+  if (val == MTC_THRESHOLD) {
+    return 10;
+  }
+
+  if (val == MTC_UNKNOWN || val == MTC_LESS_THAN_THRESHOLD ||
+      val == MTC_THRESHOLD) {
+    return std::nullopt;
+  }
+
+  return val;
+}
