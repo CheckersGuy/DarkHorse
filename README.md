@@ -33,5 +33,5 @@ The excellent [nnue-pytorch documentation](https://github.com/official-stockfish
 - **Ed Gilbert** — Creator of the strong checkers engine [*Kingsrow*](https://edgilbert.org/Checkers/KingsRow.htm), who also created checkers endgame tablebases.
 - **Jonathan Kreuzer** — Developer of the advanced checkers engine [*GuiNN*](https://github.com/jonkr2/GuiNN_Checkers), which also uses a neural network for position evaluation.
 
-## You can find the Dll for Checkerboard-GUI on the release page!
+## You can find the Dll for the Checkerboard-GUI on the release page!
 
