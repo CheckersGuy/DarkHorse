@@ -83,7 +83,7 @@ Value evaluate(Position pos, Ply ply);
 std::array<float, 40> get_probability_distribution(MoveListe &liste,
                                                    Position pos);
 
-extern Network<4096 + 2048, 32, 32, 1> network;
+extern Network<2048, 32, 32, 1> network;
 
 extern Network<128, 32, 32, 1> mlh_net;
 

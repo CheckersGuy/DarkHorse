@@ -29,9 +29,7 @@ void TableBase::load_table_base(std::string path, int num_pieces) {
   }
 
   handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
-                     [](char *msg) {
-
-                     });
+                     egdb_message_callback);
 
   if (!handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
@@ -57,7 +55,7 @@ void TableBase::load_dtw_base(std::string path, int num_pieces) {
   }
 
   dtw_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
-                         [](char *msg) {});
+                         egdb_message_callback);
   if (!dtw_handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;
     std::exit(-1);
@@ -82,7 +80,7 @@ void TableBase::load_mtc_base(std::string path, int num_pieces) {
   }
 
   mtc_handle = egdb_open(EGDB_NORMAL, num_pieces, cache_size, path.c_str(),
-                         [](char *msg) {});
+                         egdb_message_callback);
   std::cout << "Loaded MTC with" << num_pieces << " pieces" << std::endl;
   if (!mtc_handle) {
     std::cerr << "Error returned from egdb_open()" << std::endl;

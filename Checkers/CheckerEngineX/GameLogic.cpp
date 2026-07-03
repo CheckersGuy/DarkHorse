@@ -23,14 +23,59 @@ uint64_t diff_counter = 0;
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 
+uint64_t search_start_time = 0ull;
+Value glob_current_score = -INFINITE;
+uint64_t last_nodes_per_second = 0ull;
+
 std::array<Value, MAX_PLY + 10> static_evals;
 SearchGlobal glob;
 
-Network<4096 + 2048, 32, 32, 1> network;
+Network<2048, 32, 32, 1> network;
 
 Network<128, 32, 32, 1> mlh_net;
 
 Network<1024, 32, 32, 128> policy;
+
+#ifdef _WIN32
+void egdb_message_callback(char *msg) {
+  if (msg == nullptr)
+    return;
+#ifdef CHECKERBOARD
+  if (glob.reply != nullptr) {
+    snprintf(glob.reply, 1024, "%s", msg);
+  }
+#endif
+  std::cout << msg << std::endl;
+}
+#endif
+
+uint64_t current_nps() {
+  const double elapsed_sec =
+      std::max(1e-9, (double)(getSystemTime() - search_start_time) / 1e9);
+  return static_cast<uint64_t>(nodeCounter / elapsed_sec);
+}
+
+void SearchGlobal::new_move() {
+#ifdef CHECKERBOARD
+  if (reply == nullptr)
+    return;
+  last_nodes_per_second = current_nps();
+  snprintf(reply, 1024, "depth %d score %d nodes %llu KN's %llu", rootDepth,
+           glob_current_score, (unsigned long long)nodeCounter,
+           (unsigned long long)(last_nodes_per_second / 1000);
+#endif
+}
+
+void SearchGlobal::score_update() {
+#ifdef CHECKERBOARD
+  if (reply == nullptr)
+    return;
+  last_nodes_per_second = current_nps();
+  snprintf(reply, 1024, "depth %d score %d nodes %llu nps %llu", rootDepth,
+           glob_current_score, (unsigned long long)nodeCounter,
+           (unsigned long long)last_nodes_per_second);
+#endif
+}
 
 int get_mlh_estimate(Position pos) {
 
@@ -113,8 +158,6 @@ Value evaluate(Position pos, Ply ply) {
 
   // should probably add the mlh estimate here as well
 
-  const auto mlh = get_mlh_estimate(pos);
-
   if (result != TB_RESULT::UNKNOWN) {
 
     auto dtw = tablebase.probe_dtw(pos);
@@ -124,6 +167,7 @@ Value evaluate(Position pos, Ply ply) {
       return (result == TB_RESULT::WIN) ? -loss(actual_dtw) : loss(actual_dtw);
     }
 
+    const auto mlh = get_mlh_estimate(pos);
     auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply) + (300 - mlh)
                     : (result == TB_RESULT::LOSS) ? tbloss(ply) - (300 - mlh)
                                                   : 0;
@@ -169,6 +213,7 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
   std::vector<RootMove> results(actualPV);
 
   endTime = getSystemTime() + static_cast<uint64_t>(time) * 1000000;
+  search_start_time = getSystemTime();
   size_t total_time = 0;
   num_pv_excluded = 0;
 
@@ -218,11 +263,16 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
         results.begin(), results.end(),
         [](const RootMove &a, const RootMove &b) { return a.score > b.score; });
 
+    glob_current_score = results[0].score;
+    glob.score_update();
+
     if (print) {
       double time_seconds = (double)total_time / 1000.0;
+      const uint64_t nps = current_nps();
       for (int k = 0; k < actualPV; ++k) {
         stream << "info depth " << d << " multipv " << (k + 1) << " score "
-               << results[k].score << " time " << time_seconds << " pv "
+               << results[k].score << " time " << time_seconds << " nodes "
+               << nodeCounter << " nps " << (nps / 1000) << "KN's pv "
                << results[k].pv.toString(15) << "\n";
       }
       std::cout << std::endl;
@@ -584,6 +634,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
         pv.concat(move, local_pv);
         alpha = val;
+        if constexpr (is_root) {
+          glob_current_score = val;
+          glob.new_move();
+        }
       }
     }
   }

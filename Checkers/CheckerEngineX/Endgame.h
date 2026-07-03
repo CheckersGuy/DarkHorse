@@ -13,6 +13,8 @@
 #include <string>
 #include <unordered_map>
 
+void egdb_message_callback(char *msg);
+
 struct TableBase {
 
   int num_pieces = 0;
