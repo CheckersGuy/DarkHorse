@@ -83,15 +83,9 @@ constexpr uint32_t DOUBLE_CORNER = (1 << 0) | (1 << 4) | (1 << 31) | (1 << 27);
 constexpr std::array<uint32_t, 8> MASK_ROWS = {
     0xf, 0xf << 4, 0xf << 8, 0xf << 12, 0xf << 16, 0xf << 20, 0xf << 24};
 
-constexpr std::array<int, 32> LMR_TABLE = {1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3,
-                                           3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-                                           4, 4, 4, 4, 4, 4, 4, 4, 4, 4};
-
 constexpr int LMR_MAX_DEPTH = 64;      // depths beyond this reuse the last row
 constexpr int LMR_MAX_MOVE_INDEX = 40; // MoveListe holds at most 40 moves
 
-// LMR_TABLE_2D[d][m] -> base reduction in plies for (depth = d+1, move_index =
-// m+1)
 inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
     LMR_TABLE_2D = []() {
       std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH> table{};
@@ -99,8 +93,6 @@ inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
         for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
           const double depth = d + 1;
           const double move_index = m + 1;
-          // classic log(depth)*log(move_index) shape; base/scale are starting
-          // points only -- these need self-play tuning like everything else
           const double raw = 0.7 + std::log(depth) * std::log(move_index) * 1.1;
           table[d][m] = std::max(0, static_cast<int>(raw));
         }
@@ -198,9 +190,9 @@ inline bool isLoss(Value val) { return val <= TB_LOSS && isEval(val); }
 
 inline bool isWin(Value val) { return val >= -TB_LOSS && isEval(val); }
 
-inline bool isWinningEval(Value val) { return val >= 500; };
-inline bool isLosingEval(Value val) { return val <= -500; };
-inline bool isDecesive(Value val) { return std::abs(val) >= 500; };
+inline bool isWinningEval(Value val) { return val >= MAX_EVAL; };
+inline bool isLosingEval(Value val) { return val <= -MAX_EVAL; };
+inline bool isDecesive(Value val) { return std::abs(val) >= MAX_EVAL; };
 
 template <Color color> constexpr uint32_t defaultShift(const uint32_t maske) {
   if constexpr (color == BLACK) {
