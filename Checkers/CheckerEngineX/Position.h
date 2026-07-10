@@ -210,6 +210,22 @@ struct Position {
   static std::optional<Move> get_move(Position orig, Position next);
 
   int bucket_index();
+
+  template <int NUM_BUCKETS> int bucket_index() {
+
+    if constexpr (NUM_BUCKETS == 12) {
+      return piece_count_to_bucket[piece_count()];
+    }
+
+    Position copy = *this;
+    if (color == BLACK) {
+      copy = copy.get_color_flip();
+    }
+
+    const uint32_t maske = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
+                           (1 << 4) | (1 << 5) | (1 << 6);
+    return Bits::pext(copy.BP, maske);
+  }
 };
 
 template <Color color> inline bool king_mobility_critical(const Position &pos) {

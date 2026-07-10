@@ -409,5 +409,3 @@ uint32_t Position::get_correction_index() const {
   auto maske = PROMO_SQUARES_BLACK | PROMO_SQUARES_WHITE;
   return 2 * Bits::pext(BP | WP, maske) + (color == BLACK);
 }
-
-int Position::bucket_index() { return piece_count_to_bucket[piece_count()]; }

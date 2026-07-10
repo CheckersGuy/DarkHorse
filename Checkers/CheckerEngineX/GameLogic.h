@@ -83,10 +83,10 @@ Value evaluate(Position pos, Ply ply);
 std::array<float, 40> get_probability_distribution(MoveListe &liste,
                                                    Position pos);
 
-extern Network<2048, 32, 32, 1> network;
+extern Network<2048, 32, 32, 1, 128> network;
 
-extern Network<128, 32, 32, 1> mlh_net;
+extern Network<128, 32, 32, 1, 12> mlh_net;
 
-extern Network<1024, 32, 32, 128> policy;
+extern Network<1024, 32, 32, 128, 128> policy;
 
 #endif // CHECKERSTEST_GAMELOGIC_H

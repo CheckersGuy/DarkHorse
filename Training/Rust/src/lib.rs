@@ -130,7 +130,6 @@ impl BatchProvider {
                     legal_array[128 * i + index] = true;
                 }
 
-                let piece_count = sample.position.piece_count();
                 for square in sample.position.iter() {
                     match square {
                         Square::WPAWN(index) => {
@@ -158,23 +157,7 @@ impl BatchProvider {
                 mlh_array[i] = sample.mlh as i64;
                 eval_array[i] = sample.value as f32;
 
-                let sub_two;
-                match piece_count {
-                    24 | 23 | 22 | 21 | 20 | 19 => sub_two = 0,
-                    18 | 17 | 16 => sub_two = 1,
-                    15 | 14 | 13 => sub_two = 2,
-                    12 | 11 => sub_two = 3,
-                    10 => sub_two = 4,
-                    9 => sub_two = 5,
-                    8 => sub_two = 6,
-                    7 => sub_two = 7,
-                    6 => sub_two = 8,
-                    5 => sub_two = 9,
-                    4 => sub_two = 10,
-                    3 | 2 | 1 | 0 => sub_two = 11,
-                    _ => sub_two = 0,
-                }
-                bucket_array[i] = sub_two;
+                bucket_array[i] = sample.position.bucket_index();
             }
         }
         Ok(())

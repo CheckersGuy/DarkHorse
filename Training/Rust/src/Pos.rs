@@ -1,4 +1,7 @@
-use std::ops::{Shl, Shr};
+use std::{
+    arch::x86_64::{_pext_u32, _pext_u64},
+    ops::{Shl, Shr},
+};
 
 use bloomfilter::reexports::bit_vec::BitBlock;
 use libc::size_t;
@@ -357,6 +360,18 @@ impl Position {
     pub fn has_capture(&self) -> bool {
         return (self.color == -1 && self.get_jumpers::<-1>() != 0)
             || (self.color == 1 && self.get_jumpers::<1>() != 0);
+    }
+
+    pub fn bucket_index(self) -> i64 {
+        let mut copy = self;
+
+        if copy.color == -1 {
+            copy = copy.get_color_flip();
+        }
+
+        let maske: u32 = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6;
+
+        unsafe { _pext_u32(copy.bp, maske) as i64 }
     }
 
     pub fn get_start_position() -> Position {

@@ -106,7 +106,6 @@ constexpr int prob_cut = 27; // 27;
 
 constexpr int asp_wind = 15; // 15;
 
-constexpr int NUM_BUCKETS = 12;
 constexpr int MAX_ASP = 200;
 constexpr int CORRECTION_SIZE = 512;
 constexpr int MAX_EVAL = 500;

@@ -30,11 +30,11 @@ uint64_t last_nodes_per_second = 0ull;
 std::array<Value, MAX_PLY + 10> static_evals;
 SearchGlobal glob;
 
-Network<2048, 32, 32, 1> network;
+Network<2048, 32, 32, 1,128> network;
 
-Network<128, 32, 32, 1> mlh_net;
+Network<128, 32, 32, 1,12> mlh_net;
 
-Network<1024, 32, 32, 128> policy;
+Network<1024, 32, 32, 128,128> policy;
 
 #ifdef _WIN32
 void egdb_message_callback(char *msg) {

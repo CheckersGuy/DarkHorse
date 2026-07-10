@@ -80,18 +80,20 @@ fn main() -> anyhow::Result<()> {
             "/mnt/d/TrainData/Samples/mlh.samples",
         )?;
     */
-    /*
-        Data::create_policy_data(
-            vec![
-                "/mnt/d/TrainData/Games/training-book.games",
-                "/mnt/d/TrainData/Games/training-book2.games",
-                "/mnt/d/TrainData/Games/training-book3.games",
-            ],
-            "/mnt/d/TrainData/Samples/policy.samples",
-            32,
-        )?;
-
-    */
+    Data::create_policy_data(
+        vec![
+            "/mnt/d/TrainData/Games/training-book.games",
+            "/mnt/d/TrainData/Games/training-book2.games",
+            "/mnt/d/TrainData/Games/training-book3.games",
+            "/mnt/d/TrainData/Games/multipv.games",
+            "/mnt/d/TrainData/Games/cloud.games",
+            "/mnt/d/TrainData/Games/cloud2.games",
+            "/mnt/d/TrainData/Games/cloud3.games",
+            "/mnt/d/TrainData/Games/cloud4.games",
+        ],
+        "/mnt/d/TrainData/Samples/policy2.samples",
+        32,
+    )?;
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);

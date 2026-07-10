@@ -685,6 +685,7 @@ pub fn create_policy_data(
 
     for path in paths {
         let mut reader = BufReader::new(File::open(path)?);
+        println!("Starting reading file {}", path);
         for game in reader.iter_games() {
             let samples = game.get_samples();
 
@@ -698,24 +699,14 @@ pub fn create_policy_data(
                     continue;
                 }
 
-                let move_encoding;
-                if prev_pos.color == -1 {
-                    move_encoding = Move::get_move_encoding_from_pos(
-                        prev_pos.get_color_flip(),
-                        next_pos.get_color_flip(),
-                    )
-                    .unwrap_or(-1);
-                } else {
-                    move_encoding =
-                        Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
-                }
+                let move_encoding =
+                    Move::get_move_encoding_from_pos(prev_pos, next_pos).unwrap_or(-1);
 
                 if move_encoding >= 0 && !filter.check(&prev_pos) {
                     let mut sample = window[0].clone();
                     if sample.position.color == -1 {
                         sample.position = sample.position.get_color_flip();
                     }
-
                     sample.mlh = move_encoding as i16;
                     let partition = rand::thread_rng().gen::<usize>() % partitions;
                     written_count += 1;

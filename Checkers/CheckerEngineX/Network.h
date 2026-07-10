@@ -38,45 +38,6 @@ template <typename Check, typename... Types> constexpr auto get_unique() {
   }
 }
 
-template <typename... Types>
-constexpr auto get_unique_tuple(std::tuple<Types...>) {
-  return get_unique<Types...>();
-}
-
-// some more code goes here
-
-template <int counter, int first, int second, int... Args>
-constexpr auto get_window_tuple() {
-
-  if constexpr (sizeof...(Args) == 0) {
-    return std::tuple<QLayer<first, second>>{};
-  } else {
-
-    if constexpr (counter == 0) {
-      return std::tuple_cat(std::make_tuple(SparseLayer<first, second>{}),
-                            get_window_tuple<counter + 1, second, Args...>());
-    } else {
-      return std::tuple_cat(
-          std::make_tuple(QLayer<first, second, Activation::SqRelu>{}),
-          get_window_tuple<counter + 1, second, Args...>());
-    }
-  }
-}
-
-template <typename... Args> constexpr auto getVariant(std::tuple<Args...>) {
-  return std::variant<Args...>{};
-};
-
-template <int... layers>
-using VariantLayerType =
-    decltype(getVariant(get_unique_tuple(get_window_tuple<0, layers...>())));
-
-template <class... Ts> struct overloaded : Ts... {
-  using Ts::operator()...;
-};
-
-template <class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
-
 class membuf : public std::basic_streambuf<char> {
 public:
   membuf(const uint8_t *p, size_t l) {
@@ -136,7 +97,7 @@ template <int OutDim> struct alignas(64) Accumulator {
   std::pair<float, float> get_activation_stats();
 };
 
-template <int L1, int L2, int L3, int Out> struct Network {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS> struct Network {
 
   int max_units{0};
   Network() {
@@ -146,9 +107,9 @@ template <int L1, int L2, int L3, int Out> struct Network {
   }
 
   Accumulator<2 * L1> accumulator;
-  SparseLayer<L1, L2> first_layer;
-  QLayer<L2, L3, Activation::SqRelu> second_layer;
-  QLayer<L3, Out, Activation::Id> out_layer;
+  SparseLayer<L1, L2, NUM_BUCKETS> first_layer;
+  QLayer<L2, L3, Activation::SqRelu, NUM_BUCKETS> second_layer;
+  QLayer<L3, Out, Activation::Id, NUM_BUCKETS> out_layer;
 
   // permutations are needed to improve sparsity
   // permutation size should be 2*L1
@@ -404,8 +365,8 @@ std::pair<float, float> Accumulator<OutDim>::get_activation_stats() {
   return std::make_pair(f_nnz, f_nnz_blocks);
 }
 
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_permutation(std::string file) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_permutation(std::string file) {
   std::filesystem::path p(file);
   const auto file_size = std::filesystem::file_size(p);
   const auto num_items = file_size / sizeof(size_t);
@@ -421,8 +382,8 @@ void Network<L1, L2, L3, Out>::load_permutation(std::string file) {
   permutation = result;
 }
 
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_permutation_from_array(
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_permutation_from_array(
     const unsigned char *data, size_t size) {
   memstream stream(data, size);
   const auto file_size = size;
@@ -433,8 +394,8 @@ void Network<L1, L2, L3, Out>::load_permutation_from_array(
   permutation = result;
 }
 
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_bucket(std::string file) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_bucket(std::string file) {
 
   std::ifstream stream(file, std::ios::binary);
   if (!stream.good()) {
@@ -446,9 +407,9 @@ void Network<L1, L2, L3, Out>::load_bucket(std::string file) {
   second_layer.load_params(stream);
   out_layer.load_params(stream);
 }
-template <int L1, int L2, int L3, int Out>
-void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
-                                               size_t size) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_from_array(
+    const unsigned char *data, size_t size) {
   memstream stream(data, size);
   accumulator.load_weights(stream, permutation);
   first_layer.load_params(stream, permutation);
@@ -456,10 +417,11 @@ void Network<L1, L2, L3, Out>::load_from_array(const unsigned char *data,
   out_layer.load_params(stream);
 }
 
-template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+int32_t *Network<L1, L2, L3, Out, NUM_BUCKETS>::compute_incre_forward_pass(
+    Position next) {
 
-  auto bucket_index = next.bucket_index();
+  auto bucket_index = next.bucket_index<NUM_BUCKETS>();
   uint8_t *out = accumulator.forward(input, next);
 
   int32_t *output = nullptr;
@@ -470,21 +432,22 @@ int32_t *Network<L1, L2, L3, Out>::compute_incre_forward_pass(Position next) {
   return output;
 }
 
-template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::operator[](int index) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+int Network<L1, L2, L3, Out, NUM_BUCKETS>::operator[](int index) {
   return input[index];
 }
 
-template <int L1, int L2, int L3, int Out>
-int Network<L1, L2, L3, Out>::evaluate(Position pos, int ply, int shuffle) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+int Network<L1, L2, L3, Out, NUM_BUCKETS>::evaluate(Position pos, int ply,
+                                                    int shuffle) {
 
   auto nnue = *compute_incre_forward_pass(pos);
 
   return nnue;
 }
 
-template <int L1, int L2, int L3, int Out>
-int32_t *Network<L1, L2, L3, Out>::get_raw_eval(Position pos) {
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+int32_t *Network<L1, L2, L3, Out, NUM_BUCKETS>::get_raw_eval(Position pos) {
 
   return compute_incre_forward_pass(pos);
 }
