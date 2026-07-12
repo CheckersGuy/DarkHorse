@@ -222,8 +222,8 @@ struct Position {
       copy = copy.get_color_flip();
     }
 
-    const uint32_t maske = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) |
-                           (1 << 4) | (1 << 5) | (1 << 6);
+    const uint32_t maske =
+        1 << 6 | 1 << 9 | 1 << 10 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18;
     return Bits::pext(copy.BP, maske);
   }
 };

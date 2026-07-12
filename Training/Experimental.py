@@ -17,7 +17,7 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 # below will be moved into the network
 
-L1 = 2*1024
+L1 = 2*2048
 L2 = 32
 L3 = 32
 
@@ -30,7 +30,7 @@ class Network(pl.LightningModule):
         self.val_outputs = []
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.9
+        self.gamma = 0.992
         self.run_name = run_name
 
         self.num_buckets = 128

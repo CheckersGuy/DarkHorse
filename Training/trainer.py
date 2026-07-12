@@ -9,9 +9,9 @@ import string_sum
 if __name__ == "__main__":
     batch_size = 8192
     epochs = 605
-    model = Experimental.PolicyNetwork(run_name="policy128")
+    model = Experimental.Network(run_name="buckets1024")
 
-    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/policy2.samples",
+    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/cloud.samples",
                                              val_data="/mnt/c/TrainData/finaldataset3.rescored.samples",
                                              batch_size=batch_size, buffer_size=500000000)
 

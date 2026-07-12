@@ -80,7 +80,7 @@ fn main() -> anyhow::Result<()> {
             "/mnt/d/TrainData/Samples/mlh.samples",
         )?;
     */
-    Data::create_policy_data(
+    /*Data::rescoring_data(
         vec![
             "/mnt/d/TrainData/Games/training-book.games",
             "/mnt/d/TrainData/Games/training-book2.games",
@@ -90,9 +90,27 @@ fn main() -> anyhow::Result<()> {
             "/mnt/d/TrainData/Games/cloud2.games",
             "/mnt/d/TrainData/Games/cloud3.games",
             "/mnt/d/TrainData/Games/cloud4.games",
+            "/mnt/d/TrainData/Games/debugging0.games",
+            "/mnt/d/TrainData/Games/debugging1.games",
+            "/mnt/d/TrainData/Games/multipv.games",
+            "/mnt/d/TrainData/Games/multipv2.games",
+            "/mnt/d/TrainData/Games/qs_samples0.games",
         ],
-        "/mnt/d/TrainData/Samples/policy2.samples",
+        "/mnt/d/TrainData/Samples/rescored.samples",
+        10,
+        14,
         32,
+        1000000,
+    )?;
+    */
+
+    Data::rescoring_data(
+        vec!["/mnt/d/TrainData/Games/debugging0.games"],
+        "/mnt/d/TrainData/Samples/rescored.samples",
+        1,
+        14,
+        32,
+        1000000,
     )?;
 
     /*

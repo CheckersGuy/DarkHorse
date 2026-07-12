@@ -50,44 +50,180 @@ pub struct Generator<'a> {
     pub prev_file: Option<&'a str>,
 }
 
-pub fn rescoring_data(input: &str, time: i32) -> std::io::Result<()> {
-    let samples = Arc::new(Mutex::new(BufReader::new(File::open(input)?)));
-    let (tx, rx): (Sender<Sample::Sample>, Receiver<Sample::Sample>) = mpsc::channel();
-    let num_threads = 5;
-    {
-        let mut reader = samples.lock().unwrap();
-        let mut sample = Sample::Sample::default();
-        sample.read_into(&mut *reader)?;
+const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
 
-        for ind in 0..num_threads {
-            let sender = tx.clone();
-            thread::spawn(move || {
-                //buffer for the samples
+pub fn rescoring_data(
+    paths: Vec<&str>,
+    output: &str,
+    time: i32,
+    num_workers: usize,
+    partitions: usize,
+    queue_capacity: usize,
+) -> std::io::Result<()> {
+    let mut total_count: u64 = 0;
+    let mut skipped_rescoring: u64 = 0;
 
-                //let mut buffer = Vec::new();
+    let (work_tx, work_rx) = mpsc::sync_channel::<Sample::Sample>(queue_capacity);
+    let work_rx = Arc::new(Mutex::new(work_rx));
 
-                for _ in 0..10000 {}
+    let (result_tx, result_rx) = mpsc::sync_channel::<Sample::Sample>(queue_capacity);
 
-                let mut command = Command::new("./generator2")
-                    .args([format!("--eval-loop --time {} --hash_size 64", time)])
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .spawn()
-                    .expect("Failed to start process");
+    let bar = ProgressBar::new_spinner();
+    bar.set_style(
+        ProgressStyle::with_template("[{elapsed_precise}] {spinner} produced: {msg}").unwrap(),
+    );
 
-                let mut stdin = command.stdin.take().unwrap();
-                let stdout = command.stdout.take().unwrap();
+    // --- writer thread ---
+    let written_counter = Arc::new(AtomicUsize::new(0));
+    let writer_written_counter = Arc::clone(&written_counter);
+    let output_owned = output.to_string();
+    let writer_handle = {
+        let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
+        for i in 0..partitions {
+            let file_name = format!("{}{}", output_owned, i);
+            files.push(BufWriter::new(File::create(file_name)?));
+        }
+        thread::spawn(move || {
+            let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+            for sample in result_rx.iter() {
+                let partition = rng.gen::<usize>() % partitions;
+                sample
+                    .write_fen(&mut files[partition])
+                    .expect("Could not write rescored sample");
+                writer_written_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            }
+        })
+    };
 
-                stdin
-                    .write_all((String::from("terminate\n")).as_bytes())
-                    .unwrap();
+    // --- worker threads ---
+    let mut worker_handles = Vec::new();
+    for worker_id in 0..num_workers {
+        let work_rx = Arc::clone(&work_rx);
+        let result_tx = result_tx.clone();
+        let handle = thread::spawn(move || {
+            let mut command = Command::new("./generator2")
+                .args([format!("--eval-loop --time {} --hash_size 64", time)])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .expect("Failed to start process");
+            let mut stdin = command.stdin.take().unwrap();
+            let stdout = command.stdout.take().unwrap();
+            let mut f = BufReader::new(stdout);
 
-                command.kill().unwrap();
-            });
+            loop {
+                let received = {
+                    let rx = work_rx.lock().unwrap();
+                    rx.recv()
+                };
+                let mut sample = match received {
+                    Ok(s) => s,
+                    Err(_) => break,
+                };
+
+                let fen_string = sample.position.get_fen_string();
+                if stdin.write_all((fen_string + "\n").as_bytes()).is_err() {
+                    break;
+                }
+
+                let mut buffer = String::new();
+                if let Err(e) = f.read_line(&mut buffer) {
+                    println!("Worker {worker_id} read error: {:?}", e);
+                    continue;
+                }
+                buffer = buffer.trim().replace("\n", "");
+                let eval: i16 = match buffer.parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        println!("Worker {worker_id} could not parse eval '{buffer}'");
+                        continue;
+                    }
+                };
+                sample.value = eval;
+
+                if result_tx.send(sample).is_err() {
+                    break;
+                }
+            }
+
+            let _ = stdin.write_all(b"terminate\n");
+            let _ = command.wait();
+            println!("Worker {worker_id} finished");
+        });
+        worker_handles.push(handle);
+    }
+
+    // --- main thread: producer ---
+    let mut filter = Bloom::new_for_fp_rate(4_000_000_000, 0.01);
+    for path in paths.iter() {
+        println!("Reading games from file: {}", path);
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            for sample in game.get_samples() {
+                if sample.position.has_capture() {
+                    continue;
+                }
+                if sample.position.bp == 0 || sample.position.wp == 0 {
+                    continue;
+                }
+                if sample.value.abs() >= 15000 {
+                    continue;
+                }
+                if filter.check(&sample.position) {
+                    continue;
+                }
+                filter.set(&sample.position);
+
+                total_count += 1;
+                bar.set_message(total_count.to_string());
+                bar.tick();
+
+                if sample.value.abs() >= RESCORE_VALUE_THRESHOLD {
+                    // already decisive / TB-range: keep the old value, skip the engine call,
+                    // but still route it through dedup+write like everything else
+                    skipped_rescoring += 1;
+                    if result_tx.send(sample).is_err() {
+                        break;
+                    }
+                    continue;
+                }
+
+                if work_tx.send(sample).is_err() {
+                    break;
+                }
+            }
         }
     }
 
-    return Ok(());
+    drop(work_tx);
+    drop(result_tx); // drop main's own clone too, now that producing is done
+    for handle in worker_handles {
+        handle.join().unwrap();
+    }
+    writer_handle.join().unwrap();
+
+    let written_count = written_counter.load(std::sync::atomic::Ordering::Relaxed);
+    println!(
+        "Rescored and wrote back {} unique samples out of {} candidates ({} skipped rescoring, kept old value)",
+        written_count, total_count, skipped_rescoring
+    );
+
+    // --- shuffle + merge partitions ---
+    let mut writer = BufWriter::new(File::create(output)?);
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    for i in 0..partitions {
+        let file_name = format!("{}{}", output, i);
+        let mut read_local = BufReader::new(File::open(&file_name)?);
+        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
+        samples.par_shuffle(&mut rng);
+        println!("Done shuffling partition {i}");
+        for sample in samples {
+            sample.write_fen(&mut writer)?;
+        }
+    }
+    writer.flush()?;
+
+    Ok(())
 }
 
 pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Result<()> {
@@ -157,115 +293,6 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
             bar.inc(1);
         }
     }
-    Ok(())
-}
-
-pub fn rescore_data(path: &str, out_path: &str) -> std::io::Result<()> {
-    let mut reader = BufReader::new(File::open(path)?);
-    let num_workers = 7;
-
-    //processing the file in 10 big-chunks
-
-    //now we got our data and can distribute the work among all the threads
-    loop {
-        let r = thread::scope(|s| {
-            let (tx, rx): (Sender<Sample::Sample>, Receiver<Sample::Sample>) = mpsc::channel();
-
-            for ind in 0..num_workers {
-                let mut test = Vec::new();
-                for _ in 0..10000 {
-                    let mut old_sample = OldSample::default();
-                    match old_sample.read_into(&mut reader) {
-                        Err(_) => break,
-                        _ => {}
-                    }
-                    test.push(old_sample);
-                }
-                s.spawn(move || {
-                    //processing samples here
-                    println!("Worker {ind} started");
-                    let mut command = Command::new("./generator2")
-                        .args(["--eval-loop --time 1 --hash_size 4"])
-                        .stdin(Stdio::piped())
-                        .stdout(Stdio::piped())
-                        .spawn()
-                        .expect("Failed to start process");
-                    let mut stdin = command.stdin.take().unwrap();
-                    let stdout = command.stdout.take().unwrap();
-                    let mut f = BufReader::new(stdout);
-
-                    //Looping over all the samples we can get from the vec
-
-                    for (i, old_n) in test.iter().enumerate() {
-                        let fen_string = old_n.position.get_fen_string();
-                        stdin
-                            .write_all((fen_string.clone() + "\n").as_bytes())
-                            .unwrap();
-                        let mut buffer = String::new();
-                        match f.read_line(&mut buffer) {
-                            Ok(_) => {}
-                            Err(e) => {
-                                println!("{:?}", e)
-                            }
-                        }
-                        buffer = buffer.trim().replace("\n", "");
-                        let eval: i16 = buffer.parse().unwrap_or(-15000);
-                        //println!("Position: {}", i);
-                    }
-                    println!("Trying to terminate child-process");
-                    stdin
-                        .write_all((String::from("terminate\n")).as_bytes())
-                        .unwrap();
-                    command.wait().expect("Could not wait for the child");
-                    println!("Terminated child-process");
-                });
-            }
-        });
-        if !reader.has_data_left().expect("Error") {
-            break;
-        }
-    }
-    Ok(())
-}
-
-pub fn merge_rescored_data(input: Vec<&str>, output: &str) -> std::io::Result<()> {
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
-    let mut total_count = 0;
-    let mut unique_count = 0;
-    for path in input.iter() {
-        let mut reader = BufReader::new(File::open(path)?);
-        for sample in reader.iter_samples() {
-            match sample.result {
-                Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
-                    if !filter.check(&sample.position) {
-                        filter.set(&sample.position);
-                        sample.write_fen(&mut writer)?;
-                        unique_count += 1;
-                        total_count += 1;
-                    }
-                }
-                Result::UNKNOWN => {}
-                _ => {
-                    if !filter.check(&sample.position) {
-                        filter.set(&sample.position);
-                        unique_count += 1;
-                    }
-
-                    total_count += 1;
-                    sample.write_fen(&mut writer)?;
-                }
-            }
-        }
-    }
-
-    writer.flush()?;
-
-    println!(
-        "Got back {} unique samples while processing {} samples",
-        unique_count, total_count
-    );
-
     Ok(())
 }
 
@@ -429,85 +456,6 @@ pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-//#[cfg(target_os = "windows")]
-pub fn rescore_games(
-    paths: Vec<&str>,
-    output: &str,
-    base: &TableBase::Base,
-    partitions: usize,
-) -> std::io::Result<()> {
-    //let mut reader = BufReader::new(File::open(path)?);
-    let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
-    let mut total_count = 0;
-    let mut written_count: u64 = 0;
-
-    let mut files: Vec<BufWriter<std::fs::File>> = Vec::new();
-    let mut writer = BufWriter::new(File::create(output)?);
-    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
-    for i in 0..partitions {
-        let file_name = String::from(output) + i.to_string().as_str();
-        files.push(BufWriter::new(File::create(file_name)?));
-    }
-
-    println!("Starting to write files");
-    for path in paths {
-        println!("Starting with file: {}", path);
-        let mut reader = BufReader::new(File::open(path)?);
-        for game in reader.iter_games() {
-            if game.result == Result::UNKNOWN {
-                continue;
-            }
-            let samples = rescore_game(&game, base)?;
-
-            for sample in samples {
-                if sample.position.has_capture() {
-                    continue;
-                }
-                if (sample.position.bp == 0) || (sample.position.wp == 0) {
-                    continue;
-                }
-                total_count += 1;
-                match sample.result {
-                    Result::TBDRAW | Result::TBLOSS | Result::TBWIN => {
-                        if !filter.check(&sample.position) {
-                            filter.set(&sample.position);
-                            let partition = rand::thread_rng().gen::<usize>() % partitions;
-                            sample.write_fen(&mut files[partition])?;
-                            written_count += 1;
-                        }
-                    }
-                    Result::UNKNOWN => {}
-                    _ => {
-                        let partition = rand::thread_rng().gen::<usize>() % partitions;
-                        sample.write_fen(&mut files[partition])?;
-                        written_count += 1;
-                    }
-                }
-            }
-        }
-    }
-    //
-    println!("Done rescoring and creating partitions\n Now we are shuffling and merging the files");
-    files.clear(); //that should flush the buffers as well
-    for i in 0..partitions {
-        let file_name = String::from(output) + i.to_string().as_str();
-        let mut read_local = BufReader::new(File::open(file_name)?);
-        let mut samples: Vec<Sample::Sample> = read_local.iter_samples().collect();
-        samples.par_shuffle(&mut rng);
-        println!("Done shuffling partition {i}");
-        for sample in samples {
-            sample.write_fen(&mut writer)?;
-        }
-    }
-
-    writer.flush()?;
-    println!(
-        "Got back a total of {} while processing {} samples",
-        written_count, total_count
-    );
-    Ok(())
-}
-
 pub fn get_unique_samples(
     paths: Vec<&str>,
     output: &str,
@@ -590,83 +538,6 @@ pub fn get_unique_samples(
     );
     Ok(())
 }
-
-pub fn rescore_game(game: &Game, base: &TableBase::Base) -> std::io::Result<Vec<Sample::Sample>> {
-    let mut game_samples = game.get_samples();
-    let mut rng = thread_rng();
-    let mut adj_prob = 0.9;
-    let mut uniform = Uniform::new(0.0, 1.0);
-    let last_position = game_samples.last().unwrap().position;
-    if last_position.bp == 0 || last_position.wp == 0 {
-        game_samples.pop().expect("Game was empty");
-    }
-
-    let last = game_samples.last().expect("Game was empty");
-    let mut local_result = last.result;
-    for sample in game_samples.iter_mut().rev() {
-        let mover = sample.position.color;
-        if mover == -1 {
-            sample.position = sample.position.get_color_flip();
-        }
-
-        let result = base.probe_with_position(sample.position).unwrap();
-        if result == Result::UNKNOWN {
-            sample.result = local_result;
-        } else {
-            sample.result = result;
-            local_result = match result {
-                Result::TBWIN => Result::WIN,
-                Result::TBLOSS => Result::LOSS,
-                Result::TBDRAW => Result::DRAW,
-                _ => local_result,
-            };
-        }
-        local_result = match local_result {
-            Result::WIN | Result::TBWIN => Result::LOSS,
-            Result::LOSS | Result::TBLOSS => Result::WIN,
-            _ => local_result,
-        };
-    }
-    //doing some sort of draw-adjudication
-    let mut filter_samples = Vec::new();
-    let mut count = 0;
-    let mut sum_last = 0;
-    const adj_moves: i32 = 10;
-    for s in game_samples.iter().cloned() {
-        if s.value.abs() >= 15000 {
-            continue;
-        }
-        let mut sample = s;
-        let piece_count = sample.position.piece_count();
-
-        filter_samples.push(sample);
-
-        if sample.result == Result::TBWIN {
-            sample.value = 10000;
-        } else if sample.result == Result::TBLOSS {
-            sample.value = -10000;
-        } else if sample.result == Result::TBDRAW {
-            sample.value = 0;
-        }
-        if piece_count <= 10 {
-            sum_last += sample.value.abs() as i32;
-            count += 1;
-        }
-        if count >= adj_moves {
-            let avg = sum_last.div(count);
-            if avg.abs() <= 1 && sample.result == Result::DRAW {
-                let uni_num = uniform.sample(&mut rng);
-                if uni_num <= adj_prob {
-                    break;
-                }
-            }
-            count = 0;
-            sum_last = 0;
-        }
-    }
-    Ok(filter_samples)
-}
-
 pub fn create_policy_data(
     paths: Vec<&str>,
     output: &str,

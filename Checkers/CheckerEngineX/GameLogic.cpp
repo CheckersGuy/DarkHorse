@@ -34,7 +34,7 @@ Network<2048, 32, 32, 1,128> network;
 
 Network<128, 32, 32, 1,12> mlh_net;
 
-Network<1024, 32, 32, 128,128> policy;
+Network<1024, 32, 32, 128,12> policy;
 
 #ifdef _WIN32
 void egdb_message_callback(char *msg) {

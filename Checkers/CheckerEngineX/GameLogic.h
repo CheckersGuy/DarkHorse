@@ -87,6 +87,6 @@ extern Network<2048, 32, 32, 1, 128> network;
 
 extern Network<128, 32, 32, 1, 12> mlh_net;
 
-extern Network<1024, 32, 32, 128, 128> policy;
+extern Network<1024, 32, 32, 128, 12> policy;
 
 #endif // CHECKERSTEST_GAMELOGIC_H

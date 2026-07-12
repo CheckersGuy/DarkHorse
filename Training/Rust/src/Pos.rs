@@ -369,7 +369,7 @@ impl Position {
             copy = copy.get_color_flip();
         }
 
-        let maske: u32 = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 5 | 1 << 6;
+        let maske: u32 = 1 << 6 | 1 << 9 | 1 << 10 | 1 << 13 | 1 << 14 | 1 << 17 | 1 << 18;
 
         unsafe { _pext_u32(copy.bp, maske) as i64 }
     }

@@ -24,8 +24,8 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "buckets128_258.quant");
-INCBIN(policy, "policy128_44.quant");
+INCBIN(network, "buckets1024_107.quant");
+INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
 //  INCBIN(net_perm, "evalpermutation.perm");
