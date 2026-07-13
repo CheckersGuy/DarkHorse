@@ -53,12 +53,39 @@ pub struct Generator<'a> {
 
 const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
 
-// Applies the exact same filtering + threshold logic that the production pass uses,
-// but only counts — used to size the progress bar and estimate total time.
+use std::path::Path;
+
+pub fn expand_game_paths(paths: &[&str]) -> std::io::Result<Vec<String>> {
+    let mut result = Vec::new();
+
+    for &path in paths {
+        let p = Path::new(path);
+        if p.is_dir() {
+            let mut dir_games: Vec<String> = std::fs::read_dir(p)?
+                .filter_map(|entry| entry.ok())
+                .map(|entry| entry.path())
+                .filter(|entry_path| {
+                    entry_path.is_file()
+                        && entry_path
+                            .extension()
+                            .map_or(false, |ext| ext.eq_ignore_ascii_case("games"))
+                })
+                .map(|entry_path| entry_path.to_string_lossy().into_owned())
+                .collect();
+            dir_games.sort(); // deterministic order, independent of readdir order
+            result.extend(dir_games);
+        } else {
+            result.push(path.to_string());
+        }
+    }
+
+    Ok(result)
+}
+
 fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result<u64> {
     let mut filter = Bloom::new_for_fp_rate(4_000_000_000, 0.01);
     let mut count: u64 = 0;
-
+    let paths = expand_game_paths(&paths)?;
     for path in paths.iter() {
         let mut reader = BufReader::new(File::open(path)?);
         for game in reader.iter_games() {
@@ -102,6 +129,8 @@ pub fn rescoring_data(
     );
     let count_start = Instant::now();
     let to_rescore = count_positions_to_rescore(&paths, RESCORE_VALUE_THRESHOLD)?;
+
+    let paths = expand_game_paths(&paths)?;
     println!(
         "Found {} positions to rescore (counted in {:.1}s)",
         to_rescore,
@@ -427,6 +456,7 @@ pub fn remove_samples(input: &str, removers: &str, output: &str) -> std::io::Res
 }
 
 pub fn create_mlh_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
+    let paths = expand_game_paths(&paths)?;
     let mut writer = BufWriter::with_capacity(10000, File::create(output)?);
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut total_count: u64 = 0;
@@ -526,6 +556,7 @@ pub fn get_unique_samples(
     base: &TableBase::Base,
 ) -> std::io::Result<()> {
     //let mut reader = BufReader::new(File::open(path)?);
+    let paths = expand_game_paths(&paths)?;
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut total_count: u64 = 0;
     let mut written_count: u64 = 0;
@@ -606,6 +637,7 @@ pub fn create_policy_data(
     output: &str,
     partitions: usize,
 ) -> std::io::Result<()> {
+    let paths = expand_game_paths(&paths)?;
     let mut filter = Bloom::new_for_fp_rate(4000000000, 0.01);
     let mut written_count: usize = 0;
     let mut total_count: usize = 0;
