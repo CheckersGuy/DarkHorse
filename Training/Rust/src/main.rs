@@ -85,7 +85,6 @@ fn main() -> anyhow::Result<()> {
             "/mnt/d/TrainData/Games/training-book.games",
             "/mnt/d/TrainData/Games/training-book2.games",
             "/mnt/d/TrainData/Games/training-book3.games",
-            "/mnt/d/TrainData/Games/multipv.games",
             "/mnt/d/TrainData/Games/cloud.games",
             "/mnt/d/TrainData/Games/cloud2.games",
             "/mnt/d/TrainData/Games/cloud3.games",
@@ -97,19 +96,18 @@ fn main() -> anyhow::Result<()> {
             "/mnt/d/TrainData/Games/qs_samples0.games",
         ],
         "/mnt/d/TrainData/Samples/rescored.samples",
-        10,
+        2,
         14,
-        32,
+        16,
         1000000,
     )?;
     */
-
     Data::rescoring_data(
         vec!["/mnt/d/TrainData/Games/debugging0.games"],
-        "/mnt/d/TrainData/Samples/rescored.samples",
-        1,
+        "/mnt/d/TrainData/Samples/debugging-rescored20ms.samples",
+        20,
         14,
-        32,
+        4,
         1000000,
     )?;
 

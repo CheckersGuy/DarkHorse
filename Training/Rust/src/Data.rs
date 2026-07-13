@@ -37,6 +37,7 @@ use std::sync::mpsc;
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::{Duration, Instant};
 use Sample::{Result, SampleType};
 #[derive(Debug)]
 pub struct Generator<'a> {
@@ -52,6 +53,41 @@ pub struct Generator<'a> {
 
 const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
 
+// Applies the exact same filtering + threshold logic that the production pass uses,
+// but only counts — used to size the progress bar and estimate total time.
+fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result<u64> {
+    let mut filter = Bloom::new_for_fp_rate(4_000_000_000, 0.01);
+    let mut count: u64 = 0;
+
+    for path in paths.iter() {
+        let mut reader = BufReader::new(File::open(path)?);
+        for game in reader.iter_games() {
+            for sample in game.get_samples() {
+                if sample.position.has_capture() {
+                    continue;
+                }
+                if sample.position.bp == 0 || sample.position.wp == 0 {
+                    continue;
+                }
+                if sample.value.abs() >= 15000 {
+                    continue;
+                }
+                if filter.check(&sample.position) {
+                    continue;
+                }
+                filter.set(&sample.position);
+
+                // only positions below the threshold actually get rescored
+                if sample.value.abs() < threshold {
+                    count += 1;
+                }
+            }
+        }
+    }
+
+    Ok(count)
+}
+
 pub fn rescoring_data(
     paths: Vec<&str>,
     output: &str,
@@ -60,6 +96,29 @@ pub fn rescoring_data(
     partitions: usize,
     queue_capacity: usize,
 ) -> std::io::Result<()> {
+    println!(
+        "Counting positions that need rescoring (threshold={})...",
+        RESCORE_VALUE_THRESHOLD
+    );
+    let count_start = Instant::now();
+    let to_rescore = count_positions_to_rescore(&paths, RESCORE_VALUE_THRESHOLD)?;
+    println!(
+        "Found {} positions to rescore (counted in {:.1}s)",
+        to_rescore,
+        count_start.elapsed().as_secs_f64()
+    );
+
+    // rough ETA: each worker handles ~1 position per `time` ms, workers run in parallel
+    let estimated_secs = (to_rescore as f64) * (time as f64 / 1000.0) / (num_workers as f64);
+    let estimated_hours = estimated_secs / 3600.0;
+    println!(
+        "Estimated rescoring time: ~{:.1} minutes ({:.2} hours) with {} workers at {}ms/position",
+        estimated_secs / 60.0,
+        estimated_hours,
+        num_workers,
+        time
+    );
+
     let mut total_count: u64 = 0;
     let mut skipped_rescoring: u64 = 0;
 
@@ -68,9 +127,14 @@ pub fn rescoring_data(
 
     let (result_tx, result_rx) = mpsc::sync_channel::<Sample::Sample>(queue_capacity);
 
-    let bar = ProgressBar::new_spinner();
+    // now we can size the bar properly and get a real ETA display from indicatif
+    let bar = ProgressBar::new(to_rescore);
     bar.set_style(
-        ProgressStyle::with_template("[{elapsed_precise}] {spinner} produced: {msg}").unwrap(),
+        ProgressStyle::with_template(
+            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>9}/{len:9} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
     );
 
     // --- writer thread ---
@@ -100,8 +164,9 @@ pub fn rescoring_data(
     for worker_id in 0..num_workers {
         let work_rx = Arc::clone(&work_rx);
         let result_tx = result_tx.clone();
+        let worker_bar = bar.clone();
         let handle = thread::spawn(move || {
-            let mut command = Command::new("./generator2")
+            let mut command = Command::new("./MainEngine")
                 .args([format!("--eval-loop --time {} --hash_size 64", time)])
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
@@ -140,6 +205,7 @@ pub fn rescoring_data(
                     }
                 };
                 sample.value = eval;
+                worker_bar.inc(1); // only actually-rescored positions advance this bar
 
                 if result_tx.send(sample).is_err() {
                     break;
@@ -175,12 +241,8 @@ pub fn rescoring_data(
                 filter.set(&sample.position);
 
                 total_count += 1;
-                bar.set_message(total_count.to_string());
-                bar.tick();
 
                 if sample.value.abs() >= RESCORE_VALUE_THRESHOLD {
-                    // already decisive / TB-range: keep the old value, skip the engine call,
-                    // but still route it through dedup+write like everything else
                     skipped_rescoring += 1;
                     if result_tx.send(sample).is_err() {
                         break;
@@ -196,11 +258,12 @@ pub fn rescoring_data(
     }
 
     drop(work_tx);
-    drop(result_tx); // drop main's own clone too, now that producing is done
+    drop(result_tx);
     for handle in worker_handles {
         handle.join().unwrap();
     }
     writer_handle.join().unwrap();
+    bar.finish();
 
     let written_count = written_counter.load(std::sync::atomic::Ordering::Relaxed);
     println!(
@@ -698,10 +761,10 @@ impl<'a> Generator<'a> {
                         "--generate --time {} --nodes {} --depth {} --seed {}
                          --adj_draw_count 8
                          --adj_draw_score 5
-                         --adj_draw_min_ply 10
+                         --adj_draw_min_ply 5
                          --adj_draw_max_pieces 10
                          --adj_draw_prob 0.9
-                         --multi-pv-prob 0.35 
+                         --multi-pv-prob 0.75 
                          --multi-pv-eval-diff 55 
                          --multi-pv-min-pieces 10
                         ",

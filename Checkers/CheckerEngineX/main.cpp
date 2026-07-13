@@ -24,7 +24,7 @@
 #include <unordered_set>
 #include <vector>
 INCBIN(mlh_net, "mlh3.quant");
-INCBIN(network, "buckets1024_107.quant");
+INCBIN(network, "debug_0.quant");
 INCBIN(policy, "policybigger6.quant");
 
 // INCBIN(mlh_perm, "mlh.perm");
@@ -195,7 +195,7 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
 
-      TT.clear();
+      TT.age_counter++;
       const auto pos = Position::pos_from_fen(current);
 
       board = Board(pos);
@@ -289,7 +289,6 @@ int main(int argl, const char **argc) {
         std::exit(-1);
       }
 
-      TT.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
       rep_values.clear();
