@@ -11,6 +11,7 @@ use bloomfilter::reexports::bit_vec::BitBlock;
 use bloomfilter::Bloom;
 use byteorder::LittleEndian;
 use byteorder::ReadBytesExt;
+use hyperloglog_rs::prelude::*;
 use indicatif::{ProgressBar, ProgressStyle};
 use itertools::Itertools;
 use libc::abs;
@@ -39,6 +40,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use Sample::{Result, SampleType};
+
 #[derive(Debug)]
 pub struct Generator<'a> {
     book: String,
@@ -52,8 +54,6 @@ pub struct Generator<'a> {
 }
 
 const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
-
-use std::path::Path;
 
 pub fn expand_game_paths(paths: &[&str]) -> std::io::Result<Vec<String>> {
     let mut result = Vec::new();
@@ -83,8 +83,8 @@ pub fn expand_game_paths(paths: &[&str]) -> std::io::Result<Vec<String>> {
 }
 
 fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result<u64> {
-    let mut filter = Bloom::new_for_fp_rate(4_000_000_000, 0.01);
     let mut count: u64 = 0;
+    let mut hll = HyperLogLog::<Precision14, 5>::default();
     let paths = expand_game_paths(&paths)?;
     for path in paths.iter() {
         let mut reader = BufReader::new(File::open(path)?);
@@ -99,20 +99,16 @@ fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result
                 if sample.value.abs() >= 15000 {
                     continue;
                 }
-                if filter.check(&sample.position) {
-                    continue;
-                }
-                filter.set(&sample.position);
 
                 // only positions below the threshold actually get rescored
                 if sample.value.abs() < threshold {
-                    count += 1;
+                    hll.insert(&sample.position);
                 }
             }
         }
     }
 
-    Ok(count)
+    Ok(hll.estimate_cardinality() as u64)
 }
 
 pub fn rescoring_data(
@@ -650,7 +646,7 @@ pub fn create_policy_data(
     }
 
     for path in paths {
-        let mut reader = BufReader::new(File::open(path)?);
+        let mut reader = BufReader::new(File::open(&path)?);
         println!("Starting reading file {}", path);
         for game in reader.iter_games() {
             let samples = game.get_samples();
@@ -796,8 +792,8 @@ impl<'a> Generator<'a> {
                          --adj_draw_min_ply 5
                          --adj_draw_max_pieces 10
                          --adj_draw_prob 0.9
-                         --multi-pv-prob 0.75 
-                         --multi-pv-eval-diff 55 
+                         --multi-pv-prob 0.9 
+                         --multi-pv-eval-diff 65 
                          --multi-pv-min-pieces 10
                         ",
                         time, max_nodes, depth, worker_seed

@@ -35,17 +35,17 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
-    println!("Starting process");
-    /*let mut generator = Generator::new(
-        String::from("../Positions/training2.book"),
-        String::from("./cloud.games"),
-        14,
+    /*println!("Starting process");
+    let mut generator = Generator::new(
+        String::from("../Positions/drawbook.book"),
+        String::from("./qs-moregames2.games"),
+        6,
         4000000000,
     );
 
     generator.time = 1;
     generator.max_nodes = 250000000;
-    generator.depth = 70;
+    generator.depth = 1;
     generator.generate_games()?;
     */
 
@@ -103,11 +103,11 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
     Data::rescoring_data(
-        vec!["/mnt/d/TrainData/Games/debugging0.games"],
-        "/mnt/d/TrainData/Samples/debugging-rescored20ms.samples",
-        20,
+        vec!["D:/TrainData/Games"],
+        "d:/TrainData/Samples/bigdatawegot-rescored1ms.samples",
+        1,
         14,
-        4,
+        32,
         1000000,
     )?;
 
