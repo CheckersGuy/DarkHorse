@@ -17,7 +17,7 @@ from muon import MuonWithAuxAdam
 from rangerlite import RangerLite
 # below will be moved into the network
 
-L1 = 2*2048
+L1 = 2*256
 L2 = 32
 L3 = 32
 
