@@ -35,29 +35,20 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
-    /*println!("Starting process");
-    let mut generator = Generator::new(
-        String::from("../Positions/drawbook.book"),
-        String::from("./qs-moregames2.games"),
-        6,
-        4000000000,
+    /*let mut generator = Generator::new(
+        String::from("../Positions/tiny.book"),
+        String::from("./reservoir-test.samples"),
+        14,
+        5000000000,
     );
 
     generator.time = 1;
     generator.max_nodes = 250000000;
-    generator.depth = 1;
+    generator.depth = 100;
     generator.generate_games()?;
     */
+    //Data::create_book("../Positions/drawbook.book", "../Positions/tiny.book", 14).expect("Failed");
 
-    /*
-        Data::create_book(
-            "C:/Users/leagu/DarkHorse/Training/Positions/drawbook.book",
-            "C:/Users/leagu/DarkHorse/Training/Positions/training2.book",
-            14,
-        )
-        .expect("Failed");
-
-    */
     /*
         Data::get_unique_samples(
             vec![
@@ -103,8 +94,8 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
     Data::rescoring_data(
-        vec!["D:/TrainData/Games"],
-        "d:/TrainData/Samples/bigdatawegot-rescored1ms.samples",
+        vec!["C:/TrainingData/reservoir-test.samples"],
+        "C:/TrainingData/reservoir-test.rescored.samples",
         1,
         14,
         32,

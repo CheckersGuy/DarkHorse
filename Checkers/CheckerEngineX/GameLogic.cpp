@@ -36,6 +36,8 @@ Network<128, 32, 32, 1, 12> mlh_net;
 
 Network<1024, 32, 32, 128, 12> policy;
 
+Reservoir reservoir;
+
 #ifdef _WIN32
 void egdb_message_callback(char *msg) {
   if (msg == nullptr)
@@ -429,6 +431,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     } else {
       static_eval = evaluate(board.get_position(), ply);
     }
+  }
+  // Testing reservoir sampling;
+
+  if (isEval(static_eval) &&
+      !board.get_position().has_jumps(board.get_mover())) {
+    reservoir.add_sample(board.get_position(), static_eval);
   }
 
   static_evals[ply] = static_eval;

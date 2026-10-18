@@ -24,6 +24,7 @@ use std::borrow::BorrowMut;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::TryReserveError;
 use std::fmt::format;
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -249,35 +250,33 @@ pub fn rescoring_data(
     for path in paths.iter() {
         println!("Reading games from file: {}", path);
         let mut reader = BufReader::new(File::open(path)?);
-        for game in reader.iter_games() {
-            for sample in game.get_samples() {
-                if sample.position.has_capture() {
-                    continue;
-                }
-                if sample.position.bp == 0 || sample.position.wp == 0 {
-                    continue;
-                }
-                if sample.value.abs() >= 15000 {
-                    continue;
-                }
-                if filter.check(&sample.position) {
-                    continue;
-                }
-                filter.set(&sample.position);
+        for sample in reader.iter_samples() {
+            if sample.position.has_capture() {
+                continue;
+            }
+            if sample.position.bp == 0 || sample.position.wp == 0 {
+                continue;
+            }
+            if sample.value.abs() >= 15000 {
+                continue;
+            }
+            if filter.check(&sample.position) {
+                continue;
+            }
+            filter.set(&sample.position);
 
-                total_count += 1;
+            total_count += 1;
 
-                if sample.value.abs() >= RESCORE_VALUE_THRESHOLD {
-                    skipped_rescoring += 1;
-                    if result_tx.send(sample).is_err() {
-                        break;
-                    }
-                    continue;
-                }
-
-                if work_tx.send(sample).is_err() {
+            if sample.value.abs() >= RESCORE_VALUE_THRESHOLD {
+                skipped_rescoring += 1;
+                if result_tx.send(sample).is_err() {
                     break;
                 }
+                continue;
+            }
+
+            if work_tx.send(sample).is_err() {
+                break;
             }
         }
     }
@@ -773,8 +772,6 @@ impl<'a> Generator<'a> {
 
     );
 
-        let mut average_game_length: f32 = 0.0;
-        let mut game_count: f32 = 0.0;
         let max_samples = self.max_samples;
         for id in 0..self.num_workers {
             let open = Arc::clone(&openings);
@@ -864,7 +861,7 @@ impl<'a> Generator<'a> {
             handles.push(handle);
         }
         'game: for game in rx {
-            let mut save_game = Game::new();
+            let mut reservoir: Vec<Sample::Sample> = Vec::new();
             for (index, value) in game.iter().rev().enumerate() {
                 let splits: Vec<&str> = value.split("!").collect();
                 let wp: u32 = splits[0].parse().expect("Could not parse white-pieces");
@@ -879,27 +876,12 @@ impl<'a> Generator<'a> {
                 position.k = k;
                 position.color = color as i8;
 
-                /*position.print_position();
-                println!("Value: {}",value);
-                println!("Fenstring: {}",position.get_fen_string());
-                println!("\n");
-                */
-
                 let result_string = String::from(splits[4].replace("\n", "").trim());
-                if cfg!(debug_assertions) {
-                    println!("{}", value);
-                }
                 //writing the samples to our file
                 let mut sample = Sample::Sample::default();
                 sample.position = position;
                 sample.result = Sample::Result::from(result_string.as_str());
 
-                if cfg!(debug_assertions) {
-                    /*if sample.result == Sample::Result::UNKNOWN {
-                        println!("Error {result_string}");
-                    }
-                    */
-                }
                 /*
                 if sample.result == Sample::Result::UNKNOWN {
                     println!("Error UNKNOWN result");
@@ -908,31 +890,17 @@ impl<'a> Generator<'a> {
                 }
                 */
                 total_count += 1;
-                if index == 0 {
-                    //setting the initial position and result for the game
-                    save_game.set_start_position(sample.position, value as i16);
-                    save_game.result = sample.result;
-                    //println!("----------------------");
-                    //sample.position.print_position();
-                } else {
-                    if save_game
-                        .add_position(sample.position, value as i16)
-                        .is_none()
-                    {
-                        println!("Could not add the position");
-                        continue 'game;
-                    }
-                }
-                let flipped_position = if sample.position.color == -1 {
+                sample.position = if sample.position.color == -1 {
                     sample.position.get_color_flip()
                 } else {
                     sample.position
                 };
+                reservoir.push(sample);
 
-                if !filter.check(&flipped_position) && !sample.position.has_capture() {
+                if !filter.check(&sample.position) && !sample.position.has_capture() {
                     unique_count += 1;
                     bar.inc(1);
-                    filter.set(&flipped_position);
+                    filter.set(&sample.position);
                     thread_counter.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
                     if thread_counter.load(std::sync::atomic::Ordering::Relaxed) >= self.max_samples
                     {
@@ -940,13 +908,12 @@ impl<'a> Generator<'a> {
                     }
                 }
             }
-            save_game
-                .save_game(&mut writer)
-                .expect("Could not save the game");
-            average_game_length += save_game.moves.len() as f32;
-            game_count += 1.0;
-            let average = average_game_length / (game_count + 0.0001);
-            bar.println(format!("average game length is {}", average));
+            //iterating through all the samples
+            for sample in reservoir {
+                sample
+                    .write_fen(&mut writer)
+                    .expect("Could not write the data");
+            }
         }
 
         for handle in handles {

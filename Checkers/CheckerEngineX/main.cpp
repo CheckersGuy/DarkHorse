@@ -27,10 +27,6 @@ INCBIN(mlh_net, "mlh3.quant");
 INCBIN(network, "buckets1024_107.quant");
 INCBIN(policy, "policybigger6.quant");
 
-// INCBIN(mlh_perm, "mlh.perm");
-//  INCBIN(net_perm, "evalpermutation.perm");
-//   INCBIN(policy_perm, "policy.perm");
-
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
@@ -288,7 +284,7 @@ int main(int argl, const char **argc) {
       if (next_line == "terminate") {
         std::exit(-1);
       }
-
+      reservoir.clear();
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
       rep_values.clear();
@@ -400,11 +396,13 @@ int main(int argl, const char **argc) {
 
       // sending all the the results back in reverse order
       std::cout << "BEGIN" << std::endl;
-      for (int i = rep_history.size() - 1; i >= 0; --i) {
-        std::cout << rep_history[i].WP << "!" << rep_history[i].BP << "!"
-                  << rep_history[i].K << "!" << (int)rep_history[i].color << "!"
-                  << res_to_string(result, rep_history[i].color) << "!"
-                  << rep_values[i] << std::endl;
+      for (int i = 0; i < reservoir.samples.size(); ++i) {
+        std::cout << reservoir.samples[i].pos.WP << "!"
+                  << reservoir.samples[i].pos.BP << "!"
+                  << reservoir.samples[i].pos.K << "!"
+                  << (int)reservoir.samples[i].pos.color << "!"
+                  << "UNKNOWN" << "!" << reservoir.samples[i].evaluation
+                  << std::endl;
       }
       std::cout << "END" << std::endl;
     }

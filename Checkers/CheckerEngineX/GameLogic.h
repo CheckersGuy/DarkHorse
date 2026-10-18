@@ -16,6 +16,8 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <random>
+#include <unordered_set>
 #ifdef _WIN32
 #include "Endgame.h"
 #include "egdb.h"
@@ -40,6 +42,46 @@ struct RootMove {
   Line pv;
 };
 
+struct Sample {
+  Position pos;
+  Value evaluation;
+};
+
+struct Reservoir {
+  constexpr static int max_samples = 500;
+  uint64_t seen = 0;
+  std::vector<Sample> samples;
+  std::mt19937_64 generator;
+  std::unordered_set<Position> seen_positions;
+
+  void add_sample(Position pos, Value value) {
+    // filling the entire reservoir first
+
+    if (seen_positions.contains(pos)) {
+      return;
+    }
+
+    if (samples.size() < max_samples) {
+      samples.emplace_back(Sample{pos, value});
+    } else {
+      std::uniform_int_distribution<int> distrib(0, seen);
+      const auto new_index = distrib(generator);
+      if (new_index < max_samples) {
+        samples[new_index] = Sample{pos, value};
+      }
+    }
+    seen_positions.insert(pos);
+    seen++;
+  }
+
+  void clear() {
+    samples.clear();
+    seen_positions.clear();
+    seen = 0;
+  }
+};
+
+extern Reservoir reservoir;
 struct SearchGlobal {
   uint32_t sel_depth;
 #ifdef CHECKERBOARD
