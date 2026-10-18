@@ -84,27 +84,24 @@ pub fn expand_game_paths(paths: &[&str]) -> std::io::Result<Vec<String>> {
 }
 
 fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result<u64> {
-    let mut count: u64 = 0;
     let mut hll = HyperLogLog::<Precision14, 5>::default();
     let paths = expand_game_paths(&paths)?;
     for path in paths.iter() {
         let mut reader = BufReader::new(File::open(path)?);
-        for game in reader.iter_games() {
-            for sample in game.get_samples() {
-                if sample.position.has_capture() {
-                    continue;
-                }
-                if sample.position.bp == 0 || sample.position.wp == 0 {
-                    continue;
-                }
-                if sample.value.abs() >= 15000 {
-                    continue;
-                }
+        for sample in reader.iter_samples() {
+            if sample.position.has_capture() {
+                continue;
+            }
+            if sample.position.bp == 0 || sample.position.wp == 0 {
+                continue;
+            }
+            if sample.value.abs() >= 15000 {
+                continue;
+            }
 
-                // only positions below the threshold actually get rescored
-                if sample.value.abs() < threshold {
-                    hll.insert(&sample.position);
-                }
+            // only positions below the threshold actually get rescored
+            if sample.value.abs() < threshold {
+                hll.insert(&sample.position);
             }
         }
     }

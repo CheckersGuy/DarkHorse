@@ -143,7 +143,7 @@ int main(int argl, const char **argc) {
 
 #ifdef _WIN32
   if (maxdb > 0) {
-    tablebase.cache_size = 1000;
+    tablebase.cache_size = 250;
     tablebase.load_table_base("C:\\kr_english_wld", maxdb);
   }
 
@@ -178,9 +178,9 @@ int main(int argl, const char **argc) {
 
 #ifdef _WIN32
 
-    tablebase.cache_size = 1000;
-    tablebase.load_dtw_base("D:\\kr_english_dtw", 10);
-    tablebase.load_table_base("C:\\kr_english_wld", 10);
+    tablebase.cache_size = 250;
+    // tablebase.load_dtw_base("C:\\kr_english_dtw", 10);
+    tablebase.load_table_base("C:\\kr_english_wld", 8);
 
 #endif
 
