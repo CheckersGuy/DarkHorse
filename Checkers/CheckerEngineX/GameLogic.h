@@ -48,7 +48,7 @@ struct Sample {
 };
 
 struct Reservoir {
-  constexpr static int max_samples = 500;
+  constexpr static int max_samples = 2500;
   uint64_t seen = 0;
   std::vector<Sample> samples;
   std::mt19937_64 generator;

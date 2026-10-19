@@ -35,9 +35,9 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
-    /*let mut generator = Generator::new(
+    let mut generator = Generator::new(
         String::from("../Positions/tiny.book"),
-        String::from("./reservoir-test.samples"),
+        String::from("./goodlord2.samples"),
         14,
         5000000000,
     );
@@ -46,7 +46,6 @@ fn main() -> anyhow::Result<()> {
     generator.max_nodes = 250000000;
     generator.depth = 100;
     generator.generate_games()?;
-    */
     //Data::create_book("../Positions/drawbook.book", "../Positions/tiny.book", 14).expect("Failed");
 
     /*
@@ -93,14 +92,15 @@ fn main() -> anyhow::Result<()> {
         1000000,
     )?;
     */
-    Data::rescoring_data(
-        vec!["C:/TrainingData/reservoir-test.samples"],
-        "C:/TrainingData/reservoir-test.rescored.samples",
+    /*Data::rescoring_data(
+        vec!["/mnt/c/TrainingData/reservoir-test.samples"],
+        "/mnt/c/TrainingData/reservoir-test.rescored.samples",
         1,
         14,
         32,
         1000000,
     )?;
+    */
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);

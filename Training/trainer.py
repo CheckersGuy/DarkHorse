@@ -11,8 +11,8 @@ if __name__ == "__main__":
     epochs = 605
     model = Experimental.Network(run_name="debug")
 
-    data_loader = Experimental.LitDataModule(train_data="/mnt/d/TrainData/Samples/rescored.samples",
-                                             val_data="/mnt/c/TrainData/finaldataset3.rescored.samples",
+    data_loader = Experimental.LitDataModule(train_data="/mnt/c/TrainingData/reservoir-test.rescored.samples",
+                                             val_data="/mnt/c/TrainData/finaldataset3.games",
                                              batch_size=batch_size, buffer_size=500000000)
 
     check_point_callback = ModelCheckpoint(

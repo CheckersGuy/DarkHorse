@@ -203,7 +203,6 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
   MoveListe rootList;
   get_moves(board.get_position(), rootList);
-
   if (rootList.length() == 1) {
     RootMove root;
     root.score = -last_eval;
@@ -433,11 +432,12 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
   // Testing reservoir sampling;
-
+  //#ifdef SAMPLING
   if (isEval(static_eval) &&
       !board.get_position().has_jumps(board.get_mover())) {
     reservoir.add_sample(board.get_position(), static_eval);
   }
+//#endif
 
   static_evals[ply] = static_eval;
 
