@@ -13,7 +13,7 @@ use std::io::BufReader;
 use std::str::FromStr;
 
 //all positions with abs(eval)>=EXCLUDE_EVAL should be removed
-pub const EXCLUDE_EVAL: i16 = 15000;
+pub const EXCLUDE_EVAL: i16 = 10000;
 
 #[derive(Debug, Clone, Hash, PartialEq)]
 pub enum SampleType {

@@ -3,6 +3,7 @@
 #![feature(iter_array_chunks)]
 #![feature(core_intrinsics)]
 pub mod Data;
+pub mod Histogram;
 pub mod Pos;
 pub mod Sample;
 pub mod TableBase;
@@ -35,7 +36,7 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
-    let mut generator = Generator::new(
+    /*let mut generator = Generator::new(
         String::from("../Positions/tiny.book"),
         String::from("./goodlord2.samples"),
         14,
@@ -46,6 +47,20 @@ fn main() -> anyhow::Result<()> {
     generator.max_nodes = 250000000;
     generator.depth = 100;
     generator.generate_games()?;
+    */
+    /*let path = "/mnt/c/TrainingData/goodlord2.rescored.samples";
+    let mut reader = BufReader::new(File::open(path)?);
+
+    let mut histogramm = Histogram::Histogram::default();
+    for sample in reader.iter_samples() {
+        let wp = sample.position.wp;
+        let bp = sample.position.bp;
+        histogramm.add(wp, bp);
+    }
+
+    histogramm.print();
+    */
+
     //Data::create_book("../Positions/drawbook.book", "../Positions/tiny.book", 14).expect("Failed");
 
     /*
@@ -92,15 +107,14 @@ fn main() -> anyhow::Result<()> {
         1000000,
     )?;
     */
-    /*Data::rescoring_data(
+    Data::rescoring_data(
         vec!["/mnt/c/TrainingData/reservoir-test.samples"],
-        "/mnt/c/TrainingData/reservoir-test.rescored.samples",
-        1,
+        "/mnt/c/TrainingData/reservoir-test.rescored10ms.samples",
+        10,
         14,
         32,
         1000000,
     )?;
-    */
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);

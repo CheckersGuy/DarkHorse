@@ -22,11 +22,12 @@ uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
-
+Move root_partial{};
+Value root_partial_score = -INFINITE;
 uint64_t search_start_time = 0ull;
 Value glob_current_score = -INFINITE;
 uint64_t last_nodes_per_second = 0ull;
-
+Move root_prev_best{};
 std::array<Value, MAX_PLY + 10> static_evals;
 SearchGlobal glob;
 
@@ -115,6 +116,11 @@ std::array<float, 40> get_probability_distribution(MoveListe &liste,
 Value blend_mlh(Value eval, Position pos) {
   const Value abs_eval = std::abs(eval);
   const Value ramp_lo = 275, ramp_hi = MAX_EVAL;
+
+  if (abs_eval <= ramp_lo) {
+    return eval;
+  }
+
   const float t = std::clamp(
       static_cast<float>(abs_eval - ramp_lo) / (ramp_hi - ramp_lo), 0.0f, 1.0f);
 
@@ -227,6 +233,8 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
     num_pv_excluded = 0;
 
     for (int pv_idx = 0; pv_idx < actualPV; ++pv_idx) {
+      root_partial = Move{};
+      root_partial_score = -INFINITE;
       network.accumulator.refresh();
       mlh_net.accumulator.refresh();
       policy.accumulator.refresh();
@@ -237,6 +245,7 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
       auto start_time = std::chrono::high_resolution_clock::now();
       try {
+        root_prev_best = results[pv_idx].move;
         rootDepth = d;
         Value score =
             Search::search_asp(board, results[pv_idx].previous_score, d);
@@ -244,6 +253,15 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
         results[pv_idx].pv = mainPV;
         results[pv_idx].move = (mainPV.length() > 0) ? mainPV[0] : Move{};
       } catch (std::string &msg) {
+
+        if (pv_idx == 0 && actualPV == 1 && !root_partial.is_empty()) {
+          results[0].move = root_partial;
+          results[0].score =
+              root_partial_score; // fail-high scores are lower bounds
+          results[0].pv.clear();
+          results[0].pv.addMove(root_partial);
+        }
+
         stopped = true;
         break;
       }
@@ -516,6 +534,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   int32_t *out = &policy.out_layer.buffer[0];
   bool computed = false;
 
+  if constexpr (is_root) {
+    if (!root_prev_best.is_empty())
+      tt_move = root_prev_best;
+  }
+
   int start_index = 0;
   if (!tt_move.is_empty()) {
     liste.move_to_front(0, tt_move);
@@ -639,6 +662,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
       if (val > alpha) {
         best_move = move;
+
+        if constexpr (is_root) {
+          if (val > root_partial_score) {
+            root_partial = move;
+            root_partial_score = val;
+          }
+        }
+
         if (val >= beta) {
           best_move = move;
           best_score = val;
@@ -673,6 +704,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   }
   return best_score;
 }
+
 template <NodeType type>
 Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
          Move excluded, bool is_sing_search) {
@@ -770,10 +802,10 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       bestValue = value;
       if (value > alpha) {
         pv.concat(move, localPV);
+        if (value >= beta)
+          break;
+        alpha = value;
       }
-      if (value >= beta)
-        break;
-      alpha = value;
     }
   }
   if (excluded.is_empty()) {
