@@ -458,21 +458,22 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
   */
   // #endif
 
-  static_evals[ply] = static_eval;
+  const auto static_eval_index = ply + 4;
+  static_evals[static_eval_index] = static_eval;
 
   bool improving = false;
   bool opponentWorsening = false;
 
   if (isEval(static_eval)) {
-    if (isEval(static_evals[ply - 2])) {
-      improving = static_eval > static_evals[ply - 2];
-    } else if (isEval(static_evals[ply - 4])) {
-      improving = static_eval > static_evals[ply - 4];
+    if (isEval(static_evals[static_eval_index - 2])) {
+      improving = static_eval > static_evals[static_eval_index - 2];
+    } else if (isEval(static_evals[static_eval_index - 4])) {
+      improving = static_eval > static_evals[static_eval_index - 4];
     }
-    if (isEval(static_evals[ply - 1])) {
-      opponentWorsening = static_eval > -static_evals[ply - 1];
-    } else if (isEval(static_evals[ply - 3])) {
-      opponentWorsening = static_eval > -static_evals[ply - 3];
+    if (isEval(static_evals[static_eval_index - 1])) {
+      opponentWorsening = static_eval > -static_evals[static_eval_index - 1];
+    } else if (isEval(static_evals[static_eval_index - 3])) {
+      opponentWorsening = static_eval > -static_evals[static_eval_index - 3];
     }
   }
 
@@ -608,7 +609,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
 
     board.make_move(move);
 
-    if (!in_pv && !isWinningEval(beta) && depth >= 1 &&
+    if (!in_pv && !isWinningEval(beta) && depth >= 5 &&
         board.get_position().piece_count() > tab_pieces) {
       Line line;
       Depth newDepth = std::max(0, depth - 4);
@@ -685,7 +686,10 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
-
+  if (excluded.is_empty() && !is_root && best_score >= beta &&
+      isEval(best_score) && !isDecesive(best_score) && !isDecesive(beta)) {
+    best_score = (best_score * depth + beta) / (depth + 1);
+  }
   if (excluded.is_empty() && !is_root) {
     Value tt_value = value_to_tt(best_score, ply, board.get_position());
     Flag flag;
@@ -840,6 +844,7 @@ Value search_asp(Board &board, Value last_score, Depth depth) {
                                 Move{}, false);
 
       if (score <= alpha) {
+        beta = (alpha + beta) / 2;
         margin += margin / 2;
         alpha = std::max(score - margin, -EVAL_INFINITE);
       } else if (score >= beta) {
