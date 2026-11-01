@@ -23,9 +23,9 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "mlh3.quant");
+INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "policybigger6.quant");
+INCBIN(policy, "sharing_policy_14.quant");
 
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
@@ -35,7 +35,7 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
     Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
-    Value value = -INFINITE;
+    Value value = -SCORE_INFINITE;
     if (it == hashset.end()) {
       auto root_moves =
           searchValueMultiPV(board, 1, 1, 1000, 10000000, false, std::cout);
@@ -288,7 +288,7 @@ int main(int argl, const char **argc) {
       const auto start_pos = Position::pos_from_fen(next_line);
       rep_history.clear();
       rep_values.clear();
-      last_eval = -INFINITE;
+      last_eval = -SCORE_INFINITE;
       board = start_pos;
       Result result = UNKNOWN;
       int draw_streak = 0;
@@ -419,7 +419,7 @@ int main(int argl, const char **argc) {
       std::cout << "init_ready"
                 << "\n";
     } else if (current == "new_game") {
-      last_eval = -INFINITE;
+      last_eval = -SCORE_INFINITE;
       TT.clear();
       TT.age_counter = 0u;
       std::string position;

@@ -457,15 +457,14 @@ pub fn create_mlh_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
     for path in paths {
         let mut reader = BufReader::with_capacity(1000000, File::open(path)?);
         for game in reader.iter_games() {
-            let mut mlh_counter = 0;
+            let mut counter = 0;
 
             if game.result == Result::DRAW || game.result == Result::UNKNOWN {
                 continue;
             }
 
             let samples = game.get_samples();
-            for sample in samples.iter() {
-                mlh_counter += 1;
+            for (index, sample) in samples.iter().enumerate() {
                 if sample.position.has_capture() {
                     continue;
                 }
@@ -481,7 +480,7 @@ pub fn create_mlh_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
                 if !filter.check(&sample.position) {
                     filter.set(&sample.position);
                     let mut copy = sample.clone();
-                    copy.mlh = mlh_counter;
+                    copy.mlh = samples.len() as i16 - index as i16;
                     copy.write_fen(&mut writer)?;
                     written_count += 1;
                 }

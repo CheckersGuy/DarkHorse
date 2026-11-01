@@ -14,33 +14,39 @@ import numpy as np
 import string_sum
 from torch.utils.data import DataLoader
 from muon import MuonWithAuxAdam
+from BucketLinear import BucketLinear
+from BucketLinear import BucketedMixin
 from rangerlite import RangerLite
 # below will be moved into the network
 
-L1 = 2*16384
+# L1 = 2*2048 For the value network
+# L2 = 32
+# L3 = 32
+
+L1 = 2*1024
 L2 = 32
 L3 = 32
 
 
-class Network(pl.LightningModule):
+class Network(BucketedMixin, pl.LightningModule):
 
     def __init__(self, run_name="square_relu"):
         super(Network, self).__init__()
-        self.layers = []
+        self.delta_l1 = 0.0            # start with 0: plain factorization first
+        self.delta_lr_mult = 1.0
         self.val_outputs = []
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.995
-        self.run_name = run_name
 
-        self.num_buckets = 128
         self.accu = nn.Linear(120, L1)
-
-        self.layer_one = nn.Linear(L1//2, L2*self.num_buckets)
-        self.layer_sec = nn.Linear(L2, L3*self.num_buckets)
-        self.output = nn.Linear(L3, 1*self.num_buckets)
+        self.num_buckets = 128
+        self.gamma = 0.998
+        self.run_name = run_name
+        self.layer_one = BucketLinear(L1 // 2, L2, self.num_buckets)
+        self.layer_sec = BucketLinear(L2, L3, self.num_buckets)
+        # Policy: BucketLinear(L3, 128, nb)
+        self.output = BucketLinear(L3, 1, self.num_buckets)
         self.layers = [self.accu, self.layer_one, self.layer_sec, self.output]
-        self.init_layers()
 
     def forward(self, x, buckets):
         offset = torch.arange(
@@ -80,7 +86,7 @@ class Network(pl.LightningModule):
                 l1_weight[i*L2: (i+1)*L2, :] = l1_weight[0: L2, :]
                 l1_bias[i*L2: (i+1)*L2] = l1_bias[0: L2]
                 l2_weight[i*L3: (i+1)*L3, :] = l2_weight[0: L3, :]
-                l2_bias[i*L3: (i+1)*L3] = l1_bias[0: L3]
+                l2_bias[i*L3: (i+1)*L3] = l2_bias[0: L3]
                 output_weight[i:i+1, :] = output_weight[0:1, :]
 
     def write_header(self, file_out):
@@ -96,17 +102,12 @@ class Network(pl.LightningModule):
             file_out.write(struct.pack(
                 "I", layer.out_features//self.num_buckets))
 
-    def step(self):
-        with torch.no_grad():
-            for layer in self.layers[1:]:
-                if isinstance(layer, torch.nn.Linear):
-                    layer.weight.clamp_(
-                        self.min_weight_hidden, self.max_weight_hidden)
-
     def configure_optimizers(self):
         # optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
         optimizer = RangerLite(self.parameters(), lr=5.0e-3,
                                eps=1.0e-5, weight_decay=0.0)
+        groups = self.bucket_param_groups(5.0e-3, self.delta_lr_mult)
+        optimizer = RangerLite(groups, lr=5.0e-3, eps=1.0e-5, weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
@@ -203,24 +204,25 @@ class Network(pl.LightningModule):
         return
 
 
-class MLHNetwork(pl.LightningModule):
+class MLHNetwork(BucketedMixin, pl.LightningModule):
 
     def __init__(self, run_name):
         super(MLHNetwork, self).__init__()
-        self.layers = []
+        self.delta_l1 = 0.0            # start with 0: plain factorization first
+        self.delta_lr_mult = 1.0
         self.val_outputs = []
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.97
+        self.gamma = 0.93
         self.run_name = run_name
-
-        self.num_buckets = 12
+        self.num_buckets = 128
         self.accu = nn.Linear(120, L1)
-
-        self.layer_one = nn.Linear(L1//2, L2*self.num_buckets)
-        self.layer_sec = nn.Linear(L2, L3*self.num_buckets)
-        self.output = nn.Linear(L3, 1*self.num_buckets)
+        self.layer_one = BucketLinear(L1 // 2, L2, self.num_buckets)
+        self.layer_sec = BucketLinear(L2, L3, self.num_buckets)
+        # Policy: BucketLinear(L3, 128, nb)
+        self.output = BucketLinear(L3, 1, self.num_buckets)
         self.layers = [self.accu, self.layer_one, self.layer_sec, self.output]
+
         self.init_layers()
 
     def forward(self, x, buckets):
@@ -242,9 +244,9 @@ class MLHNetwork(pl.LightningModule):
         l2c = l2s.view(-1, L3)[indices]
         l2c = torch.clamp(l2c, 0.0, 1.0)
 
-        l3s = self.output(l2c).reshape((-1, self.num_buckets, 1))
-        l3c = l3s.view(-1, 1)[indices]
-        out = l3c
+        l5s = self.output(l2c).reshape((-1, self.num_buckets, 1))
+        l5c = l5s.view(-1, 1)[indices]
+        out = l5c
         return out
 
     def init_layers(self):
@@ -261,7 +263,7 @@ class MLHNetwork(pl.LightningModule):
                 l1_weight[i*L2: (i+1)*L2, :] = l1_weight[0: L2, :]
                 l1_bias[i*L2: (i+1)*L2] = l1_bias[0: L2]
                 l2_weight[i*L3: (i+1)*L3, :] = l2_weight[0: L3, :]
-                l2_bias[i*L3: (i+1)*L3] = l1_bias[0: L3]
+                l2_bias[i*L3: (i+1)*L3] = l2_bias[0: L3]
                 output_weight[i:i+1, :] = output_weight[0:1, :]
 
     def write_header(self, file_out):
@@ -277,19 +279,10 @@ class MLHNetwork(pl.LightningModule):
             file_out.write(struct.pack(
                 "I", layer.out_features//self.num_buckets))
 
-    def step(self):
-        with torch.no_grad():
-            for layer in self.layers[1:]:
-                if isinstance(layer, torch.nn.Linear):
-                    layer.weight.clamp_(
-                        self.min_weight_hidden, self.max_weight_hidden)
-
     def configure_optimizers(self):
-        # optimizer = Ranger(self.parameters(),lr=1e-2, eps=1.0e-5, use_gc=False,gc_loc=False,weight_decay=0)
-        optimizer = RangerLite(self.parameters(), lr=1e-5,
-                               eps=1.0e-5, weight_decay=0.0)
-        # optimizer = torch.optim.AdamW(self.parameters())
-
+        # optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        groups = self.bucket_param_groups(5.0e-3, self.delta_lr_mult)
+        optimizer = RangerLite(groups, lr=5.0e-3, eps=1.0e-5, weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]
@@ -298,9 +291,9 @@ class MLHNetwork(pl.LightningModule):
         self.step()
         result, eval, mlh_target, buckets, x, legal_moves = train_batch
         mlh_target = torch.clamp(mlh_target.to(dtype=torch.float32), 0, 300)
-        mlh_target = mlh_target/300.0  # value range from 0 to 60
+        mlh_target = mlh_target/300.0
         out = self.forward(x, buckets)
-        loss = torch.pow(torch.abs(out-mlh_target), 1.0).mean()
+        loss = torch.pow(torch.abs(out-mlh_target), 2.0).mean()
         self.log('train_loss', loss.detach(), prog_bar=True)
         return {"loss": loss}
 
@@ -381,23 +374,23 @@ class MLHNetwork(pl.LightningModule):
         return
 
 
-class PolicyNetwork(pl.LightningModule):
+class PolicyNetwork(BucketedMixin, pl.LightningModule):
 
     def __init__(self, run_name):
         super(PolicyNetwork, self).__init__()
-        self.layers = []
+        self.delta_l1 = 0.0            # start with 0: plain factorization first
+        self.delta_lr_mult = 1.0
         self.val_outputs = []
         self.max_weight_hidden = 127.0 / 64.0
         self.min_weight_hidden = -127.0 / 64.0
-        self.gamma = 0.98
+        self.gamma = 0.93
         self.run_name = run_name
-
         self.num_buckets = 128
         self.accu = nn.Linear(120, L1)
-
-        self.layer_one = nn.Linear(L1//2, L2*self.num_buckets)
-        self.layer_sec = nn.Linear(L2, L3*self.num_buckets)
-        self.output = nn.Linear(L3, 128*self.num_buckets)
+        self.layer_one = BucketLinear(L1 // 2, L2, self.num_buckets)
+        self.layer_sec = BucketLinear(L2, L3, self.num_buckets)
+        # Policy: BucketLinear(L3, 128, nb)
+        self.output = BucketLinear(L3, 128, self.num_buckets)
         self.layers = [self.accu, self.layer_one, self.layer_sec, self.output]
         self.loss = torch.nn.CrossEntropyLoss(ignore_index=-1000)
         self.init_layers()
@@ -456,17 +449,10 @@ class PolicyNetwork(pl.LightningModule):
             file_out.write(struct.pack(
                 "I", layer.out_features//self.num_buckets))
 
-    def step(self):
-        with torch.no_grad():
-            for layer in self.layers[1:]:
-                if isinstance(layer, torch.nn.Linear):
-                    layer.weight.clamp_(
-                        self.min_weight_hidden, self.max_weight_hidden)
-
     def configure_optimizers(self):
-        # optimizer = Ranger(self.parameters(),lr=1e-2,betas=(.9, 0.999),use_gc=False,gc_loc=False)
-        optimizer = RangerLite(self.parameters(), lr=1.0e-2,
-                               eps=1.0e-5, weight_decay=0.0)
+        # optimizer = Ranger(self.parameters(),lr=1.0, eps=1.0e-3, use_gc=False,gc_loc=False,weight_decay=0)
+        groups = self.bucket_param_groups(5.0e-3, self.delta_lr_mult)
+        optimizer = RangerLite(groups, lr=5.0e-3, eps=1.0e-5, weight_decay=0.0)
         scheduler = torch.optim.lr_scheduler.StepLR(
             optimizer, step_size=1, gamma=self.gamma)
         return [optimizer], [scheduler]

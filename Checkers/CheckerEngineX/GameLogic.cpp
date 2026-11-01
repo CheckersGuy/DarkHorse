@@ -16,16 +16,16 @@ uint64_t endTime = 1000000000;
 size_t max_nodes_search = 18446744073709551615ull;
 uint64_t nodeCounter = 0u;
 int rootDepth = 0;
-Value last_eval = -INFINITE;
+Value last_eval = -SCORE_INFINITE;
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 Move root_partial{};
-Value root_partial_score = -INFINITE;
+Value root_partial_score = -SCORE_INFINITE;
 uint64_t search_start_time = 0ull;
-Value glob_current_score = -INFINITE;
+Value glob_current_score = -SCORE_INFINITE;
 uint64_t last_nodes_per_second = 0ull;
 Move root_prev_best{};
 std::array<Value, MAX_PLY + 10> static_evals;
@@ -33,9 +33,9 @@ SearchGlobal glob;
 
 Network<2048, 32, 32, 1, 128> network;
 
-Network<128, 32, 32, 1, 12> mlh_net;
+Network<128, 32, 32, 1, 128> mlh_net;
 
-Network<1024, 32, 32, 128, 12> policy;
+Network<1024, 32, 32, 128, 128> policy;
 
 Reservoir reservoir;
 
@@ -88,7 +88,7 @@ int get_mlh_estimate(Position pos) {
 
   auto out = mlh_net.evaluate(pos, 0, 0);
   auto scaled = static_cast<float>(out) / 127.0;
-  scaled = std::max(0, (int)std::round(scaled * 300));
+  scaled = std::clamp((int)std::round(scaled * 300), 0, 300);
   return scaled;
 }
 
@@ -234,13 +234,13 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
     for (int pv_idx = 0; pv_idx < actualPV; ++pv_idx) {
       root_partial = Move{};
-      root_partial_score = -INFINITE;
+      root_partial_score = -SCORE_INFINITE;
       network.accumulator.refresh();
       mlh_net.accumulator.refresh();
       policy.accumulator.refresh();
 
       for (auto k = 0; k < static_evals.size(); ++k) {
-        static_evals[k] = -INFINITE;
+        static_evals[k] = -SCORE_INFINITE;
       }
 
       auto start_time = std::chrono::high_resolution_clock::now();
@@ -521,6 +521,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 #endif
+
   if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
@@ -624,7 +625,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
 
     Line local_pv;
-    Value val = -INFINITE;
+    Value val = -SCORE_INFINITE;
 
     Depth reduction = Search::reduce(improving, i, depth, ply, board, move,
                                      in_pv, cutnode, move_prob[i], have_prob);
@@ -787,12 +788,12 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       return tt_value;
     }
   }
-  Value static_eval = -INFINITE;
+  Value static_eval = -SCORE_INFINITE;
   if (found_hash && std::abs(info.static_eval) < EVAL_INFINITE) {
     static_eval = value_from_tt(info.static_eval, ply, board.get_position());
   }
 
-  Value bestValue = -INFINITE;
+  Value bestValue = -SCORE_INFINITE;
   MoveListe moves;
   get_captures(board.get_position(), moves);
 
@@ -811,7 +812,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
       net_val = static_eval;
     } else {
       net_val = evaluate(board.get_position(), ply);
-      TT.store_hash(in_pv, -INFINITE,
+      TT.store_hash(in_pv, -SCORE_INFINITE,
                     value_to_tt(net_val, ply, board.get_position()), key,
                     TT_LOWER, 0, Move{}, is_tt_pv);
     }
@@ -866,7 +867,7 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 }
 
 Value search_asp(Board &board, Value last_score, Depth depth) {
-  Value best_score = -INFINITE;
+  Value best_score = -SCORE_INFINITE;
   const int MAX_RESEARCHES = 4;
   if (depth >= 3 && isEval(last_score)) {
     Value margin = asp_wind;

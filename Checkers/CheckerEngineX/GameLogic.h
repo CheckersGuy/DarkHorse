@@ -37,8 +37,8 @@ enum NodeType {
 
 struct RootMove {
   Move move{};
-  Value score{-INFINITE};
-  Value previous_score{-INFINITE};
+  Value score{-SCORE_INFINITE};
+  Value previous_score{-SCORE_INFINITE};
   Line pv;
 };
 
@@ -127,8 +127,8 @@ std::array<float, 40> get_probability_distribution(MoveListe &liste,
 
 extern Network<2048, 32, 32, 1, 128> network;
 
-extern Network<128, 32, 32, 1, 12> mlh_net;
+extern Network<128, 32, 32, 1, 128> mlh_net;
 
-extern Network<1024, 32, 32, 128, 12> policy;
+extern Network<1024, 32, 32, 128, 128> policy;
 
 #endif // CHECKERSTEST_GAMELOGIC_H

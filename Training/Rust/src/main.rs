@@ -77,14 +77,16 @@ fn main() -> anyhow::Result<()> {
     */
     /*
         Data::create_mlh_data(
-            vec![
-                "/mnt/d/TrainData/Games/training-book.games",
-                "/mnt/d/TrainData/Games/training-book2.games",
-                "/mnt/d/TrainData/Games/training-book3.games",
-            ],
-            "/mnt/d/TrainData/Samples/mlh.samples",
+            vec!["/mnt/c/TrainingData/finaldataset0.games"],
+            "/mnt/c/TrainingData/mlh-data.samples",
         )?;
     */
+    Data::create_policy_data(
+        vec!["/mnt/c/TrainingData/finaldataset0.games"],
+        "/mnt/c/TrainingData/policy.samples",
+        32,
+    )?;
+
     /*Data::rescoring_data(
         vec![
             "/mnt/d/TrainData/Games/training-book.games",
@@ -107,14 +109,15 @@ fn main() -> anyhow::Result<()> {
         1000000,
     )?;
     */
-    Data::rescoring_data(
-        vec!["/mnt/c/TrainingData/reservoir-test.samples"],
-        "/mnt/c/TrainingData/reservoir-test.rescored10ms.samples",
-        10,
-        14,
-        32,
-        1000000,
-    )?;
+    /* Data::rescoring_data(
+         vec!["/mnt/c/TrainingData/reservoir-test.samples"],
+         "/mnt/c/TrainingData/reservoir-test.rescored10ms.samples",
+         10,
+         14,
+         32,
+         1000000,
+     )?;
+    */
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);

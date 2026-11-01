@@ -129,7 +129,7 @@ using Value = int;
 
 enum SEARCH : int { MAX_PLY = 256 };
 enum Score : int {
-  INFINITE = 15001,
+  SCORE_INFINITE = 15001,
   EVAL_INFINITE = 13000,
   MATE_IN_MAX_PLY = EVAL_INFINITE - MAX_PLY,
   MATED_IN_MAX_PLY = -MATE_IN_MAX_PLY,
