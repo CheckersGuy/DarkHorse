@@ -526,12 +526,13 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       !board.get_position().has_jumps()) {
     return static_eval;
   }
+  /*
+    if (depth >= 7 && in_pv && tt_move.is_empty() &&
+        !board.get_position().has_jumps()) {
+      depth--;
+    }
 
-  if (depth >= 7 && in_pv && tt_move.is_empty() &&
-      !board.get_position().has_jumps()) {
-    depth--;
-  }
-
+    */
   int32_t *out = &policy.out_layer.buffer[0];
   bool computed = false;
 
