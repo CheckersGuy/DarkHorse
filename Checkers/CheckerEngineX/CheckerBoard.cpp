@@ -12,10 +12,9 @@ int max_db_pieces = 6;
 bool enable_wld = false;
 Position previous;
 std::string db_path;
-INCBIN(mlh_net, "mlh3.quant");
+INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "policybigger6.quant");
-
+INCBIN(policy, "sharing_policy_14.quant");
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
