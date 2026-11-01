@@ -93,13 +93,24 @@ inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
         for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
           const double depth = d + 1;
           const double move_index = m + 1;
-          const double raw = 0.7 + std::log(depth) * std::log(move_index) * 1.1;
-          table[d][m] = std::max(0, static_cast<int>(raw));
+          const double raw = 0.5 + 0.5 * std::log(depth) * std::log(move_index);
+          table[d][m] = std::clamp(static_cast<int>(raw), 0, 5);
         }
       }
       return table;
     }();
 
+constexpr std::array<float, 9> LMP_MASS = {
+    1.000f, // depth 0 (unused, never prunes)
+    0.99f,  // depth 1
+    0.995f, // depth 2
+    0.996f, // depth 3
+    0.997f, // depth 4
+    0.998f, // depth 5
+    0.999f, // depth 6
+    0.999f, // depth 7
+    0.999f  // depth 8
+};
 constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
 
 constexpr int prob_cut = 27; // 27;

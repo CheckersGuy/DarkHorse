@@ -310,12 +310,19 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
 
 namespace Search {
 Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
-             Move move, bool in_pv, bool cutnode) {
+             Move move, bool in_pv, bool cutnode, float move_prob,
+             bool have_prob) {
 
   if (move_index >= 1 && depth >= 2 && !move.is_capture()) {
     const int d_idx = std::min(depth - 1, LMR_MAX_DEPTH - 1);
-    const int m_idx = std::min(move_index, LMR_MAX_MOVE_INDEX - 1);
+    int m_idx = std::min(move_index, LMR_MAX_MOVE_INDEX - 1);
 
+    m_idx =
+        have_prob
+            ? (std::clamp((int)std::lround(1.0f / std::max(move_prob, 0.025f)),
+                          1, LMR_MAX_MOVE_INDEX - 1) -
+               1)
+            : m_idx;
     auto red = LMR_TABLE_2D[d_idx][m_idx];
 
     if (in_pv) {
@@ -526,13 +533,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       !board.get_position().has_jumps()) {
     return static_eval;
   }
-  /*
-    if (depth >= 7 && in_pv && tt_move.is_empty() &&
-        !board.get_position().has_jumps()) {
-      depth--;
-    }
 
-    */
   int32_t *out = &policy.out_layer.buffer[0];
   bool computed = false;
 
@@ -569,13 +570,40 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     return score;
   };
 
+  std::array<float, 40> move_prob{};
+  bool have_prob = false;
+  constexpr float PC_MIN_P = 0.01f;
   const Value old_alpha = alpha;
   const Value prob_beta = beta + prob_cut + 10 * improving;
 
+  const bool tt_blocks =
+      found_hash && info.depth >= depth - 4 && info.flag != TT_LOWER &&
+      isEval(info.score) &&
+      value_from_tt(info.score, ply, board.get_position()) < prob_beta;
+
+  float searched_mass = 0.0f;
   for (auto i = 0; i < liste.length(); ++i) {
     if (i == start_index) {
       liste.sort(board.get_position(), depth, ply, tt_move, start_index,
                  oracle);
+
+      if (computed && !liste[0].is_capture()) {
+        const bool flip = board.get_position().color == BLACK;
+        float max_l = -1e9f;
+        for (int k = 0; k < liste.length(); ++k) {
+          Move m = flip ? liste[k].flipped() : liste[k];
+          move_prob[k] = out[m.get_move_encoding()] / 127.0f;
+          max_l = std::max(max_l, move_prob[k]);
+        }
+        float sum = 0.0f;
+        for (int k = 0; k < liste.length(); ++k) {
+          move_prob[k] = std::exp(move_prob[k] - max_l);
+          sum += move_prob[k];
+        }
+        for (int k = 0; k < liste.length(); ++k)
+          move_prob[k] /= sum;
+        have_prob = true;
+      }
     }
     const Move move = liste[i];
 
@@ -589,16 +617,17 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
                board.previous().has_jumps(~board.get_mover())) {
       extension = 1;
     }
-    if (!in_pv && depth < LMP_COUNT.size() && i >= LMP_COUNT[depth] &&
-        extension == 0 && !move.is_capture()) {
-      continue;
+
+    if (!in_pv && have_prob && i >= 2 && extension == 0 && !move.is_capture() &&
+        depth < LMP_MASS.size() && searched_mass >= LMP_MASS[depth]) {
+      continue; // note: searched_mass is not updated for skipped moves
     }
 
     Line local_pv;
     Value val = -INFINITE;
 
-    Depth reduction =
-        Search::reduce(improving, i, depth, ply, board, move, in_pv, cutnode);
+    Depth reduction = Search::reduce(improving, i, depth, ply, board, move,
+                                     in_pv, cutnode, move_prob[i], have_prob);
 
     if (is_tt_pv && !in_pv) {
       reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);
@@ -611,7 +640,7 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     board.make_move(move);
 
     if (!in_pv && !isWinningEval(beta) && depth >= 5 &&
-        board.get_position().piece_count() > tab_pieces) {
+        board.get_position().piece_count() > tab_pieces && !tt_blocks) {
       Line line;
       Depth newDepth = std::max(0, depth - 4);
       Value board_val = -qs<NONPV>(board, ply + 1, line, -prob_beta,
@@ -659,6 +688,11 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
 
     board.undo_move();
+
+    if (have_prob) {
+      searched_mass += move_prob[i];
+    };
+
     if (val > best_score) {
       best_score = val;
 
