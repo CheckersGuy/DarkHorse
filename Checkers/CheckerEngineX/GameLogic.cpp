@@ -136,10 +136,7 @@ inline Value value_to_tt(Value v, int ply, Position pos) {
   if (!isEval(v)) {
     return v;
   }
-
-  if (std::abs(v) >= MAX_EVAL) {
-    return v >= MAX_EVAL ? v + ply : v <= -MAX_EVAL ? v - ply : v;
-  }
+  
   return v >= TB_WIN_MAX_PLY ? v + ply : v <= TB_LOSS_MAX_PLY ? v - ply : v;
 }
 
@@ -148,9 +145,6 @@ inline Value value_from_tt(Value v, int ply, Position pos) {
     return v;
   }
 
-  if (std::abs(v) >= MAX_EVAL) {
-    return v >= MAX_EVAL ? v - ply : v <= -MAX_EVAL ? v + ply : v;
-  }
   return v >= TB_WIN_MAX_PLY ? v - ply : v <= TB_LOSS_MAX_PLY ? v + ply : v;
 }
 

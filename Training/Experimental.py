@@ -23,7 +23,7 @@ from rangerlite import RangerLite
 # L2 = 32
 # L3 = 32
 
-L1 = 2*1024
+L1 = 2*4096
 L2 = 32
 L3 = 32
 
