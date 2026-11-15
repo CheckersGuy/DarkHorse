@@ -81,10 +81,9 @@ fn main() -> anyhow::Result<()> {
             "/mnt/c/TrainingData/mlh-data.samples",
         )?;
     */
-    Data::create_policy_data(
-        vec!["/mnt/c/TrainingData/finaldataset0.games"],
-        "/mnt/c/TrainingData/policy.samples",
-        32,
+    Data::filter_training_data(
+        "/mnt/c/TrainingData/reservoir-test.rescored.samples",
+        "/mnt/c/TrainingData/reservoir-test.rescored.filtered.samples",
     )?;
 
     /*Data::rescoring_data(

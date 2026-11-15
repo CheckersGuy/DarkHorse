@@ -93,7 +93,7 @@ inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
         for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
           const double depth = d + 1;
           const double move_index = m + 1;
-          const double raw = 0.5 + 0.5 * std::log(depth) * std::log(move_index);
+          const double raw = 0.5 + 0.7 * std::log(depth) * std::log(move_index);
           table[d][m] = std::clamp(static_cast<int>(raw), 0, 5);
         }
       }

@@ -19,6 +19,7 @@ int rootDepth = 0;
 Value last_eval = -SCORE_INFINITE;
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
+const bool forced_cap_enabled = true;
 
 uint64_t counter = 0;
 uint64_t both_counter = 0;
@@ -35,7 +36,7 @@ Network<2048, 32, 32, 1, 128> network;
 
 Network<128, 32, 32, 1, 128> mlh_net;
 
-Network<1024, 32, 32, 128, 128> policy;
+Network<1024, 64, 64, 128, 128> policy;
 
 Reservoir reservoir;
 
@@ -136,7 +137,7 @@ inline Value value_to_tt(Value v, int ply, Position pos) {
   if (!isEval(v)) {
     return v;
   }
-  
+
   return v >= TB_WIN_MAX_PLY ? v + ply : v <= TB_LOSS_MAX_PLY ? v - ply : v;
 }
 
@@ -208,6 +209,14 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
     root.score = -last_eval;
     root.move = rootList[0];
     return {root};
+  }
+
+  const bool forced = rootList.length() == 1;
+  uint32_t eff_time = time;
+  int eff_depth = depth;
+  if (forced && forced_cap_enabled) { // false in eval-loop/book so those get a
+    eff_time = std::min<uint32_t>(time, 1); // ms
+    eff_depth = std::min(depth, 1);
   }
 
   const int actualPV = std::min(numPV, rootList.length());

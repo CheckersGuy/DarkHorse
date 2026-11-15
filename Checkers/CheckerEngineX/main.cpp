@@ -25,7 +25,7 @@
 #include <vector>
 INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "sharing_policy_14.quant");
+INCBIN(policy, "sharing_policy_32.quant");
 
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {

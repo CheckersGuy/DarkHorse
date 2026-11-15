@@ -19,11 +19,7 @@ from BucketLinear import BucketedMixin
 from rangerlite import RangerLite
 # below will be moved into the network
 
-# L1 = 2*2048 For the value network
-# L2 = 32
-# L3 = 32
-
-L1 = 2*4096
+L1 = 2*2048
 L2 = 32
 L3 = 32
 

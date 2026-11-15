@@ -1,5 +1,6 @@
 #![feature(iter_array_chunks)]
 use crate::Move;
+use crate::Pos::MoveList;
 use crate::Pos::Position;
 use crate::Pos::Square;
 use crate::Sample;
@@ -498,45 +499,51 @@ pub fn create_mlh_data(paths: Vec<&str>, output: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+fn keep(s: &Sample::Sample) -> bool {
+    let p = s.position;
+    if p.bp == 0 || p.wp == 0 {
+        return false;
+    }
+    if s.value.abs() >= 15000 {
+        return false;
+    }
+    // legality
+    if (p.bp & p.wp) != 0 {
+        return false;
+    }
+    if (p.k & !(p.bp | p.wp)) != 0 {
+        return false;
+    }
+    if (p.wp & !p.k & 0x0000_000f) != 0 {
+        return false;
+    }
+    if (p.bp & !p.k & 0xf000_0000) != 0 {
+        return false;
+    }
+    if p.bp.count_ones() > 12 || p.wp.count_ones() > 12 {
+        return false;
+    }
+    // side to move must be quiet and have more than one move
+    if p.has_capture() {
+        return false;
+    }
+    let mut l = MoveList::new();
+    l.get_moves(p);
+    l.length > 1
+}
+
 pub fn filter_training_data(path: &str, out: &str) -> std::io::Result<()> {
     let mut reader = BufReader::new(File::open(path)?);
     let mut writer = BufWriter::new(File::create(out)?);
     let sample_iter = reader.iter_samples();
-    let mut filter = Bloom::new_for_fp_rate(5000000000, 0.05);
-    let mut unique_counter = 0;
-    let mut rescoreable_posititions = 0;
 
-    //filtering positions where the material imbalance is too high
-    //might be a good idea as well
-    //
     for s in sample_iter {
-        if s.value.abs() >= 650 && !s.is_tb_position() {
+        if !keep(&s) {
             continue;
         }
 
-        let from_white_pov = s.position;
-
-        let white_material = from_white_pov.wp.count_ones() as i32
-            + (from_white_pov.k & from_white_pov.wp).count_ones() as i32;
-        let black_material = from_white_pov.bp.count_ones() as i32
-            + (from_white_pov.k & from_white_pov.bp).count_ones() as i32;
-        let diff = white_material - black_material;
-        if diff.abs() >= 2 {
-            continue;
-        }
-        if !filter.check(&from_white_pov) {
-            filter.set(&from_white_pov);
-            s.write_fen(&mut writer)?;
-            unique_counter += 1;
-            rescoreable_posititions += match s.result {
-                Result::TBWIN => 0,
-                Result::TBLOSS => 0,
-                Result::TBDRAW => 0,
-                _ => 1,
-            };
-        }
+        s.write_fen(&mut writer)?;
     }
-    println!("There are a total of {} positions in the new dataset. Of the {} positions, {} are rescored tablebase positions", unique_counter,unique_counter,rescoreable_posititions);
     Ok(())
 }
 

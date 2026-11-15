@@ -9,9 +9,9 @@ import string_sum
 if __name__ == "__main__":
     batch_size = 8192
     epochs = 605
-    model = Experimental.PolicyNetwork(run_name="sharing_policy")
+    model = Experimental.Network(run_name="sharing_policy")
 
-    data_loader = Experimental.LitDataModule(train_data="/mnt/c/TrainingData/policy.samples",
+    data_loader = Experimental.LitDataModule(train_data="/mnt/c/TrainingData/reservoir-test.rescored.filtered.samples",
                                              val_data="/mnt/c/TrainData/finaldataset3.games",
                                              batch_size=batch_size, buffer_size=500000000)
 
@@ -21,6 +21,6 @@ if __name__ == "__main__":
     trainer = pl.Trainer(accelerator="gpu", devices=1, max_epochs=epochs, callbacks=[
                          check_point_callback], limit_val_batches=0)
 
-    # trainer.fit(model, data_loader, ckpt_path="Networks/medium=0-v32.ckpt")
+    # trainer.fit(model, data_loader, ckpt_path="Networks/sharing.ckpt")
 
     trainer.fit(model, data_loader)
