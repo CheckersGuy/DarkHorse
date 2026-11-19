@@ -111,7 +111,12 @@ constexpr std::array<float, 9> LMP_MASS = {
     0.999f, // depth 7
     0.999f  // depth 8
 };
-constexpr std::array<int, 9> LMP_COUNT = {0, 6, 9, 13, 18, 18, 18, 18, 18};
+
+inline int SE_MIN_DEPTH = 6;
+inline int SE_MARGIN = 2;         // s_beta = tt_value - SE_MARGIN * depth
+inline int SE_DOUBLE_MARGIN = 25; // same scale as prob_cut = 27
+
+constexpr std::array<int, 9> LMP_COUNT = {0, 5, 7, 9, 13, 15, 18, 18, 18};
 
 constexpr int prob_cut = 27; // 27;
 

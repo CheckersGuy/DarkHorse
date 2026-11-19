@@ -27,6 +27,30 @@ INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
 INCBIN(policy, "sharing_policy_32.quant");
 
+static Value search_value(const Position &pos, int time_ms, size_t max_nodes,
+                          int forced_left = 8) {
+  Position tmp = pos;
+  MoveListe liste;
+  get_moves(tmp, liste);
+
+  if (liste.length() == 0)
+    return loss(0);
+
+  if (liste.length() == 1) {
+    // follow forced moves instead of searching a one-move root
+    if (forced_left == 0)
+      return evaluate(pos, 0);
+    Position next = pos;
+    next.make_move(liste[0]);
+    return -search_value(next, time_ms, max_nodes, forced_left - 1);
+  }
+
+  Board b(pos);
+  auto r =
+      searchValueMultiPV(b, 1, MAX_PLY, time_ms, max_nodes, false, std::cout);
+  return r.front().score;
+}
+
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
              Value min, Value max) {
 
@@ -183,6 +207,9 @@ int main(int argl, const char **argc) {
     tablebase.load_table_base("C:\\kr_english_wld", 8);
 
 #endif
+    const bool children = parser.has_option("children");
+    const int child_time =
+        parser.has_option("child-time") ? parser.as<int>("child-time") : time;
 
     TT.resize_in_mb(hash_size);
     std::string current;
@@ -194,32 +221,35 @@ int main(int argl, const char **argc) {
       TT.age_counter++;
       const auto pos = Position::pos_from_fen(current);
 
-      board = Board(pos);
-      Move best;
+      const Value root_value = search_value(pos, time, max_nodes);
 
-      auto root_moves = searchValueMultiPV(board, 1, MAX_PLY, time, max_nodes,
-                                           false, std::cout);
-
-      auto eval = root_moves.front().score;
-
-      std::cout << eval << std::endl;
-    }
-    return 0;
-  }
-
-  if (parser.has_option("book")) {
-    std::string next_line;
-    TT.resize_in_mb(2);
-    while (std::getline(std::cin, next_line)) {
-      // need to clear statistics all the time
-
-      if (next_line == "terminate") {
-        std::exit(-1);
+      if (!children) {
+        std::cout << root_value << std::endl; // old protocol
+        continue;
       }
-      const auto pos = Position::pos_from_fen(next_line);
-      generate_book(6, pos, -55, 55);
-      // sending a message, telling "master" to send us another position
-      std::cout << "done" << std::endl;
+
+      // Positions where the mover must capture have no quiet-move labels worth
+      // training on, so skip the child searches there.
+      MoveListe liste;
+      Position tmp = pos;
+      const bool must_capture = pos.has_jumps(pos.get_color());
+      if (!must_capture)
+        get_moves(tmp, liste);
+
+      std::ostringstream out;
+      out << root_value << " " << liste.length();
+      for (int i = 0; i < liste.length(); ++i) {
+        Move m = liste[i];
+        Position child = pos;
+        child.make_move(m);
+        const Value q = -search_value(child, child_time, max_nodes);
+
+        // same encoding the policy net uses: white's perspective
+        const Move scored = (pos.color == BLACK) ? m.flipped() : m;
+        out << " " << scored.get_move_encoding() << " " << m.is_capture() << " "
+            << q;
+      }
+      std::cout << out.str() << std::endl;
     }
     return 0;
   }

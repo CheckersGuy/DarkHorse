@@ -413,6 +413,16 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     }
   }
 
+  if (!excluded.is_empty()) {
+    MoveListe filtered;
+    for (int idx = 0; idx < liste.length(); ++idx)
+      if (liste[idx] != excluded)
+        filtered.add_move(liste[idx]);
+    liste = filtered;
+    if (liste.length() == 0)
+      return alpha; // can't happen (we gate on length > 1), but safe
+  }
+
   auto key = board.get_current_key();
   int tab_pieces = 0;
 #ifdef _WIN32
@@ -445,13 +455,14 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
-
-  if (found_hash && liste.length() > 1 && info.flag != Flag::None &&
-      !is_sing_search && info.depth >= depth - 4 && info.flag != TT_UPPER &&
-      isEval(info.score) && !isWinningEval(info.score)) {
+  if (found_hash && liste.length() > 1 && !tt_move.is_empty() &&
+      depth >= SE_MIN_DEPTH && info.flag != Flag::None && !is_sing_search &&
+      info.depth >= depth - 4 && info.flag != TT_UPPER && isEval(info.score) &&
+      !isWinningEval(info.score)) {
     sing_move = tt_move;
     sing_value = tt_value;
   }
+
   if (!board.get_position().has_jumps(board.get_mover())) {
     if (found_hash && std::abs(info.static_eval) < EVAL_INFINITE) {
       static_eval = value_from_tt(info.static_eval, ply, board.get_position());
@@ -620,6 +631,24 @@ Value search(bool cutnode, Board &board, Ply ply, Line &pv, Value alpha,
     } else if (move.is_capture() &&
                board.previous().has_jumps(~board.get_mover())) {
       extension = 1;
+    }
+
+    if (!is_root && excluded.is_empty() && !sing_move.is_empty() &&
+        move == sing_move) {
+      const Value s_beta = sing_value - SE_MARGIN * depth;
+      Line s_line;
+      const Value s = search<NONPV>(cutnode, board, ply, s_line, s_beta - 1,
+                                    s_beta, (depth - 1) / 2, move, true);
+      // se_tried++;
+      if (s < s_beta) { // stage 1: plain extension
+        extension = 1;
+        if (!in_pv && s < s_beta - SE_DOUBLE_MARGIN && ply < 2 * rootDepth)
+          extension = 2;                        // stage 3: double extension
+      } else if (s_beta >= beta && isEval(s)) { // stage 2: multi-cut
+        return s_beta;
+      } else if (tt_value >= beta) { // stage 4: negative extension
+        extension = -1;
+      }
     }
 
     if (!in_pv && have_prob && i >= 2 && extension == 0 && !move.is_capture() &&
@@ -868,40 +897,43 @@ Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
 
   return bestValue;
 }
-
+inline Value asp_delta(Value s) {
+  const Value a = std::abs(s);
+  return asp_wind + (a > 275 ? (a - 275) / 8 : 0); // tune
+}
 Value search_asp(Board &board, Value last_score, Depth depth) {
-  Value best_score = -SCORE_INFINITE;
-  const int MAX_RESEARCHES = 4;
+  constexpr int MAX_RESEARCH = 4;
   if (depth >= 3 && isEval(last_score)) {
-    Value margin = asp_wind;
-    Value alpha = last_score - margin;
-    Value beta = last_score + margin;
-    while (margin < MAX_ASP) {
+    Value delta = asp_delta(last_score);
+    Value alpha = std::max(last_score - delta, -EVAL_INFINITE);
+    Value beta = std::min(last_score + delta, (Value)EVAL_INFINITE);
+    for (int tries = 0; tries < MAX_RESEARCH; ++tries) {
       Line line;
-
-      auto score = search<ROOT>(false, board, 0, line, alpha, beta, depth,
-                                Move{}, false);
-
+      const Value score = search<ROOT>(false, board, 0, line, alpha, beta,
+                                       depth, Move{}, false);
       if (score <= alpha) {
         beta = (alpha + beta) / 2;
-        margin += margin / 2;
-        alpha = std::max(score - margin, -EVAL_INFINITE);
+        alpha = std::max(score - delta, -EVAL_INFINITE);
+        if (tries == MAX_RESEARCH - 2)
+          alpha = -EVAL_INFINITE;
       } else if (score >= beta) {
-        margin += margin / 2;
-        beta = std::min(score + margin, int(EVAL_INFINITE));
+        if (!root_partial.is_empty())
+          root_prev_best = root_partial;
+        beta = std::min(score + delta, (Value)EVAL_INFINITE);
+        if (tries == MAX_RESEARCH - 2)
+          beta = EVAL_INFINITE;
       } else {
-        best_score = score;
         mainPV = line;
-        return best_score;
+        return score;
       }
+      delta += delta / 2;
     }
   }
   Line line;
-  auto value = search<ROOT>(false, board, 0, line, -EVAL_INFINITE,
-                            EVAL_INFINITE, depth, Move{}, false);
-  best_score = value;
+  const Value value = search<ROOT>(false, board, 0, line, -EVAL_INFINITE,
+                                   EVAL_INFINITE, depth, Move{}, false);
   mainPV = line;
-  return best_score;
+  return value;
 }
 
 } // namespace Search
