@@ -12,6 +12,122 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::str::FromStr;
 
+pub const POLICY_MAGIC: u32 = 0x504F_4C31; // "POL1"
+pub const POLICY_HEADER_BYTES: u64 = 12;
+
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Default)]
+pub struct Child {
+    pub enc: u8,       // 4*from + dir, always white's perspective (0..127)
+    pub capture: bool, // multi-jump encodings collide, so mask these in the loss
+    pub score: i16,    // value after the move, from the mover's view
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct PolicySample {
+    pub sample: Sample, // value = root value from the new eval-loop line
+    pub children: Vec<Child>,
+}
+
+impl PolicySample {
+    pub fn new(sample: Sample) -> Self {
+        PolicySample {
+            sample,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn write<W: Write>(&self, w: &mut W) -> std::io::Result<()> {
+        self.sample.write_fen(w)?;
+        w.write_u8(self.children.len() as u8)?;
+        for c in &self.children {
+            w.write_u8(c.enc)?;
+            w.write_u8(c.capture as u8)?;
+            w.write_i16::<LittleEndian>(c.score)?;
+        }
+        Ok(())
+    }
+
+    pub fn read_into<R: Read>(&mut self, r: &mut R) -> std::io::Result<()> {
+        self.sample.read_into(r)?;
+        let n = r.read_u8()? as usize;
+        self.children.clear();
+        for _ in 0..n {
+            let enc = r.read_u8()?;
+            let capture = r.read_u8()? != 0;
+            let score = r.read_i16::<LittleEndian>()?;
+            self.children.push(Child {
+                enc,
+                capture,
+                score,
+            });
+        }
+        Ok(())
+    }
+}
+
+// Engine mate scores: +-(EVAL_INFINITE - plies_to_end), see types.h
+const EVAL_INFINITE: i32 = 13000;
+const MATE_IN_MAX_PLY: i32 = EVAL_INFINITE - 256;
+/// Score difference per ply between two mate scores in the policy targets.
+/// 25 per ply = 50 per full move, i.e. a factor e per move at temperature 50.
+pub const MATE_PLY_STEP: f32 = 25.0;
+
+/// Child score -> score used for the policy soft targets (before /temperature).
+/// Normal scores are passed through unclamped. Mate scores are spread out by
+/// distance: a win in fewer plies (or a loss in more plies) ranks higher.
+pub fn policy_score(score: i16) -> f32 {
+    let s = score as i32;
+    if s.abs() >= MATE_IN_MAX_PLY {
+        let plies = (EVAL_INFINITE - s.abs()) as f32;
+        let mag = EVAL_INFINITE as f32 - MATE_PLY_STEP * plies;
+        if s > 0 {
+            mag
+        } else {
+            -mag
+        }
+    } else {
+        s as f32
+    }
+}
+
+pub fn write_policy_header<W: Write>(w: &mut W, count: u64) -> std::io::Result<()> {
+    w.write_u32::<LittleEndian>(POLICY_MAGIC)?;
+    w.write_u64::<LittleEndian>(count)
+}
+
+pub fn read_policy_header<R: Read>(r: &mut R) -> std::io::Result<u64> {
+    if r.read_u32::<LittleEndian>()? != POLICY_MAGIC {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "not a policy-sample file",
+        ));
+    }
+    r.read_u64::<LittleEndian>()
+}
+
+/// Parses "<root> <N> <enc> <is_capture> <score> ..." from the new eval-loop.
+pub fn parse_children_line(line: &str) -> Option<(i16, Vec<Child>)> {
+    let clamp = |v: i32| v.clamp(i16::MIN as i32, i16::MAX as i32) as i16;
+    let mut it = line.split_whitespace();
+    let root: i32 = it.next()?.parse().ok()?;
+    let n: usize = it.next()?.parse().ok()?;
+    let mut children = Vec::with_capacity(n);
+    for _ in 0..n {
+        let enc: i32 = it.next()?.parse().ok()?;
+        let cap: i32 = it.next()?.parse().ok()?;
+        let score: i32 = it.next()?.parse().ok()?;
+        if !(0..128).contains(&enc) {
+            return None;
+        }
+        children.push(Child {
+            enc: enc as u8,
+            capture: cap != 0,
+            score: clamp(score),
+        });
+    }
+    Some((clamp(root), children))
+}
+
 //all positions with abs(eval)>=EXCLUDE_EVAL should be removed
 pub const EXCLUDE_EVAL: i16 = 10000;
 

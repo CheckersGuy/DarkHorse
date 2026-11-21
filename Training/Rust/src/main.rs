@@ -81,10 +81,11 @@ fn main() -> anyhow::Result<()> {
             "/mnt/c/TrainingData/mlh-data.samples",
         )?;
     */
-    Data::filter_training_data(
+    /*Data::filter_training_data(
         "/mnt/c/TrainingData/reservoir-test.rescored.samples",
         "/mnt/c/TrainingData/reservoir-test.rescored.filtered.samples",
     )?;
+    */
 
     /*Data::rescoring_data(
         vec![
@@ -108,15 +109,37 @@ fn main() -> anyhow::Result<()> {
         1000000,
     )?;
     */
-    /* Data::rescoring_data(
-         vec!["/mnt/c/TrainingData/reservoir-test.samples"],
-         "/mnt/c/TrainingData/reservoir-test.rescored10ms.samples",
-         10,
-         14,
-         32,
-         1000000,
-     )?;
+    /*Data::rescoring_children(
+        vec!["/mnt/c/TrainingData/reservoir-test.samples"],
+        "/mnt/c/TrainingData/test-samples.children.samples",
+        1,
+        1,
+        14,
+        32,
+        100000,
+    )?;
     */
+
+    // 10M positions total, ~80/20 train/val split (already done)
+    /*Data::split_train_val(
+        "/mnt/c/TrainingData/reservoir-test.samples",
+        "/mnt/c/TrainingData/reservoir-test.10M.train.samples",
+        "/mnt/c/TrainingData/reservoir-test.10M.val.samples",
+        0.2,
+        Some(10_000_000),
+    )?;
+    */
+
+    // rescore both sets with children, then delete the unrescored inputs
+    for set in ["train", "val"] {
+        let input = format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.samples");
+        let output = format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.children.samples");
+        println!("Rescoring {input}");
+        Data::rescoring_children(vec![input.as_str()], &output, 1, 1, 14, 32, 100000)?;
+    }
+    for set in ["train", "val"] {
+        std::fs::remove_file(format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.samples"))?;
+    }
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);

@@ -73,6 +73,7 @@ void set_enable_wld(bool enable) {
 void set_max_db_pieces(int val) { reg_set_int("DarkHorse_max_db_pieces", val); }
 void set_db_size(int val) { reg_set_int("DarkHorse_db_size", val); }
 void set_hash_size(int val) { reg_set_int("DarkHorse_hash_size", val); }
+void set_threads(int val) { reg_set_int("DarkHorse_threads", val); }
 void set_db_path(std::string path) {
   reg_set_string("DarkHorse_db_path", path.c_str());
 }
@@ -96,6 +97,14 @@ bool use_wld_db() {
 std::optional<int> get_hash_size() {
   int value;
   if (reg_get_int("DarkHorse_hash_size", &value) == 0) {
+    return std::make_optional(value);
+  }
+  return std::nullopt;
+}
+
+std::optional<int> get_threads() {
+  int value;
+  if (reg_get_int("DarkHorse_threads", &value) == 0) {
     return std::make_optional(value);
   }
   return std::nullopt;

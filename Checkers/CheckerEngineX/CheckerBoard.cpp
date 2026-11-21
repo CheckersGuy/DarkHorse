@@ -1,5 +1,6 @@
 #include "CheckerBoard.h"
 #include "GameLogic.h"
+#include "Thread.h"
 #include "registry.h"
 #include "types.h"
 bool engine_initialized = false;
@@ -7,6 +8,7 @@ Board game_board;
 
 int num_draw_scores = 0;
 int hash_size_in_mb = 8;
+int num_threads = 1;
 int db_size_in_mb = 256;
 int max_db_pieces = 6;
 bool enable_wld = false;
@@ -59,6 +61,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   temp.color = (color == CB_BLACK) ? BLACK : WHITE;
   if (!engine_initialized) {
     hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
+    num_threads = Registry::get_threads().value_or(num_threads);
+    set_num_threads(num_threads);
     db_path = Registry::get_db_path().value_or(db_path);
     max_db_pieces = Registry::get_max_db_pieces().value_or(max_db_pieces);
     db_size_in_mb = Registry::get_db_size().value_or(db_size_in_mb);
@@ -179,6 +183,15 @@ int enginecommand(char str[256], char reply[1024]) {
       return 1;
     }
 
+    if (strcmp(param1, "threads") == 0) {
+      const int n = std::max(1, (int)strtol(param2, &stopstring, 10));
+      num_threads = n;
+      set_num_threads(num_threads); // never called during a search
+      Registry::set_threads(num_threads);
+      snprintf(reply, REPLY_MAX, "threads set to %d", num_threads);
+      return 1;
+    }
+
     if (strcmp(param1, "dbpath") == 0) {
       char *p = strstr(str, "dbpath");
       while (!isspace(*p))
@@ -241,6 +254,12 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "hashsize") == 0) {
       hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
       snprintf(reply, REPLY_MAX, "%d", hash_size_in_mb);
+      return 1;
+    }
+
+    if (strcmp(param1, "threads") == 0) {
+      num_threads = Registry::get_threads().value_or(num_threads);
+      snprintf(reply, REPLY_MAX, "%d", num_threads);
       return 1;
     }
 

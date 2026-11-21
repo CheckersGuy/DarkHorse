@@ -11,6 +11,7 @@
 #include "Transposition.h"
 #include "types.h"
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cmath>
 #include <cstddef>
@@ -24,11 +25,13 @@
 inline TableBase tablebase;
 #endif
 
-extern uint64_t nodeCounter;
+struct ThreadData; // Thread.h
 extern uint64_t counter;
 extern uint64_t both_counter;
 extern int last_eval;
-extern bool stop_search;
+extern std::atomic<bool>
+    stop_search; // set by the main thread, polled by helpers
+
 enum NodeType {
   ROOT,
   PV,
@@ -100,15 +103,16 @@ extern SearchGlobal glob;
 
 namespace Search {
 
-Value search_asp(Board &board, Value last_score, Depth depth);
+Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth);
 
 template <NodeType type>
-Value search(bool cutnode, Board &board, Ply ply, Line &line, Value alpha,
-             Value beta, Depth depth, Move excluded, bool is_sing_search);
+Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &line,
+             Value alpha, Value beta, Depth depth, Move excluded,
+             bool is_sing_search);
 
 template <NodeType type>
-Value qs(Board &board, Ply ply, Line &pv, Value alpha, Value beta, Depth depth,
-         Move excluded, bool is_sing_search);
+Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
+         Value beta, Depth depth, Move excluded, bool is_sing_search);
 
 Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
              Move move, bool in_pv, bool cutnode);
@@ -119,7 +123,11 @@ std::vector<RootMove> searchValueMultiPV(Board board, int numPV, int depth,
                                          uint32_t time, size_t max_nodes,
                                          bool print, std::ostream &stream);
 
+// The ThreadData overloads use that thread's network state (search); the
+// others use a per-OS-thread default state (tools, book code, main.cpp).
+int get_mlh_estimate(ThreadData &td, Position pos);
 int get_mlh_estimate(Position pos);
+Value evaluate(ThreadData &td, Position pos, Ply ply);
 Value evaluate(Position pos, Ply ply);
 
 std::array<float, 40> get_probability_distribution(MoveListe &liste,

@@ -4,6 +4,7 @@
 #include "MGenerator.h"
 #include "Network.h"
 #include "Perft.h"
+#include "Thread.h"
 #include "Transposition.h"
 #ifdef _WIN32
 #include "egdb.h"
@@ -151,6 +152,19 @@ int main(int argl, const char **argc) {
     depth = parser.as<int>("depth");
   } else {
     depth = parser.has_option("bench") ? 27 : MAX_PLY;
+  }
+
+  // Lazy SMP search threads. Data generation and rescoring always search
+  // single-threaded: they already run as many parallel engine processes.
+  int num_threads =
+      parser.has_option("threads") ? parser.as<int>("threads") : 1;
+  if (parser.has_option("generate") || parser.has_option("eval-loop")) {
+    num_threads = 1;
+  }
+  set_num_threads(num_threads);
+
+  if (parser.has_option("policy_scale")) {
+    POLICY_SCALE = std::stof(parser.as<std::string>("policy_scale"));
   }
 
   if (parser.has_option("multipv")) {

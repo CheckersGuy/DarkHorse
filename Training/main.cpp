@@ -53,6 +53,57 @@ int main(int argl, const char **argc) {
       } else {
         engine_match.setHashSize(21);
       }
+
+      // Search threads per engine (Lazy SMP), e.g. --search_threads 1 2.
+      // Not to be confused with --threads, the number of games run in
+      // parallel. Passed to the engines as their --threads argument.
+      if (parser.has_option("search_threads")) {
+        auto search_threads = parser.as<std::vector<int>>("search_threads");
+        if (search_threads.size() != 2 || search_threads[0] < 1 ||
+            search_threads[1] < 1) {
+          std::cerr << "--search_threads needs two values >= 1, e.g. "
+                       "--search_threads 1 2"
+                    << std::endl;
+          return 1;
+        }
+        engine_match.set_arg1("--threads " + std::to_string(search_threads[0]));
+        engine_match.set_arg2("--threads " + std::to_string(search_threads[1]));
+
+        const unsigned cores = std::thread::hardware_concurrency();
+        const unsigned busy =
+            engine_match.getNumThreads() *
+            std::max(search_threads[0], search_threads[1]);
+        std::cout << "Search threads: engine 1 = " << search_threads[0]
+                  << ", engine 2 = " << search_threads[1] << std::endl;
+        if (cores != 0 && busy > cores) {
+          std::cout << "Warning: up to " << busy << " busy threads ("
+                    << engine_match.getNumThreads()
+                    << " parallel games) on " << cores
+                    << " hardware threads; reduce --threads to avoid "
+                       "distorting the result"
+                    << std::endl;
+        }
+      }
+      // Policy logit scale per engine, e.g. --policy_scale 2.2 1.0.
+      // Passed to the engines as their --policy_scale argument.
+      if (parser.has_option("policy_scale")) {
+        auto scales = parser.as<std::vector<std::string>>("policy_scale");
+        if (scales.size() != 2) {
+          std::cerr << "--policy_scale needs two values, e.g. "
+                       "--policy_scale 2.2 1.0"
+                    << std::endl;
+          return 1;
+        }
+        auto join = [](const std::string &a, const std::string &b) {
+          return a.empty() ? b : a + " " + b;
+        };
+        engine_match.set_arg1(
+            join(engine_match.get_arg1(), "--policy_scale " + scales[0]));
+        engine_match.set_arg2(
+            join(engine_match.get_arg2(), "--policy_scale " + scales[1]));
+        std::cout << "Policy scale: engine 1 = " << scales[0]
+                  << ", engine 2 = " << scales[1] << std::endl;
+      }
       engine_match.start();
     }
   }

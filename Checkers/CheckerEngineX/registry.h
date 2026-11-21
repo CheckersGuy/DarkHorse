@@ -17,11 +17,13 @@ int reg_get_string(const char *name, char *string, int maxlen);
 
 void set_db_size(int val);
 void set_hash_size(int val);
+void set_threads(int val);
 void set_db_path(std::string path);
 void set_enable_wld(bool enable);
 void set_max_db_pieces(int val);
 std::optional<int> get_db_size();
 std::optional<int> get_hash_size();
+std::optional<int> get_threads();
 std::optional<std::string> get_db_path();
 std::optional<int> get_max_db_pieces();
 bool use_wld_db();

@@ -43,6 +43,195 @@ use std::thread;
 use std::time::{Duration, Instant};
 use Sample::{Result, SampleType};
 
+use byteorder::WriteBytesExt;
+use std::io::{Seek, SeekFrom};
+use Sample::{parse_children_line, write_policy_header, PolicySample};
+
+fn read_policy_partition(path: &str) -> std::io::Result<Vec<PolicySample>> {
+    let mut r = BufReader::new(File::open(path)?);
+    let mut out = Vec::new();
+    loop {
+        let mut ps = PolicySample::new(Sample::Sample::default());
+        match ps.read_into(&mut r) {
+            Ok(()) => out.push(ps),
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(out)
+}
+
+/// Deletes the temporary partition files `<prefix>0 .. <prefix>{partitions-1}`.
+/// Only call this after the merged output has been written and flushed.
+fn remove_partitions(prefix: &str, partitions: usize) -> std::io::Result<()> {
+    for i in 0..partitions {
+        std::fs::remove_file(format!("{}{}", prefix, i))?;
+    }
+    Ok(())
+}
+
+pub fn rescoring_children(
+    paths: Vec<&str>,
+    output: &str,
+    time: i32,
+    child_time: i32,
+    num_workers: usize,
+    partitions: usize,
+    queue_capacity: usize,
+) -> std::io::Result<()> {
+    const AVG_CHILDREN: f64 = 8.0;
+    let to_rescore = count_positions_to_rescore(&paths, RESCORE_VALUE_THRESHOLD)?;
+    let paths = expand_game_paths(&paths)?;
+
+    let per_pos_ms = time as f64 + AVG_CHILDREN * child_time as f64;
+    let est_hours = to_rescore as f64 * per_pos_ms / 1000.0 / num_workers as f64 / 3600.0;
+    println!("{} positions, estimated {:.2} hours", to_rescore, est_hours);
+
+    let (work_tx, work_rx) = mpsc::sync_channel::<PolicySample>(queue_capacity);
+    let work_rx = Arc::new(Mutex::new(work_rx));
+    let (result_tx, result_rx) = mpsc::sync_channel::<PolicySample>(queue_capacity);
+
+    let bar = ProgressBar::new(to_rescore);
+    bar.set_style(
+        ProgressStyle::with_template(
+            "[{elapsed_precise},{eta_precise}] {bar:40.cyan/blue} {pos:>9}/{len:9} {msg}",
+        )
+        .unwrap()
+        .progress_chars("##-"),
+    );
+
+    // --- writer thread: random partition files, no header ---
+    let writer_handle = {
+        let mut files: Vec<BufWriter<File>> = Vec::new();
+        for i in 0..partitions {
+            files.push(BufWriter::new(File::create(format!("{}{}", output, i))?));
+        }
+        thread::spawn(move || {
+            let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+            for ps in result_rx.iter() {
+                let p = rng.gen::<usize>() % partitions;
+                ps.write(&mut files[p]).expect("Could not write sample");
+            }
+            for f in files.iter_mut() {
+                f.flush().expect("flush");
+            }
+        })
+    };
+
+    // --- workers ---
+    let mut worker_handles = Vec::new();
+    for worker_id in 0..num_workers {
+        let work_rx = Arc::clone(&work_rx);
+        let result_tx = result_tx.clone();
+        let worker_bar = bar.clone();
+        worker_handles.push(thread::spawn(move || {
+            let mut command = Command::new("./MainEngine")
+                .args([format!(
+                    "--eval-loop --children --time {} --child-time {} --hash_size 64",
+                    time, child_time
+                )])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .spawn()
+                .expect("Failed to start process");
+            let mut stdin = command.stdin.take().unwrap();
+            let mut f = BufReader::new(command.stdout.take().unwrap());
+
+            loop {
+                let received = { work_rx.lock().unwrap().recv() };
+                let mut ps = match received {
+                    Ok(s) => s,
+                    Err(_) => break,
+                };
+
+                let fen = ps.sample.position.get_fen_string();
+                if stdin.write_all((fen + "\n").as_bytes()).is_err() {
+                    break;
+                }
+
+                let mut buf = String::new();
+                if f.read_line(&mut buf).is_err() {
+                    continue;
+                }
+                match parse_children_line(&buf) {
+                    Some((root, children)) => {
+                        ps.sample.value = root;
+                        ps.children = children;
+                    }
+                    None => {
+                        println!("Worker {worker_id} could not parse '{}'", buf.trim());
+                        continue;
+                    }
+                }
+                worker_bar.inc(1);
+                if result_tx.send(ps).is_err() {
+                    break;
+                }
+            }
+            let _ = stdin.write_all(b"terminate\n");
+            let _ = command.wait();
+        }));
+    }
+
+    // --- producer: same filters as rescoring_data ---
+    let mut filter = Bloom::new_for_fp_rate(4_000_000_000, 0.01);
+    for path in paths.iter() {
+        let mut reader = BufReader::new(File::open(path)?);
+        for sample in reader.iter_samples() {
+            if sample.position.has_capture() {
+                continue;
+            }
+            if sample.position.bp == 0 || sample.position.wp == 0 {
+                continue;
+            }
+            if sample.value.abs() >= 15000 {
+                continue;
+            }
+            if filter.check(&sample.position) {
+                continue;
+            }
+            filter.set(&sample.position);
+
+            let ps = PolicySample::new(sample);
+            if sample.value.abs() >= RESCORE_VALUE_THRESHOLD {
+                // keep the old value, no children
+                if result_tx.send(ps).is_err() {
+                    break;
+                }
+            } else if work_tx.send(ps).is_err() {
+                break;
+            }
+        }
+    }
+    drop(work_tx);
+    drop(result_tx);
+    for h in worker_handles {
+        h.join().unwrap();
+    }
+    writer_handle.join().unwrap();
+    bar.finish();
+
+    // --- shuffle partitions into the final file (with header) ---
+    let mut writer = BufWriter::new(File::create(output)?);
+    write_policy_header(&mut writer, 0)?;
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    let mut count: u64 = 0;
+    for i in 0..partitions {
+        let mut samples = read_policy_partition(&format!("{}{}", output, i))?;
+        samples.par_shuffle(&mut rng);
+        for ps in samples {
+            ps.write(&mut writer)?;
+            count += 1;
+        }
+    }
+    writer.flush()?;
+    writer.seek(SeekFrom::Start(4))?; // patch the count after the magic
+    writer.write_u64::<LittleEndian>(count)?;
+    writer.flush()?;
+    remove_partitions(output, partitions)?;
+    Ok(())
+}
+
 #[derive(Debug)]
 pub struct Generator<'a> {
     book: String,
@@ -307,6 +496,7 @@ pub fn rescoring_data(
         }
     }
     writer.flush()?;
+    remove_partitions(output, partitions)?;
 
     Ok(())
 }
@@ -415,6 +605,8 @@ pub fn shuffle_data_external<const partitions: usize>(
             sample.write_fen(&mut writer)?;
         }
     }
+    writer.flush()?;
+    remove_partitions(input, partitions)?;
 
     Ok(())
 }
@@ -628,6 +820,7 @@ pub fn get_unique_samples(
         "Got back a total of {} while processing {} samples",
         written_count, total_count
     );
+    remove_partitions(output, partitions)?;
     Ok(())
 }
 pub fn create_policy_data(
@@ -683,6 +876,7 @@ pub fn create_policy_data(
     }
 
     println!("Done sampling unique positions and creating partitions\n Now we are shuffling and merging the files");
+    files.clear(); // flush + close the partition writers before reading them back
     for i in 0..partitions {
         let file_name = String::from(output) + i.to_string().as_str();
         let mut read_local = BufReader::new(File::open(file_name)?);
@@ -699,8 +893,59 @@ pub fn create_policy_data(
         "Got back a total of {} while processing {} samples",
         written_count, total_count
     );
+    remove_partitions(output, partitions)?;
 
     Ok(())
+}
+
+/// Splits unrescored samples (as written by `Generator::generate_games`) into a
+/// training- and a validation-file.
+///
+/// The split is decided by a deterministic hash of the position, not by a random
+/// draw, so every copy of a position lands in the same set (no train/val leakage
+/// through duplicate positions) and re-running gives the same split.
+/// `max_samples` limits how many samples are read from the start of `input`
+/// (`None` = whole file). Because the split is per-position and the limit takes a
+/// prefix, a larger limit gives train/val sets that contain the smaller ones.
+/// Streams the input; memory use is constant.
+/// Returns (train_count, val_count).
+pub fn split_train_val(
+    input: &str,
+    train_output: &str,
+    val_output: &str,
+    val_fraction: f64,
+    max_samples: Option<usize>,
+) -> std::io::Result<(u64, u64)> {
+    use std::collections::hash_map::DefaultHasher; // fixed keys -> deterministic across runs
+    use std::hash::Hasher;
+
+    assert!(
+        (0.0..=1.0).contains(&val_fraction),
+        "val_fraction must be in [0, 1]"
+    );
+    let threshold = (val_fraction * u64::MAX as f64) as u64;
+
+    let mut reader = BufReader::new(File::open(input)?);
+    let mut train_writer = BufWriter::new(File::create(train_output)?);
+    let mut val_writer = BufWriter::new(File::create(val_output)?);
+    let (mut train_count, mut val_count) = (0u64, 0u64);
+
+    for sample in reader.iter_samples().take(max_samples.unwrap_or(usize::MAX)) {
+        let mut hasher = DefaultHasher::new();
+        sample.position.hash(&mut hasher);
+        if hasher.finish() < threshold {
+            sample.write_fen(&mut val_writer)?;
+            val_count += 1;
+        } else {
+            sample.write_fen(&mut train_writer)?;
+            train_count += 1;
+        }
+    }
+    train_writer.flush()?;
+    val_writer.flush()?;
+
+    println!("Train samples: {train_count}, validation samples: {val_count}");
+    Ok((train_count, val_count))
 }
 
 pub fn shuffle_data(path: &str, output: &str) -> std::io::Result<()> {

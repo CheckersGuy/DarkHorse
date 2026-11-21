@@ -18,7 +18,7 @@ class Board {
 public:
   std::array<Position, 1000> pStack;
   std::array<Position, 1000> rep_history;
-  std::array<int16_t, 1000> last_rev;
+  std::array<int16_t, 1000> last_rev{}; // zeroed: read by is_repetition() even when the position is set via get_position()
   int rep_size = 0;
 
 public:

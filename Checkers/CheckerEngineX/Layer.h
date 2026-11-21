@@ -37,7 +37,8 @@ template <int In, int Out, Activation ac, int NUM_BUCKETS> struct QLayer {
 
   alignas(CACHE_LINE_SIZE) int32_t biases[OutDim * NUM_BUCKETS];
   alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim * NUM_BUCKETS];
-  alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
+  // the int32 output buffer (PadOutDim entries, 64-byte aligned) is per-thread
+  // state and gets passed to forward()
 
   int get_weight_index(int index) {
 
@@ -98,7 +99,7 @@ template <int In, int Out, Activation ac, int NUM_BUCKETS> struct QLayer {
       }
     }
   }
-  auto *forward(uint8_t *input, int bucket_index) {
+  auto *forward(uint8_t *input, int bucket_index, int32_t *buffer) const {
     const auto w_offset = bucket_index * PadInDim * OutDim;
     if constexpr ((OutDim % 4) != 0) {
       for (auto i = 0; i < OutDim; ++i) {

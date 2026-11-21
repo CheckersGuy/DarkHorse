@@ -62,7 +62,8 @@ Value tempo_black(Position pos);
 
 constexpr static size_t ALIGNMENT = 64;
 
-template <int OutDim> struct alignas(64) Accumulator {
+// Feature-transformer weights: loaded once, shared read-only by all threads.
+template <int OutDim> struct Accumulator {
   constexpr static int out_dimension = OutDim;
   static inline uint32_t num_trials = 0; // used to compute the average
   static inline uint32_t num_nnz =
@@ -70,31 +71,38 @@ template <int OutDim> struct alignas(64) Accumulator {
   static inline uint32_t num_nnz_blocks =
       0; // counts the number of nonzero blocks
 
+  int16_t *ft_biases{nullptr};
+  int16_t *ft_weights{nullptr};
+
+  Accumulator() = default;
+  Accumulator(const Accumulator &) = delete; // single owner of ft_* buffers
+  Accumulator &operator=(const Accumulator &) = delete;
+  ~Accumulator();
+
+  void load_weights(std::istream &stream, std::vector<size_t> permutation);
+
+  std::pair<float, float> get_activation_stats();
+};
+
+// Incrementally updated accumulator values: one per search thread.
+template <int OutDim> struct alignas(64) AccumulatorState {
   alignas(64) int16_t black_acc[OutDim];
   alignas(64) int16_t white_acc[OutDim];
-  // used to improve block sparsity
-  int16_t *ft_biases;
-  int16_t *ft_weights;
-
-  int size;
   Position previous_black_flipped, previous_white;
   std::array<int, 32> removed_features;
   std::array<int, 32> active_features;
 
-  ~Accumulator();
+  void update(const Accumulator<OutDim> &w, Color per, Position after);
 
-  void update(Color per, Position after);
+  void update(const Accumulator<OutDim> &w, Position after);
 
-  void update(Position after);
+  void apply(const Accumulator<OutDim> &w, Color color, Position before,
+             Position after);
 
-  void apply(Color color, Position before, Position after);
+  void refresh(const Accumulator<OutDim> &w);
 
-  void refresh();
-
-  void load_weights(std::istream &stream, std::vector<size_t> permutation);
-
-  uint8_t *forward(uint8_t *in, const Position &next);
-  std::pair<float, float> get_activation_stats();
+  uint8_t *forward(const Accumulator<OutDim> &w, uint8_t *in,
+                   const Position &next);
 };
 
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS> struct Network {
@@ -106,16 +114,30 @@ template <int L1, int L2, int L3, int Out, int NUM_BUCKETS> struct Network {
     }
   }
 
+  using FirstLayer = SparseLayer<L1, L2, NUM_BUCKETS>;
+  using SecondLayer = QLayer<L2, L3, Activation::SqRelu, NUM_BUCKETS>;
+  using OutLayer = QLayer<L3, Out, Activation::Id, NUM_BUCKETS>;
+
+  // ---- weights: shared read-only by all threads ----
   Accumulator<2 * L1> accumulator;
-  SparseLayer<L1, L2, NUM_BUCKETS> first_layer;
-  QLayer<L2, L3, Activation::SqRelu, NUM_BUCKETS> second_layer;
-  QLayer<L3, Out, Activation::Id, NUM_BUCKETS> out_layer;
+  FirstLayer first_layer;
+  SecondLayer second_layer;
+  OutLayer out_layer;
 
   // permutations are needed to improve sparsity
   // permutation size should be 2*L1
   std::vector<size_t> permutation;
 
-  alignas(64) uint8_t input[(L1 + L2 + L3 + Out) + 128] = {0};
+  // ---- per-thread evaluation state (accumulators + layer scratch buffers) ----
+  struct State {
+    AccumulatorState<2 * L1> acc;
+    alignas(64) uint8_t input[(L1 + L2 + L3 + Out) + 128] = {0};
+    alignas(64) int32_t first_buffer[FirstLayer::PadOutDim] = {0};
+    alignas(64) int32_t second_buffer[SecondLayer::PadOutDim] = {0};
+    alignas(64) int32_t out_buffer[OutLayer::PadOutDim] = {0};
+    alignas(64) uint16_t nnz[FirstLayer::NNZ_SIZE] = {0};
+    bool ready{false}; // accumulators initialised from the biases
+  };
 
   void load_permutation(std::string file);
   void load_permutation_from_array(const unsigned char *, size_t size);
@@ -124,21 +146,36 @@ template <int L1, int L2, int L3, int Out, int NUM_BUCKETS> struct Network {
 
   void load_from_array(const unsigned char *, size_t size);
 
-  int32_t *compute_incre_forward_pass(Position next);
+  void refresh(State &st) const;
 
-  int evaluate(Position pos, int ply, int shuffle);
+  int32_t *compute_incre_forward_pass(State &st, Position next) const;
 
-  int32_t *get_raw_eval(Position pos);
+  int evaluate(State &st, Position pos, int ply, int shuffle) const;
 
-  int operator[](int index);
+  int32_t *get_raw_eval(State &st, Position pos) const;
 
-  friend class Accumulator<2 * L1>;
+  // Convenience for single-threaded callers (tools, book code): a lazily
+  // initialised state per OS thread. The search uses its own per-thread State.
+  State &default_state() const {
+    thread_local State st;
+    if (!st.ready)
+      refresh(st);
+    return st;
+  }
+  void refresh() const { refresh(default_state()); }
+  int evaluate(Position pos, int ply, int shuffle) const {
+    return evaluate(default_state(), pos, ply, shuffle);
+  }
+  int32_t *get_raw_eval(Position pos) const {
+    return get_raw_eval(default_state(), pos);
+  }
 };
 
-template <int OutDim> void Accumulator<OutDim>::refresh() {
+template <int OutDim>
+void AccumulatorState<OutDim>::refresh(const Accumulator<OutDim> &w) {
   for (auto i = 0; i < OutDim; ++i) {
-    white_acc[i] = ft_biases[i];
-    black_acc[i] = ft_biases[i];
+    white_acc[i] = w.ft_biases[i];
+    black_acc[i] = w.ft_biases[i];
   }
   previous_black_flipped = Position{};
   previous_white = Position{};
@@ -181,10 +218,6 @@ void Accumulator<OutDim>::load_weights(std::istream &stream,
 
   free(col_buffer);
   free(buffer_biases);
-  for (auto i = 0; i < OutDim; ++i) {
-    black_acc[i] = ft_biases[i];
-    white_acc[i] = ft_biases[i];
-  }
 }
 
 template <int OutDim> Accumulator<OutDim>::~Accumulator() {
@@ -193,7 +226,8 @@ template <int OutDim> Accumulator<OutDim>::~Accumulator() {
 }
 
 template <int OutDim>
-void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
+void AccumulatorState<OutDim>::apply(const Accumulator<OutDim> &w, Color perp,
+                                     Position before, Position after) {
   // assert(before.is_legal());
   // assert(after.is_legal());
   int16_t *input = ((perp == BLACK) ? black_acc : white_acc);
@@ -288,8 +322,8 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
       regs[i] = _mm256_load_si256(accu + i + k * num_regs);
     }
     for (auto i = 0; i < num_active; ++i) {
-      const __m256i *weights =
-          reinterpret_cast<__m256i *>(ft_weights + OutDim * active_features[i]);
+      const __m256i *weights = reinterpret_cast<const __m256i *>(
+          w.ft_weights + OutDim * active_features[i]);
 
       for (auto j = 0; j < num_regs; ++j) {
         regs[j] = _mm256_add_epi16(
@@ -299,7 +333,7 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
 
     for (auto i = 0; i < num_removed; ++i) {
       const __m256i *weights = reinterpret_cast<const __m256i *>(
-          ft_weights + OutDim * removed_features[i]);
+          w.ft_weights + OutDim * removed_features[i]);
       for (auto j = 0; j < num_regs; ++j) {
         regs[j] = _mm256_sub_epi16(
             regs[j], _mm256_load_si256(weights + j + k * num_regs));
@@ -312,41 +346,45 @@ void Accumulator<OutDim>::apply(Color perp, Position before, Position after) {
 }
 
 template <int OutDim>
-void Accumulator<OutDim>::update(Color perp, Position after) {
+void AccumulatorState<OutDim>::update(const Accumulator<OutDim> &w, Color perp,
+                                      Position after) {
   if (perp == BLACK) {
     const Position after_flipped = after.get_color_flip();
-    apply(perp, previous_black_flipped, after.get_color_flip());
+    apply(w, perp, previous_black_flipped, after.get_color_flip());
     previous_black_flipped = after_flipped;
   } else {
-    apply(perp, previous_white, after);
+    apply(w, perp, previous_white, after);
     previous_white = after;
   }
 }
 
-template <int OutDim> void Accumulator<OutDim>::update(Position after) {
-  update(BLACK, after);
-  update(WHITE, after);
+template <int OutDim>
+void AccumulatorState<OutDim>::update(const Accumulator<OutDim> &w,
+                                      Position after) {
+  update(w, BLACK, after);
+  update(w, WHITE, after);
 }
 
 template <int OutDim>
-uint8_t *Accumulator<OutDim>::forward(uint8_t *in, const Position &next) {
+uint8_t *AccumulatorState<OutDim>::forward(const Accumulator<OutDim> &w,
+                                           uint8_t *in, const Position &next) {
   int16_t *z_previous;
   if (next.color == BLACK) {
     z_previous = black_acc;
   } else {
     z_previous = white_acc;
   }
-  update(next.color, next);
+  update(w, next.color, next);
   Simd::accum_activation8<OutDim>(z_previous, in);
 #ifdef SPARSEOPT
   for (auto i = 0; i < OutDim / 2; ++i) {
-    num_nnz += (in[i] != 0);
+    Accumulator<OutDim>::num_nnz += (in[i] != 0);
   }
   auto *blocks = reinterpret_cast<uint32_t *>(in);
   for (auto i = 0; i < OutDim / 8; ++i) {
-    num_nnz_blocks += (blocks[i] != 0);
+    Accumulator<OutDim>::num_nnz_blocks += (blocks[i] != 0);
   }
-  num_trials += 1;
+  Accumulator<OutDim>::num_trials += 1;
 #endif
   return in;
 }
@@ -418,38 +456,42 @@ void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_from_array(
 }
 
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
+void Network<L1, L2, L3, Out, NUM_BUCKETS>::refresh(State &st) const {
+  st.acc.refresh(accumulator);
+  st.ready = true;
+}
+
+template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
 int32_t *Network<L1, L2, L3, Out, NUM_BUCKETS>::compute_incre_forward_pass(
-    Position next) {
+    State &st, Position next) const {
 
   auto bucket_index = next.bucket_index<NUM_BUCKETS>();
-  uint8_t *out = accumulator.forward(input, next);
+  uint8_t *out = st.acc.forward(accumulator, st.input, next);
 
   int32_t *output = nullptr;
 
-  out = first_layer.forward(out, bucket_index);
-  out = second_layer.forward(out, bucket_index);
-  output = out_layer.forward(out, bucket_index);
+  out = first_layer.forward(out, bucket_index, st.first_buffer, st.nnz);
+  out = second_layer.forward(out, bucket_index, st.second_buffer);
+  output = out_layer.forward(out, bucket_index, st.out_buffer);
   return output;
 }
 
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
-int Network<L1, L2, L3, Out, NUM_BUCKETS>::operator[](int index) {
-  return input[index];
-}
+int Network<L1, L2, L3, Out, NUM_BUCKETS>::evaluate(State &st, Position pos,
+                                                    int ply,
+                                                    int shuffle) const {
 
-template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
-int Network<L1, L2, L3, Out, NUM_BUCKETS>::evaluate(Position pos, int ply,
-                                                    int shuffle) {
-
-  auto nnue = *compute_incre_forward_pass(pos);
+  auto nnue = *compute_incre_forward_pass(st, pos);
 
   return nnue;
 }
 
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
-int32_t *Network<L1, L2, L3, Out, NUM_BUCKETS>::get_raw_eval(Position pos) {
+int32_t *
+Network<L1, L2, L3, Out, NUM_BUCKETS>::get_raw_eval(State &st,
+                                                    Position pos) const {
 
-  return compute_incre_forward_pass(pos);
+  return compute_incre_forward_pass(st, pos);
 }
 
 #endif // READING_NETWORK_H

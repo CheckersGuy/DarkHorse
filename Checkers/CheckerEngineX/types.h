@@ -100,6 +100,11 @@ inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
       return table;
     }();
 
+// Policy logits (out / 127) are multiplied by this before every softmax.
+// > 1 sharpens the move probabilities used by LMP, LMR and futility pruning;
+// the move ranking is unaffected. Set with --policy_scale.
+inline float POLICY_SCALE = 1.0f;
+
 constexpr std::array<float, 9> LMP_MASS = {
     1.000f, // depth 0 (unused, never prunes)
     0.99f,  // depth 1
@@ -111,6 +116,15 @@ constexpr std::array<float, 9> LMP_MASS = {
     0.999f, // depth 7
     0.999f  // depth 8
 };
+
+inline int SE_TRIPLE_MARGIN = 110; // must be > SE_DOUBLE_MARGIN (25)
+inline int SE_MAX_MULTI = 2;       // multi-extensions allowed along one line
+
+inline int FP_MAX_DEPTH = 6;  // only prune at shallow remaining depth
+inline int FP_BASE = 40;      // margin at lmr_depth 0
+inline int FP_SLOPE = 35;     // extra margin per lmr_depth
+inline int FP_MIN_PIECES = 8; // below this, king endgames: eval too unreliable
+constexpr float FP_MIN_MASS = 0.5f; // policy mass that must be searched first
 
 inline int SE_MIN_DEPTH = 6;
 inline int SE_MARGIN = 2;         // s_beta = tt_value - SE_MARGIN * depth

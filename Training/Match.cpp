@@ -259,10 +259,10 @@ void Match::start() {
         auto argument = (i == 0) ? arg1 : arg2;
         if (argument.empty()) {
 
-          execlp(command.c_str(), e.c_str(), NULL);
+          execlp(command.c_str(), e.c_str(), (char *)NULL);
         } else {
 
-          execlp(command.c_str(), e.c_str(), argument.c_str());
+          execlp(command.c_str(), e.c_str(), argument.c_str(), (char *)NULL);
         }
 
         exit(EXIT_SUCCESS);

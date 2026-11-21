@@ -114,6 +114,10 @@ public:
 
   void set_arg2(std::string arg);
 
+  const std::string &get_arg1() const { return arg1; }
+
+  const std::string &get_arg2() const { return arg2; }
+
   void setHashSize(int hash);
 
   void setTime(int time);

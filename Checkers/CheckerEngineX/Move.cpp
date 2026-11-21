@@ -66,6 +66,8 @@ int Move::get_move_encoding() const {
 
 void MoveEncoding::encode_move(Move move) {
   from_index = (!move.is_empty()) ? move.get_from_index() : 32;
+  direction = 0; // must be set for empty moves too: the TT entry's age/flag
+                 // bitfields share this word and picked up the garbage bits
   if (move.is_empty())
     return;
   uint8_t dir;

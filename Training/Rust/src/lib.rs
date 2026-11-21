@@ -5,10 +5,82 @@ use Pos::{Position, Square};
 pub mod Pos;
 pub mod Sample;
 pub mod dataloader;
-use dataloader::DataLoader;
 use itertools::Itertools;
 use numpy::{PyArray, PyArray1, PyArrayMethods};
 //Wrapper for the dataloader
+
+use dataloader::{DataLoader, PolicyDataLoader};
+
+#[pyclass]
+struct PolicyBatchProvider {
+    loader: PolicyDataLoader,
+    batch_size: usize,
+}
+
+#[pymethods]
+impl PolicyBatchProvider {
+    #[new]
+    fn new(path: String, size: usize, bsize: usize, shuffle: bool) -> Self {
+        PolicyBatchProvider {
+            loader: PolicyDataLoader::new(path, size, shuffle).expect("Error could not load"),
+            batch_size: bsize,
+        }
+    }
+
+    #[getter(num_samples)]
+    fn get_samples(&self) -> PyResult<i64> {
+        Ok(self.loader.num_samples as i64)
+    }
+
+    fn fill(
+        &mut self,
+        _py: Python<'_>,
+        input: Bound<'_, PyArray1<f32>>,   // B*120
+        eval: Bound<'_, PyArray1<f32>>,    // B
+        bucket: Bound<'_, PyArray1<i64>>,  // B
+        q_score: Bound<'_, PyArray1<f32>>, // B*128, zero-initialised
+        q_mask: Bound<'_, PyArray1<bool>>, // B*128, zero-initialised
+    ) -> PyResult<()> {
+        unsafe {
+            let mut in_array = input.as_array_mut();
+            let mut eval_array = eval.as_array_mut();
+            let mut bucket_array = bucket.as_array_mut();
+            let mut q_score_array = q_score.as_array_mut();
+            let mut q_mask_array = q_mask.as_array_mut();
+
+            for i in 0..self.batch_size {
+                let ps = self.loader.get_next().expect("Error loading sample");
+                let mut sample = ps.sample;
+                if sample.position.color == -1 {
+                    sample.position = sample.position.get_color_flip();
+                }
+
+                for square in sample.position.iter() {
+                    match square {
+                        Square::WPAWN(ix) => in_array[120 * i + ix as usize - 4] = 1.0,
+                        Square::BPAWN(ix) => in_array[120 * i + ix as usize + 28] = 1.0,
+                        Square::WKING(ix) => in_array[120 * i + ix as usize + 56] = 1.0,
+                        Square::BKING(ix) => in_array[120 * i + ix as usize + 88] = 1.0,
+                    }
+                }
+
+                eval_array[i] = sample.value.clamp(-500, 500) as f32;
+                bucket_array[i] = sample.position.bucket_index();
+
+                for c in ps.children.iter() {
+                    if c.capture {
+                        continue;
+                    }
+                    let idx = 128 * i + c.enc as usize;
+                    q_score_array[idx] = Sample::policy_score(c.score);
+                    q_mask_array[idx] = true;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 #[pyclass]
 struct BatchProvider {
     loader: DataLoader,
@@ -17,6 +89,14 @@ struct BatchProvider {
 
 //need to add a helper function which generates network input given a fen_string
 //to be continued
+
+/// Prints `num_samples` random positions of a policy file with their soft targets.
+#[pyfunction]
+#[pyo3(signature = (path, num_samples, temperature=50.0))]
+fn print_soft_targets(path: &str, num_samples: usize, temperature: f32) -> PyResult<()> {
+    dataloader::print_soft_targets(path, num_samples, temperature)?;
+    Ok(())
+}
 
 #[pyfunction]
 fn print_fen_string(fen_string: &str) -> PyResult<()> {
@@ -170,6 +250,8 @@ impl BatchProvider {
 #[pymodule]
 fn string_sum<'py>(py: Python<'py>, m: &Bound<'py, PyModule>) -> PyResult<()> {
     m.add_class::<BatchProvider>()?;
+    m.add_class::<PolicyBatchProvider>()?;
+    m.add_function(wrap_pyfunction!(print_soft_targets, m)?)?;
     m.add_function(wrap_pyfunction!(print_fen_string, m)?)?;
     m.add_function(wrap_pyfunction!(input_from_fen, m)?)?;
     Ok(())

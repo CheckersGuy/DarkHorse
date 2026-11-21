@@ -58,18 +58,19 @@ namespace Utils{
 
             int16_t *accu_buff;
 
-            net.accumulator.forward(net.input, pos);
+            auto &st = net.default_state(); // per-thread network state
+            st.acc.forward(net.accumulator, st.input, pos);
 
-            int32_t *acc_out = reinterpret_cast<int32_t *>(net.input);
+            int32_t *acc_out = reinterpret_cast<int32_t *>(st.input);
 
             for (auto i = 0; i < num_activations; ++i)
             {
-                histogram[i] += (net.input[i] != 0);
+                histogram[i] += (st.input[i] != 0);
             }
 
             for (auto i = 0; i < net.accumulator.out_dimension / 2; ++i)
             {
-                num_active += (net.input[i] != 0);
+                num_active += (st.input[i] != 0);
             }
 
             for (auto i = 0; i < net.accumulator.out_dimension / 8; ++i)

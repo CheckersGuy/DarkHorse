@@ -100,9 +100,10 @@ template <int In, int Out, int NUM_BUCKETS> struct SparseLayer {
 
   alignas(CACHE_LINE_SIZE) int32_t biases[OutDim * NUM_BUCKETS];
   alignas(CACHE_LINE_SIZE) int8_t weights[PadInDim * OutDim * NUM_BUCKETS];
-  alignas(CACHE_LINE_SIZE) int32_t buffer[PadOutDim] = {0};
-
-  alignas(CACHE_LINE_SIZE) uint16_t nnz[InDim / CHUNKSIZE];
+  // per-thread state passed to forward(): the int32 output buffer (PadOutDim)
+  // and the nnz index buffer (NNZ_SIZE; find_nnz_version3 stores 8 indices at
+  // a time, so it gets 8 entries of slack)
+  static constexpr int NNZ_SIZE = InDim / CHUNKSIZE + 8;
 
   int get_weight_index(int index) {
     const int BLOCK_ROWS = OutDim;
@@ -159,7 +160,8 @@ template <int In, int Out, int NUM_BUCKETS> struct SparseLayer {
     }
   }
 
-  auto *forward(uint8_t *input, int bucket_index) {
+  auto *forward(uint8_t *input, int bucket_index, int32_t *buffer,
+               uint16_t *nnz) const {
     const auto w_offset = bucket_index * PadInDim * OutDim;
     const auto b_offset = bucket_index * OutDim;
     // number of output registers for avx2
