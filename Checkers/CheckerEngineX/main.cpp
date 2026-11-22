@@ -5,6 +5,7 @@
 #include "Network.h"
 #include "Perft.h"
 #include "Thread.h"
+#include "Params.h"
 #include "Transposition.h"
 #ifdef _WIN32
 #include "egdb.h"
@@ -52,23 +53,32 @@ static Value search_value(const Position &pos, int time_ms, size_t max_nodes,
   return r.front().score;
 }
 
+// Book generation: expands 'depth' plies from the board and prints every
+// leaf (FEN, no pending jump) whose score lies in [min, max]; with use_abs
+// the window applies to |score|, so positions where either side is better
+// qualify (unbalanced books). Leaves are scored with a search of
+// 'search_depth' plies and each position is scored at most once.
 void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
-             Value min, Value max) {
+             Value min, Value max, int search_depth = 1, bool use_abs = false) {
 
   if (depth == 0) {
-    Move bestMove;
-    Board copy = board;
     auto it = hashset.find(board.get_position());
     // if we havent evaluated the position before, evaluate it now
-    Value value = -SCORE_INFINITE;
-    if (it == hashset.end()) {
-      auto root_moves =
-          searchValueMultiPV(board, 1, 1, 1000, 10000000, false, std::cout);
-      value = root_moves.front().score;
-      hashset.insert(board.get_position());
-    }
+    if (it != hashset.end())
+      return;
+    hashset.insert(board.get_position());
+    if (board.get_position().has_jumps())
+      return;
 
-    if (value >= min && value <= max && !board.get_position().has_jumps()) {
+    auto root_moves = searchValueMultiPV(board, 1, search_depth, 1000,
+                                         10000000, false, std::cout);
+    if (root_moves.empty())
+      return;
+    Value value = root_moves.front().score;
+    if (use_abs)
+      value = std::abs(value);
+
+    if (value >= min && value <= max) {
       std::cout << board.get_position().get_fen_string() << std::endl;
     }
     return;
@@ -80,17 +90,18 @@ void recurse(Board &board, std::unordered_set<Position> &hashset, int depth,
   for (auto i = 0; i < liste.length(); ++i) {
     const Move move = liste[i];
     board.make_move(move);
-    recurse(board, hashset, depth - 1, min, max);
+    recurse(board, hashset, depth - 1, min, max, search_depth, use_abs);
     board.undo_move();
   }
 
   return;
 }
 
-void generate_book(int depth, Position pos, Value min_value, Value max_value) {
+void generate_book(int depth, Position pos, Value min_value, Value max_value,
+                   int search_depth = 1, bool use_abs = false) {
   std::unordered_set<Position> hashset;
   Board board(pos);
-  recurse(board, hashset, depth, min_value, max_value);
+  recurse(board, hashset, depth, min_value, max_value, search_depth, use_abs);
 }
 
 struct SearchThread {
@@ -106,6 +117,52 @@ struct SearchThread {
       // should accept some sort of search object
     }
   }
+};
+
+// Fixed bench positions (--bench without --position): the node count is a
+// signature of the engine version, the NPS is used to calibrate time controls
+// across machines (see Training/bench_parallel.sh).
+static const char *BENCH_FENS[] = {
+    "W:W6,17,18,21,22,26,27,28:B7,9,10,11,15,19",
+    "W:W5,10,17,18,22,28,29,31:B1,3,11,12,13,19",
+    "W:W20,21,22,23,24,32:B3,4,9,10,13,15",
+    "W:W21,23,24,25,26,32:B1,2,4,12,14,15",
+    "W:W13,17,21,23,24,27,28,29,31,32:B2,3,4,5,6,7,10,12,14,20",
+    "W:W13,17,25,28,29,31,32:B1,4,5,6,12,15,20",
+    "W:W14,16,17,18,20,22,25,28,31:B5,6,7,9,11,12,13",
+    "W:WK2,13,18,19,21,24,30,32:B3,5,6,8,9,12,23,K27",
+    "W:WK2,19,21,23,24,26,31:B3,7,9,11,12,16,K29",
+    "W:W21,22,23,24,25,26,28,31:B2,5,7,9,10,11,13,16",
+    "W:WK3,K12,13,20,21,24:B1,5,6,K15,26,K27",
+    "W:W19,22,23,26,27,28,29,30,32:B2,3,4,8,9,10,11,14,20",
+    "W:W13,19,21,22,23,24,27,29,30,32:B1,3,5,6,8,10,12,14,15,20",
+    "W:WK2,13,20,21,25,26,30:B1,8,10,14,18",
+    "W:W13,15,21,24,28,30:B1,5,8,12,14,23",
+    "W:W11,13,22,27,29,30,32:B2,4,6,7,9,19,28",
+    "W:W16,20,24,26,29,31:B2,4,6,7,11,21",
+    "W:W14,21,22,27,28,32:B7,11,12,16,19,20",
+    "W:W17,21,22,24,25,26,27,28,30,31:B2,3,4,5,6,9,11,15,16,20",
+    "W:W16,18,20,21,24,28,29,32:B2,5,6,7,8,11,13",
+    "W:W14,15,17,24,27,32:B3,5,6,8,12,19",
+    "W:W17,18,21,22,24,27,31,32:B2,3,4,5,8,10,12,20",
+    "W:W14,18,19,21,23,27,30,31:B2,3,4,5,7,9,12,16,20,K29",
+    "W:W18,20,23,24,26,32:B6,9,10,11,16,17",
+    "W:W18,19,21,22,23,24,25,26,27,29,32:B2,3,4,5,7,9,10,12,13,14,20",
+    "W:W13,19,22,23,27,29,32:B2,4,6,8,10,12,20",
+    "W:W13,14,15,21,26,27,28,31:B3,5,6,7,8,16,19,20",
+    "W:W9,13,19,21,23,25,27,30,31,32:B2,3,5,6,8,10,12,14,15,20",
+    "W:W13,17,18,20,22,26,28,29,30,32:B1,3,4,6,7,9,11,12,16,19",
+    "W:W17,18,21,24,27,28,29,31:B2,3,4,6,7,12,13,20",
+    "W:W13,17,19,21,22,28,31:B6,10,12,14,15,16,24",
+    "W:W12,21,22,26,28,29:B1,2,10,11,13,14",
+    "W:W14,17,21,22,24,27,28,32:B2,7,10,11,12,15,20",
+    "W:W10,20,21,23,24,29,30,31,32:B1,3,4,6,8,9,11,13",
+    "W:W19,20,23,25,27,29,30,31:B2,6,7,8,10,11,12,14",
+    "W:W11,18,20,22,23,25,27,32:B2,4,5,7,9,16,19,28",
+    "W:W18,20,21,22,23,27,28,29,31,32:B2,3,4,6,8,9,11,12,13,15",
+    "W:W17,18,21,28,29,30:B1,4,5,11,12,20",
+    "W:W21,22,23,24,25,27,28,29,31:B1,2,5,6,8,12,13,14,15,20",
+    "W:W7,11,15,17,21,28:B1,5,9,K18,19,20",
 };
 
 int main(int argl, const char **argc) {
@@ -151,7 +208,9 @@ int main(int argl, const char **argc) {
   if (parser.has_option("depth")) {
     depth = parser.as<int>("depth");
   } else {
-    depth = parser.has_option("bench") ? 27 : MAX_PLY;
+    depth = parser.has_option("bench")
+                ? (parser.has_option("position") ? 27 : 16)
+                : MAX_PLY;
   }
 
   // Lazy SMP search threads. Data generation and rescoring always search
@@ -162,6 +221,21 @@ int main(int argl, const char **argc) {
     num_threads = 1;
   }
   set_num_threads(num_threads);
+
+  // tunable search parameters: --list_params, --<NAME> <value>
+  if (parser.has_option("list_params")) {
+    print_params(std::cout);
+    return 0;
+  }
+  for (auto &p : tune_params()) {
+    if (parser.has_option(p.name))
+      set_param(p.name, parser.as<int>(p.name));
+  }
+  apply_params();
+
+  if (parser.has_option("tm")) {
+    TM_ENABLED = parser.as<int>("tm");
+  }
 
   if (parser.has_option("policy_scale")) {
     POLICY_SCALE = std::stof(parser.as<std::string>("policy_scale"));
@@ -186,6 +260,74 @@ int main(int argl, const char **argc) {
   }
 
 #endif
+
+  // Opening-book generation, driven by Training/Rust Data::create_book:
+  // reads one FEN per line from stdin, prints the qualifying positions
+  // --book_plies deeper and then "done"; "terminate" ends the process.
+  //   --book_plies N         expansion depth (default 6, 0 = score the input)
+  //   --book_search_depth D  search depth used to score a position (default 1)
+  //   --book_min A --book_max B  score window (default -55..55)
+  //   --book_abs 1           window on |score| (unbalanced books)
+  //   --book_hash MB         hash size (default 2)
+  if (parser.has_option("book")) {
+    const int plies =
+        parser.has_option("book_plies") ? parser.as<int>("book_plies") : 6;
+    const int sdepth = parser.has_option("book_search_depth")
+                           ? parser.as<int>("book_search_depth")
+                           : 1;
+    const int bmin =
+        parser.has_option("book_min") ? parser.as<int>("book_min") : -55;
+    const int bmax =
+        parser.has_option("book_max") ? parser.as<int>("book_max") : 55;
+    const bool babs =
+        parser.has_option("book_abs") && parser.as<int>("book_abs") != 0;
+    const int bhash =
+        parser.has_option("book_hash") ? parser.as<int>("book_hash") : 2;
+    TT.resize_in_mb(bhash);
+    std::string next_line;
+    while (std::getline(std::cin, next_line)) {
+      if (!next_line.empty() && next_line.back() == '\r')
+        next_line.pop_back();
+      if (next_line == "terminate")
+        return 0;
+      if (next_line.empty())
+        continue;
+      const auto pos = Position::pos_from_fen(next_line);
+      generate_book(plies, pos, bmin, bmax, sdepth, babs);
+      // tell the driver to send the next position
+      std::cout << "done" << std::endl;
+    }
+    return 0;
+  }
+
+  // Benchmark: all bench positions at a fixed depth (default 16), each from an
+  // empty TT. Prints total nodes (version signature) and NPS. Before running
+  // SPRT/SPSA on another machine, run Training/bench_parallel.sh there and
+  // here and scale the time per move by the NPS ratio.
+  if (parser.has_option("bench") && !parser.has_option("position")) {
+    // small default hash: clearing a large TT 40 times would dominate the
+    // timing under parallel load (memory bandwidth); only searches are timed
+    TT.resize_in_mb(parser.has_option("hash_size") ? hash_size : 16);
+    uint64_t bench_nodes = 0;
+    double ms = 0.0;
+    for (const char *fen : BENCH_FENS) {
+      TT.clear();
+      board = Board{};
+      board.get_position() = Position::pos_from_fen(fen);
+      const auto t0 = std::chrono::steady_clock::now();
+      searchValueMultiPV(board, 1, depth, 1000000000, max_nodes, false,
+                         std::cout);
+      ms += std::chrono::duration<double, std::milli>(
+                std::chrono::steady_clock::now() - t0)
+                .count();
+      bench_nodes += total_nodes();
+    }
+    std::cout << "bench nodes " << bench_nodes << " time_ms "
+              << (uint64_t)ms << " nps "
+              << (uint64_t)(bench_nodes / std::max(ms, 1.0) * 1000.0)
+              << std::endl;
+    return 0;
+  }
 
   if (parser.has_option("search") || parser.has_option("bench"))
 

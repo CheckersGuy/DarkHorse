@@ -46,7 +46,8 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
       break;
     }
     const int age_entry = (age_counter - entry.age) & 63;
-    int score = 5 * entry.depth - 7 * std::max(age_entry, 0);
+    int score = TT_DEPTH_WEIGHT * entry.depth -
+                TT_AGE_WEIGHT * std::max(age_entry, 0);
     if (score < best_score) {
       best_score = score;
       replace = &entry;
@@ -58,7 +59,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
     store_move = MoveEncoding(tt_move);
   }
   if (flag == TT_EXACT || replace->key != lock ||
-      depth + 4 + 2 * in_pv > replace->depth) {
+      depth + TT_OVERWRITE_MARGIN + 2 * in_pv > replace->depth) {
     replace->key = lock;
     replace->best_move = store_move;
     replace->flag = flag;

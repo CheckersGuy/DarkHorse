@@ -28,6 +28,7 @@ struct ThreadData {
   int completed_depth = 0;
 
   std::array<Value, MAX_PLY + 10> static_evals;
+  std::array<bool, MAX_PLY + 10> ttpv_stack{}; // is_tt_pv per ply
 
   // root bookkeeping
   Move root_partial{};

@@ -501,13 +501,32 @@ pub fn rescoring_data(
     Ok(())
 }
 
-pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Result<()> {
-    //create an opening book
+/// Creates an opening book with the engine's `--book` mode.
+///
+/// Every line of `input` is a FEN. `num_workers` engine processes are started
+/// as `./MainEngine --book <engine_args...>`; each one prints the qualifying
+/// positions for a FEN followed by "done". The collected positions are
+/// deduplicated, shuffled (the match tool hands every parallel game a
+/// contiguous chunk of the book, and neighbouring positions from the same
+/// root opening are nearly identical) and optionally cut to `max_positions`.
+///
+/// Engine options (see main.cpp): --book_plies N, --book_search_depth D,
+/// --book_min A, --book_max B, --book_abs 1, --book_hash MB.
+pub fn create_book(
+    input: &str,
+    output: &str,
+    num_workers: usize,
+    engine_args: &[&str],
+    max_positions: Option<usize>,
+    seed: u64,
+) -> std::io::Result<usize> {
     let (tx, rx): (Sender<String>, Receiver<String>) = mpsc::channel();
     let open_reader = BufReader::new(File::open(input)?);
-    let mut writer = File::create(output)?;
-    let openings: Vec<String> = open_reader.lines().map(|value| value.unwrap()).collect();
-    let mut filter = Bloom::new_for_fp_rate(1000000000, 0.01);
+    let openings: Vec<String> = open_reader
+        .lines()
+        .map(|value| value.unwrap().trim().to_string())
+        .filter(|line| !line.is_empty())
+        .collect();
 
     let bar = ProgressBar::new(openings.len() as u64);
     bar.set_style(
@@ -518,57 +537,78 @@ pub fn create_book(input: &str, output: &str, num_workers: usize) -> std::io::Re
         .progress_chars("##-"),
     );
 
-    for chunk in openings.chunks(openings.len() / num_workers) {
+    let chunk_size = std::cmp::max(1, (openings.len() + num_workers - 1) / num_workers.max(1));
+    let mut handles = Vec::new();
+    for chunk in openings.chunks(chunk_size) {
         let sender = tx.clone();
         let my_chunk = chunk.to_owned();
-        thread::spawn(move || {
+        let args: Vec<String> = engine_args.iter().map(|a| a.to_string()).collect();
+        handles.push(thread::spawn(move || {
             let mut command = Command::new("./MainEngine")
-                .args(["--book"])
+                .arg("--book")
+                .args(&args)
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
+                .stderr(Stdio::null())
                 .spawn()
-                .expect("Failed to start process");
+                .expect("Failed to start ./MainEngine");
             let mut stdin = command.stdin.take().unwrap();
             let stdout = command.stdout.take().unwrap();
             let mut f = BufReader::new(stdout);
 
             for pos in my_chunk {
                 stdin.write_all((pos.clone() + "\n").as_bytes()).unwrap();
-                'generate: loop {
+                loop {
                     let mut buffer = String::new();
                     match f.read_line(&mut buffer) {
+                        Ok(0) => panic!("engine closed its output while generating the book"),
                         Ok(_) => {}
-                        Err(e) => {
-                            println!("{:?}", e)
-                        }
+                        Err(e) => panic!("{:?}", e),
                     }
-                    buffer = buffer.trim().replace("\n", "");
-                    sender.send(buffer.clone()).unwrap();
-                    if buffer == "done" {
-                        break 'generate;
+                    let line = buffer.trim().to_string();
+                    let done = line == "done";
+                    sender.send(line).unwrap();
+                    if done {
+                        break;
                     }
                 }
             }
-            stdin
-                .write_all((String::from("terminate\n")).as_bytes())
-                .unwrap();
-
-            command.kill().unwrap();
-        });
+            let _ = stdin.write_all(b"terminate\n");
+            let _ = command.wait();
+        }));
     }
-    let mut u_count: usize = 0;
+    // all clones live in the workers; without this the receiver never ends
+    drop(tx);
+
+    let mut seen: HashSet<String> = HashSet::new();
+    let mut positions: Vec<String> = Vec::new();
     for val in rx {
-        let trimmed = val.trim().replace("\n", "").to_lowercase();
-        if trimmed != "done" && !filter.check(&val) {
-            //println!("{val}");
-            writer.write_all((val.clone() + "\n").as_bytes()).unwrap();
-            u_count += 1;
-            filter.set(&val);
-        } else if trimmed == "done" {
+        if val == "done" {
             bar.inc(1);
+        } else if val.starts_with("B:") || val.starts_with("W:") {
+            if seen.insert(val.clone()) {
+                positions.push(val);
+            }
         }
     }
-    Ok(())
+    for h in handles {
+        h.join().expect("book worker panicked");
+    }
+    bar.finish();
+
+    let mut rng = StdRng::seed_from_u64(seed);
+    positions.shuffle(&mut rng);
+    if let Some(max) = max_positions {
+        positions.truncate(max);
+    }
+
+    let mut writer = BufWriter::new(File::create(output)?);
+    for p in &positions {
+        writer.write_all((p.clone() + "\n").as_bytes())?;
+    }
+    writer.flush()?;
+    println!("{}: {} positions", output, positions.len());
+    Ok(positions.len())
 }
 
 pub fn shuffle_data_external<const partitions: usize>(

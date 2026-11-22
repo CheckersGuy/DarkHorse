@@ -1,0 +1,41 @@
+DarkHorse benchmark reference (local test machine)
+==================================================
+
+Purpose: calibrate SPRT/SPSA time controls on other machines (e.g. cloud servers)
+so that every move gets roughly the same number of nodes as on this machine.
+
+Machine
+  CPU        AMD Ryzen 7 9800X3D 8-Core Processor (8 cores / 16 threads, 1 socket)
+  OS         WSL2 (Linux 6.6.87.2-microsoft-standard-WSL2)
+  Date       2026-11-22
+  Git        6f18d6d + uncommitted search changes (SPSA defaults, bundles 5/6/7/11, C, E)
+
+Benchmark
+  Command    Training/bench_parallel.sh 14         (14 = --threads of our SPRT/SPSA matches)
+  Engine     MainEngine --bench  (40 built-in positions, depth 16, 16 MB hash,
+             only the search time is measured)
+  Signature  bench nodes 1501908   (same node count = same search code)
+
+Results (3 runs, machine otherwise idle)
+  14 copies  avg nps per copy  1,209,070 / 1,185,483 / 1,220,308   -> reference 1,205,000
+  1 copy     nps               3,083,293   (single copy, for information only)
+
+Time controls used locally
+  SPRT       20 ms per move, 14 parallel games, unbalanced_70_150.book
+  SPSA       5 ms per move, 14 parallel games
+
+Calibration on another machine
+  1. Build the same engine version there; check that `MainEngine --bench`
+     reports the same node signature (otherwise the search code differs).
+  2. Run  Training/bench_parallel.sh N  with N = number of games played in
+     parallel there (its --threads value), on an otherwise idle machine.
+  3. time_other = time_local * 1,205,000 / nps_per_copy_other
+     e.g. nps_per_copy_other = 900,000  ->  20 ms * 1.34 = 27 ms per move.
+
+Notes
+  - Always measure under full load: per-copy speed drops a lot with many parallel
+    copies (shared caches, memory bandwidth, all-core turbo, hyperthreads).
+    Here: 3.08M nps with 1 copy vs. 1.2M nps per copy with 14 copies.
+  - Search changes shift the NPS slightly. For an exact calibration, run the
+    benchmark with the binary under test on both machines; this file is the
+    long-term reference for quick estimates.

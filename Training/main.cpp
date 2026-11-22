@@ -35,6 +35,49 @@ int main(int argl, const char **argc) {
       Match engine_match(engines[0], engines[1]);
       engine_match.set_time(time[0], time[1]);
 
+      // Simulate CheckerBoard's time bank for fixed time per move (engine
+      // matches): time saved on one move is returned on later moves.
+      if (parser.has_option("time_bank")) {
+        engine_match.set_time_bank(true);
+      }
+
+      // Opening book, e.g. --book ../Training/Positions/11manballots.pos
+      if (parser.has_option("book")) {
+        engine_match.setOpeningBook(parser.as<std::string>("book"));
+      }
+
+      // Random start offsets in the book (e.g. per SPSA iteration)
+      if (parser.has_option("book_seed")) {
+        engine_match.set_book_seed(
+            std::stoull(parser.as<std::string>("book_seed")));
+      }
+
+      // Sequential test on game pairs: --sprt elo0 elo1 [alpha beta]
+      // NOTE: the time controls we use (e.g. 20 ms per move) were chosen on the
+      // local machine. On another machine (cloud) run Training/bench_parallel.sh
+      // on both machines first and scale --time by the NPS ratio, otherwise the
+      // engines search a different number of nodes per move.
+      // (logistic Elo, alpha = beta = 0.05 by default). The match stops as
+      // soon as H0 (elo0) or H1 (elo1) is accepted; --num_games is a cap.
+      if (parser.has_option("sprt")) {
+        auto v = parser.as<std::vector<std::string>>("sprt");
+        if (v.size() != 2 && v.size() != 4) {
+          std::cerr << "--sprt needs elo0 elo1 [alpha beta], e.g. --sprt 0 5"
+                    << std::endl;
+          return 1;
+        }
+        const double e0 = std::stod(v[0]), e1 = std::stod(v[1]);
+        const double a = v.size() == 4 ? std::stod(v[2]) : 0.05;
+        const double b = v.size() == 4 ? std::stod(v[3]) : 0.05;
+        if (!(e1 > e0) || a <= 0.0 || a >= 0.5 || b <= 0.0 || b >= 0.5) {
+          std::cerr << "--sprt needs elo1 > elo0 and 0 < alpha, beta < 0.5"
+                    << std::endl;
+          return 1;
+        }
+        engine_match.set_sprt(e0, e1, a, b);
+        engine_match.setMaxGames(200000);
+      }
+
       if (parser.has_option("num_games")) {
         auto num_games = parser.as<int>("num_games");
         engine_match.setMaxGames(num_games);
@@ -103,6 +146,29 @@ int main(int argl, const char **argc) {
             join(engine_match.get_arg2(), "--policy_scale " + scales[1]));
         std::cout << "Policy scale: engine 1 = " << scales[0]
                   << ", engine 2 = " << scales[1] << std::endl;
+      }
+      // Extra engine options without leading dashes (the match tool's own
+      // parser splits on "--"): --opts1 hist_mode=1 hist_div=8192 becomes
+      // "--hist_mode 1 --hist_div 8192" on engine 1's command line.
+      for (int e = 1; e <= 2; ++e) {
+        const std::string key = "opts" + std::to_string(e);
+        if (!parser.has_option(key))
+          continue;
+        std::string args = e == 1 ? engine_match.get_arg1()
+                                  : engine_match.get_arg2();
+        for (const auto &kv : parser.as<std::vector<std::string>>(key)) {
+          const auto eq = kv.find('=');
+          if (eq == std::string::npos || eq == 0) {
+            std::cerr << "--" << key << " expects key=value, got " << kv
+                      << std::endl;
+            return 1;
+          }
+          if (!args.empty())
+            args += " ";
+          args += "--" + kv.substr(0, eq) + " " + kv.substr(eq + 1);
+        }
+        (e == 1 ? engine_match.set_arg1(args) : engine_match.set_arg2(args));
+        std::cout << "Engine " << e << " options: " << args << std::endl;
       }
       engine_match.start();
     }

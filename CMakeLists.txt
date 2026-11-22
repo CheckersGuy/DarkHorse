@@ -14,6 +14,12 @@ add_link_options(
 )
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX")
 
+# Lazy SMP search threads (Windows targets link winpthread explicitly below)
+if (UNIX)
+  find_package(Threads REQUIRED)
+  link_libraries(Threads::Threads)
+endif()
+
 
 if (UNIX)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/Training)

@@ -63,6 +63,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     hash_size_in_mb = Registry::get_hash_size().value_or(hash_size_in_mb);
     num_threads = Registry::get_threads().value_or(num_threads);
     set_num_threads(num_threads);
+    TM_ENABLED = Registry::get_tm().value_or(TM_ENABLED);
     db_path = Registry::get_db_path().value_or(db_path);
     max_db_pieces = Registry::get_max_db_pieces().value_or(max_db_pieces);
     db_size_in_mb = Registry::get_db_size().value_or(db_size_in_mb);
@@ -192,6 +193,16 @@ int enginecommand(char str[256], char reply[1024]) {
       return 1;
     }
 
+    // time management: 1 = save time on easy moves (CheckerBoard engine
+    // matches return saved time on later moves), 0 = always use maxtime
+    if (strcmp(param1, "tm") == 0) {
+      TM_ENABLED = (strtol(param2, &stopstring, 10) != 0) ? 1 : 0;
+      Registry::set_tm(TM_ENABLED);
+      snprintf(reply, REPLY_MAX, "time management %s",
+               TM_ENABLED ? "on" : "off");
+      return 1;
+    }
+
     if (strcmp(param1, "dbpath") == 0) {
       char *p = strstr(str, "dbpath");
       while (!isspace(*p))
@@ -260,6 +271,12 @@ int enginecommand(char str[256], char reply[1024]) {
     if (strcmp(param1, "threads") == 0) {
       num_threads = Registry::get_threads().value_or(num_threads);
       snprintf(reply, REPLY_MAX, "%d", num_threads);
+      return 1;
+    }
+
+    if (strcmp(param1, "tm") == 0) {
+      TM_ENABLED = Registry::get_tm().value_or(TM_ENABLED);
+      snprintf(reply, REPLY_MAX, "%d", TM_ENABLED);
       return 1;
     }
 

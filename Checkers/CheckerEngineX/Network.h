@@ -453,6 +453,14 @@ void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_from_array(
   first_layer.load_params(stream, permutation);
   second_layer.load_params(stream);
   out_layer.load_params(stream);
+  // A network file that does not match the template parameters would leave
+  // weights uninitialised (failed reads) or silently ignore trailing data.
+  if (stream.fail() || stream.peek() != std::char_traits<char>::eof()) {
+    std::cerr << "Network<" << L1 << ", " << L2 << ", " << L3 << ", " << Out
+              << ", " << NUM_BUCKETS << ">: embedded network data of " << size
+              << " bytes does not match the architecture" << std::endl;
+    std::exit(EXIT_FAILURE);
+  }
 }
 
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>

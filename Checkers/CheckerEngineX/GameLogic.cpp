@@ -21,6 +21,7 @@ const bool forced_cap_enabled = true;
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 uint64_t search_start_time = 0ull;
+uint64_t search_time_ms = 0ull; // time budget of the current search
 Value glob_current_score = -SCORE_INFINITE;
 uint64_t last_nodes_per_second = 0ull;
 SearchGlobal glob;
@@ -121,7 +122,7 @@ std::array<float, 40> get_probability_distribution(MoveListe &liste,
 template <typename MlhFn>
 Value blend_mlh(Value eval, Position pos, MlhFn mlh_fn) {
   const Value abs_eval = std::abs(eval);
-  const Value ramp_lo = 275, ramp_hi = MAX_EVAL;
+  const Value ramp_lo = MLH_RAMP_LO, ramp_hi = MAX_EVAL;
 
   if (abs_eval <= ramp_lo) {
     return eval;
@@ -132,7 +133,7 @@ Value blend_mlh(Value eval, Position pos, MlhFn mlh_fn) {
 
   const int mlh = mlh_fn(pos);
 
-  const Value bonus = static_cast<Value>(t * (300 - mlh));
+  const Value bonus = static_cast<Value>(t * std::max(0, MLH_BONUS - mlh));
 
   return eval + ((eval >= 0) ? bonus : -bonus);
 }
@@ -260,6 +261,10 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
   std::vector<RootMove> &results = td.results;
   const bool is_main = (td.id == 0);
   size_t total_time = 0;
+  Move tm_prev_best{};
+  int tm_stable = 0; // consecutive iterations with the same best move
+  double tm_iter_ms = 0.0, tm_prev_iter_ms = 0.0; // last two iteration times
+  double tm_iter_start_ms = 0.0;
 
   for (int d = 1; d <= depth; ++d) {
     if (!is_main) {
@@ -271,6 +276,8 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
     }
     bool stopped = false;
     td.num_pv_excluded = 0;
+    if (is_main)
+      tm_iter_start_ms = (double)(getSystemTime() - search_start_time) / 1e6;
 
     for (int pv_idx = 0; pv_idx < actualPV; ++pv_idx) {
       td.root_partial = Move{};
@@ -288,7 +295,14 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
         td.root_prev_best = results[pv_idx].move;
         td.root_depth = d;
         Value score =
-            Search::search_asp(td, board, results[pv_idx].previous_score, d);
+            Search::search_asp(
+                td, board, results[pv_idx].previous_score, d, (Value)0,
+                // #27-B2: window also covers the mean of the last two scores
+                (ASP_SPAN && isEval(results[pv_idx].prev2_score) &&
+                 isEval(results[pv_idx].previous_score))
+                    ? (Value)((results[pv_idx].prev2_score +
+                               results[pv_idx].previous_score) / 2)
+                    : (Value)-SCORE_INFINITE);
         results[pv_idx].score = score;
         results[pv_idx].pv = td.main_pv;
         results[pv_idx].move =
@@ -319,8 +333,10 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
     if (stopped)
       break;
 
-    for (auto &rm : results)
+    for (auto &rm : results) {
+      rm.prev2_score = rm.previous_score; // used by #27-B2
       rm.previous_score = rm.score;
+    }
 
     // sort-by-score happens here, strictly before printing
     std::sort(
@@ -344,6 +360,30 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
                << results[k].pv.toString(15) << "\n";
       }
       std::cout << std::endl;
+    }
+
+    // Time management: don't start an iteration that probably cannot finish,
+    // and stop earlier when the best move has been stable for a while.
+    if (TM_ENABLED) {
+      const Move best = results[0].move;
+      tm_stable = (d > 1 && best == tm_prev_best) ? tm_stable + 1 : 0;
+      tm_prev_best = best;
+
+      const double elapsed_ms =
+          (double)(getSystemTime() - search_start_time) / 1e6;
+      tm_prev_iter_ms = tm_iter_ms;
+      tm_iter_ms = elapsed_ms - tm_iter_start_ms;
+
+      if (d >= TM_MIN_DEPTH) {
+        const double growth =
+            std::clamp(tm_prev_iter_ms > 0.0 ? tm_iter_ms / tm_prev_iter_ms
+                                             : TM_GROWTH_MAX,
+                       TM_GROWTH_MIN, TM_GROWTH_MAX);
+        const double budget =
+            (double)search_time_ms * TM_STABILITY[std::min(tm_stable, 4)];
+        if (elapsed_ms + tm_iter_ms * growth > budget)
+          break;
+      }
     }
   }
 }
@@ -393,6 +433,7 @@ std::vector<RootMove> searchValueMultiPV(Board root_board, int numPV, int depth,
 
   endTime = getSystemTime() + static_cast<uint64_t>(time) * 1000000;
   search_start_time = getSystemTime();
+  search_time_ms = time;
 
   for (auto &t : threads)
     reset_thread(*t, root_board, actualPV);
@@ -458,16 +499,17 @@ Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
 
     m_idx =
         have_prob
-            ? (std::clamp((int)std::lround(1.0f / std::max(move_prob, 0.025f)),
+            ? (std::clamp((int)std::lround(1.0f / std::max(move_prob, LMR_PROB_FLOOR_X1000 / 1000.0f)),
                           1, LMR_MAX_MOVE_INDEX - 1) -
                1)
             : m_idx;
-    auto red = LMR_TABLE_2D[d_idx][m_idx];
+    // fixed point (1/1024 ply); converted to plies by the caller
+    int red = LMR_TABLE_2D[d_idx][m_idx];
 
     if (in_pv) {
-      red = std::max(0, red - 1);
+      red = std::max(0, red - LMR_PV_FP);
     }
-    red += !improving;
+    red += !improving ? LMR_NOT_IMPROVING_FP : 0;
     return red;
   }
   return 0;
@@ -562,6 +604,7 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
   if (excluded.is_empty()) {
     is_tt_pv = in_pv || (found_hash && info.ttPv);
+    td.ttpv_stack[ply] = is_tt_pv;
   }
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
@@ -579,6 +622,10 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
           info.flag == TT_EXACT) {
         return tt_value;
       }
+    } else if (TT_SHALLOW_MARGIN && info.depth >= depth - 1 &&
+               info.flag == TT_LOWER && !isDecesive(tt_value) &&
+               tt_value >= beta + TT_SHALLOW_MARGIN) {
+      return tt_value; // one ply too shallow, but far above beta
     }
   }
   // No TT cutoffs at PV nodes (as in Stockfish): an exact-entry cutoff there
@@ -587,8 +634,8 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
   if (found_hash && liste.length() > 1 && !tt_move.is_empty() &&
       depth >= SE_MIN_DEPTH && info.flag != Flag::None && !is_sing_search &&
-      info.depth >= depth - 4 && info.flag != TT_UPPER && isEval(info.score) &&
-      !isWinningEval(info.score)) {
+      info.depth >= depth - SE_TT_DEPTH_MARGIN && info.flag != TT_UPPER &&
+      isEval(info.score) && !isWinningEval(info.score)) {
     sing_move = tt_move;
     sing_value = tt_value;
   }
@@ -666,18 +713,26 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   }
 #endif
 
-  if (!is_tt_pv && static_eval >= beta && tt_move.is_empty() &&
+  if (!is_tt_pv && depth <= RFP_MAX_DEPTH && static_eval >= beta &&
+      tt_move.is_empty() &&
       board.get_position().piece_count() > tab_pieces &&
       !board.get_position().has_jumps() && !isWinningEval(static_eval) &&
-      (static_eval - 20 - (30 - 7 * improving) * depth >= beta)) {
-    return static_eval;
+      (static_eval - RFP_BASE - (RFP_SLOPE - RFP_IMPROVING * improving) * depth >=
+       beta)) {
+    return RFP_BLEND ? (RFP_BLEND_W * static_eval + (1024 - RFP_BLEND_W) * beta) /
+                           1024
+                     : static_eval;
   }
 
-  if (!in_pv && isEval(static_eval) &&
-      static_eval + 150 + 10 * depth * depth <= alpha &&
+  if (!in_pv && depth <= RAZOR_MAX_DEPTH && isEval(static_eval) &&
+      static_eval + RAZOR_BASE + RAZOR_QUAD * depth * depth <= alpha &&
       !board.get_position().has_jumps()) {
     return static_eval;
   }
+
+  // a position already above beta counts as improving
+  if (IMPROVING_BETA && isEval(static_eval) && static_eval >= beta)
+    improving = true;
 
   int32_t *out = td.policy_state.out_buffer;
   bool computed = false;
@@ -719,7 +774,7 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   bool have_prob = false;
   constexpr float PC_MIN_P = 0.01f;
   const Value old_alpha = alpha;
-  const Value prob_beta = beta + prob_cut + 10 * improving;
+  const Value prob_beta = beta + prob_cut + PROBCUT_IMPROVING * improving;
 
   const bool tt_blocks =
       found_hash && info.depth >= depth - 4 && info.flag != TT_LOWER &&
@@ -755,6 +810,7 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
         for (int k = 0; k < liste.length(); ++k)
           move_prob[k] /= sum;
         have_prob = true;
+
       }
     }
     const Move move = liste[i];
@@ -779,12 +835,18 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       // se_tried++;
       if (s < s_beta) { // stage 1: plain extension
         extension = 1;
-        if (!in_pv && s < s_beta - SE_DOUBLE_MARGIN && ply < 2 * td.root_depth)
+        if (!in_pv && s < s_beta - SE_DOUBLE_MARGIN &&
+            10 * ply < SE_DOUBLE_PLY_X10 * td.root_depth) {
           extension = 2;                        // stage 3: double extension
+          if (SE_TRIPLE && s < s_beta - SE_TRIPLE_MARGIN)
+            extension = 3; // #9: triple extension
+        }
       } else if (s_beta >= beta && isEval(s)) { // stage 2: multi-cut
         return s_beta;
       } else if (tt_value >= beta) { // stage 4: negative extension
-        extension = -1;
+        extension = -SE_NEG_EXT;
+      } else if (SE_NEG_CUTNODE && cutnode) { // stage 4b: at cut nodes
+        extension = -SE_NEG_CUT_EXT;
       }
     }
 
@@ -799,20 +861,24 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     Depth reduction = Search::reduce(improving, i, depth, ply, board, move,
                                      in_pv, cutnode, move_prob[i], have_prob);
 
+    // reduction is in 1/1024 ply until here
     if (is_tt_pv && !in_pv) {
-      reduction -= 1 + (tt_value > alpha) + (info.depth >= depth);
+      reduction -= LMR_TTPV_FP + (tt_value > alpha ? LMR_TTPV_ALPHA_FP : 0) +
+                   (info.depth >= depth ? LMR_TTPV_DEPTH_FP : 0);
     } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
-      reduction++;
+      reduction += LMR_CUTNODE_FP;
     }
+    reduction = reduction > 0 ? reduction / LMR_ONE : 0;
 
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
     board.make_move(move);
     TT.prefetch(board.get_current_key());
 
-    if (!in_pv && !isWinningEval(beta) && depth >= 5 &&
+    if (!in_pv && !isWinningEval(beta) && depth >= PROBCUT_MIN_DEPTH &&
         board.get_position().piece_count() > tab_pieces && !tt_blocks) {
       Line line;
-      Depth newDepth = std::max(0, depth - 4);
+      Depth newDepth = std::max(
+          0, depth - PROBCUT_REDUCTION - PROBCUT_IMP_RED * improving);
       Value board_val = -qs<NONPV>(td, board, ply + 1, line, -prob_beta,
                                    -prob_beta + 1, 0, Move{}, is_sing_search);
 
@@ -899,6 +965,10 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
         pv.concat(move, local_pv);
         alpha = val;
+        // remaining moves only need to beat a better alpha: search shallower
+        if (!is_root && ALPHA_RAISE_REDUCTION && depth > ALPHA_RAISE_MIN_D && depth < ALPHA_RAISE_MAX_D &&
+            !isDecesive(val))
+          depth -= ALPHA_RAISE_REDUCTION;
         if constexpr (is_root) {
           if (td.id == 0) {
             glob_current_score = val;
@@ -913,6 +983,9 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     best_score = (best_score * depth + beta) / (depth + 1);
   }
   if (excluded.is_empty() && !is_root) {
+    // a node failing low below a tt-pv parent keeps the pv flag
+    if (TTPV_PROPAGATE && best_score <= old_alpha && ply > 0)
+      is_tt_pv = is_tt_pv || td.ttpv_stack[ply - 1];
     Value tt_value = value_to_tt(best_score, ply, board.get_position());
     Flag flag;
     if (best_score <= old_alpha) {
@@ -1026,6 +1099,10 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
       }
     }
   }
+  // fail-high blend in qsearch
+  if (QS_BLEND && bestValue >= beta && !isDecesive(bestValue) &&
+      !isDecesive(beta))
+    bestValue = (QS_BLEND_W * bestValue + (1024 - QS_BLEND_W) * beta) / 1024;
   if (excluded.is_empty()) {
     Value tt_value = value_to_tt(bestValue, ply, board.get_position());
     Flag flag;
@@ -1045,19 +1122,28 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
 }
 inline Value asp_delta(Value s) {
   const Value a = std::abs(s);
-  return asp_wind + (a > 275 ? (a - 275) / 8 : 0); // tune
+  return asp_wind + (a > ASP_THRESHOLD ? (a - ASP_THRESHOLD) / ASP_DIV : 0);
 }
-Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth) {
+Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth,
+                 Value extra_delta, Value span_score) {
   constexpr int MAX_RESEARCH = 4;
   if (depth >= 3 && isEval(last_score)) {
-    Value delta = asp_delta(last_score);
-    Value alpha = std::max(last_score - delta, -EVAL_INFINITE);
-    Value beta = std::min(last_score + delta, (Value)EVAL_INFINITE);
+    Value delta = asp_delta(last_score) + extra_delta;
+    const bool span = isEval(span_score);
+    const Value lo = span ? std::min(last_score, span_score) : last_score;
+    const Value hi = span ? std::max(last_score, span_score) : last_score;
+    Value alpha = std::max(lo - delta, -EVAL_INFINITE);
+    Value beta = std::min(hi + delta, (Value)EVAL_INFINITE);
+    int failed_high = 0;
     for (int tries = 0; tries < MAX_RESEARCH; ++tries) {
       Line line;
+      // after a fail high the re-search may be shallower (Stockfish-style)
+      const Depth asp_depth =
+          std::max(1, depth - ASP_FH_REDUCTION * failed_high);
       const Value score = search<ROOT>(td, false, board, 0, line, alpha, beta,
-                                       depth, Move{}, false);
+                                       asp_depth, Move{}, false);
       if (score <= alpha) {
+        failed_high = 0;
         beta = (alpha + beta) / 2;
         alpha = std::max(score - delta, -EVAL_INFINITE);
         if (tries == MAX_RESEARCH - 2)
@@ -1068,11 +1154,12 @@ Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth) {
         beta = std::min(score + delta, (Value)EVAL_INFINITE);
         if (tries == MAX_RESEARCH - 2)
           beta = EVAL_INFINITE;
+        ++failed_high;
       } else {
         td.main_pv = line;
         return score;
       }
-      delta += delta / 2;
+      delta = delta * ASP_GROWTH_X100 / 100;
     }
   }
   Line line;

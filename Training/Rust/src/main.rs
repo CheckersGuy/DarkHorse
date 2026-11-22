@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
     histogramm.print();
     */
 
-    //Data::create_book("../Positions/drawbook.book", "../Positions/tiny.book", 14).expect("Failed");
+    //Data::create_book("../Positions/drawbook.book", "../Positions/tiny.book", 14, &[], None, 1).expect("Failed");
 
     /*
         Data::get_unique_samples(
@@ -130,7 +130,8 @@ fn main() -> anyhow::Result<()> {
     )?;
     */
 
-    // rescore both sets with children, then delete the unrescored inputs
+    // rescore both sets with children, then delete the unrescored inputs (done)
+    /*
     for set in ["train", "val"] {
         let input = format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.samples");
         let output = format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.children.samples");
@@ -139,6 +140,35 @@ fn main() -> anyhow::Result<()> {
     }
     for set in ["train", "val"] {
         std::fs::remove_file(format!("/mnt/c/TrainingData/reservoir-test.10M.{set}.samples"))?;
+    }
+    */
+
+    // Unbalanced opening books for SPRT/SPSA (needs ./MainEngine in this dir).
+    // Stage 1: positions 6 plies after the drawbook openings whose quick
+    // (depth 1) score is moderately unbalanced for either side.
+    let candidates = "../Positions/unbalanced.candidates";
+    Data::create_book(
+        "../Positions/drawbook.book",
+        candidates,
+        14,
+        &["--book_plies", "6", "--book_search_depth", "1", "--book_abs", "1",
+          "--book_min", "30", "--book_max", "300"],
+        Some(200_000),
+        1,
+    )?;
+    // Stage 2: rescore the candidates with a depth-12 search and keep the ones
+    // inside each |score| window.
+    for (lo, hi) in [(40, 100), (70, 150), (100, 220)] {
+        let (lo_s, hi_s) = (lo.to_string(), hi.to_string());
+        Data::create_book(
+            candidates,
+            &format!("../Positions/unbalanced_{lo}_{hi}.book"),
+            14,
+            &["--book_plies", "0", "--book_search_depth", "12", "--book_abs", "1",
+              "--book_min", lo_s.as_str(), "--book_max", hi_s.as_str(), "--book_hash", "16"],
+            None,
+            2,
+        )?;
     }
 
     /*

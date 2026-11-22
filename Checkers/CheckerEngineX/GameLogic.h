@@ -42,6 +42,7 @@ struct RootMove {
   Move move{};
   Value score{-SCORE_INFINITE};
   Value previous_score{-SCORE_INFINITE};
+  Value prev2_score{-SCORE_INFINITE}; // score two iterations ago (#27-B2)
   Line pv;
 };
 
@@ -103,7 +104,10 @@ extern SearchGlobal glob;
 
 namespace Search {
 
-Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth);
+// extra_delta widens the initial window; span_score, if valid, is included in
+// the initial window together with last_score (#27-B2)
+Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth,
+                 Value extra_delta = 0, Value span_score = -SCORE_INFINITE);
 
 template <NodeType type>
 Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &line,
@@ -115,7 +119,8 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
          Value beta, Depth depth, Move excluded, bool is_sing_search);
 
 Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
-             Move move, bool in_pv, bool cutnode);
+             Move move, bool in_pv, bool cutnode, float move_prob,
+             bool have_prob);
 
 } // namespace Search
 

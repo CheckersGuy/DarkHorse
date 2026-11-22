@@ -86,38 +86,119 @@ constexpr std::array<uint32_t, 8> MASK_ROWS = {
 constexpr int LMR_MAX_DEPTH = 64;      // depths beyond this reuse the last row
 constexpr int LMR_MAX_MOVE_INDEX = 40; // MoveListe holds at most 40 moves
 
-inline const std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>
-    LMR_TABLE_2D = []() {
-      std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH> table{};
-      for (int d = 0; d < LMR_MAX_DEPTH; ++d) {
-        for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
-          const double depth = d + 1;
-          const double move_index = m + 1;
-          const double raw = 0.5 + 0.7 * std::log(depth) * std::log(move_index);
-          table[d][m] = std::clamp(static_cast<int>(raw), 0, 5);
-        }
-      }
-      return table;
-    }();
+// ---- tunable search parameters (see Params.h; --list_params, --NAME value)
+// Scaled integers so SPSA can treat every parameter the same way.
+inline int RFP_BASE = 21;      // RFP: eval - BASE - (SLOPE - IMPROVING*imp)*d
+inline int RFP_SLOPE = 31;
+inline int RFP_IMPROVING = 7;
+// bundle of small search features (0 = off); SPRT H1 +4.3 on 2026-11-22
+inline int ASP_FH_REDUCTION = 1;      // root depth - this*fail_highs in aspiration
+inline int ALPHA_RAISE_REDUCTION = 2; // depth - this after alpha is raised
+inline int RFP_BLEND = 1;             // RFP returns (eval + beta) / 2
+inline int TT_SHALLOW_MARGIN = 60;    // TT_LOWER cutoff at depth-1 if >= beta+this
+// bundle C (0 = off); SPRT H1 +2.3 on 2026-11-22
+inline int QS_BLEND = 1;       // qsearch fail-high blend
+inline int TTPV_PROPAGATE = 1; // fail-low node inherits parent tt_pv
+inline int IMPROVING_BETA = 1; // improving |= static_eval >= beta
+// bundle E; SPRT H1 +5.2 on 2026-11-22 (old behaviour: 1, 0, 0, alpha-raise 1)
+inline int SE_NEG_EXT = 2;      // negative singular extension in plies
+inline int SE_NEG_CUTNODE = 1;  // negative extension also at cut nodes
+// SPSA-tunable constants of accepted features (defaults = tested behaviour)
+inline int SE_NEG_CUT_EXT = 2;      // negative extension at cut nodes (plies)
+inline int RFP_BLEND_W = 512;       // RFP return: (W*eval + (1024-W)*beta)/1024
+inline int QS_BLEND_W = 462;        // qsearch fail-high blend weight of best
+inline int ALPHA_RAISE_MIN_D = 2;   // alpha-raise reduction for MIN < depth < MAX
+inline int ALPHA_RAISE_MAX_D = 14;
+inline int PROBCUT_IMP_RED = 1; // extra ProbCut reduction when improving
+inline int SE_TRIPLE = 0;       // #9: triple extension (uses SE_TRIPLE_MARGIN)
+inline int ASP_SPAN = 0;        // #27-B2: window spans last score and 2-iter mean
+inline int RAZOR_BASE = 162;   // razoring: eval + BASE + QUAD*d*d <= alpha
+inline int RAZOR_QUAD = 11;
+inline int PROBCUT_IMPROVING = 11; // prob_beta = beta + prob_cut + this*imp
+inline int LMR_BASE_X100 = 53;     // LMR: BASE/100 + FACTOR/100 * ln d * ln m
+inline int LMR_FACTOR_X100 = 70;
+inline int LMR_PROB_FLOOR_X1000 = 26; // policy probability floor in reduce()
+inline int ASP_DIV = 8;               // aspiration: wind + (|s|-THRESHOLD)/DIV
+inline int ASP_THRESHOLD = 270;       // aspiration widening starts here
+inline int ASP_GROWTH_X100 = 153;     // window growth per re-search (x100)
+inline int MLH_RAMP_LO = 270;         // eval blend with moves-left estimate
+inline int MLH_BONUS = 284;           // bonus = t * max(0, MLH_BONUS - mlh)
+inline int PROBCUT_MIN_DEPTH = 6;
+inline int PROBCUT_REDUCTION = 4;     // ProbCut verification depth = d - this
+inline int SE_TT_DEPTH_MARGIN = 3;    // SE needs tt depth >= depth - this
+inline int SE_DOUBLE_PLY_X10 = 20;    // double ext. only while 10*ply < X10*rd
+inline int RFP_MAX_DEPTH = 1000;      // 1000 = no limit (old behaviour)
+inline int RAZOR_MAX_DEPTH = 1000;    // 1000 = no limit (old behaviour)
+inline int TT_DEPTH_WEIGHT = 5;       // TT replacement: W_D*depth - W_A*age
+inline int TT_AGE_WEIGHT = 7;
+inline int TT_OVERWRITE_MARGIN = 4;   // same key overwritten if d+this > old
+
+// LMR in fixed point (1/1024 ply), rounded towards zero at the end. The
+// defaults (1024 = one ply) reproduce the old integer reductions exactly.
+constexpr int LMR_ONE = 1024;
+inline int LMR_TABLE_MAX = 5;          // cap of the table part (plies)
+inline int LMR_PV_FP = 998;           // less at PV nodes
+inline int LMR_NOT_IMPROVING_FP = 905;
+inline int LMR_TTPV_FP = 1008;         // tt_pv non-PV node: less by this
+inline int LMR_TTPV_ALPHA_FP = 1127;   //   + this if tt value > alpha
+inline int LMR_TTPV_DEPTH_FP = 989;   //   + this if tt depth >= depth
+inline int LMR_CUTNODE_FP = 1087;      // more at cut nodes (not the tt move)
+
+// table entries in 1/1024 ply: floor(raw * 1024), clamped to [0, max plies]
+using LmrTable = std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>;
+inline LmrTable compute_lmr_table(int base_x100, int factor_x100,
+                                  int max_plies = 5) {
+  LmrTable table{};
+  const double base = base_x100 / 100.0, factor = factor_x100 / 100.0;
+  for (int d = 0; d < LMR_MAX_DEPTH; ++d) {
+    for (int m = 0; m < LMR_MAX_MOVE_INDEX; ++m) {
+      const double depth = d + 1;
+      const double move_index = m + 1;
+      const double raw = base + factor * std::log(depth) * std::log(move_index);
+      table[d][m] = std::clamp(static_cast<int>(raw * 1024.0), 0,
+                               max_plies * 1024);
+    }
+  }
+  return table;
+}
+inline LmrTable LMR_TABLE_2D = compute_lmr_table(53, 70, 5);
 
 // Policy logits (out / 127) are multiplied by this before every softmax.
 // > 1 sharpens the move probabilities used by LMP, LMR and futility pruning;
 // the move ranking is unaffected. Set with --policy_scale.
 inline float POLICY_SCALE = 1.0f;
 
-constexpr std::array<float, 9> LMP_MASS = {
-    1.000f, // depth 0 (unused, never prunes)
-    0.99f,  // depth 1
-    0.995f, // depth 2
-    0.996f, // depth 3
-    0.997f, // depth 4
-    0.998f, // depth 5
-    0.999f, // depth 6
-    0.999f, // depth 7
-    0.999f  // depth 8
+// Time management (off = always search until the hard deadline, as before).
+// With TM on, after each iteration the main thread predicts the duration of
+// the next one (last iteration's duration * growth, growth = ratio of the last
+// two iteration durations clamped to [TM_GROWTH_MIN, TM_GROWTH_MAX]) and does
+// not start it if elapsed + prediction > budget * TM_STABILITY[stable], where
+// 'stable' counts consecutive iterations with the same best move. The hard
+// deadline stays the full budget. Set with --tm / CheckerBoard "set tm".
+inline int TM_ENABLED = 0;
+inline double TM_GROWTH_MIN = 1.2;
+inline double TM_GROWTH_MAX = 3.0;
+inline std::array<double, 5> TM_STABILITY = {1.0, 1.0, 0.9, 0.8, 0.7};
+inline int TM_MIN_DEPTH = 6;
+
+// LMP tails in units of 1e-4 (mass = 1 - tail/10000); depths 7-8 use TAIL_6.
+// LMP_MASS is only recomputed from the tails when one of them is set
+// (apply_params); the initialiser below uses the same formula.
+inline int LMP_TAIL_1 = 98, LMP_TAIL_2 = 51, LMP_TAIL_3 = 42, LMP_TAIL_4 = 30,
+           LMP_TAIL_5 = 20, LMP_TAIL_6 = 11;
+inline std::array<float, 9> LMP_MASS = {
+    1.0f,                    // depth 0 (unused, never prunes)
+    1.0f - 98 / 10000.0f,    // depth 1  (same formula as apply_params)
+    1.0f - 51 / 10000.0f,    // depth 2
+    1.0f - 42 / 10000.0f,    // depth 3
+    1.0f - 30 / 10000.0f,    // depth 4
+    1.0f - 20 / 10000.0f,    // depth 5
+    1.0f - 11 / 10000.0f,    // depth 6
+    1.0f - 11 / 10000.0f,    // depth 7
+    1.0f - 11 / 10000.0f     // depth 8
 };
 
-inline int SE_TRIPLE_MARGIN = 110; // must be > SE_DOUBLE_MARGIN (25)
+inline int SE_TRIPLE_MARGIN = 110; // must be > SE_DOUBLE_MARGIN (24)
 inline int SE_MAX_MULTI = 2;       // multi-extensions allowed along one line
 
 inline int FP_MAX_DEPTH = 6;  // only prune at shallow remaining depth
@@ -128,13 +209,13 @@ constexpr float FP_MIN_MASS = 0.5f; // policy mass that must be searched first
 
 inline int SE_MIN_DEPTH = 6;
 inline int SE_MARGIN = 2;         // s_beta = tt_value - SE_MARGIN * depth
-inline int SE_DOUBLE_MARGIN = 25; // same scale as prob_cut = 27
+inline int SE_DOUBLE_MARGIN = 24; // same scale as prob_cut
 
 constexpr std::array<int, 9> LMP_COUNT = {0, 5, 7, 9, 13, 15, 18, 18, 18};
 
-constexpr int prob_cut = 27; // 27;
+inline int prob_cut = 35; // tunable as PROBCUT_MARGIN
 
-constexpr int asp_wind = 15; // 15;
+inline int asp_wind = 18; // tunable as ASP_WINDOW
 
 constexpr int MAX_ASP = 200;
 constexpr int CORRECTION_SIZE = 512;

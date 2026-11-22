@@ -52,11 +52,28 @@ void Engine::writeMessage(const std::string &msg) {
         sizeof(char) * ex_message.size());
 }
 
+// CheckerBoard's maxtime_for_non_incremental_tc (eygilbert/CheckerBoard,
+// CheckerBoard.c): 'remaining' is the bank after crediting this move's level.
+static double cb_maxtime(double remaining, double increment) {
+  if (remaining < 0.4 * increment)
+    return 0.4 * increment;
+  if (remaining > increment)
+    return increment + (remaining - increment) / 2.5;
+  return remaining;
+}
+
 Move Engine::search() {
   if (state == State::Game_Ready) {
     if (!waiting_response) {
+      int maxtime = time_move;
+      if (use_bank) {
+        bank_ms += time_move;
+        maxtime = std::max(1, (int)std::lround(cb_maxtime(bank_ms, time_move)));
+      }
+      sent_maxtime = maxtime;
       writeMessage("search");
-      writeMessage(std::to_string(time_move));
+      writeMessage(std::to_string(maxtime));
+      search_start = std::chrono::steady_clock::now();
       waiting_response = true;
     }
 
@@ -72,6 +89,15 @@ Move Engine::search() {
         line = readPipe();
       }
       waiting_response = false;
+      const double elapsed_ms =
+          std::chrono::duration<double, std::milli>(
+              std::chrono::steady_clock::now() - search_start)
+              .count();
+      if (use_bank)
+        bank_ms -= elapsed_ms;
+      searches++;
+      used_ms_sum += elapsed_ms;
+      maxtime_ms_sum += sent_maxtime;
       move.from = 1u << squares[0];
       move.to = 1u << squares[1];
       for (auto i = 2; i < squares.size(); ++i) {
@@ -95,6 +121,7 @@ void Engine::newGame(const Position &pos) {
     if (answer == "game_ready") {
       state = State::Game_Ready;
       waiting_response = false;
+      bank_ms = 0.0; // CheckerBoard resets the clocks at every game
     }
   }
 }
@@ -178,7 +205,57 @@ void Match::setMaxGames(int games) { this->maxGames = games; }
 
 void Match::setTime(int time) { this->time = time; }
 
-void Match::setOpeningBook(std::string book) { this->openingBook = book; }
+void Match::setOpeningBook(std::string book) {
+  this->openingBook = book;
+  load_book();
+}
+
+void Match::load_book() {
+  std::ifstream stream(openingBook);
+  if (!stream.good()) {
+    std::cerr << "Could not load the openings from " << openingBook
+              << std::endl;
+    std::exit(-1);
+  }
+  positions.clear();
+  std::string line;
+  while (std::getline(stream, line)) {
+    if (!line.empty() && line.back() == '\r')
+      line.pop_back();
+    if (!line.empty())
+      positions.emplace_back(line);
+  }
+  if (positions.size() < 2) {
+    std::cerr << "Opening book " << openingBook << " has too few positions"
+              << std::endl;
+    std::exit(-1);
+  }
+}
+
+void Match::set_sprt(double elo0, double elo1, double alpha, double beta) {
+  sprt_enabled = true;
+  this->elo0 = elo0;
+  this->elo1 = elo1;
+  this->alpha = alpha;
+  this->beta = beta;
+}
+
+void Match::print_status(int games) {
+  double elo, err;
+  penta.elo(elo, err);
+  printf("games %-6d W-L-D %d-%d-%d  penta [%llu %llu %llu %llu %llu]  "
+         "Elo %+.1f +- %.1f",
+         games, wins_one, wins_two, draws, (unsigned long long)penta.n[0],
+         (unsigned long long)penta.n[1], (unsigned long long)penta.n[2],
+         (unsigned long long)penta.n[3], (unsigned long long)penta.n[4], elo,
+         err);
+  if (sprt_enabled) {
+    printf("  LLR %.2f [%.2f, %.2f]", penta.llr(elo0, elo1),
+           Sprt::lower_bound(alpha, beta), Sprt::upper_bound(alpha, beta));
+  }
+  printf("\n");
+  fflush(stdout);
+}
 
 const std::string &Match::getOpeningBook() { return openingBook; }
 
@@ -232,17 +309,28 @@ void Match::start() {
                   mainPipe[p][0][1]};
     engine.setTime(times.first);
     engine.setHashSize(hash_size);
+    engine.use_bank = time_bank;
     Engine engine2{second, Engine::State::Idle, enginePipe[p][1][0],
                    mainPipe[p][1][1]};
     engine2.setTime(times.second);
     engine2.setHashSize(hash_size);
+    engine2.use_bank = time_bank;
     interfaces.emplace_back(Interface{engine, engine2});
     interfaces[p].pos_counter = num_local * p;
   }
+  if (use_book_seed) {
+    std::mt19937_64 book_rng(book_seed);
+    for (auto &inter : interfaces)
+      inter.pos_counter = book_rng() % (positions.size() - 1);
+  }
   auto &first = interfaces.front();
-  std::cout << "Time: " << times.first << " " << times.second << std::endl;
+  std::cout << "Time: " << times.first << " " << times.second
+            << (time_bank ? " (CheckerBoard time bank)" : " (fixed per move)")
+            << std::endl;
 
   pid_t pid;
+  int finished_games = 0;
+  int sprt_result = 0; // -1: H0 accepted, 1: H1 accepted
   for (int p = 0; p < num_matches; ++p) {
     for (auto i = 0; i < numEngines; ++i) {
       pipe(mainPipe[p][i]);
@@ -277,11 +365,14 @@ void Match::start() {
         fcntl64(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
       }
     }
-    printf("\r");
-    printf("\r");
-    printf("%-5s %-5s %-5s \n", "Wins_one", "Wins_two", "Draws");
-    printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-    while (game_count < maxGames) {
+    if (sprt_enabled) {
+      printf("SPRT: elo0 %.2f elo1 %.2f alpha %.3f beta %.3f (logistic Elo, "
+             "pentanomial)\n",
+             elo0, elo1, alpha, beta);
+    }
+    const double llr_lower = Sprt::lower_bound(alpha, beta);
+    const double llr_upper = Sprt::upper_bound(alpha, beta);
+    while (game_count < maxGames && sprt_result == 0) {
       for (int k = 0; k < interfaces.size(); ++k) {
         Interface &inter = interfaces[k];
         if (inter.pos.is_empty()) {
@@ -300,20 +391,39 @@ void Match::start() {
 
         if (inter.is_terminal_state()) {
           game_count++;
-          printf("\r");
-          printf("\r");
-          printf("%-5d %-5d %-5d", wins_one, wins_two, draws);
-          std::cout << std::endl;
+          finished_games++;
           MoveListe liste;
           get_moves(inter.pos, liste);
+          int result; // engine 1's result in half points
           if (liste.length() == 0) {
+            // the side to move has lost
             if (inter.first_mover == 0) {
               wins_two++;
+              result = 0;
             } else {
               wins_one++;
+              result = 2;
             }
           } else {
             draws++;
+            result = 1;
+          }
+
+          // first_game is false while the first game of a pair is running
+          // and true again once the colour-swapped second game has started
+          if (!inter.first_game) {
+            inter.pending_result = result;
+          } else if (inter.pending_result >= 0) {
+            penta.add(inter.pending_result + result);
+            inter.pending_result = -1;
+            print_status(finished_games);
+            if (sprt_enabled) {
+              const double llr = penta.llr(elo0, elo1);
+              if (llr >= llr_upper)
+                sprt_result = 1;
+              else if (llr <= llr_lower)
+                sprt_result = -1;
+            }
           }
 
           inter.reset_engines();
@@ -331,6 +441,35 @@ void Match::start() {
   for (int p = 0; p < num_matches; ++p) {
     for (int k = 0; k < numEngines; ++k) {
       wait(&status);
+    }
+  }
+  if (pid > 0) {
+    for (int e = 0; e < 2; ++e) {
+      uint64_t n = 0;
+      double used = 0.0, sent = 0.0;
+      for (auto &inter : interfaces) {
+        n += inter.engines[e].searches;
+        used += inter.engines[e].used_ms_sum;
+        sent += inter.engines[e].maxtime_ms_sum;
+      }
+      if (n > 0)
+        printf("Engine%d time: %llu moves, avg used %.2f ms, avg maxtime sent "
+               "%.2f ms\n",
+               e + 1, (unsigned long long)n, used / n, sent / n);
+    }
+    std::cout << "Final: ";
+    print_status(finished_games);
+    if (sprt_enabled) {
+      const double llr = penta.llr(elo0, elo1);
+      if (sprt_result == 1)
+        printf("SPRT: H1 accepted (elo0=%.2f elo1=%.2f), LLR %.2f\n", elo0,
+               elo1, llr);
+      else if (sprt_result == -1)
+        printf("SPRT: H0 accepted (elo0=%.2f elo1=%.2f), LLR %.2f\n", elo0,
+               elo1, llr);
+      else
+        printf("SPRT: inconclusive after %d games, LLR %.2f\n",
+               finished_games, llr);
     }
   }
   std::cout << "Finished the match" << std::endl;
