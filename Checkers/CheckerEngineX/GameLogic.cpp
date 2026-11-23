@@ -250,6 +250,7 @@ static void reset_thread(ThreadData &td, const Board &root_board,
   td.num_pv_excluded = 0;
   td.completed_depth = 0;
   td.results.assign(actualPV, RootMove{});
+  td.ext_acc.fill(0);
 #ifdef SEARCH_STATS
   td.cut_stats.reset();
 #endif
@@ -295,14 +296,7 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
         td.root_prev_best = results[pv_idx].move;
         td.root_depth = d;
         Value score =
-            Search::search_asp(
-                td, board, results[pv_idx].previous_score, d, (Value)0,
-                // #27-B2: window also covers the mean of the last two scores
-                (ASP_SPAN && isEval(results[pv_idx].prev2_score) &&
-                 isEval(results[pv_idx].previous_score))
-                    ? (Value)((results[pv_idx].prev2_score +
-                               results[pv_idx].previous_score) / 2)
-                    : (Value)-SCORE_INFINITE);
+            Search::search_asp(td, board, results[pv_idx].previous_score, d);
         results[pv_idx].score = score;
         results[pv_idx].pv = td.main_pv;
         results[pv_idx].move =
@@ -333,10 +327,8 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
     if (stopped)
       break;
 
-    for (auto &rm : results) {
-      rm.prev2_score = rm.previous_score; // used by #27-B2
+    for (auto &rm : results)
       rm.previous_score = rm.score;
-    }
 
     // sort-by-score happens here, strictly before printing
     std::sort(
@@ -515,6 +507,14 @@ Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
   return 0;
 }
 
+// whole plies of a fractional depth (1/1024 ply), rounded to the nearest ply;
+// the remainder (|rem| <= 1/2 ply) is carried on, so small fractions neither
+// cost nor cancel a whole ply but accumulate along the line
+static inline int fp_whole(int fp) {
+  return fp >= 0 ? (fp + LMR_ONE / 2) / LMR_ONE
+                 : -((-fp + LMR_ONE / 2) / LMR_ONE);
+}
+
 template <NodeType type>
 Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
              Value alpha, Value beta, Depth depth, Move excluded,
@@ -526,6 +526,9 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   pv.clear();
   const uint64_t node_count = td.inc_nodes();
   check_stop(td, node_count);
+  // fractional depth carried in from the parent (1/1024 ply); reductions of
+  // this node (alpha raise) adjust it, children receive the remainder
+  int node_acc = td.ext_acc[ply];
 
   if (depth <= 0) {
     return Search::qs<next_type>(td, board, ply, pv, alpha, beta, depth, Move{},
@@ -816,14 +819,16 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     const Move move = liste[i];
 
     const auto kings = board.get_position().K;
-    int extension = 0;
+    // extension in 1/1024 ply; `extension` keeps only its sign for the
+    // pruning/LMR decisions below
+    int ext_fp = 0;
     if (liste.length() == 1) {
-      extension = 1;
+      ext_fp = SINGLE_EXT_FP;
     } else if (in_pv && move.is_capture()) {
-      extension = 1;
+      ext_fp = PV_CAPTURE_EXT_FP;
     } else if (move.is_capture() &&
                board.previous().has_jumps(~board.get_mover())) {
-      extension = 1;
+      ext_fp = RECAPTURE_EXT_FP;
     }
 
     if (!is_root && excluded.is_empty() && !sing_move.is_empty() &&
@@ -834,21 +839,20 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
                                     s_beta, (depth - 1) / 2, move, true);
       // se_tried++;
       if (s < s_beta) { // stage 1: plain extension
-        extension = 1;
+        ext_fp = SE_EXT_FP;
         if (!in_pv && s < s_beta - SE_DOUBLE_MARGIN &&
             10 * ply < SE_DOUBLE_PLY_X10 * td.root_depth) {
-          extension = 2;                        // stage 3: double extension
-          if (SE_TRIPLE && s < s_beta - SE_TRIPLE_MARGIN)
-            extension = 3; // #9: triple extension
+          ext_fp = SE_DOUBLE_EXT_FP;            // stage 3: double extension
         }
       } else if (s_beta >= beta && isEval(s)) { // stage 2: multi-cut
         return s_beta;
       } else if (tt_value >= beta) { // stage 4: negative extension
-        extension = -SE_NEG_EXT;
+        ext_fp = -SE_NEG_EXT_FP;
       } else if (SE_NEG_CUTNODE && cutnode) { // stage 4b: at cut nodes
-        extension = -SE_NEG_CUT_EXT;
+        ext_fp = -SE_NEG_CUT_EXT_FP;
       }
     }
+    const int extension = (ext_fp > 0) - (ext_fp < 0);
 
     if (!in_pv && have_prob && i >= 2 && extension == 0 && !move.is_capture() &&
         depth < LMP_MASS.size() && searched_mass >= LMP_MASS[depth]) {
@@ -868,6 +872,11 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
       reduction += LMR_CUTNODE_FP;
     }
+    // LMR_CARRY_PCT: this percentage of the fractional part of the reduction is not thrown away but
+    // carried into the reduced child's depth
+    const int lmr_rem = (LMR_CARRY_PCT && reduction > 0 && extension <= 0)
+                            ? (reduction % LMR_ONE) * LMR_CARRY_PCT / 100
+                            : 0;
     reduction = reduction > 0 ? reduction / LMR_ONE : 0;
 
     reduction = (extension > 0 || reduction < 0) ? 0 : reduction;
@@ -877,8 +886,10 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     if (!in_pv && !isWinningEval(beta) && depth >= PROBCUT_MIN_DEPTH &&
         board.get_position().piece_count() > tab_pieces && !tt_blocks) {
       Line line;
-      Depth newDepth = std::max(
-          0, depth - PROBCUT_REDUCTION - PROBCUT_IMP_RED * improving);
+      const int pc_acc =
+          node_acc - PROBCUT_RED_FP - PROBCUT_IMP_RED_FP * improving;
+      Depth newDepth = std::max(0, depth + fp_whole(pc_acc));
+      td.ext_acc[ply + 1] = pc_acc - fp_whole(pc_acc) * LMR_ONE;
       Value board_val = -qs<NONPV>(td, board, ply + 1, line, -prob_beta,
                                    -prob_beta + 1, 0, Move{}, is_sing_search);
 
@@ -898,13 +909,17 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       }
     }
 
-    Depth new_depth = std::max(0, depth - 1 + extension);
+    const int child_acc = node_acc + ext_fp;
+    Depth new_depth = std::max(0, depth - 1 + fp_whole(child_acc));
+    td.ext_acc[ply + 1] = child_acc - fp_whole(child_acc) * LMR_ONE;
 
     if (reduction != 0) {
 
+      td.ext_acc[ply + 1] -= lmr_rem;
       val = -Search::search<NONPV>(
           td, true, board, ply + 1, local_pv, -alpha - 1, -alpha,
           std::max(0, new_depth - reduction), Move{}, is_sing_search);
+      td.ext_acc[ply + 1] += lmr_rem;
 
       if (val > alpha) {
         val = -Search::search<NONPV>(td, !cutnode, board, ply + 1, local_pv,
@@ -966,9 +981,15 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
         pv.concat(move, local_pv);
         alpha = val;
         // remaining moves only need to beat a better alpha: search shallower
-        if (!is_root && ALPHA_RAISE_REDUCTION && depth > ALPHA_RAISE_MIN_D && depth < ALPHA_RAISE_MAX_D &&
-            !isDecesive(val))
-          depth -= ALPHA_RAISE_REDUCTION;
+        if (!is_root && ALPHA_RAISE_RED_FP && depth > ALPHA_RAISE_MIN_D &&
+            depth < ALPHA_RAISE_MAX_D && !isDecesive(val)) {
+          node_acc -= ALPHA_RAISE_RED_FP;
+          depth += fp_whole(node_acc);
+          node_acc -= fp_whole(node_acc) * LMR_ONE;
+          // SPSA can combine a large reduction with a small ALPHA_RAISE_MIN_D;
+          // depth < 0 would divide by zero in the fail-high blend below
+          depth = std::max(depth, 0);
+        }
         if constexpr (is_root) {
           if (td.id == 0) {
             glob_current_score = val;
@@ -1124,22 +1145,19 @@ inline Value asp_delta(Value s) {
   const Value a = std::abs(s);
   return asp_wind + (a > ASP_THRESHOLD ? (a - ASP_THRESHOLD) / ASP_DIV : 0);
 }
-Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth,
-                 Value extra_delta, Value span_score) {
+Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth) {
   constexpr int MAX_RESEARCH = 4;
   if (depth >= 3 && isEval(last_score)) {
-    Value delta = asp_delta(last_score) + extra_delta;
-    const bool span = isEval(span_score);
-    const Value lo = span ? std::min(last_score, span_score) : last_score;
-    const Value hi = span ? std::max(last_score, span_score) : last_score;
-    Value alpha = std::max(lo - delta, -EVAL_INFINITE);
-    Value beta = std::min(hi + delta, (Value)EVAL_INFINITE);
+    Value delta = asp_delta(last_score);
+    Value alpha = std::max(last_score - delta, -EVAL_INFINITE);
+    Value beta = std::min(last_score + delta, (Value)EVAL_INFINITE);
     int failed_high = 0;
     for (int tries = 0; tries < MAX_RESEARCH; ++tries) {
       Line line;
       // after a fail high the re-search may be shallower (Stockfish-style)
-      const Depth asp_depth =
-          std::max(1, depth - ASP_FH_REDUCTION * failed_high);
+      const int asp_acc = -ASP_FH_RED_FP * failed_high;
+      const Depth asp_depth = std::max(1, depth + fp_whole(asp_acc));
+      td.ext_acc[0] = asp_acc - fp_whole(asp_acc) * LMR_ONE;
       const Value score = search<ROOT>(td, false, board, 0, line, alpha, beta,
                                        asp_depth, Move{}, false);
       if (score <= alpha) {
@@ -1163,6 +1181,7 @@ Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth,
     }
   }
   Line line;
+  td.ext_acc[0] = 0;
   const Value value = search<ROOT>(td, false, board, 0, line, -EVAL_INFINITE,
                                    EVAL_INFINITE, depth, Move{}, false);
   td.main_pv = line;

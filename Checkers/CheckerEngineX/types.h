@@ -88,45 +88,51 @@ constexpr int LMR_MAX_MOVE_INDEX = 40; // MoveListe holds at most 40 moves
 
 // ---- tunable search parameters (see Params.h; --list_params, --NAME value)
 // Scaled integers so SPSA can treat every parameter the same way.
-inline int RFP_BASE = 21;      // RFP: eval - BASE - (SLOPE - IMPROVING*imp)*d
-inline int RFP_SLOPE = 31;
-inline int RFP_IMPROVING = 7;
+inline int RFP_BASE = 20;      // RFP: eval - BASE - (SLOPE - IMPROVING*imp)*d
+inline int RFP_SLOPE = 33;
+inline int RFP_IMPROVING = 6;
 // bundle of small search features (0 = off); SPRT H1 +4.3 on 2026-11-22
-inline int ASP_FH_REDUCTION = 1;      // root depth - this*fail_highs in aspiration
-inline int ALPHA_RAISE_REDUCTION = 2; // depth - this after alpha is raised
+// depth changes in 1/1024 ply (fractional parts are carried down the line)
+inline int ASP_FH_RED_FP = 824;      // root depth - this*fail_highs in aspiration
+inline int ALPHA_RAISE_RED_FP = 2010; // depth - this after alpha is raised
 inline int RFP_BLEND = 1;             // RFP returns (eval + beta) / 2
-inline int TT_SHALLOW_MARGIN = 60;    // TT_LOWER cutoff at depth-1 if >= beta+this
+inline int TT_SHALLOW_MARGIN = 58;    // TT_LOWER cutoff at depth-1 if >= beta+this
 // bundle C (0 = off); SPRT H1 +2.3 on 2026-11-22
 inline int QS_BLEND = 1;       // qsearch fail-high blend
 inline int TTPV_PROPAGATE = 1; // fail-low node inherits parent tt_pv
 inline int IMPROVING_BETA = 1; // improving |= static_eval >= beta
 // bundle E; SPRT H1 +5.2 on 2026-11-22 (old behaviour: 1, 0, 0, alpha-raise 1)
-inline int SE_NEG_EXT = 2;      // negative singular extension in plies
+inline int SE_NEG_EXT_FP = 2049;    // negative singular extension
 inline int SE_NEG_CUTNODE = 1;  // negative extension also at cut nodes
 // SPSA-tunable constants of accepted features (defaults = tested behaviour)
-inline int SE_NEG_CUT_EXT = 2;      // negative extension at cut nodes (plies)
-inline int RFP_BLEND_W = 512;       // RFP return: (W*eval + (1024-W)*beta)/1024
-inline int QS_BLEND_W = 462;        // qsearch fail-high blend weight of best
+inline int SE_NEG_CUT_EXT_FP = 1968; // negative extension at cut nodes
+inline int SE_EXT_FP = 1114;         // singular extension
+inline int SE_DOUBLE_EXT_FP = 1998;  // double extension
+inline int SINGLE_EXT_FP = 1084;     // only one legal move
+inline int PV_CAPTURE_EXT_FP = 940; // capture at a PV node
+inline int RECAPTURE_EXT_FP = 962;  // capture after the opponent could jump
+inline int RFP_BLEND_W = 466;       // RFP return: (W*eval + (1024-W)*beta)/1024
+inline int QS_BLEND_W = 456;        // qsearch fail-high blend weight of best
 inline int ALPHA_RAISE_MIN_D = 2;   // alpha-raise reduction for MIN < depth < MAX
-inline int ALPHA_RAISE_MAX_D = 14;
-inline int PROBCUT_IMP_RED = 1; // extra ProbCut reduction when improving
-inline int SE_TRIPLE = 0;       // #9: triple extension (uses SE_TRIPLE_MARGIN)
-inline int ASP_SPAN = 0;        // #27-B2: window spans last score and 2-iter mean
+inline int ALPHA_RAISE_MAX_D = 15;
+inline int PROBCUT_IMP_RED_FP = 1008; // extra ProbCut reduction when improving
+inline int LMR_CARRY_PCT = 39;    // % of the fractional LMR remainder carried (0 = off); NR-SPRT [-3,1] H1 +2.0 +- 3.9 (2026-11-22)
+// material scaling of the net eval: eval * (BASE + SLOPE*(pieces-12)) / 1024
 inline int RAZOR_BASE = 162;   // razoring: eval + BASE + QUAD*d*d <= alpha
 inline int RAZOR_QUAD = 11;
-inline int PROBCUT_IMPROVING = 11; // prob_beta = beta + prob_cut + this*imp
-inline int LMR_BASE_X100 = 53;     // LMR: BASE/100 + FACTOR/100 * ln d * ln m
-inline int LMR_FACTOR_X100 = 70;
-inline int LMR_PROB_FLOOR_X1000 = 26; // policy probability floor in reduce()
+inline int PROBCUT_IMPROVING = 12; // prob_beta = beta + prob_cut + this*imp
+inline int LMR_BASE_X100 = 57;     // LMR: BASE/100 + FACTOR/100 * ln d * ln m
+inline int LMR_FACTOR_X100 = 71;
+inline int LMR_PROB_FLOOR_X1000 = 28; // policy probability floor in reduce()
 inline int ASP_DIV = 8;               // aspiration: wind + (|s|-THRESHOLD)/DIV
-inline int ASP_THRESHOLD = 270;       // aspiration widening starts here
-inline int ASP_GROWTH_X100 = 153;     // window growth per re-search (x100)
-inline int MLH_RAMP_LO = 270;         // eval blend with moves-left estimate
-inline int MLH_BONUS = 284;           // bonus = t * max(0, MLH_BONUS - mlh)
-inline int PROBCUT_MIN_DEPTH = 6;
-inline int PROBCUT_REDUCTION = 4;     // ProbCut verification depth = d - this
-inline int SE_TT_DEPTH_MARGIN = 3;    // SE needs tt depth >= depth - this
-inline int SE_DOUBLE_PLY_X10 = 20;    // double ext. only while 10*ply < X10*rd
+inline int ASP_THRESHOLD = 282;       // aspiration widening starts here
+inline int ASP_GROWTH_X100 = 156;     // window growth per re-search (x100)
+inline int MLH_RAMP_LO = 268;         // eval blend with moves-left estimate
+inline int MLH_BONUS = 267;           // bonus = t * max(0, MLH_BONUS - mlh)
+inline int PROBCUT_MIN_DEPTH = 7;
+inline int PROBCUT_RED_FP = 4093;     // ProbCut verification depth = d - this
+inline int SE_TT_DEPTH_MARGIN = 2;    // SE needs tt depth >= depth - this
+inline int SE_DOUBLE_PLY_X10 = 22;    // double ext. only while 10*ply < X10*rd
 inline int RFP_MAX_DEPTH = 1000;      // 1000 = no limit (old behaviour)
 inline int RAZOR_MAX_DEPTH = 1000;    // 1000 = no limit (old behaviour)
 inline int TT_DEPTH_WEIGHT = 5;       // TT replacement: W_D*depth - W_A*age
@@ -136,13 +142,13 @@ inline int TT_OVERWRITE_MARGIN = 4;   // same key overwritten if d+this > old
 // LMR in fixed point (1/1024 ply), rounded towards zero at the end. The
 // defaults (1024 = one ply) reproduce the old integer reductions exactly.
 constexpr int LMR_ONE = 1024;
-inline int LMR_TABLE_MAX = 5;          // cap of the table part (plies)
-inline int LMR_PV_FP = 998;           // less at PV nodes
-inline int LMR_NOT_IMPROVING_FP = 905;
-inline int LMR_TTPV_FP = 1008;         // tt_pv non-PV node: less by this
-inline int LMR_TTPV_ALPHA_FP = 1127;   //   + this if tt value > alpha
-inline int LMR_TTPV_DEPTH_FP = 989;   //   + this if tt depth >= depth
-inline int LMR_CUTNODE_FP = 1087;      // more at cut nodes (not the tt move)
+inline int LMR_TABLE_MAX = 6;          // cap of the table part (plies)
+inline int LMR_PV_FP = 1014;           // less at PV nodes
+inline int LMR_NOT_IMPROVING_FP = 1048;
+inline int LMR_TTPV_FP = 882;         // tt_pv non-PV node: less by this
+inline int LMR_TTPV_ALPHA_FP = 1076;   //   + this if tt value > alpha
+inline int LMR_TTPV_DEPTH_FP = 924;   //   + this if tt depth >= depth
+inline int LMR_CUTNODE_FP = 1097;      // more at cut nodes (not the tt move)
 
 // table entries in 1/1024 ply: floor(raw * 1024), clamped to [0, max plies]
 using LmrTable = std::array<std::array<int, LMR_MAX_MOVE_INDEX>, LMR_MAX_DEPTH>;
@@ -161,7 +167,7 @@ inline LmrTable compute_lmr_table(int base_x100, int factor_x100,
   }
   return table;
 }
-inline LmrTable LMR_TABLE_2D = compute_lmr_table(53, 70, 5);
+inline LmrTable LMR_TABLE_2D = compute_lmr_table(57, 71, 6); // = LMR_BASE_X100, LMR_FACTOR_X100, LMR_TABLE_MAX
 
 // Policy logits (out / 127) are multiplied by this before every softmax.
 // > 1 sharpens the move probabilities used by LMP, LMR and futility pruning;
@@ -184,21 +190,20 @@ inline int TM_MIN_DEPTH = 6;
 // LMP tails in units of 1e-4 (mass = 1 - tail/10000); depths 7-8 use TAIL_6.
 // LMP_MASS is only recomputed from the tails when one of them is set
 // (apply_params); the initialiser below uses the same formula.
-inline int LMP_TAIL_1 = 98, LMP_TAIL_2 = 51, LMP_TAIL_3 = 42, LMP_TAIL_4 = 30,
-           LMP_TAIL_5 = 20, LMP_TAIL_6 = 11;
+inline int LMP_TAIL_1 = 99, LMP_TAIL_2 = 53, LMP_TAIL_3 = 40, LMP_TAIL_4 = 31,
+           LMP_TAIL_5 = 20, LMP_TAIL_6 = 8;
 inline std::array<float, 9> LMP_MASS = {
     1.0f,                    // depth 0 (unused, never prunes)
-    1.0f - 98 / 10000.0f,    // depth 1  (same formula as apply_params)
-    1.0f - 51 / 10000.0f,    // depth 2
-    1.0f - 42 / 10000.0f,    // depth 3
-    1.0f - 30 / 10000.0f,    // depth 4
+    1.0f - 99 / 10000.0f,    // depth 1  (same formula as apply_params)
+    1.0f - 53 / 10000.0f,    // depth 2
+    1.0f - 40 / 10000.0f,    // depth 3
+    1.0f - 31 / 10000.0f,    // depth 4
     1.0f - 20 / 10000.0f,    // depth 5
-    1.0f - 11 / 10000.0f,    // depth 6
-    1.0f - 11 / 10000.0f,    // depth 7
-    1.0f - 11 / 10000.0f     // depth 8
+    1.0f - 8 / 10000.0f,    // depth 6
+    1.0f - 8 / 10000.0f,    // depth 7
+    1.0f - 8 / 10000.0f     // depth 8
 };
 
-inline int SE_TRIPLE_MARGIN = 110; // must be > SE_DOUBLE_MARGIN (24)
 inline int SE_MAX_MULTI = 2;       // multi-extensions allowed along one line
 
 inline int FP_MAX_DEPTH = 6;  // only prune at shallow remaining depth
@@ -209,13 +214,13 @@ constexpr float FP_MIN_MASS = 0.5f; // policy mass that must be searched first
 
 inline int SE_MIN_DEPTH = 6;
 inline int SE_MARGIN = 2;         // s_beta = tt_value - SE_MARGIN * depth
-inline int SE_DOUBLE_MARGIN = 24; // same scale as prob_cut
+inline int SE_DOUBLE_MARGIN = 23; // same scale as prob_cut
 
 constexpr std::array<int, 9> LMP_COUNT = {0, 5, 7, 9, 13, 15, 18, 18, 18};
 
-inline int prob_cut = 35; // tunable as PROBCUT_MARGIN
+inline int prob_cut = 41; // tunable as PROBCUT_MARGIN
 
-inline int asp_wind = 18; // tunable as ASP_WINDOW
+inline int asp_wind = 19; // tunable as ASP_WINDOW
 
 constexpr int MAX_ASP = 200;
 constexpr int CORRECTION_SIZE = 512;

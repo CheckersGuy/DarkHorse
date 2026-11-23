@@ -14,7 +14,10 @@ Benchmark
   Command    Training/bench_parallel.sh 14         (14 = --threads of our SPRT/SPSA matches)
   Engine     MainEngine --bench  (40 built-in positions, depth 16, 16 MB hash,
              only the search time is measured)
-  Signature  bench nodes 1501908   (same node count = same search code)
+  Signature  bench nodes 1281642   (same node count = same search code;
+             SPSA run 3 defaults, 2026-11-23. The NPS figures below were
+             measured with the earlier signature 1501908 and are still a
+             good estimate for calibration)
 
 Results (3 runs, machine otherwise idle)
   14 copies  avg nps per copy  1,209,070 / 1,185,483 / 1,220,308   -> reference 1,205,000

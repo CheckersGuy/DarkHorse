@@ -29,6 +29,8 @@ struct ThreadData {
 
   std::array<Value, MAX_PLY + 10> static_evals;
   std::array<bool, MAX_PLY + 10> ttpv_stack{}; // is_tt_pv per ply
+  // fractional depth carry (1/1024 ply) handed from a node to its children
+  std::array<int, MAX_PLY + 10> ext_acc{};
 
   // root bookkeeping
   Move root_partial{};
