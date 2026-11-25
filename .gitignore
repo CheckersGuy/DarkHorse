@@ -991,3 +991,7 @@ launchSettings.json
 *.json
 /Output
 
+
+# generated opening books (rebuilt by Training/scripts/cloud_generate.sh)
+Training/Positions/tiny_plus*.book
+Training/Positions/*.book.tmp

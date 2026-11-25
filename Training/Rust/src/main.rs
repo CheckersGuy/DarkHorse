@@ -49,6 +49,9 @@ fn main() -> anyhow::Result<()> {
     //   movegen pshuffle <in> <out>                 (external shuffle of a POL1 policy file)
     //   movegen vrescore <in> <out> <workers> [A,B,C,D] (value net: root value only, same
     //                                                budget and root search; POL1, no children)
+    //   movegen book <in> <out> <workers> <plies> [min max] [max_positions]
+    //                                               opening book: positions <plies> deeper, depth-1
+    //                                               score in [min,max] (default -55..55)
     //   movegen generate <book> <out> <workers> <max_samples> [key=value ...]
     //                                               self-play games with ./MainEngine --generate,
     //                                               samples from the search trees. Keys:
@@ -135,6 +138,19 @@ fn main() -> anyhow::Result<()> {
                     }
                 }
                 generator.generate_games()?;
+            }
+            "book" => {
+                // movegen book <in> <out> <workers> <plies> [min max] [max_positions]:
+                // every input position expanded <plies> plies deeper; keeps leaves whose
+                // depth-1 score lies in [min, max] (default -55..55), deduplicated and
+                // shuffled (./MainEngine --book)
+                let workers: usize = args[4].parse()?;
+                let plies = args[5].clone();
+                let (lo, hi) = if args.len() > 7 { (args[6].clone(), args[7].clone()) } else { ("-55".to_string(), "55".to_string()) };
+                let max: Option<usize> = if args.len() > 8 { Some(args[8].parse()?) } else { None };
+                let engine_args = ["--book_plies", plies.as_str(), "--book_search_depth", "1",
+                                   "--book_min", lo.as_str(), "--book_max", hi.as_str()];
+                Data::create_book(&args[2], &args[3], workers, &engine_args, max, 1)?;
             }
             "pshuffle" => {
                 Data::shuffle_policy_external(&args[2], &args[3], 64)?;

@@ -2,6 +2,10 @@
 # cloud_rescore.sh INPUT WORKDIR WORKERS [CHUNK_M] [BLOCK_CHUNKS]
 #
 # Rescores a (deduplicated) sample file in chunks and builds ready-to-train files:
+#   0. splits off a NEW validation set of VAL_POS positions (default 2,500,000; split by
+#      a hash of the position, so a position is never in both sets) and rescores it
+#      first: WORKDIR/val.children.samples + WORKDIR/val.ready. All nets (old and new)
+#      are compared on this set from now on (owner's decision 2026-11-25).
 #   1. splits INPUT into chunks of about CHUNK_M million positions (default 50); every
 #      position goes to a RANDOM chunk, so each chunk (and the early block below) is a
 #      random sample of the whole input: WORKDIR/data.c<i>.samples
@@ -28,6 +32,7 @@
 #   DELETE_INPUTS=1      delete each unrescored chunk after it is rescored
 #   DELETE_CHUNKS=1      delete the rescored chunks once train.children.samples is ready
 #   CHUNK_POS=N          chunk size in positions (tests)
+#   VAL_POS=N            size of the new validation set (default 2500000, 0 = none)
 #
 # The engine must be the CURRENT build (--no_mlh, node budgets; the script checks it).
 # Disk for 3B positions: input ~54 GB + input chunks ~54 GB (or DELETE_INPUTS=1)
@@ -72,15 +77,51 @@ build_file() {
   log "$name: ready for download ($(cat "$W/$name.ready"))"
 }
 
+# rescore one sample file into a POL1 file: rescore_file SRC OUT LABEL
+rescore_file() {
+  local src=$1 out=$2 label=$3 want got
+  rm -f "$out.tmp"*                               # leftovers of an interrupted run
+  want=$(( $(stat -c %s "$src") / 18 ))
+  log "$label: rescoring $want positions"
+  ( cd "$ENGINE_DIR" && "$MOVEGEN" rescore "$src" "$out.tmp" "$WORKERS" ${NODES_PHASE:-} ) >> "$LOG" 2>&1 ||
+    fail "$label: movegen rescore failed (rerun the script to retry)"
+  got=$(count_pol1 "$out.tmp")
+  # rescore drops a few positions (captures, decided evals): expect >= 90 %
+  [ "$got" -ge $(( want * 9 / 10 )) ] || fail "$label: only $got of $want positions rescored"
+  mv "$out.tmp" "$out"
+  log "$label: done, $got positions"
+}
+
+# ---- 0. new validation set (once), rescored first
+VAL_POS=${VAL_POS:-2500000}
+TRAIN_IN=$IN
+if [ "$VAL_POS" -gt 0 ]; then
+  TRAIN_IN=$W/train_input.samples
+  if [ ! -f "$W/split.done" ]; then
+    total=$(( $(stat -c %s "$IN") / 18 ))
+    frac=$(python3 -c "print(min(1.0, $VAL_POS / $total))")
+    log "splitting off a validation set of about $VAL_POS positions (fraction $frac)"
+    rm -f "$TRAIN_IN" "$W/val.samples"
+    "$MOVEGEN" split "$IN" "$TRAIN_IN" "$W/val.samples" "$frac" >> "$LOG" 2>&1 || fail "validation split failed"
+    touch "$W/split.done"
+  fi
+  if [ ! -f "$W/val.ready" ]; then
+    rescore_file "$W/val.samples" "$W/val.children.samples" "validation set"
+    echo "$(count_pol1 "$W/val.children.samples") positions" > "$W/val.ready"
+    log "validation set ready for download ($(cat "$W/val.ready"))"
+  fi
+fi
+
 # ---- 1. split into random chunks (once)
 if [ ! -f "$W/chunks.done" ]; then
-  total=$(( $(stat -c %s "$IN") / 18 ))
+  total=$(( $(stat -c %s "$TRAIN_IN") / 18 ))
   per=${CHUNK_POS:-$(( CHUNK_M * 1000000 ))}
   n=$(( (total + per - 1) / per ))
   log "splitting $IN ($total positions) into $n random chunks"
   rm -f "$W"/data.c*.samples
-  "$MOVEGEN" chunks "$IN" "$W/data." "$n" random >> "$LOG" 2>&1 || fail "chunk split failed"
+  "$MOVEGEN" chunks "$TRAIN_IN" "$W/data." "$n" random >> "$LOG" 2>&1 || fail "chunk split failed"
   echo "$n" > "$W/chunks.done"
+  [ "${DELETE_INPUTS:-0}" = 1 ] && [ "$TRAIN_IN" != "$IN" ] && rm -f "$TRAIN_IN"
 fi
 N=$(cat "$W/chunks.done")
 log "start: $N chunks, $WORKERS workers, early block after $BLOCK chunks"
@@ -91,16 +132,7 @@ for i in $(seq 1 "$N"); do
   out=$W/data.c$i.children.samples
   if [ ! -f "$out" ] && [ ! -f "$W/train.ready" ]; then
     [ -f "$src" ] || fail "missing input chunk $src"
-    rm -f "$out.tmp"*                             # leftovers of an interrupted run
-    want=$(( $(stat -c %s "$src") / 18 ))
-    log "chunk $i/$N: rescoring $want positions"
-    ( cd "$ENGINE_DIR" && "$MOVEGEN" rescore "$src" "$out.tmp" "$WORKERS" ${NODES_PHASE:-} ) >> "$LOG" 2>&1 ||
-      fail "chunk $i: movegen rescore failed (rerun the script to retry)"
-    got=$(count_pol1 "$out.tmp")
-    # rescore drops a few positions (captures, decided evals): expect >= 90 %
-    [ "$got" -ge $(( want * 9 / 10 )) ] || fail "chunk $i: only $got of $want positions rescored"
-    mv "$out.tmp" "$out"
-    log "chunk $i/$N: done, $got positions"
+    rescore_file "$src" "$out" "chunk $i/$N"
     [ "${DELETE_INPUTS:-0}" = 1 ] && rm -f "$src"
   fi
   if [ "$BLOCK" -gt 0 ] && [ "$i" -eq "$BLOCK" ] && [ "$BLOCK" -lt "$N" ]; then

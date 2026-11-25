@@ -53,6 +53,18 @@ training data and nets. Detailed history, SPRT results and all decisions:
    position, far less correlated). `bands` = keep factor by |static eval| <=50 /
    51-200 / 201-400 / >400 (opt-in experiment, see data_distribution_findings.md).
    Book: `Training/Positions/tiny.book` (first line is skipped).
+   **Cloud / large runs:** `Training/scripts/cloud_generate.sh OUTPUT WORKERS
+   MAX_SAMPLES [options]` builds the opening book `tiny_plus4.book` first if it is
+   missing (`movegen book`: tiny.book + 2 + 2 plies, +-55 cp at depth 1, 5.5M openings,
+   ~4 min, deterministic; not in git, ignored) and then generates with the default
+   options `nodes=1500 prob=0.05 cap=300 dedup=1`. Why the bigger book (pilot
+   2026-11-25, 7M positions each): 1,000 openings reused ~47x (= 3B with tiny.book)
+   lose 24 % of opening positions (>=17 pieces) as duplicates vs 1.6 % with fresh
+   openings; tiny_plus4.book gives ~3 uses per opening for 3B. Endgame (<=8 pieces)
+   duplicates are ~23.5 % regardless of the book. Book piece distribution:
+   tiny_plus4 18: 39 %, 20: 44 %, 22: 8 %, 16: 3 % (tiny.book: 20: 47 %, 22: 42 %,
+   18: 7 %). Open experiment: a small share of shallower openings (the plies between
+   drawbook.book and tiny.book are never sampled).
 2. **Dedup / split / chunks**: `movegen dedup <in> <out>`,
    `movegen split <in> <train> <val> <frac>`, `movegen chunks <in> <prefix> <n>`.
 3. **Rescore** (labels, POL1 format = root + children):
@@ -63,7 +75,9 @@ training data and nets. Detailed history, SPRT results and all decisions:
    faster). The engine must print the `no_mlh` banner (new engine only).
    **Cloud / large runs (owner's plan, 2026-11-25):**
    `Training/scripts/cloud_rescore.sh INPUT WORKDIR WORKERS [CHUNK_M=50] [BLOCK_CHUNKS=10]`
-   splits the deduplicated input into 50M RANDOM chunks (`movegen chunks ... random`:
+   first splits off a NEW validation set (VAL_POS, default 2.5M, hash split by
+   position = never in both sets) and rescores it (`val.children.samples` +
+   `val.ready`), then splits the rest into 50M RANDOM chunks (`movegen chunks ... random`:
    each chunk is a random sample, no dedup drift along the file), rescores them one by
    one and keeps them (a crash loses at most one chunk; rerun the same command to
    resume). Once, after 10 chunks, it builds a merged + shuffled 500M early training
@@ -85,7 +99,13 @@ training data and nets. Detailed history, SPRT results and all decisions:
 
 Data files (local machine): `/mnt/c/TrainingData/`; current training set
 `reservoir-full.train.cum8.children.samples` (199.9M positions, shuffled),
-validation `reservoir-full.val.children.samples` (always the same file).
+validation `reservoir-full.val.children.samples` (all runs up to the 200M nets).
+**Validation decision (owner, 2026-11-25):** with the new generated data (500M block,
+3B) a NEW validation set from that data is used (made by cloud_rescore.sh), and ALL
+nets, old and new, are re-evaluated on it (`cmp_policy.py`-style int8 eval or engine
+`--policy_eval`). Not a perfectly fair comparison (old nets never saw the new
+distribution; new positions overlap the old val set by ~0.4 %), but Elo (SPRT) is the
+final judge anyway.
 
 ## Cloud machine notes (many cores)
 
