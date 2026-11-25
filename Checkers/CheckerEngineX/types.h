@@ -129,6 +129,25 @@ inline int ASP_THRESHOLD = 282;       // aspiration widening starts here
 inline int ASP_GROWTH_X100 = 156;     // window growth per re-search (x100)
 inline int MLH_RAMP_LO = 268;         // eval blend with moves-left estimate
 inline int MLH_BONUS = 267;           // bonus = t * max(0, MLH_BONUS - mlh)
+// moves-left blend on/off. --eval-loop --no_mlh: the ROOT value is searched without
+// MLH (value-net label = pure search value; the engine adds the MLH bonus itself),
+// child searches (--children, policy labels) keep MLH: it separates the winning
+// moves in decided positions.
+inline bool USE_MLH = true;
+// XORed into every TT key while MLH is off, so searches with and without MLH never
+// share TT entries (their values differ)
+inline uint64_t TT_KEY_SALT = 0;
+// labelling (eval loop) only: when the search stops inside an iteration that has
+// failed low and no root move beat alpha yet, return that fail-low score (an upper
+// bound of the deeper value) instead of the older, more optimistic score of the last
+// completed iteration. Measured on 6k positions vs a 50 ms reference: the failing-low
+// cases (5 %) 86 -> 83 cp error, overall label MSE -1.6 %. Off in play.
+inline bool ROOT_FAIL_LOW_BOUND = false;
+constexpr uint64_t NO_MLH_TT_SALT = 0x9E3779B97F4A7C15ull;
+inline void set_mlh(bool on) {
+  USE_MLH = on;
+  TT_KEY_SALT = on ? 0 : NO_MLH_TT_SALT;
+}
 inline int PROBCUT_MIN_DEPTH = 7;
 inline int PROBCUT_RED_FP = 4093;     // ProbCut verification depth = d - this
 inline int SE_TT_DEPTH_MARGIN = 2;    // SE needs tt depth >= depth - this
@@ -173,6 +192,9 @@ inline LmrTable LMR_TABLE_2D = compute_lmr_table(57, 71, 6); // = LMR_BASE_X100,
 // > 1 sharpens the move probabilities used by LMP, LMR and futility pruning;
 // the move ranking is unaffected. Set with --policy_scale.
 inline float POLICY_SCALE = 1.0f;
+// tunable form of POLICY_SCALE (x100); apply_params sets POLICY_SCALE from it,
+// --policy_scale still overrides it afterwards
+inline int POLICY_SCALE_X100 = 100;
 
 // Time management (off = always search until the hard deadline, as before).
 // With TM on, after each iteration the main thread predicts the duration of

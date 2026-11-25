@@ -36,7 +36,13 @@ struct Move {
   std::string get_move_as_string() const;
 
   // flips the move from white to black or vice versa
-  Move flipped();
+  Move flipped() {
+    Move next;
+    next.from = Bits::reverse32(from);
+    next.to = Bits::reverse32(to);
+    next.captures = Bits::reverse32(captures);
+    return next;
+  }
 
   friend std::ostream &operator<<(std::ostream &, Move other);
 };

@@ -121,10 +121,4 @@ Move Move::from_encoding(int encoding) {
   return encode.get_move();
 }
 
-Move Move::flipped() {
-  Move next;
-  next.from = getMirrored(from);
-  next.to = getMirrored(to);
-  next.captures = getMirrored(captures);
-  return next;
-}
+

@@ -73,7 +73,7 @@ def play(args, plus, minus, seed):
            "--time", str(args.time), str(args.time),
            "--threads", str(args.threads), "--num_games", str(num_games),
            "--book", args.book, "--book_seed", str(seed),
-           "--opts1", *plus, "--opts2", *minus]
+           "--opts1", *plus, *args.extra, "--opts2", *minus, *args.extra]
     # own process group: on abort the match tool *and* its engines are killed
     # (the engines do not notice when the match tool dies)
     proc = subprocess.Popen(cmd, cwd=BUILD_DIR, stdout=subprocess.PIPE,
@@ -128,6 +128,9 @@ def main():
     ap.add_argument("--start-from", default=None,
                     help="state JSON of an earlier run: start from its theta "
                          "(parameters missing there start at the engine default)")
+    ap.add_argument("--extra", nargs="*", default=[],
+                    help="fixed engine options for both sides, e.g. "
+                         "policy_file=/abs/net.quant (key=value)")
     ap.add_argument("--only", default=None,
                     help="comma-separated parameter names to tune; all other "
                          "parameters stay fixed at their start value")
@@ -137,7 +140,7 @@ def main():
         with open(args.state) as f:
             st = json.load(f)
         for key in ("engine", "iterations", "games", "time", "threads", "book",
-                    "r_end", "alpha", "gamma", "seed"):
+                    "r_end", "alpha", "gamma", "seed", "extra"):
             setattr(args, key, st["args"][key])
         params = st["params"]
         theta = st["theta"]

@@ -20,7 +20,14 @@ INCBIN(policy, "sharing_policy_32.quant");
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
-  // to be implemented
+#if defined(__AVXVNNI__)
+  // VNNI build on a CPU without AVX-VNNI: report instead of crashing
+  if (!__builtin_cpu_supports("avxvnni")) {
+    snprintf(str, 1024, "DarkHorse-vnni needs a CPU with AVX-VNNI "
+                        "(Intel 12th gen+ / AMD Zen 5); use the avx2 engine");
+    return 0;
+  }
+#endif
 
   if ((info & CB_RESET_MOVES)) {
     game_board = Board(Position::get_start_position());
@@ -156,7 +163,12 @@ int enginecommand(char str[256], char reply[1024]) {
   param1[0] = 0;
   param2[0] = 0;
   sscanf(str, "%s %s %s", command, param1, param2);
-#ifdef AVX256
+#if defined(__AVXVNNI__)
+  if (strcmp(command, "name") == 0) {
+    snprintf(reply, REPLY_MAX, "DarkHorse-vnni v1.0");
+    return 1;
+  }
+#elif defined(AVX256)
   if (strcmp(command, "name") == 0) {
     snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v1.0");
     return 1;

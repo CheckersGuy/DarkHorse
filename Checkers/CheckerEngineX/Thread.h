@@ -35,6 +35,9 @@ struct ThreadData {
   // root bookkeeping
   Move root_partial{};
   Value root_partial_score = -SCORE_INFINITE;
+  bool root_partial_lower = false; // root_partial_score is a fail-high bound
+  int asp_fail_lows = 0, asp_fail_highs = 0; // in the current iteration
+  Value asp_fail_low_score = 0;                // last fail-low score (upper bound)
   Move root_prev_best{};
   std::array<Move, 40> pv_excluded_moves;
   int num_pv_excluded = 0;

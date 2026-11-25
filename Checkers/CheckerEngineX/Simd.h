@@ -295,11 +295,21 @@ inline __m128i m256_haddx4(__m256i sum0, __m256i sum1, __m256i sum2,
   return _mm_add_epi32(_mm_add_epi32(sum128lo, sum128hi), bias);
 };
 inline void m256_add_dpbusd_epi32(__m256i &acc, __m256i a, __m256i b) {
+  // With VNNI (only when compiled for such a CPU, e.g. -march=znver5; the
+  // default x86-64-v3 build takes the AVX2 path) this is one instruction.
+  // Bit-exact: the inputs a are activations in [0, 127], so the int16 pair
+  // sums of maddubs (max 2*127*128 = 32512) never saturate.
+#if defined(__AVX512VNNI__) && defined(__AVX512VL__)
+  acc = _mm256_dpbusd_epi32(acc, a, b);
+#elif defined(__AVXVNNI__)
+  acc = _mm256_dpbusd_avx_epi32(acc, a, b);
+#else
   __m256i product0 = _mm256_maddubs_epi16(a, b);
 
   __m256i one = _mm256_set1_epi16(1);
   product0 = _mm256_madd_epi16(product0, one);
   acc = _mm256_add_epi32(acc, product0);
+#endif
 }
 
 inline void m128_add_dpbusd_epi32(__m128i &acc, __m128i a, __m128i b) {

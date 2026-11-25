@@ -20,9 +20,10 @@ struct PolicyBatchProvider {
 #[pymethods]
 impl PolicyBatchProvider {
     #[new]
-    fn new(path: String, size: usize, bsize: usize, shuffle: bool) -> Self {
+    #[pyo3(signature = (path, size, bsize, shuffle, rotate=false))]
+    fn new(path: String, size: usize, bsize: usize, shuffle: bool, rotate: bool) -> Self {
         PolicyBatchProvider {
-            loader: PolicyDataLoader::new(path, size, shuffle).expect("Error could not load"),
+            loader: PolicyDataLoader::new(path, size, shuffle, rotate).expect("Error could not load"),
             batch_size: bsize,
         }
     }
@@ -34,22 +35,32 @@ impl PolicyBatchProvider {
 
     fn fill(
         &mut self,
-        _py: Python<'_>,
+        py: Python<'_>,
         input: Bound<'_, PyArray1<f32>>,   // B*120
         eval: Bound<'_, PyArray1<f32>>,    // B
         bucket: Bound<'_, PyArray1<i64>>,  // B
         q_score: Bound<'_, PyArray1<f32>>, // B*128, zero-initialised
         q_mask: Bound<'_, PyArray1<bool>>, // B*128, zero-initialised
     ) -> PyResult<()> {
-        unsafe {
-            let mut in_array = input.as_array_mut();
-            let mut eval_array = eval.as_array_mut();
-            let mut bucket_array = bucket.as_array_mut();
-            let mut q_score_array = q_score.as_array_mut();
-            let mut q_mask_array = q_mask.as_array_mut();
-
-            for i in 0..self.batch_size {
-                let ps = self.loader.get_next().expect("Error loading sample");
+        // raw slices are taken while holding the GIL; the actual work runs with
+        // the GIL released (py.allow_threads), so the Python main thread can keep
+        // launching GPU work while a loader thread fills the next batch
+        let not_contiguous =
+            |_| pyo3::exceptions::PyValueError::new_err("fill: arrays must be contiguous");
+        let (in_array, eval_array, bucket_array, q_score_array, q_mask_array) = unsafe {
+            (
+                input.as_slice_mut().map_err(not_contiguous)?,
+                eval.as_slice_mut().map_err(not_contiguous)?,
+                bucket.as_slice_mut().map_err(not_contiguous)?,
+                q_score.as_slice_mut().map_err(not_contiguous)?,
+                q_mask.as_slice_mut().map_err(not_contiguous)?,
+            )
+        };
+        let batch_size = self.batch_size;
+        let loader = &mut self.loader;
+        py.allow_threads(move || {
+            for i in 0..batch_size {
+                let ps = loader.get_next().expect("Error loading sample");
                 let mut sample = ps.sample;
                 if sample.position.color == -1 {
                     sample.position = sample.position.get_color_flip();
@@ -76,8 +87,109 @@ impl PolicyBatchProvider {
                     q_mask_array[idx] = true;
                 }
             }
-        }
+        });
         Ok(())
+    }
+
+    /// Compact batch: per sample the 3 bitboards (white to move, as i64), the
+    /// clamped eval and the bucket; the non-capture children as flat lists
+    /// (row, encoding, policy score). The GPU expands them into the 120 inputs and
+    /// the 128 scores/mask (Experimental.expand_compact). Returns the number of
+    /// children written. Same samples and values as fill().
+    fn fill_compact(
+        &mut self,
+        py: Python<'_>,
+        pos: Bound<'_, PyArray1<i64>>,         // B*3: wp, bp, k
+        eval: Bound<'_, PyArray1<f32>>,        // B
+        bucket: Bound<'_, PyArray1<i64>>,      // B
+        child_row: Bound<'_, PyArray1<i64>>,   // capacity
+        child_enc: Bound<'_, PyArray1<i64>>,   // capacity
+        child_score: Bound<'_, PyArray1<f32>>, // capacity
+    ) -> PyResult<usize> {
+        let not_contiguous =
+            |_| pyo3::exceptions::PyValueError::new_err("fill_compact: arrays must be contiguous");
+        let (pos_a, eval_a, bucket_a, row_a, enc_a, score_a) = unsafe {
+            (
+                pos.as_slice_mut().map_err(not_contiguous)?,
+                eval.as_slice_mut().map_err(not_contiguous)?,
+                bucket.as_slice_mut().map_err(not_contiguous)?,
+                child_row.as_slice_mut().map_err(not_contiguous)?,
+                child_enc.as_slice_mut().map_err(not_contiguous)?,
+                child_score.as_slice_mut().map_err(not_contiguous)?,
+            )
+        };
+        let batch_size = self.batch_size;
+        let loader = &mut self.loader;
+        let cap = row_a.len().min(enc_a.len()).min(score_a.len());
+        let n = py.allow_threads(move || -> Result<usize, String> {
+            let mut n = 0usize;
+            for i in 0..batch_size {
+                let ps = loader.get_next().map_err(|e| e.to_string())?;
+                let mut sample = ps.sample;
+                if sample.position.color == -1 {
+                    sample.position = sample.position.get_color_flip();
+                }
+                pos_a[3 * i] = sample.position.wp as i64;
+                pos_a[3 * i + 1] = sample.position.bp as i64;
+                pos_a[3 * i + 2] = sample.position.k as i64;
+                eval_a[i] = sample.value.clamp(-500, 500) as f32;
+                bucket_a[i] = sample.position.bucket_index();
+                for c in ps.children.iter() {
+                    if c.capture {
+                        continue;
+                    }
+                    if n >= cap {
+                        return Err(format!("fill_compact: more than {} children in a batch", cap));
+                    }
+                    row_a[n] = i as i64;
+                    enc_a[n] = c.enc as i64;
+                    score_a[n] = Sample::policy_score(c.score);
+                    n += 1;
+                }
+            }
+            Ok(n)
+        });
+        n.map_err(pyo3::exceptions::PyRuntimeError::new_err)
+    }
+
+    /// Value-net batch from the same POL1 files: per sample the 3 bitboards (white
+    /// to move, as i64), the root value (clamped to +-500 exactly like the old value
+    /// training, BatchProvider.testing) and the bucket; the child lists are skipped.
+    /// The GPU expands the bitboards into the 120 inputs (Experimental.expand_inputs).
+    fn fill_value(
+        &mut self,
+        py: Python<'_>,
+        pos: Bound<'_, PyArray1<i64>>,  // B*3: wp, bp, k
+        eval: Bound<'_, PyArray1<f32>>, // B
+        bucket: Bound<'_, PyArray1<i64>>, // B
+    ) -> PyResult<()> {
+        let not_contiguous =
+            |_| pyo3::exceptions::PyValueError::new_err("fill_value: arrays must be contiguous");
+        let (pos_a, eval_a, bucket_a) = unsafe {
+            (
+                pos.as_slice_mut().map_err(not_contiguous)?,
+                eval.as_slice_mut().map_err(not_contiguous)?,
+                bucket.as_slice_mut().map_err(not_contiguous)?,
+            )
+        };
+        let batch_size = self.batch_size;
+        let loader = &mut self.loader;
+        let r = py.allow_threads(move || -> Result<(), String> {
+            for i in 0..batch_size {
+                let ps = loader.get_next().map_err(|e| e.to_string())?;
+                let mut sample = ps.sample;
+                if sample.position.color == -1 {
+                    sample.position = sample.position.get_color_flip();
+                }
+                pos_a[3 * i] = sample.position.wp as i64;
+                pos_a[3 * i + 1] = sample.position.bp as i64;
+                pos_a[3 * i + 2] = sample.position.k as i64;
+                eval_a[i] = sample.value.clamp(-500, 500) as f32;
+                bucket_a[i] = sample.position.bucket_index();
+            }
+            Ok(())
+        });
+        r.map_err(pyo3::exceptions::PyRuntimeError::new_err)
     }
 }
 

@@ -225,6 +225,7 @@ template <int OutDim> Accumulator<OutDim>::~Accumulator() {
   std_aligned_free(ft_weights);
 }
 
+
 template <int OutDim>
 void AccumulatorState<OutDim>::apply(const Accumulator<OutDim> &w, Color perp,
                                      Position before, Position after) {
@@ -309,6 +310,32 @@ void AccumulatorState<OutDim>::apply(const Accumulator<OutDim> &w, Color perp,
     BK_Z &= BK_Z - 1;
   }
 
+#ifdef ACC_STATS
+  // profiling statistics (never compiled into the normal build):
+  // changed piece-square features per update
+  {
+    static uint64_t calls = 0, sum_ps = 0, hist[65] = {0};
+    static bool registered = false;
+    const int n = num_active + num_removed;
+    calls++;
+    sum_ps += n;
+    hist[std::min(n, 64)]++;
+    if (!registered) {
+      registered = true;
+      std::atexit([] {
+        std::fprintf(stderr, "ACC_STATS<%d> updates %llu: avg changed features %.2f\n", OutDim,
+                     (unsigned long long)calls, double(sum_ps) / calls);
+        double cum = 0;
+        for (int i = 0; i <= 64; ++i)
+          if (hist[i]) {
+            cum += 100.0 * hist[i] / calls;
+            std::fprintf(stderr, "  changed %2d: %5.2f%%  (cum %5.1f%%)\n", i,
+                         100.0 * hist[i] / calls, cum);
+          }
+      });
+    }
+  }
+#endif
   auto *accu = reinterpret_cast<__m256i *>(input);
   constexpr int num_regs = 16; // number of available avx2 registers
   constexpr int OutRegisters = OutDim / 16; // each register can hold 16 int16_t
@@ -321,22 +348,22 @@ void AccumulatorState<OutDim>::apply(const Accumulator<OutDim> &w, Color perp,
     for (auto i = 0; i < num_regs; ++i) {
       regs[i] = _mm256_load_si256(accu + i + k * num_regs);
     }
+    // one base pointer per feature and chunk: the 16 loads use constant
+    // displacements instead of 16 separately kept (partly spilled) offsets
+    const int16_t *chunk_weights = w.ft_weights + k * num_regs * 16;
     for (auto i = 0; i < num_active; ++i) {
       const __m256i *weights = reinterpret_cast<const __m256i *>(
-          w.ft_weights + OutDim * active_features[i]);
-
+          chunk_weights + OutDim * active_features[i]);
       for (auto j = 0; j < num_regs; ++j) {
-        regs[j] = _mm256_add_epi16(
-            _mm256_load_si256(weights + j + k * num_regs), regs[j]);
+        regs[j] = _mm256_add_epi16(_mm256_load_si256(weights + j), regs[j]);
       }
     }
 
     for (auto i = 0; i < num_removed; ++i) {
       const __m256i *weights = reinterpret_cast<const __m256i *>(
-          w.ft_weights + OutDim * removed_features[i]);
+          chunk_weights + OutDim * removed_features[i]);
       for (auto j = 0; j < num_regs; ++j) {
-        regs[j] = _mm256_sub_epi16(
-            regs[j], _mm256_load_si256(weights + j + k * num_regs));
+        regs[j] = _mm256_sub_epi16(regs[j], _mm256_load_si256(weights + j));
       }
     }
     for (auto i = 0; i < num_regs; ++i) {
@@ -350,7 +377,7 @@ void AccumulatorState<OutDim>::update(const Accumulator<OutDim> &w, Color perp,
                                       Position after) {
   if (perp == BLACK) {
     const Position after_flipped = after.get_color_flip();
-    apply(w, perp, previous_black_flipped, after.get_color_flip());
+    apply(w, perp, previous_black_flipped, after_flipped);
     previous_black_flipped = after_flipped;
   } else {
     apply(w, perp, previous_white, after);
@@ -444,6 +471,13 @@ void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_bucket(std::string file) {
   first_layer.load_params(stream, permutation);
   second_layer.load_params(stream);
   out_layer.load_params(stream);
+  // the file must contain exactly this architecture: not truncated, no bytes left
+  if (!stream.good() || stream.peek() != std::ifstream::traits_type::eof()) {
+    std::cerr << "Network file " << file << " does not match Network<" << L1
+              << ", " << L2 << ", " << L3 << ", " << Out << ", " << NUM_BUCKETS
+              << ">" << std::endl;
+    std::exit(-1);
+  }
 }
 template <int L1, int L2, int L3, int Out, int NUM_BUCKETS>
 void Network<L1, L2, L3, Out, NUM_BUCKETS>::load_from_array(

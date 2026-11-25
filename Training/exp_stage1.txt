@@ -1,0 +1,6 @@
+# stage 1: learning rate x schedule, RangerLite, 8 epochs on the 100M set
+exp_A0_step_lr5e-3|--max-epochs 8 --lr 5e-3 --schedule step
+exp_A1_step_lr2.5e-3|--max-epochs 8 --lr 2.5e-3 --schedule step
+exp_A2_step_lr1e-2|--max-epochs 8 --lr 1e-2 --schedule step
+exp_B1_cos_lr5e-3|--max-epochs 8 --lr 5e-3 --schedule cosine --warmup 0.01
+exp_B2_cos_lr1e-2|--max-epochs 8 --lr 1e-2 --schedule cosine --warmup 0.01

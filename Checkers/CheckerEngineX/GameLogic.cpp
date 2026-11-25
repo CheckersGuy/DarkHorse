@@ -1,3 +1,10 @@
+#ifdef _WIN32
+#include <process.h>
+#define getpid _getpid
+#else
+#include <unistd.h>
+#endif
+#include <cstring>
 #include "GameLogic.h"
 #include "Bits.h"
 #include "MGenerator.h"
@@ -14,6 +21,7 @@
 
 uint64_t endTime = 1000000000;
 size_t max_nodes_search = 18446744073709551615ull;
+RootDiag root_diag;
 Value last_eval = -SCORE_INFINITE;
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
@@ -121,6 +129,8 @@ std::array<float, 40> get_probability_distribution(MoveListe &liste,
 
 template <typename MlhFn>
 Value blend_mlh(Value eval, Position pos, MlhFn mlh_fn) {
+  if (!USE_MLH)
+    return eval;
   const Value abs_eval = std::abs(eval);
   const Value ramp_lo = MLH_RAMP_LO, ramp_hi = MAX_EVAL;
 
@@ -155,6 +165,44 @@ inline Value value_from_tt(Value v, int ply, Position pos) {
   return v >= TB_WIN_MAX_PLY ? v - ply : v <= TB_LOSS_MAX_PLY ? v + ply : v;
 }
 
+// Optional sampling of evaluated positions (--log_evals FILE --log_rate N):
+// every N-th net evaluation is appended to FILE in the 18-byte training-sample
+// format (wp, bp, k, color, mlh, result, value), flipped to white to move like
+// the training data. Off by default (rate 0).
+static FILE *eval_log_file = nullptr;
+static int eval_log_rate = 0;
+
+void set_eval_log(const std::string &path, int rate) {
+  // one file per process (<path>.<pid>): parallel match engines must not
+  // interleave their records
+  const std::string file = path + "." + std::to_string(getpid());
+  eval_log_file = std::fopen(file.c_str(), "ab");
+  if (!eval_log_file) {
+    std::cerr << "Could not open eval log " << file << std::endl;
+    std::exit(-1);
+  }
+  eval_log_rate = std::max(1, rate);
+}
+
+static void log_eval(Position pos, Value eval) {
+  thread_local uint64_t counter = 0;
+  if (++counter % eval_log_rate != 0)
+    return;
+  if (pos.color == BLACK)
+    pos = pos.get_color_flip();
+  unsigned char buf[18];
+  auto put32 = [&](int off, uint32_t v) { std::memcpy(buf + off, &v, 4); };
+  put32(0, pos.WP);
+  put32(4, pos.BP);
+  put32(8, pos.K);
+  buf[12] = static_cast<unsigned char>(static_cast<int8_t>(pos.color));
+  const int16_t mlh = -1, value = static_cast<int16_t>(eval);
+  std::memcpy(buf + 13, &mlh, 2);
+  buf[15] = 0; // result unknown
+  std::memcpy(buf + 16, &value, 2);
+  std::fwrite(buf, 1, sizeof(buf), eval_log_file);
+}
+
 template <typename NetFn, typename MlhFn>
 static Value evaluate_impl(Position pos, Ply ply, NetFn net_fn, MlhFn mlh_fn) {
   const auto piece_count = pos.piece_count();
@@ -181,7 +229,7 @@ static Value evaluate_impl(Position pos, Ply ply, NetFn net_fn, MlhFn mlh_fn) {
       return (result == TB_RESULT::WIN) ? -loss(actual_dtw) : loss(actual_dtw);
     }
 
-    const auto mlh = mlh_fn(pos);
+    const auto mlh = USE_MLH ? mlh_fn(pos) : 300; // 300: no moves-left term
     auto tb_value = (result == TB_RESULT::WIN)    ? -tbloss(ply) + (300 - mlh)
                     : (result == TB_RESULT::LOSS) ? tbloss(ply) - (300 - mlh)
                                                   : 0;
@@ -190,6 +238,8 @@ static Value evaluate_impl(Position pos, Ply ply, NetFn net_fn, MlhFn mlh_fn) {
 #endif
 
   eval = net_fn(pos, ply);
+  if (eval_log_rate)
+    log_eval(pos, eval);
   eval = std::clamp(eval, -MAX_EVAL, MAX_EVAL);
   eval = blend_mlh(eval, pos, mlh_fn);
 
@@ -283,6 +333,8 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
     for (int pv_idx = 0; pv_idx < actualPV; ++pv_idx) {
       td.root_partial = Move{};
       td.root_partial_score = -SCORE_INFINITE;
+      td.root_partial_lower = false;
+      td.asp_fail_lows = td.asp_fail_highs = 0;
       network.refresh(td.net_state);
       mlh_net.refresh(td.mlh_state);
       policy.refresh(td.policy_state);
@@ -303,6 +355,17 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
             (td.main_pv.length() > 0) ? td.main_pv[0] : Move{};
       } catch (std::string &msg) {
 
+        if (is_main) {
+          root_diag.interrupted = true;
+          root_diag.fail_lows = td.asp_fail_lows;
+          root_diag.fail_highs = td.asp_fail_highs;
+          root_diag.fail_low_score = td.asp_fail_low_score;
+          root_diag.partial_used = pv_idx == 0 && actualPV == 1 && !td.root_partial.is_empty();
+          root_diag.partial_lower = root_diag.partial_used && td.root_partial_lower;
+        }
+        if (ROOT_FAIL_LOW_BOUND && pv_idx == 0 && actualPV == 1 &&
+            td.root_partial.is_empty() && td.asp_fail_lows > 0)
+          results[0].score = td.asp_fail_low_score; // move unchanged
         if (pv_idx == 0 && actualPV == 1 && !td.root_partial.is_empty()) {
           results[0].move = td.root_partial;
           results[0].score =
@@ -338,6 +401,8 @@ static void iterative_deepening(ThreadData &td, int actualPV, int depth,
 
     if (!is_main)
       continue;
+    root_diag.completed_depth = d;
+    root_diag.completed_score = results[0].score;
 
     glob_current_score = results[0].score;
     glob.score_update();
@@ -439,6 +504,7 @@ std::vector<RootMove> searchValueMultiPV(Board root_board, int numPV, int depth,
     });
   }
 
+  root_diag = RootDiag{};
   iterative_deepening(td, actualPV, depth, print, stream);
 
   stop_search.store(true, std::memory_order_relaxed);
@@ -447,6 +513,8 @@ std::vector<RootMove> searchValueMultiPV(Board root_board, int numPV, int depth,
 
   std::vector<RootMove> &results = td.results;
   last_eval = results[0].score;
+  root_diag.returned_score = results[0].score;
+  root_diag.nodes = td.nodes.load(std::memory_order_relaxed);
 
 #ifdef SEARCH_STATS
   if (print) {
@@ -650,14 +718,11 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       static_eval = evaluate(td, board.get_position(), ply);
     }
   }
-  // Testing reservoir sampling;
-  // #ifdef SAMPLING
-  /*if (isEval(static_eval) &&
+  // data generation (--generate): sample quiet search-tree positions
+  if (reservoir.enabled && isEval(static_eval) &&
       !board.get_position().has_jumps(board.get_mover())) {
     reservoir.add_sample(board.get_position(), static_eval);
   }
-  */
-  // #endif
 
   const auto static_eval_index = ply + 4;
   td.static_evals[static_eval_index] = static_eval;
@@ -954,6 +1019,7 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
           if (val > td.root_partial_score) {
             td.root_partial = move;
             td.root_partial_score = val;
+            td.root_partial_lower = val >= beta;
           }
         }
 
@@ -1161,12 +1227,15 @@ Value search_asp(ThreadData &td, Board &board, Value last_score, Depth depth) {
       const Value score = search<ROOT>(td, false, board, 0, line, alpha, beta,
                                        asp_depth, Move{}, false);
       if (score <= alpha) {
+        ++td.asp_fail_lows;
+        td.asp_fail_low_score = score;
         failed_high = 0;
         beta = (alpha + beta) / 2;
         alpha = std::max(score - delta, -EVAL_INFINITE);
         if (tries == MAX_RESEARCH - 2)
           alpha = -EVAL_INFINITE;
       } else if (score >= beta) {
+        ++td.asp_fail_highs;
         if (!td.root_partial.is_empty())
           td.root_prev_best = td.root_partial;
         beta = std::min(score + delta, (Value)EVAL_INFINITE);

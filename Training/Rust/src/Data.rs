@@ -79,13 +79,61 @@ pub fn rescoring_children(
     partitions: usize,
     queue_capacity: usize,
 ) -> std::io::Result<()> {
+    let budget = format!("--time {} --child-time {}", time, child_time);
+    rescoring_pol1(paths, output, &budget, num_workers, partitions, queue_capacity, true)
+}
+
+/// Default node budget per phase (pieces >= 17, 13-16, 9-12, <= 8) for the
+/// node-based rescoring (engine --nodes_phase), see Training/value_net_plan.md.
+pub const DEFAULT_NODES_PHASE: &str = "2500,2500,1500,750";
+
+/// rescoring_children with a node budget per position instead of a time limit
+/// (reproducible labels, independent of the CPU load).
+pub fn rescoring_children_nodes(
+    paths: Vec<&str>,
+    output: &str,
+    nodes_phase: &str,
+    num_workers: usize,
+    partitions: usize,
+    queue_capacity: usize,
+) -> std::io::Result<()> {
+    let budget = format!("--nodes_phase {}", nodes_phase);
+    rescoring_pol1(paths, output, &budget, num_workers, partitions, queue_capacity, true)
+}
+
+/// Value-net rescoring: root value only (no child searches). As in rescoring_children
+/// the root is searched without MLH (engine --no_mlh), so the value label is the pure
+/// search value (the engine adds the moves-left bonus itself); child scores keep MLH.
+/// Output: POL1 file with empty child lists (read by the value loader, fill_value).
+pub fn rescoring_value(
+    paths: Vec<&str>,
+    output: &str,
+    nodes_phase: &str,
+    num_workers: usize,
+    partitions: usize,
+    queue_capacity: usize,
+) -> std::io::Result<()> {
+    let budget = format!("--nodes_phase {}", nodes_phase);
+    rescoring_pol1(paths, output, &budget, num_workers, partitions, queue_capacity, false)
+}
+
+fn rescoring_pol1(
+    paths: Vec<&str>,
+    output: &str,
+    budget: &str, // engine options: "--time T --child-time C" or "--nodes_phase A,B,C,D"
+    num_workers: usize,
+    partitions: usize,
+    queue_capacity: usize,
+    children: bool,
+) -> std::io::Result<()> {
     const AVG_CHILDREN: f64 = 8.0;
     let to_rescore = count_positions_to_rescore(&paths, RESCORE_VALUE_THRESHOLD)?;
     let paths = expand_game_paths(&paths)?;
 
-    let per_pos_ms = time as f64 + AVG_CHILDREN * child_time as f64;
+    // rough estimate: ~1 ms per search (time mode, or ~1500 nodes)
+    let per_pos_ms = 1.0 + if children { AVG_CHILDREN } else { 0.0 };
     let est_hours = to_rescore as f64 * per_pos_ms / 1000.0 / num_workers as f64 / 3600.0;
-    println!("{} positions, estimated {:.2} hours", to_rescore, est_hours);
+    println!("{} positions, estimated {:.2} hours ({})", to_rescore, est_hours, budget);
 
     let (work_tx, work_rx) = mpsc::sync_channel::<PolicySample>(queue_capacity);
     let work_rx = Arc::new(Mutex::new(work_rx));
@@ -124,18 +172,25 @@ pub fn rescoring_children(
         let work_rx = Arc::clone(&work_rx);
         let result_tx = result_tx.clone();
         let worker_bar = bar.clone();
+        let budget = budget.to_string();
         worker_handles.push(thread::spawn(move || {
+            let engine_args = if children {
+                format!("--eval-loop --children --no_mlh {} --hash_size 64", budget)
+            } else {
+                format!("--eval-loop --no_mlh {} --hash_size 64", budget)
+            };
             let mut command = Command::new("./MainEngine")
-                .args([format!(
-                    "--eval-loop --children --time {} --child-time {} --hash_size 64",
-                    time, child_time
-                )])
+                .args(engine_args.split_whitespace())
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .spawn()
                 .expect("Failed to start process");
             let mut stdin = command.stdin.take().unwrap();
             let mut f = BufReader::new(command.stdout.take().unwrap());
+            // root values are searched without MLH (both modes; child scores keep MLH):
+            // the engine must confirm --no_mlh with a first line "no_mlh" (an old
+            // engine ignores the option and would rescore the root with MLH)
+            let mut expect_banner = true;
 
             loop {
                 let received = { work_rx.lock().unwrap().recv() };
@@ -150,17 +205,38 @@ pub fn rescoring_children(
                 }
 
                 let mut buf = String::new();
+                if expect_banner {
+                    if f.read_line(&mut buf).is_err() || buf.trim() != "no_mlh" {
+                        panic!(
+                            "./MainEngine does not support --no_mlh (first line '{}'): \
+                             update the engine copy in Training/Rust",
+                            buf.trim()
+                        );
+                    }
+                    expect_banner = false;
+                    buf.clear();
+                }
                 if f.read_line(&mut buf).is_err() {
                     continue;
                 }
-                match parse_children_line(&buf) {
-                    Some((root, children)) => {
-                        ps.sample.value = root;
-                        ps.children = children;
+                if !children {
+                    match buf.trim().parse::<i16>() {
+                        Ok(v) => ps.sample.value = v,
+                        Err(_) => {
+                            println!("Worker {worker_id} could not parse '{}'", buf.trim());
+                            continue;
+                        }
                     }
-                    None => {
-                        println!("Worker {worker_id} could not parse '{}'", buf.trim());
-                        continue;
+                } else {
+                    match parse_children_line(&buf) {
+                        Some((root, children)) => {
+                            ps.sample.value = root;
+                            ps.children = children;
+                        }
+                        None => {
+                            println!("Worker {worker_id} could not parse '{}'", buf.trim());
+                            continue;
+                        }
                     }
                 }
                 worker_bar.inc(1);
@@ -242,6 +318,16 @@ pub struct Generator<'a> {
     pub max_nodes: usize,
     pub depth: usize,
     pub prev_file: Option<&'a str>,
+    /// engine sampling (see Reservoir in GameLogic.h): keep probability per new
+    /// search-tree position, cap per game, optional keep factors per |eval| band
+    pub sample_prob: f64,
+    pub sample_cap: usize,
+    pub sample_bands: Option<String>,
+    /// node budget per move instead of time (no nps calibration needed)
+    pub use_nodes: bool,
+    /// write each position only once (Bloom filter); otherwise all are written
+    /// and deduplicated later (`movegen dedup`)
+    pub dedup: bool,
 }
 
 const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
@@ -274,7 +360,8 @@ pub fn expand_game_paths(paths: &[&str]) -> std::io::Result<Vec<String>> {
 }
 
 fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result<u64> {
-    let mut hll = HyperLogLog::<Precision14, 5>::default();
+    let hll = HyperLogLog::<Precision14, 5>::default();
+    let mut exact: u64 = 0;
     let paths = expand_game_paths(&paths)?;
     for path in paths.iter() {
         let mut reader = BufReader::new(File::open(path)?);
@@ -289,14 +376,18 @@ fn count_positions_to_rescore(paths: &[&str], threshold: i16) -> std::io::Result
                 continue;
             }
 
-            // only positions below the threshold actually get rescored
+            // only positions below the threshold actually get rescored.
+            // Exact count (the HyperLogLog estimate was badly off, e.g. 164 for
+            // 2.5M positions); duplicates are counted too, which is exact for the
+            // already deduplicated chunk files.
             if sample.value.abs() < threshold {
-                hll.insert(&sample.position);
+                exact += 1;
             }
         }
     }
 
-    Ok(hll.estimate_cardinality() as u64)
+    let _ = &hll;
+    Ok(exact)
 }
 
 pub fn rescoring_data(
@@ -1024,6 +1115,11 @@ impl<'a> Generator<'a> {
             depth: 128,
             max_nodes: 18446744073709551615usize,
             prev_file: None,
+            sample_prob: 1.0,
+            sample_cap: 2500,
+            sample_bands: None,
+            use_nodes: false,
+            dedup: false,
         }
     }
 
@@ -1041,7 +1137,9 @@ impl<'a> Generator<'a> {
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
         let openings = Arc::new(Mutex::new(Vec::new()));
-        let (tx, rx): (Sender<Vec<String>>, Receiver<Vec<String>>) = mpsc::channel();
+        // bounded: with hundreds of workers a slow writer must block them, not buffer
+        // an unlimited number of games in memory
+        let (tx, rx) = mpsc::sync_channel::<Vec<String>>(4 * self.num_workers.max(1));
         for line in reader.lines().skip(1) {
             {
                 let result = line?;
@@ -1061,7 +1159,20 @@ impl<'a> Generator<'a> {
     );
 
         let max_samples = self.max_samples;
+        // search budget per move: node budget (--nodes, no time limit) or time
+        let budget = if self.use_nodes {
+            format!("--nodes {}", max_nodes)
+        } else {
+            format!("--time {}", time)
+        };
+        let mut sampling = format!("--sample_prob {} --sample_cap {}", self.sample_prob, self.sample_cap);
+        if let Some(b) = &self.sample_bands {
+            sampling += &format!(" --sample_bands {}", b);
+        }
+        let (mut written, mut skipped) = (0u64, 0u64);
         for id in 0..self.num_workers {
+            let budget = budget.clone();
+            let sampling = sampling.clone();
             let open = Arc::clone(&openings);
             let op_counter = Arc::clone(&opening_counter);
             let sender = tx.clone();
@@ -1069,9 +1180,8 @@ impl<'a> Generator<'a> {
             let worker_seed: u64 =
                 rand::thread_rng().gen::<u64>() ^ (id as u64).wrapping_mul(0x9E3779B97F4A7C15);
             let handle = std::thread::spawn(move || {
-                let mut command = Command::new("./MainEngine")
-                    .args([format!(
-                        "--generate --time {} --nodes {} --depth {} --seed {}
+                let engine_args = format!(
+                        "--generate {} --depth {} --seed {} {}
                          --adj_draw_count 8
                          --adj_draw_score 5
                          --adj_draw_min_ply 5
@@ -1081,8 +1191,10 @@ impl<'a> Generator<'a> {
                          --multi-pv-eval-diff 65 
                          --multi-pv-min-pieces 10
                         ",
-                        time, max_nodes, depth, worker_seed
-                    )])
+                        budget, depth, worker_seed, sampling
+                    );
+                let mut command = Command::new("./MainEngine")
+                    .args(engine_args.split_whitespace())
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .spawn()
@@ -1112,16 +1224,24 @@ impl<'a> Generator<'a> {
                         }
                     }
                     let trimmed = start_pos.trim().replace("\n", "");
-                    stdin
-                        .write_all((String::from(trimmed) + "\n").as_bytes())
-                        .unwrap();
+                    if stdin.write_all((String::from(trimmed) + "\n").as_bytes()).is_err() {
+                        eprintln!("worker {id}: engine not accepting input, stopping");
+                        break 'outer;
+                    }
                     let mut game = Vec::new();
                     loop {
                         let mut buffer = String::new();
                         match f.read_line(&mut buffer) {
+                            // engine died: stop this worker (an EOF loop here used to
+                            // fill memory with empty lines until the machine crashed)
+                            Ok(0) => {
+                                eprintln!("worker {id}: engine closed its output, stopping");
+                                break 'outer;
+                            }
                             Ok(_) => {}
                             Err(e) => {
-                                println!("{:?}", e)
+                                eprintln!("worker {id}: read error {:?}, stopping", e);
+                                break 'outer;
                             }
                         }
                         buffer = buffer.trim().replace("\n", "");
@@ -1140,16 +1260,17 @@ impl<'a> Generator<'a> {
                         break;
                     }
                 }
-                stdin
-                    .write_all((String::from("terminate\n")).as_bytes())
-                    .unwrap();
-
-                command.kill().unwrap();
+                let _ = stdin.write_all((String::from("terminate\n")).as_bytes());
+                let _ = command.kill();
             });
             handles.push(handle);
         }
+        // only the workers hold senders now: if they all stop, the loop below ends
+        drop(tx);
         'game: for game in rx {
-            let mut reservoir: Vec<Sample::Sample> = Vec::new();
+            // (sample, first occurrence in the run) - `filter` decides both the
+            // unique count and, with dedup, what is written
+            let mut reservoir: Vec<(Sample::Sample, bool)> = Vec::new();
             for (index, value) in game.iter().rev().enumerate() {
                 let splits: Vec<&str> = value.split("!").collect();
                 let wp: u32 = splits[0].parse().expect("Could not parse white-pieces");
@@ -1183,9 +1304,10 @@ impl<'a> Generator<'a> {
                 } else {
                     sample.position
                 };
-                reservoir.push(sample);
+                let is_new = !filter.check(&sample.position) && !sample.position.has_capture();
+                reservoir.push((sample, is_new));
 
-                if !filter.check(&sample.position) && !sample.position.has_capture() {
+                if is_new {
                     unique_count += 1;
                     bar.inc(1);
                     filter.set(&sample.position);
@@ -1196,11 +1318,22 @@ impl<'a> Generator<'a> {
                     }
                 }
             }
-            //iterating through all the samples
-            for sample in reservoir {
+            // write the game's samples: quiet positions with pieces of both
+            // colours only (the engine already samples quiet positions only)
+            for (sample, is_new) in reservoir {
+                let p = &sample.position;
+                if p.has_capture() || p.wp == 0 || p.bp == 0 {
+                    skipped += 1;
+                    continue;
+                }
+                if self.dedup && !is_new {
+                    skipped += 1;
+                    continue;
+                }
                 sample
                     .write_fen(&mut writer)
                     .expect("Could not write the data");
+                written += 1;
             }
         }
 
@@ -1208,11 +1341,124 @@ impl<'a> Generator<'a> {
             handle.join().unwrap();
         }
         println!(
-            "We got back {} unique samples and a total of {} ",
-            unique_count, total_count
+            "We got back {} unique samples and a total of {}; written {}, skipped {}{}",
+            unique_count, total_count, written, skipped,
+            if self.dedup { " (dedup on)" } else { "" }
         );
         writer.flush().expect("Could not flush writer");
 
         Ok(())
     }
 }
+
+/// One-off exact-ish dedup of a sample file before chunked rescoring.
+/// Same filters as `rescoring_children` (no capture, both colours present,
+/// |value| < 15000); a Bloom filter sized for `expected` positions with
+/// false-positive rate `fp` (1e-4 for ~400M entries is about 1 GB).
+pub fn dedup_samples(input: &str, output: &str, expected: usize, fp: f64) -> std::io::Result<(u64, u64)> {
+    let mut filter = Bloom::new_for_fp_rate(expected, fp);
+    let mut reader = BufReader::with_capacity(1 << 22, File::open(input)?);
+    let mut writer = BufWriter::with_capacity(1 << 22, File::create(output)?);
+    let (mut read, mut written) = (0u64, 0u64);
+    for sample in reader.iter_samples() {
+        read += 1;
+        if read % 10_000_000 == 0 {
+            println!("dedup: {} read, {} written", read, written);
+        }
+        if sample.position.has_capture()
+            || sample.position.bp == 0
+            || sample.position.wp == 0
+            || sample.value.abs() >= 15000
+        {
+            continue;
+        }
+        if filter.check(&sample.position) {
+            continue;
+        }
+        filter.set(&sample.position);
+        sample.write_fen(&mut writer)?;
+        written += 1;
+    }
+    writer.flush()?;
+    println!("dedup done: {} read, {} written to {}", read, written, output);
+    Ok((read, written))
+}
+
+/// Splits a sample file into `chunks` contiguous files `<prefix>c<i>.samples`
+/// (i = 1..chunks) with (almost) equal counts.
+pub fn split_into_chunks(input: &str, prefix: &str, chunks: usize) -> std::io::Result<Vec<u64>> {
+    const SAMPLE_BYTES: u64 = 18;
+    let total = std::fs::metadata(input)?.len() / SAMPLE_BYTES;
+    let mut reader = BufReader::with_capacity(1 << 22, File::open(input)?);
+    let mut iter = reader.iter_samples();
+    let mut counts = Vec::new();
+    for i in 0..chunks as u64 {
+        let target = total * (i + 1) / chunks as u64 - total * i / chunks as u64;
+        let name = format!("{}c{}.samples", prefix, i + 1);
+        let mut writer = BufWriter::with_capacity(1 << 22, File::create(&name)?);
+        let mut n = 0u64;
+        while n < target {
+            match iter.next() {
+                Some(s) => {
+                    s.write_fen(&mut writer)?;
+                    n += 1;
+                }
+                None => break,
+            }
+        }
+        writer.flush()?;
+        println!("{}: {} samples", name, n);
+        counts.push(n);
+    }
+    Ok(counts)
+}
+
+/// External shuffle of a POL1 policy-sample file (variable-length records):
+/// records go to `partitions` random temp files, each partition is shuffled
+/// in RAM and appended to the output (new header with the same count).
+pub fn shuffle_policy_external(input: &str, output: &str, partitions: usize) -> std::io::Result<u64> {
+    use crate::Sample::{read_policy_header, write_policy_header, PolicySample};
+    let mut reader = BufReader::with_capacity(1 << 22, File::open(input)?);
+    let count = read_policy_header(&mut reader)?;
+    let mut rng = StdRng::from_rng(thread_rng()).unwrap();
+    let names: Vec<String> = (0..partitions).map(|i| format!("{}.part{}", output, i)).collect();
+    {
+        let mut parts: Vec<BufWriter<File>> = names
+            .iter()
+            .map(|n| File::create(n).map(|f| BufWriter::with_capacity(1 << 20, f)))
+            .collect::<std::io::Result<_>>()?;
+        let mut ps = PolicySample::new(Sample::Sample::default());
+        for i in 0..count {
+            ps.read_into(&mut reader)?;
+            ps.write(&mut parts[rng.gen_range(0..partitions)])?;
+            if (i + 1) % 10_000_000 == 0 {
+                println!("pshuffle: distributed {} / {}", i + 1, count);
+            }
+        }
+        for p in parts.iter_mut() {
+            p.flush()?;
+        }
+    }
+    let mut writer = BufWriter::with_capacity(1 << 22, File::create(output)?);
+    write_policy_header(&mut writer, count)?;
+    let mut written = 0u64;
+    for name in names.iter() {
+        let mut r = BufReader::with_capacity(1 << 22, File::open(name)?);
+        let mut buf: Vec<PolicySample> = Vec::new();
+        while r.has_data_left()? {
+            let mut ps = PolicySample::new(Sample::Sample::default());
+            ps.read_into(&mut r)?;
+            buf.push(ps);
+        }
+        buf.shuffle(&mut rng);
+        for ps in buf.iter() {
+            ps.write(&mut writer)?;
+        }
+        written += buf.len() as u64;
+        std::fs::remove_file(name)?;
+    }
+    writer.flush()?;
+    println!("pshuffle done: {} of {} samples written to {}", written, count, output);
+    Ok(written)
+}
+

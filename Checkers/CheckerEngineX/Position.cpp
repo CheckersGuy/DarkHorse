@@ -199,15 +199,6 @@ std::string Position::get_fen_string() const {
   return stream.str();
 }
 
-Position Position::get_color_flip() const {
-  Position next;
-  next.BP = getMirrored(WP);
-  next.WP = getMirrored(BP);
-  next.K = getMirrored(K);
-  next.color = ~color;
-  // next.key = key ^ Zobrist::color_black;
-  return next;
-}
 
 bool Position::is_legal() const {
   const uint32_t b_pawns = BP & (~K);

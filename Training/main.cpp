@@ -22,10 +22,60 @@
 // 2. measuring the results and implement support for arbitrary permutations
 // 3. Look at how stockfish does this
 
+static void print_help() {
+  std::cout << R"HELP(Engine match tool (Train)
+
+Usage: Train --match --engines E1 E2 --time T1 T2 [OPTIONS]
+Engines are looked up in ../Training/Engines/ (relative to the working
+directory). Every opening is played twice with colours reversed (game pair).
+
+REQUIRED
+  --match                   run an engine match
+  --engines E1 E2           the two engine binaries (names in ../Training/Engines)
+  --time T1 T2              time per move in ms for engine 1 and engine 2
+
+OPTIONS
+  --help                    this text
+  --threads N               games played in parallel (default: cores - 1)
+  --search_threads A B      Lazy SMP threads per engine (default 1 1); warns
+                            if threads x search threads exceeds the cores
+  --hash_size MB            hash size per engine (default 21)
+  --book FILE               opening book, one FEN per line
+                            (default ../Training/Positions/drawbook.book)
+  --book_seed S             random start offsets in the book (e.g. per SPSA
+                            iteration)
+  --num_games N             stop after N games (default 1000000)
+  --sprt ELO0 ELO1 [ALPHA BETA]
+                            sequential test on game pairs (logistic Elo,
+                            alpha = beta = 0.05 by default); stops when H0 or
+                            H1 is accepted, --num_games is a cap
+  --time_bank               simulate CheckerBoard's time bank (time saved on
+                            one move is returned on later moves)
+  --policy_scale S1 S2      passed to the engines as --policy_scale
+  --opts1 KEY=VALUE ...     extra options for engine 1, without dashes:
+                            --opts1 hist_mode=1 hist_div=8192 becomes
+                            "--hist_mode 1 --hist_div 8192"
+  --opts2 KEY=VALUE ...     the same for engine 2
+
+NOTE
+  Time controls were chosen on the local machine. On another machine run
+  Training/bench_parallel.sh on both machines and scale --time by the nps
+  ratio, otherwise the engines search a different number of nodes per move.
+
+EXAMPLES
+  Train --match --engines dev base --time 20 20 --threads 14 --sprt 0 5
+  Train --match --engines dev base --time 20 20 --opts1 policy_file=net.quant
+)HELP";
+}
+
 int main(int argl, const char **argc) {
 
   CmdParser parser;
   parser.parse(argl, argc);
+  if (argl < 2 || parser.has_option("help")) {
+    print_help();
+    return 0;
+  }
 
   if (parser.has_option("match")) {
     if (parser.has_option("engines") && parser.has_option("time")) {
@@ -171,6 +221,10 @@ int main(int argl, const char **argc) {
         std::cout << "Engine " << e << " options: " << args << std::endl;
       }
       engine_match.start();
+    } else {
+      std::cerr << "--match needs --engines E1 E2 and --time T1 T2 (see --help)"
+                << std::endl;
+      return 1;
     }
   }
 

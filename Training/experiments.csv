@@ -1,0 +1,9 @@
+run,args,epochs,best_epoch,best_tie,best_regret,last_tie,last_regret,last_val_loss,it_per_s,tie_per_epoch
+exp_A0_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step,8,7,0.8563,26.7,0.8563,26.7,1.4419,90.0,0.8373 0.8446 0.8490 0.8517 0.8532 0.8547 0.8555 0.8563
+exp_A1_step_lr2.5e-3,--max-epochs 8 --lr 2.5e-3 --schedule step,8,7,0.8556,27.1,0.8556,27.1,1.4482,92.5,0.8370 0.8453 0.8495 0.8520 0.8532 0.8544 0.8550 0.8556
+exp_A2_step_lr1e-2,--max-epochs 8 --lr 1e-2 --schedule step,8,7,0.854,27.47,0.854,27.47,1.445,91.7,0.8291 0.8380 0.8435 0.8471 0.8498 0.8515 0.8528 0.8540
+exp_B1_cos_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule cosine --warmup 0.01,8,7,0.8572,26.44,0.8572,26.44,1.4401,89.0,0.8378 0.8439 0.8478 0.8507 0.8531 0.8553 0.8567 0.8572
+exp_B2_cos_lr1e-2,--max-epochs 8 --lr 1e-2 --schedule cosine --warmup 0.01,1,0,0.8304,35.62,0.8304,35.62,1.5105,83.0,0.8304
+exp_T1_threat_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_threat,8,7,0.8582,25.95,0.8582,25.95,1.4349,77.5,0.8394 0.8471 0.8511 0.8533 0.8554 0.8568 0.8575 0.8582
+exp_T2_t14m3_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_t14m3,8,7,0.8598,25.44,0.8598,25.44,1.4296,73.8,0.8399 0.8467 0.8519 0.8545 0.8567 0.8580 0.8590 0.8598
+exp_T3_t14m23_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_t14m23,8,7,0.8619,24.77,0.8619,24.77,1.4231,70.9,0.8405 0.8484 0.8533 0.8561 0.8586 0.8600 0.8608 0.8619

@@ -1,3 +1,5 @@
+#include <cstring>
+#include <fstream>
 #include "Bits.h"
 #include "CmdParser.h"
 #include "GameLogic.h"
@@ -165,7 +167,124 @@ static const char *BENCH_FENS[] = {
     "W:W7,11,15,17,21,28:B1,5,9,K18,19,20",
 };
 
+static void print_help() {
+  std::cout << R"HELP(DarkHorse engine (MainEngine / MainEngine-vnni)
+
+Usage: MainEngine [MODE] [OPTIONS]
+Options start with "--"; a value follows after a space (--time 100).
+Without a mode the engine reads the match protocol from stdin (see below).
+
+MODES
+  --help                    this text
+  --search                  search one position and print the iterations
+                            (--position FEN, default start position)
+  --bench                   benchmark: the bench positions at depth 16, each
+                            with an empty TT; prints total nodes (version
+                            signature), time and nps. With --position FEN:
+                            search that position (default depth 27)
+  --eval-loop               rescoring: reads one FEN per line from stdin,
+                            prints the root value (see RESCORING)
+  --generate                self-play data generation: reads one opening FEN
+                            per line, plays a game, prints the sampled
+                            positions between BEGIN and END (see GENERATION)
+  --book                    opening-book generation: reads FENs from stdin,
+                            prints the positions --book_plies deeper whose
+                            score lies in the window, then "done"
+  --list_params             print the tunable search parameters
+                            (name,value,min,max,step) and exit
+  --policy_eval FILE        hard-label metrics of the policy net on a POL1
+                            file (--policy_eval_n N: first N rows)
+  --policy_dump FILE        print the policy net's 128 raw outputs per sample
+                            of a POL1 file (training-code check)
+  --value_dump FILE         print the value net's eval per sample of a POL1
+                            file (--value_dump_n N: first N samples)
+  "terminate" on stdin ends every stdin-driven mode.
+
+SEARCH
+  --time MS                 time per search in ms (default 100)
+  --nodes N                 node limit per search (default unlimited)
+  --depth D                 depth limit (default 256; bench 16)
+  --hash_size MB            transposition table size (default 128)
+  --threads N               Lazy SMP search threads (default 1; --generate
+                            and --eval-loop always use 1)
+  --multipv N               number of principal variations (default 1)
+  --tm 0|1                  time management: skip an iteration that is not
+                            predicted to finish in time (default 0)
+  --<PARAM> V               set a tunable search parameter, names from
+                            --list_params (e.g. --RFP_BASE 20)
+  --no_mlh                  no moves-left blend in the evaluation
+                            (with --eval-loop: root value only)
+  --maxdb N                 tablebases up to N pieces (Windows build only)
+
+NETWORKS (the embedded nets are the default)
+  --value_file FILE         load a value net (.quant, Network<2048,32,32,1,128>)
+  --value_perm FILE         test: reload the embedded value net with a neuron
+                            permutation (result must be bit-exact)
+  --policy_file FILE        load a policy net (.quant, Network<1024,32,32,128,128>)
+  --policy_perm FILE        neuron permutation for --policy_file
+  --policy_scale S          policy logit scale (POLICY_SCALE)
+  --log_evals FILE          log every N-th evaluated position to FILE
+  --log_rate N              rate for --log_evals (default 1000)
+
+RESCORING (--eval-loop)
+  --children                also search every quiet child move; prints
+                            "root n enc capture score ..." (policy labels)
+  --nodes N                 node budget per search (time is only a safety net)
+  --nodes_phase A,B,C,D     node budget by pieces: >=17, 13-16, 9-12, <=8
+  --time MS / --child-time MS   time budget per root / child search
+                            (used without a node budget)
+  --no_mlh                  root value without MLH; prints "no_mlh" first
+  --label_diag MS           diagnostics: one "diag" line per position with
+                            the root bookkeeping and an MS-ms reference search
+
+GENERATION (--generate; driven by "movegen generate")
+  --time MS / --nodes N     budget per move (nodes doubled for 2-PV moves;
+                            --nodes without --time: node budget only)
+  --depth D                 depth limit
+  --seed S                  random seed (mixed with the system time)
+  --sample_prob P           keep each new search-tree position with prob. P
+                            (default 1)
+  --sample_cap N            at most N positions per game (default 2500)
+  --sample_bands a,b,c,d    extra keep prob. by |static eval|: <=50, 51-200,
+                            201-400, >400 (default 1,1,1,1)
+  --multi-pv-prob P         probability to search 2 PVs and maybe play the
+                            2nd move (default 0)
+  --multi-pv-eval-diff CP   max loss of the 2nd move vs the best (default 0)
+  --multi-pv-min-pieces N   never deviate at or below N pieces (default 0)
+  --adj_draw_count N        adjudicate a draw after N moves with
+                            |eval| <= --adj_draw_score (default 0 = off)
+  --adj_draw_score CP       draw window (default 0)
+  --adj_draw_min_ply N      earliest ply for adjudication (default 0)
+  --adj_draw_max_pieces N   only at or below N pieces (default 24)
+  --adj_draw_prob P         share of games with adjudication (default 1)
+
+BOOK (--book)
+  --book_plies N            expansion depth (default 6, 0 = score the input)
+  --book_search_depth D     search depth for the score (default 1)
+  --book_min A --book_max B score window (default -55..55)
+  --book_abs 1              window on |score| (unbalanced books)
+  --book_hash MB            hash size (default 2)
+
+MATCH PROTOCOL (no mode; used by the Train --match tool)
+  stdin commands: init HASH_MB | new_game FEN | new_move SQ SQ [CAPTURES] end_move
+                  | search MS | terminate
+
+EXAMPLES
+  MainEngine --bench
+  MainEngine --search --position B:W13,17,20,23,25,26,27,29,30,31,32:B3,4,5,6,7,8,9,10,11,12,16 --time 1000
+  MainEngine --policy_eval val.children.samples --policy_file net.quant
+)HELP";
+}
+
 int main(int argl, const char **argc) {
+#if defined(__AVXVNNI__)
+  // MainEngine-vnni on a CPU without AVX-VNNI: report instead of crashing
+  if (!__builtin_cpu_supports("avxvnni")) {
+    std::cerr << "MainEngine-vnni needs a CPU with AVX-VNNI (Intel 12th gen+ / "
+                 "AMD Zen 5); use MainEngine (AVX2)" << std::endl;
+    return 1;
+  }
+#endif
 
   // mlh_net.load_permutation_from_array(gmlh_permData, gmlh_permSize);
   //  policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
@@ -177,6 +296,182 @@ int main(int argl, const char **argc) {
 
   CmdParser parser;
   parser.parse(argl, argc);
+  if (parser.has_option("help")) {
+    print_help();
+    return 0;
+  }
+  // --no_mlh: no moves-left blend (with --eval-loop only for the root value, see there)
+  const bool no_mlh = parser.has_option("no_mlh");
+  if (no_mlh)
+    set_mlh(false);
+  // test option: reload the embedded value net with a neuron permutation
+  // (raw size_t[2*L1], see load_permutation); the result must be bit-exact
+  if (parser.has_option("value_perm")) {
+    network.load_permutation(parser.as<std::string>("value_perm"));
+    network.load_from_array(gnetworkData, gnetworkSize);
+  }
+  // replaces the embedded value net (same architecture: Network<2048, 32, 32, 1, 128>),
+  // e.g. for SPRTs of a newly trained net (Training/train_value.py)
+  if (parser.has_option("value_file"))
+    network.load_bucket(parser.as<std::string>("value_file"));
+  // --value_dump FILE [--value_dump_n N]: prints the value net's eval (side to move)
+  // of the first N samples of a POL1 file, one per line, to compare with the
+  // training code (Experimental.ValueNetwork: 127 * output)
+  if (parser.has_option("value_dump")) {
+    std::ifstream in(parser.as<std::string>("value_dump"), std::ios::binary);
+    uint32_t magic = 0;
+    uint64_t count = 0;
+    in.read(reinterpret_cast<char *>(&magic), 4);
+    in.read(reinterpret_cast<char *>(&count), 8);
+    if (!in || magic != 0x504F4C31u) {
+      std::cerr << "not a policy-sample file" << std::endl;
+      return 1;
+    }
+    const uint64_t limit = parser.has_option("value_dump_n")
+                               ? std::stoull(parser.as<std::string>("value_dump_n"))
+                               : count;
+    for (uint64_t i = 0; i < std::min(count, limit); ++i) {
+      unsigned char rec[18];
+      uint8_t n = 0;
+      in.read(reinterpret_cast<char *>(rec), 18);
+      in.read(reinterpret_cast<char *>(&n), 1);
+      in.ignore(4 * n);
+      if (!in)
+        break;
+      Position pos;
+      std::memcpy(&pos.WP, rec, 4);
+      std::memcpy(&pos.BP, rec + 4, 4);
+      std::memcpy(&pos.K, rec + 8, 4);
+      pos.color = static_cast<int8_t>(rec[12]) == -1 ? BLACK : WHITE;
+      std::cout << network.get_raw_eval(pos)[0] << "\n";
+    }
+    return 0;
+  }
+  // replaces the embedded policy net, e.g. for SPRTs of a newly trained net
+  // (same architecture: Network<1024, 32, 32, 128, 128>)
+  if (parser.has_option("policy_file")) {
+    // optional neuron permutation (raw size_t[2*L1], see load_permutation);
+    // must be set before the weights are loaded
+    if (parser.has_option("policy_perm"))
+      policy.load_permutation(parser.as<std::string>("policy_perm"));
+    policy.load_bucket(parser.as<std::string>("policy_file"));
+  }
+  // --policy_dump FILE: prints the policy net's 128 raw outputs (white's move
+  // encodings) for every sample of a POL1 file, one line per sample (training-code check)
+  if (parser.has_option("policy_dump")) {
+    std::ifstream in(parser.as<std::string>("policy_dump"), std::ios::binary);
+    uint32_t magic = 0;
+    uint64_t count = 0;
+    in.read(reinterpret_cast<char *>(&magic), 4);
+    in.read(reinterpret_cast<char *>(&count), 8);
+    if (!in || magic != 0x504F4C31u) {
+      std::cerr << "not a policy-sample file" << std::endl;
+      return 1;
+    }
+    for (uint64_t i = 0; i < count; ++i) {
+      unsigned char rec[18];
+      uint8_t n = 0;
+      in.read(reinterpret_cast<char *>(rec), 18);
+      in.read(reinterpret_cast<char *>(&n), 1);
+      in.ignore(4 * n);
+      if (!in)
+        break;
+      Position pos;
+      std::memcpy(&pos.WP, rec, 4);
+      std::memcpy(&pos.BP, rec + 4, 4);
+      std::memcpy(&pos.K, rec + 8, 4);
+      pos.color = static_cast<int8_t>(rec[12]) == -1 ? BLACK : WHITE;
+      const int32_t *out = policy.get_raw_eval(pos);
+      for (int j = 0; j < 128; ++j)
+        std::cout << out[j] << (j < 127 ? ' ' : '\n');
+    }
+    return 0;
+  }
+  // --policy_eval FILE [--policy_eval_n N]: hard-label metrics of the policy
+  // net (embedded or --policy_file) on a POL1 policy-sample file, computed
+  // like Experimental.PolicyNetwork: rows with >= 2 moves, label = best child
+  // score, logits = raw output / 127 (POLICY_SCALE applied), regret clamped
+  // to +-500. Positions in the file are white to move, encodings white's view.
+  if (parser.has_option("policy_eval")) {
+    if (parser.has_option("policy_scale")) // parsed further below otherwise
+      POLICY_SCALE = std::stof(parser.as<std::string>("policy_scale"));
+    std::ifstream in(parser.as<std::string>("policy_eval"), std::ios::binary);
+    uint32_t magic = 0;
+    uint64_t count = 0;
+    in.read(reinterpret_cast<char *>(&magic), 4);
+    in.read(reinterpret_cast<char *>(&count), 8);
+    if (!in || magic != 0x504F4C31u) {
+      std::cerr << "not a policy-sample file" << std::endl;
+      return 1;
+    }
+    uint64_t limit = parser.has_option("policy_eval_n")
+                         ? std::stoull(parser.as<std::string>("policy_eval_n"))
+                         : count;
+    uint64_t rows = 0, top1 = 0, top3 = 0, tie10 = 0, blunder = 0;
+    double pmax_sum = 0.0, ent_sum = 0.0;
+    double ce = 0.0, regret = 0.0;
+    for (uint64_t i = 0; i < count && rows < limit; ++i) {
+      unsigned char rec[18];
+      uint8_t n = 0;
+      in.read(reinterpret_cast<char *>(rec), 18);
+      in.read(reinterpret_cast<char *>(&n), 1);
+      struct Ch { uint8_t enc, cap; int16_t score; } ch[64];
+      for (int c = 0; c < n; ++c)
+        in.read(reinterpret_cast<char *>(&ch[c]), 4);
+      if (!in)
+        break;
+      if (n < 2)
+        continue;
+      Position pos;
+      std::memcpy(&pos.WP, rec, 4);
+      std::memcpy(&pos.BP, rec + 4, 4);
+      std::memcpy(&pos.K, rec + 8, 4);
+      pos.color = static_cast<int8_t>(rec[12]) == -1 ? BLACK : WHITE;
+      const int32_t *out = policy.get_raw_eval(pos);
+      int best = 0, pred = 0;
+      double maxl = -1e30;
+      for (int c = 0; c < n; ++c) {
+        if (ch[c].score > ch[best].score) best = c;
+        const double l = out[ch[c].enc] / 127.0 * POLICY_SCALE;
+        if (l > maxl) { maxl = l; pred = c; }
+      }
+      double z = 0.0;
+      for (int c = 0; c < n; ++c)
+        z += std::exp(out[ch[c].enc] / 127.0 * POLICY_SCALE - maxl);
+      ce += -(out[ch[best].enc] / 127.0 * POLICY_SCALE - maxl - std::log(z));
+      pmax_sum += 1.0 / z; // probability of the top-ranked move
+      for (int c = 0; c < n; ++c) {
+        const double pc =
+            std::exp(out[ch[c].enc] / 127.0 * POLICY_SCALE - maxl) / z;
+        ent_sum -= pc * std::log(pc + 1e-12);
+      }
+      auto clampv = [](int v) { return std::clamp(v, -500, 500); };
+      regret += clampv(ch[best].score) - clampv(ch[pred].score);
+      const int reg = clampv(ch[best].score) - clampv(ch[pred].score);
+      tie10 += reg <= 10;   // as Experimental.py tie_tol
+      blunder += reg > 50;  // as Experimental.py blunder_cp
+      top1 += (pred == best) || (ch[pred].score == ch[best].score);
+      int better = 0;
+      const double lb = out[ch[best].enc];
+      for (int c = 0; c < n; ++c)
+        better += out[ch[c].enc] > lb;
+      top3 += better < 3;
+      ++rows;
+    }
+    std::cout << "policy_eval rows " << rows << " top1(tie-aware) "
+              << double(top1) / rows << " top3 " << double(top3) / rows
+              << " ce_hard " << ce / rows << " regret " << regret / rows
+              << " top1_tie10 " << double(tie10) / rows
+              << " blunder50 " << double(blunder) / rows
+              << " pmax " << pmax_sum / rows << " entropy " << ent_sum / rows
+              << std::endl;
+    return 0;
+  }
+  if (parser.has_option("log_evals")) {
+    set_eval_log(parser.as<std::string>("log_evals"),
+                 parser.has_option("log_rate") ? parser.as<int>("log_rate")
+                                               : 1000);
+  }
   Board board;
 
   std::vector<int> value_history;
@@ -194,7 +489,7 @@ int main(int argl, const char **argc) {
     time = 100;
   }
   if (parser.has_option("nodes")) {
-    max_nodes = parser.as<int>("nodes");
+    max_nodes = std::stoull(parser.as<std::string>("nodes"));
   } else {
     max_nodes = 18446744073709551615ull;
   }
@@ -364,10 +659,41 @@ int main(int argl, const char **argc) {
 
 #endif
     const bool children = parser.has_option("children");
+    // --label_diag MS: per position one "diag" line (search bookkeeping of the
+    // normal root search, then a reference search of MS ms with a cleared TT)
+    const int label_diag_ms =
+        parser.has_option("label_diag") ? parser.as<int>("label_diag") : 0;
     const int child_time =
         parser.has_option("child-time") ? parser.as<int>("child-time") : time;
+    // Node budget instead of a time limit (reproducible labels, independent of
+    // the CPU load): --nodes N for every search, or --nodes_phase A,B,C,D for
+    // positions with >= 17, 13-16, 9-12 and <= 8 pieces (root and child searches
+    // alike, by the searched position's piece count). The time limit then only
+    // serves as a safety net.
+    std::array<size_t, 4> phase_nodes;
+    phase_nodes.fill(max_nodes);
+    if (parser.has_option("nodes_phase")) {
+      std::stringstream ss(parser.as<std::string>("nodes_phase"));
+      std::string tok;
+      for (int i = 0; i < 4 && std::getline(ss, tok, ','); ++i)
+        phase_nodes[i] = std::stoull(tok);
+    }
+    const bool node_budget =
+        parser.has_option("nodes") || parser.has_option("nodes_phase");
+    auto budget = [&](const Position &p) {
+      const int pc = p.piece_count();
+      return phase_nodes[pc >= 17 ? 0 : pc >= 13 ? 1 : pc >= 9 ? 2 : 3];
+    };
+    const int root_time = node_budget ? 10000 : time;
+    const int child_time_eff = node_budget ? 10000 : child_time;
+    ROOT_FAIL_LOW_BOUND = true; // labelling only, see types.h
 
     TT.resize_in_mb(hash_size);
+    // --no_mlh: the root value is searched without MLH (value label), child
+    // searches with MLH (policy labels). Confirmed to the rescorer (Training/Rust
+    // Data.rs), which refuses engines that do not print it.
+    if (no_mlh)
+      std::cout << "no_mlh" << std::endl;
     std::string current;
     while (std::getline(std::cin, current)) {
       if (current == "terminate") {
@@ -377,7 +703,27 @@ int main(int argl, const char **argc) {
       TT.age_counter++;
       const auto pos = Position::pos_from_fen(current);
 
-      const Value root_value = search_value(pos, time, max_nodes);
+      set_mlh(!no_mlh);
+      root_diag = RootDiag{};
+      if (label_diag_ms > 0)
+        TT.clear(); // no entries of the previous (deep) reference search
+      const Value root_value = search_value(pos, root_time, budget(pos));
+      if (label_diag_ms > 0) {
+        // label diagnostics: root bookkeeping of this search + a deeper reference
+        const RootDiag d = root_diag;
+        TT.clear();
+        const Value ref = search_value(pos, label_diag_ms, SIZE_MAX);
+        const RootDiag r = root_diag;
+        std::cout << "diag " << pos.piece_count() << " " << d.nodes << " "
+                  << d.completed_depth << " " << d.completed_score << " "
+                  << d.interrupted << " " << d.partial_used << " " << d.partial_lower
+                  << " " << d.fail_lows << " " << d.fail_highs << " " << root_value
+                  << " " << ref << " " << r.completed_depth << " " << d.fail_low_score
+                  << std::endl;
+        set_mlh(true);
+        continue;
+      }
+      set_mlh(true);
 
       if (!children) {
         std::cout << root_value << std::endl; // old protocol
@@ -398,7 +744,7 @@ int main(int argl, const char **argc) {
         Move m = liste[i];
         Position child = pos;
         child.make_move(m);
-        const Value q = -search_value(child, child_time, max_nodes);
+        const Value q = -search_value(child, child_time_eff, budget(child));
 
         // same encoding the policy net uses: white's perspective
         const Move scored = (pos.color == BLACK) ? m.flipped() : m;
@@ -421,6 +767,33 @@ int main(int argl, const char **argc) {
 
     std::string next_line;
     TT.resize_in_mb(16);
+
+    // --- position sampling (see Reservoir in GameLogic.h) ---
+    //   --sample_prob P     keep each new search-tree position with prob. P
+    //   --sample_cap N      at most N positions per game (reservoir)
+    //   --sample_bands a,b,c,d  extra keep prob. by |static eval| band
+    //                       (<=50, 51-200, 201-400, >400); default 1,1,1,1
+    // Budget per move: --nodes N (x2 for a 2-PV move) and/or --time MS; with
+    // --nodes and no --time the search is limited by nodes only.
+    reservoir.enabled = true;
+    reservoir.generator.seed(adj_seed ^ 0xD1B54A32D192ED03ull);
+    if (parser.has_option("sample_prob"))
+      reservoir.sample_prob =
+          std::stod(parser.as<std::string>("sample_prob"));
+    if (parser.has_option("sample_cap"))
+      reservoir.max_samples = parser.as<int>("sample_cap");
+    if (parser.has_option("sample_bands")) {
+      std::stringstream ss(parser.as<std::string>("sample_bands"));
+      std::string item;
+      for (size_t b = 0; b < reservoir.band_accept.size(); ++b) {
+        if (!std::getline(ss, item, ','))
+          throw std::runtime_error("--sample_bands needs 4 values");
+        reservoir.band_accept[b] = std::stod(item);
+      }
+    }
+    const bool node_budget = parser.has_option("nodes");
+    if (node_budget && !parser.has_option("time"))
+      time = 1000000;
     std::vector<Position> rep_history;
     std::vector<int> rep_values;
 
@@ -495,9 +868,10 @@ int main(int argl, const char **argc) {
             board.get_position().piece_count() > multi_pv_min_pieces;
         const int this_move_pv = try_multipv_this_move ? 2 : 1;
 
-        auto root_moves =
-            searchValueMultiPV(board, this_move_pv, depth, this_move_pv * time,
-                               max_nodes, false, std::cout);
+        auto root_moves = searchValueMultiPV(
+            board, this_move_pv, depth, this_move_pv * time,
+            node_budget ? this_move_pv * max_nodes : max_nodes, false,
+            std::cout);
 
         auto value = root_moves.front().score;
         best = root_moves.front().move;

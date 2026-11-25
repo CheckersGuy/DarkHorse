@@ -37,7 +37,8 @@ inline constexpr uint32_t getVerticalFlip(uint32_t b) {
 }
 
 inline constexpr uint32_t getMirrored(uint32_t b) {
-  return getHorizontalFlip(getVerticalFlip(b));
+  // == getHorizontalFlip(getVerticalFlip(b)), a plain 32-bit reversal
+  return Bits::reverse32(b);
 }
 
 // Searchstack
@@ -186,7 +187,15 @@ struct Position {
 
   std::string get_pos_string() const;
 
-  Position get_color_flip() const;
+  // inline: called for every evaluation (black perspective of all nets)
+  Position get_color_flip() const {
+    Position next;
+    next.BP = getMirrored(WP);
+    next.WP = getMirrored(BP);
+    next.K = getMirrored(K);
+    next.color = ~color;
+    return next;
+  }
 
   uint32_t get_correction_index() const;
 

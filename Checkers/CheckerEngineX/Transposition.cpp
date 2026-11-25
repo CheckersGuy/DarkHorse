@@ -29,6 +29,7 @@ void Transposition::clear() {
 void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
                                uint64_t key, Flag flag, uint8_t depth,
                                Move tt_move, bool ttPV) {
+  key ^= TT_KEY_SALT; // separate entries for MLH-off searches (types.h)
 
   assert(!tt_move.is_capture());
 
@@ -78,6 +79,7 @@ void Transposition::store_hash(bool in_pv, Value value, Value static_eval,
 }
 
 bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
+  key ^= TT_KEY_SALT;
   const auto index =
       reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
   const uint32_t currKey = key >> 32u;
@@ -102,6 +104,7 @@ bool Transposition::find_hash(uint64_t key, NodeInfo &info) const {
 }
 
 void Transposition::prefetch(uint64_t key) {
+  key ^= TT_KEY_SALT;
   const auto index =
       reduce(static_cast<uint32_t>(key), static_cast<uint32_t>(get_capacity()));
 #if defined(_MSC_VER)

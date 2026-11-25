@@ -64,6 +64,13 @@ list(REMOVE_ITEM TSources ${CMAKE_CURRENT_SOURCE_DIR}/Training/rescorer.cpp)
 
 
 add_executable(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+# VNNI variant: identical to MainEngine (x86-64-v3 / AVX2) plus AVX-VNNI, so the int8
+# dot products of the nets use vpdpbusd (Simd.h). Runs on Intel Core 12th gen+ and
+# AMD Zen 5; the binary checks the CPU at startup. Bit-exact with the AVX2 build.
+set(VNNI_FLAGS "-mavxvnni")
+add_executable(MainEngine-vnni ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
+target_compile_options(MainEngine-vnni PRIVATE ${VNNI_FLAGS})
+target_compile_definitions(MainEngine-vnni PUBLIC "USEDB")
 add_executable(generator ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/main.cpp ${CHeaders} ${CSources})
 target_compile_definitions(generator PUBLIC "GENERATOR")
 if (UNIX)
@@ -75,6 +82,10 @@ endif()
 if(WIN32)
   add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
   target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
+  # CheckerBoard DLL with AVX-VNNI (see MainEngine-vnni); engine name DarkHorse-vnni
+  add_library(Dark-vnni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
+  target_compile_definitions(Dark-vnni PUBLIC "CHECKERBOARD")
+  target_compile_options(Dark-vnni PRIVATE ${VNNI_FLAGS})
   target_compile_definitions(MainEngine PUBLIC "USEDB")
 
   add_library(RustDll SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.h ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.cpp ${CHeaders} ${CSources})
@@ -84,6 +95,8 @@ if(WIN32)
 
   target_link_libraries(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
   target_link_libraries(Dark ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
+  target_link_libraries(Dark-vnni ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
+  target_link_libraries(MainEngine-vnni ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
   target_link_libraries(RustDll ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib )
 endif()
 add_executable(sparse_opt ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/test.cpp ${CHeaders} ${CSources})
@@ -99,5 +112,6 @@ if (UNIX)
     set_target_properties(sparse_opt PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 endif ()
 set_target_properties(MainEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
+set_target_properties(MainEngine-vnni PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 set_target_properties(generator PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake-build-debug")
 

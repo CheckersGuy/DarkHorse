@@ -45,6 +45,7 @@ inline std::vector<TuneParam> &tune_params() {
       {"RECAPTURE_EXT_FP", &RECAPTURE_EXT_FP, 0, 2048, 128},
       {"PROBCUT_IMP_RED_FP", &PROBCUT_IMP_RED_FP, 0, 3072, 128},
       {"LMR_CARRY_PCT", &LMR_CARRY_PCT, 0, 100, 8},
+      {"POLICY_SCALE_X100", &POLICY_SCALE_X100, 50, 500, 15},
       {"RAZOR_BASE", &RAZOR_BASE, 50, 300, 15},
       {"RAZOR_QUAD", &RAZOR_QUAD, 2, 30, 1.5},
       {"PROBCUT_MARGIN", &prob_cut, 5, 80, 4},
@@ -108,6 +109,7 @@ inline bool set_param(const char *name, int value) {
 
 // Recomputes tables derived from parameters. Call after set_param.
 inline void apply_params() {
+  POLICY_SCALE = POLICY_SCALE_X100 / 100.0f;
   LMR_TABLE_2D =
       compute_lmr_table(LMR_BASE_X100, LMR_FACTOR_X100, LMR_TABLE_MAX);
   if (lmp_tails_set()) {

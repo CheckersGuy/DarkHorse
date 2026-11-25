@@ -11,6 +11,15 @@
 #include <types.h>
 
 namespace Bits {
+// reverses the bit order of a 32-bit word (= rotating the board by 180 degrees)
+inline constexpr uint32_t reverse32(uint32_t x) {
+  x = __builtin_bswap32(x);
+  x = ((x & 0x0F0F0F0Fu) << 4) | ((x >> 4) & 0x0F0F0F0Fu);
+  x = ((x & 0x33333333u) << 2) | ((x >> 2) & 0x33333333u);
+  x = ((x & 0x55555555u) << 1) | ((x >> 1) & 0x55555555u);
+  return x;
+}
+
 
 enum class IndexType { INNER, PROMO };
 

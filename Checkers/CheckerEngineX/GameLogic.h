@@ -11,6 +11,7 @@
 #include "Transposition.h"
 #include "types.h"
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -50,30 +51,48 @@ struct Sample {
   Value evaluation;
 };
 
+// Position sampling for data generation (--generate): every main-search node
+// without a capture for the side to move is offered once per game (in-game
+// dedup). A new position is kept with probability
+// sample_prob * band_accept[band(|static eval|)] (Bernoulli), and the kept
+// stream is reservoir-sampled down to max_samples per game. Defaults (p = 1,
+// cap 2500, all bands 1) = the original reservoir sampling.
 struct Reservoir {
-  constexpr static int max_samples = 2500;
-  uint64_t seen = 0;
+  bool enabled = false;        // only --generate samples (no cost elsewhere)
+  int max_samples = 2500;      // cap per game
+  double sample_prob = 1.0;    // keep probability of a new position
+  // |static eval| bands: <= 50, 51-200, 201-400, > 400
+  std::array<double, 4> band_accept{1.0, 1.0, 1.0, 1.0};
+  uint64_t seen = 0;           // positions that passed the Bernoulli filter
+  uint64_t offered = 0;        // distinct positions offered this game
   std::vector<Sample> samples;
   std::mt19937_64 generator;
+  std::uniform_real_distribution<double> unit{0.0, 1.0};
   std::unordered_set<Position> seen_positions;
 
-  void add_sample(Position pos, Value value) {
-    // filling the entire reservoir first
+  static int band(Value value) {
+    const int a = std::abs(static_cast<int>(value));
+    return a <= 50 ? 0 : (a <= 200 ? 1 : (a <= 400 ? 2 : 3));
+  }
 
-    if (seen_positions.contains(pos)) {
+  void add_sample(Position pos, Value value) {
+    if (!seen_positions.insert(pos).second) {
       return;
     }
-
-    if (samples.size() < max_samples) {
+    ++offered;
+    const double p = sample_prob * band_accept[band(value)];
+    if (p < 1.0 && unit(generator) >= p) {
+      return;
+    }
+    if (samples.size() < static_cast<size_t>(max_samples)) {
       samples.emplace_back(Sample{pos, value});
     } else {
-      std::uniform_int_distribution<int> distrib(0, seen);
+      std::uniform_int_distribution<uint64_t> distrib(0, seen);
       const auto new_index = distrib(generator);
-      if (new_index < max_samples) {
+      if (new_index < static_cast<uint64_t>(max_samples)) {
         samples[new_index] = Sample{pos, value};
       }
     }
-    seen_positions.insert(pos);
     seen++;
   }
 
@@ -81,6 +100,7 @@ struct Reservoir {
     samples.clear();
     seen_positions.clear();
     seen = 0;
+    offered = 0;
   }
 };
 
@@ -100,6 +120,24 @@ struct SearchGlobal {
 };
 
 extern SearchGlobal glob;
+
+// Root bookkeeping of the last searchValueMultiPV call (main thread), for the
+// label diagnostics of the rescoring eval loop (--label_diag)
+struct RootDiag {
+  int completed_depth = 0;   // last fully completed iteration
+  Value completed_score = 0; // its (exact) score
+  bool interrupted = false;  // stopped inside an iteration
+  bool partial_used = false; // returned the interrupted iteration's best move/score
+  bool partial_lower = false; // ... and that score came from a fail high (lower bound)
+  int fail_lows = 0, fail_highs = 0; // aspiration fails in the interrupted iteration
+  Value fail_low_score = 0; // score of the last fail low there (an upper bound)
+  Value returned_score = 0;
+  uint64_t nodes = 0;
+};
+extern RootDiag root_diag;
+
+// --log_evals FILE --log_rate N: sample every N-th evaluated position
+void set_eval_log(const std::string &path, int rate);
 
 namespace Search {
 

@@ -328,16 +328,40 @@ void Match::start() {
             << (time_bank ? " (CheckerBoard time bank)" : " (fixed per move)")
             << std::endl;
 
+  // Every game needs 4 pipes (8 fds) while the engines are started. Many
+  // parallel games (cloud machines) exceed the usual soft limit of 1024 open
+  // files, so raise it to the hard limit; pipe() failures are fatal below.
+  {
+    rlimit rl{};
+    if (getrlimit(RLIMIT_NOFILE, &rl) == 0 && rl.rlim_cur < rl.rlim_max) {
+      rl.rlim_cur = rl.rlim_max;
+      setrlimit(RLIMIT_NOFILE, &rl);
+    }
+    if (getrlimit(RLIMIT_NOFILE, &rl) == 0 &&
+        rl.rlim_cur < static_cast<rlim_t>(8 * num_matches + 64)) {
+      std::cerr << "open-file limit " << rl.rlim_cur << " is too small for "
+                << num_matches << " parallel games (needs about "
+                << 8 * num_matches + 64 << "); raise it with ulimit -n"
+                << std::endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
   pid_t pid;
   int finished_games = 0;
   int sprt_result = 0; // -1: H0 accepted, 1: H1 accepted
   for (int p = 0; p < num_matches; ++p) {
     for (auto i = 0; i < numEngines; ++i) {
-      pipe(mainPipe[p][i]);
-      pipe(enginePipe[p][i]);
+      // O_CLOEXEC: an engine must not inherit the pipes of the other games
+      // (dup2 below clears the flag on its own stdin/stdout)
+      if (pipe2(mainPipe[p][i], O_CLOEXEC) != 0 ||
+          pipe2(enginePipe[p][i], O_CLOEXEC) != 0) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+      }
       pid = fork();
       if (pid < 0) {
-        std::cerr << "Error" << std::endl;
+        perror("fork");
         exit(EXIT_FAILURE);
       } else if (pid == 0) {
         dup2(mainPipe[p][i][0], STDIN_FILENO);
@@ -352,19 +376,16 @@ void Match::start() {
 
           execlp(command.c_str(), e.c_str(), argument.c_str(), (char *)NULL);
         }
-
-        exit(EXIT_SUCCESS);
+        perror(("exec " + command).c_str());
+        _exit(EXIT_FAILURE);
       }
+      // parent: close the engine's ends right away (keeps 4 fds per game)
+      close(mainPipe[p][i][0]);
+      close(enginePipe[p][i][1]);
+      fcntl64(enginePipe[p][i][0], F_SETFL, O_NONBLOCK | O_RDONLY);
     }
   }
   if (pid > 0) {
-    for (int p = 0; p < num_matches; ++p) {
-      for (int k = 0; k < numEngines; ++k) {
-        close(mainPipe[p][k][0]);
-        close(enginePipe[p][k][1]);
-        fcntl64(enginePipe[p][k][0], F_SETFL, O_NONBLOCK | O_RDONLY);
-      }
-    }
     if (sprt_enabled) {
       printf("SPRT: elo0 %.2f elo1 %.2f alpha %.3f beta %.3f (logistic Elo, "
              "pentanomial)\n",

@@ -36,6 +36,87 @@ use TableBase::Base;
 use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
+    // Data steps for the chunked policy rescoring (one call per step):
+    //   movegen dedup   <in> <out>
+    //   movegen split   <in> <train_out> <val_out> <val_fraction>
+    //   movegen chunks  <in> <prefix> <n>          -> <prefix>c1..cN.samples
+    //   movegen rescore <in> <out> <workers> [A,B,C,D]  (children, ./MainEngine; node budget
+    //                                                per search by pieces >=17/13-16/9-12/<=8,
+    //                                                default Data::DEFAULT_NODES_PHASE;
+    //                                                root value without MLH, children with)
+    //   movegen pshuffle <in> <out>                 (external shuffle of a POL1 policy file)
+    //   movegen vrescore <in> <out> <workers> [A,B,C,D] (value net: root value only, same
+    //                                                budget and root search; POL1, no children)
+    //   movegen generate <book> <out> <workers> <max_samples> [key=value ...]
+    //                                               self-play games with ./MainEngine --generate,
+    //                                               samples from the search trees. Keys:
+    //                                               nodes=N (node budget per move, no time limit)
+    //                                               time=MS (default 1, used without nodes=)
+    //                                               prob=P (keep prob. per new position, default 1)
+    //                                               cap=N (max positions per game, default 2500)
+    //                                               bands=a,b,c,d (keep factor by |eval| band
+    //                                               <=50/51-200/201-400/>400, default all 1)
+    //                                               dedup=1 (write each position once)
+    //                                               depth=D (default 128)
+    raise_open_file_limit();
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "dedup" => {
+                Data::dedup_samples(&args[2], &args[3], 400_000_000, 1e-4)?;
+            }
+            "split" => {
+                let frac: f64 = args[5].parse()?;
+                let (t, v) = Data::split_train_val(&args[2], &args[3], &args[4], frac, None)?;
+                println!("split done: {} train, {} val", t, v);
+            }
+            "chunks" => {
+                let n: usize = args[4].parse()?;
+                Data::split_into_chunks(&args[2], &args[3], n)?;
+            }
+            "rescore" => {
+                let workers: usize = args[4].parse()?;
+                let np = if args.len() > 5 { args[5].as_str() } else { Data::DEFAULT_NODES_PHASE };
+                Data::rescoring_children_nodes(vec![args[2].as_str()], &args[3], np, workers, 32, 100000)?;
+            }
+            "vrescore" => {
+                let workers: usize = args[4].parse()?;
+                let np = if args.len() > 5 { args[5].as_str() } else { Data::DEFAULT_NODES_PHASE };
+                Data::rescoring_value(vec![args[2].as_str()], &args[3], np, workers, 32, 100000)?;
+            }
+            "generate" => {
+                let workers: usize = args[4].parse()?;
+                let max_samples: usize = args[5].parse()?;
+                let mut generator = Generator::new(args[2].clone(), args[3].clone(), workers, max_samples);
+                generator.time = 1;
+                for kv in &args[6..] {
+                    let (key, val) = kv.split_once('=').with_context(|| format!("expected key=value, got {kv}"))?;
+                    match key {
+                        "nodes" => {
+                            generator.max_nodes = val.parse()?;
+                            generator.use_nodes = true;
+                        }
+                        "time" => generator.time = val.parse()?,
+                        "prob" => generator.sample_prob = val.parse()?,
+                        "cap" => generator.sample_cap = val.parse()?,
+                        "bands" => {
+                            anyhow::ensure!(val.split(',').count() == 4, "bands needs 4 values");
+                            generator.sample_bands = Some(val.to_string());
+                        }
+                        "dedup" => generator.dedup = val == "1" || val == "true",
+                        "depth" => generator.depth = val.parse()?,
+                        other => anyhow::bail!("unknown generate option {other}"),
+                    }
+                }
+                generator.generate_games()?;
+            }
+            "pshuffle" => {
+                Data::shuffle_policy_external(&args[2], &args[3], 64)?;
+            }
+            other => anyhow::bail!("unknown command {other}"),
+        }
+        return Ok(());
+    }
     /*let mut generator = Generator::new(
         String::from("../Positions/tiny.book"),
         String::from("./goodlord2.samples"),
@@ -143,7 +224,7 @@ fn main() -> anyhow::Result<()> {
     }
     */
 
-    // Unbalanced opening books for SPRT/SPSA (needs ./MainEngine in this dir).
+    /* (done) // Unbalanced opening books for SPRT/SPSA (needs ./MainEngine in this dir).
     // Stage 1: positions 6 plies after the drawbook openings whose quick
     // (depth 1) score is moderately unbalanced for either side.
     let candidates = "../Positions/unbalanced.candidates";
@@ -170,6 +251,7 @@ fn main() -> anyhow::Result<()> {
             2,
         )?;
     }
+    */
 
     /*
         let mut reader = BufReader::new(File::open("D:/TrainData/windows.samples")?);
@@ -181,4 +263,16 @@ fn main() -> anyhow::Result<()> {
         }
     */
     Ok(())
+}
+
+/// Every engine worker holds two pipe fds (rescore/generate); hundreds of workers
+/// on a cloud machine can exceed the usual soft limit of 1024 open files.
+fn raise_open_file_limit() {
+    unsafe {
+        let mut rl = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+        if libc::getrlimit(libc::RLIMIT_NOFILE, &mut rl) == 0 && rl.rlim_cur < rl.rlim_max {
+            rl.rlim_cur = rl.rlim_max;
+            libc::setrlimit(libc::RLIMIT_NOFILE, &rl);
+        }
+    }
 }
