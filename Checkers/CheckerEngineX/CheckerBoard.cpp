@@ -163,19 +163,23 @@ int enginecommand(char str[256], char reply[1024]) {
   param1[0] = 0;
   param2[0] = 0;
   sscanf(str, "%s %s %s", command, param1, param2);
+// version from CMakeLists.txt (DARKHORSE_VERSION)
+#ifndef DARKHORSE_VERSION
+#define DARKHORSE_VERSION "1.1"
+#endif
 #if defined(__AVXVNNI__)
   if (strcmp(command, "name") == 0) {
-    snprintf(reply, REPLY_MAX, "DarkHorse-vnni v1.0");
+    snprintf(reply, REPLY_MAX, "DarkHorse-vnni v" DARKHORSE_VERSION);
     return 1;
   }
 #elif defined(AVX256)
   if (strcmp(command, "name") == 0) {
-    snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v1.0");
+    snprintf(reply, REPLY_MAX, "DarkHorse-avx2 v" DARKHORSE_VERSION);
     return 1;
   }
 #else
   if (strcmp(command, "name") == 0) {
-    snprintf(reply, REPLY_MAX, "DarkHorse v1.0");
+    snprintf(reply, REPLY_MAX, "DarkHorse v" DARKHORSE_VERSION);
     return 1;
   }
 #endif

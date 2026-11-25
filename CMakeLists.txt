@@ -80,22 +80,26 @@ add_executable(perft_check ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/C
 endif()
 
 if(WIN32)
-  add_library(Dark SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  target_compile_definitions(Dark PUBLIC "CHECKERBOARD")
-  # CheckerBoard DLL with AVX-VNNI (see MainEngine-vnni); engine name DarkHorse-vnni
-  add_library(Dark-vnni SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
-  target_compile_definitions(Dark-vnni PUBLIC "CHECKERBOARD")
+  set(WIN32_STATIC_PTHREAD
+    -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive,-Bdynamic
+  )
+  # CheckerBoard engines: building the target "Dark" produces both DLLs,
+  # DarkHorse-<version>-avx2.dll and DarkHorse-<version>-vnni.dll (AVX-VNNI, see
+  # MainEngine-vnni). The version is also the one CheckerBoard shows ("name").
+  set(DARKHORSE_VERSION "1.1")
+  foreach(variant avx2 vnni)
+    add_library(Dark-${variant} SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.cpp ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/CheckerBoard.h ${CHeaders} ${CSources})
+    target_compile_definitions(Dark-${variant} PUBLIC "CHECKERBOARD" "DARKHORSE_VERSION=\"${DARKHORSE_VERSION}\"")
+    set_target_properties(Dark-${variant} PROPERTIES PREFIX "" OUTPUT_NAME "DarkHorse-${DARKHORSE_VERSION}-${variant}")
+    target_link_libraries(Dark-${variant} ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
+  endforeach()
   target_compile_options(Dark-vnni PRIVATE ${VNNI_FLAGS})
+  add_custom_target(Dark DEPENDS Dark-avx2 Dark-vnni)
   target_compile_definitions(MainEngine PUBLIC "USEDB")
 
   add_library(RustDll SHARED ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.h ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/helper.cpp ${CHeaders} ${CSources})
-    set(WIN32_STATIC_PTHREAD
-      -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive,-Bdynamic
-  )
 
   target_link_libraries(MainEngine ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
-  target_link_libraries(Dark ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
-  target_link_libraries(Dark-vnni ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
   target_link_libraries(MainEngine-vnni ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib ${WIN32_STATIC_PTHREAD})
   target_link_libraries(RustDll ${CMAKE_CURRENT_SOURCE_DIR}/Checkers/CheckerEngineX/egdb64.lib )
 endif()
