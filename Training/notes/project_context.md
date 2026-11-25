@@ -107,6 +107,19 @@ nets, old and new, are re-evaluated on it (`cmp_policy.py`-style int8 eval or en
 distribution; new positions overlap the old val set by ~0.4 %), but Elo (SPRT) is the
 final judge anyway.
 
+## Cloud run (spot instances): one command
+
+`Training/scripts/cloud_pipeline.sh WORKDIR WORKERS TOTAL` (e.g. TOTAL=1500000000)
+runs everything and can be restarted at any point (lock file against two copies):
+generation in resumable 50M pieces (`cloud_generate.sh`, opening book built if missing,
+final dedup across pieces) -> `cloud_rescore.sh` with 10M chunks (spot default; an
+interruption loses at most one piece or chunk) -> new validation set, early 500M block,
+full training file. Requirements: WORKDIR on a PERSISTENT volume (spot instance
+disks are usually wiped), current engine in Training/Rust/MainEngine, movegen built,
+`@reboot` crontab entry with the same command (see the script header). Tested
+2026-11-25 with forced kills during generation, rescoring and an interrupted merge:
+resumes correctly, no duplicates, no train/val overlap, block is a subset of train.
+
 ## Cloud machine notes (many cores)
 
 - Memory per process: rescoring worker ~100 MB (64 MB hash), generation worker ~50 MB,
@@ -143,5 +156,7 @@ final judge anyway.
    full SPSA run 4 with POLICY_SCALE_X100 fixed, verification SPRT.
 2. Experiments on the 200M set before generating a lot more data (value net: data
    scaling, positions per game, label budget, eval-band resampling).
-3. Generate new data on a cloud machine with the reworked generator (settings from
+3. Target size now **1.5B positions** (owner, 2026-11-25; no large cloud machine
+   available): 7.5x the 200M set, ~1.6 uses per opening with tiny_plus4.book, final
+   file ~73 GB (~40 GB zstd), cloud disk ~300 GB. Generate new data on a cloud machine with the reworked generator (settings from
    step 2), rescore with the new engine and node budget.
