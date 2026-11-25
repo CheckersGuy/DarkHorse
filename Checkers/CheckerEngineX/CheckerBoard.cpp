@@ -200,7 +200,10 @@ int enginecommand(char str[256], char reply[1024]) {
       return 1;
     }
 
-    if (strcmp(param1, "threads") == 0) {
+    // CheckerBoard's "More Options" dialog sends "set searchthreads N";
+    // "threads" is kept as an alias
+    if (strcmp(param1, "searchthreads") == 0 ||
+        strcmp(param1, "threads") == 0) {
       const int n = std::max(1, (int)strtol(param2, &stopstring, 10));
       num_threads = n;
       set_num_threads(num_threads); // never called during a search
@@ -284,9 +287,18 @@ int enginecommand(char str[256], char reply[1024]) {
       return 1;
     }
 
-    if (strcmp(param1, "threads") == 0) {
+    // CheckerBoard enables its search-threads box only if the engine answers
+    // "get searchthreads" (and shows "get cpus" next to it)
+    if (strcmp(param1, "searchthreads") == 0 ||
+        strcmp(param1, "threads") == 0) {
       num_threads = Registry::get_threads().value_or(num_threads);
       snprintf(reply, REPLY_MAX, "%d", num_threads);
+      return 1;
+    }
+
+    if (strcmp(param1, "cpus") == 0) {
+      snprintf(reply, REPLY_MAX, "%u",
+               std::max(1u, std::thread::hardware_concurrency()));
       return 1;
     }
 
