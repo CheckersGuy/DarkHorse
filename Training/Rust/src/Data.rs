@@ -328,6 +328,8 @@ pub struct Generator<'a> {
     /// write each position only once (Bloom filter); otherwise all are written
     /// and deduplicated later (`movegen dedup`)
     pub dedup: bool,
+    /// false-positive rate of the run's Bloom filter (unique count / dedup)
+    pub bloom_fp: f64,
 }
 
 const RESCORE_VALUE_THRESHOLD: i16 = 5000; // don't bother rescoring decisive/TB-range evals
@@ -1120,11 +1122,21 @@ impl<'a> Generator<'a> {
             sample_bands: None,
             use_nodes: false,
             dedup: false,
+            bloom_fp: 1e-3,
         }
     }
 
     pub fn generate_games(&self) -> std::io::Result<()> {
-        let mut filter = Bloom::new_for_fp_rate(3000000000, 0.1);
+        // sized for this run: max_samples unique positions (+10 % margin) at
+        // false-positive rate bloom_fp (a false positive drops a unique position
+        // when dedup is on). ~14.4 bits per entry at 1e-3: 3e9 positions ~6 GB.
+        let bloom_items = ((self.max_samples as f64) * 1.1).max(1e6) as usize;
+        let mut filter = Bloom::new_for_fp_rate(bloom_items, self.bloom_fp);
+        println!(
+            "bloom filter: {} entries at fp {} (~{:.2} GB)",
+            bloom_items, self.bloom_fp,
+            bloom_items as f64 * -self.bloom_fp.ln() / (2f64.ln().powi(2)) / 8e9
+        );
         let mut unique_count = 0;
         let mut total_count = 0;
         let time = self.time;
@@ -1409,6 +1421,31 @@ pub fn split_into_chunks(input: &str, prefix: &str, chunks: usize) -> std::io::R
         writer.flush()?;
         println!("{}: {} samples", name, n);
         counts.push(n);
+    }
+    Ok(counts)
+}
+
+/// Like `split_into_chunks`, but every sample goes to a uniformly random chunk:
+/// each chunk is a random sample of the whole input (no drift along the file, e.g.
+/// from dedup keeping first occurrences). Chunk sizes vary by about sqrt(n).
+pub fn split_into_random_chunks(input: &str, prefix: &str, chunks: usize, seed: u64) -> std::io::Result<Vec<u64>> {
+    use rand::{Rng, SeedableRng};
+    let mut rng = rand::rngs::StdRng::seed_from_u64(seed);
+    let mut reader = BufReader::with_capacity(1 << 22, File::open(input)?);
+    let mut writers = Vec::with_capacity(chunks);
+    for i in 0..chunks {
+        let name = format!("{}c{}.samples", prefix, i + 1);
+        writers.push(BufWriter::with_capacity(1 << 20, File::create(&name)?));
+    }
+    let mut counts = vec![0u64; chunks];
+    for s in reader.iter_samples() {
+        let c = rng.gen_range(0..chunks);
+        s.write_fen(&mut writers[c])?;
+        counts[c] += 1;
+    }
+    for (i, w) in writers.iter_mut().enumerate() {
+        w.flush()?;
+        println!("{}c{}.samples: {} samples", prefix, i + 1, counts[i]);
     }
     Ok(counts)
 }

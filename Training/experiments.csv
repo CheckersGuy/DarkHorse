@@ -7,3 +7,4 @@ exp_B2_cos_lr1e-2,--max-epochs 8 --lr 1e-2 --schedule cosine --warmup 0.01,1,0,0
 exp_T1_threat_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_threat,8,7,0.8582,25.95,0.8582,25.95,1.4349,77.5,0.8394 0.8471 0.8511 0.8533 0.8554 0.8568 0.8575 0.8582
 exp_T2_t14m3_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_t14m3,8,7,0.8598,25.44,0.8598,25.44,1.4296,73.8,0.8399 0.8467 0.8519 0.8545 0.8567 0.8580 0.8590 0.8598
 exp_T3_t14m23_step_lr5e-3,--max-epochs 8 --lr 5e-3 --schedule step --inputs ps_t14m23,8,7,0.8619,24.77,0.8619,24.77,1.4231,70.9,0.8405 0.8484 0.8533 0.8561 0.8586 0.8600 0.8608 0.8619
+exp_D200_cos_8ep,--max-epochs 8 --lr 5e-3 --schedule cosine --warmup 0.01,8,7,0.8596,25.6,0.8596,25.6,1.4304,160.4,0.8426 0.8467 0.8505 0.8530 0.8558 0.8580 0.8589 0.8596

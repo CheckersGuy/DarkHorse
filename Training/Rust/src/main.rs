@@ -37,9 +37,11 @@ use crate::Sample::OldSample;
 
 fn main() -> anyhow::Result<()> {
     // Data steps for the chunked policy rescoring (one call per step):
-    //   movegen dedup   <in> <out>
+    //   movegen dedup   <in> <out> [expected] [fp]  (Bloom filter sized for the input file,
+    //                                               fp 1e-4 by default)
     //   movegen split   <in> <train_out> <val_out> <val_fraction>
-    //   movegen chunks  <in> <prefix> <n>          -> <prefix>c1..cN.samples
+    //   movegen chunks  <in> <prefix> <n> [random [seed]] -> <prefix>c1..cN.samples
+    //                                               (random: each sample to a random chunk)
     //   movegen rescore <in> <out> <workers> [A,B,C,D]  (children, ./MainEngine; node budget
     //                                                per search by pieces >=17/13-16/9-12/<=8,
     //                                                default Data::DEFAULT_NODES_PHASE;
@@ -58,12 +60,28 @@ fn main() -> anyhow::Result<()> {
     //                                               <=50/51-200/201-400/>400, default all 1)
     //                                               dedup=1 (write each position once)
     //                                               depth=D (default 128)
+    //                                               bloom_fp=P (dedup filter fp, default 1e-3;
+    //                                               filter sized max_samples * 1.1)
     raise_open_file_limit();
     let args: Vec<String> = std::env::args().collect();
     if args.len() > 1 {
         match args[1].as_str() {
             "dedup" => {
-                Data::dedup_samples(&args[2], &args[3], 400_000_000, 1e-4)?;
+                // Bloom filter sized for the input (18 bytes per sample) unless given:
+                // movegen dedup <in> <out> [expected_positions] [fp], default fp 1e-4
+                // (~19 bits per entry: 3e9 positions ~7.2 GB)
+                let expected: usize = if args.len() > 4 {
+                    args[4].parse()?
+                } else {
+                    ((std::fs::metadata(&args[2])?.len() / 18) as usize).max(1_000_000)
+                };
+                let fp: f64 = if args.len() > 5 { args[5].parse()? } else { 1e-4 };
+                println!(
+                    "dedup bloom filter: {} entries at fp {} (~{:.2} GB)",
+                    expected, fp,
+                    expected as f64 * -fp.ln() / (2f64.ln().powi(2)) / 8e9
+                );
+                Data::dedup_samples(&args[2], &args[3], expected, fp)?;
             }
             "split" => {
                 let frac: f64 = args[5].parse()?;
@@ -72,7 +90,14 @@ fn main() -> anyhow::Result<()> {
             }
             "chunks" => {
                 let n: usize = args[4].parse()?;
-                Data::split_into_chunks(&args[2], &args[3], n)?;
+                // movegen chunks <in> <prefix> <n> [random [seed]]: random = every sample
+                // goes to a random chunk (each chunk is a random sample of the input)
+                if args.len() > 5 && args[5] == "random" {
+                    let seed: u64 = if args.len() > 6 { args[6].parse()? } else { 0x5EED };
+                    Data::split_into_random_chunks(&args[2], &args[3], n, seed)?;
+                } else {
+                    Data::split_into_chunks(&args[2], &args[3], n)?;
+                }
             }
             "rescore" => {
                 let workers: usize = args[4].parse()?;
@@ -105,6 +130,7 @@ fn main() -> anyhow::Result<()> {
                         }
                         "dedup" => generator.dedup = val == "1" || val == "true",
                         "depth" => generator.depth = val.parse()?,
+                        "bloom_fp" => generator.bloom_fp = val.parse()?,
                         other => anyhow::bail!("unknown generate option {other}"),
                     }
                 }
