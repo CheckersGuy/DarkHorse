@@ -16,7 +16,8 @@ Position previous;
 std::string db_path;
 INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "sharing_policy_32.quant");
+INCBIN(policy, "policy_500M_40ep.quant");
+INCBIN(policy_perm, "policy_500M_40ep.perm"); // neuron permutation (sparsity)
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
                        struct CBmove *move) {
@@ -82,7 +83,8 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
     }
     mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
     network.load_from_array(gnetworkData, gnetworkSize);
-    policy.load_from_array(gpolicyData, gpolicySize);
+    policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
+  policy.load_from_array(gpolicyData, gpolicySize);
     TT.resize_in_mb(hash_size_in_mb);
     engine_initialized = true;
     num_draw_scores = 0;

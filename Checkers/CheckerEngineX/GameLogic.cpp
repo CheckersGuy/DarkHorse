@@ -240,6 +240,8 @@ static Value evaluate_impl(Position pos, Ply ply, NetFn net_fn, MlhFn mlh_fn) {
   eval = net_fn(pos, ply);
   if (eval_log_rate)
     log_eval(pos, eval);
+  if (VALUE_SCALE_X100 != 100)
+    eval = eval * VALUE_SCALE_X100 / 100;
   eval = std::clamp(eval, -MAX_EVAL, MAX_EVAL);
   eval = blend_mlh(eval, pos, mlh_fn);
 

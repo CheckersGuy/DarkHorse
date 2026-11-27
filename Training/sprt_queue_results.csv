@@ -1,0 +1,13 @@
+time,idea,variant,stage,bounds,verdict,elo,err,games,opts,base
+2026-11-25 23:57:36,B win mode,B1_winmode_noprune,s1,0..3,H0,+0.6,1.9,8922,"{"WIN_MODE": 1}","{}"
+2026-11-26 00:05:34,B win mode,B2_winmode_lmrhalf,s1,0..3,H0,-2.7,4.0,1682,"{"WIN_MODE": 2}","{}"
+2026-11-26 00:34:49,B win mode,B3_winmode_both,s1,0..3,H0,+0.2,2.3,6376,"{"WIN_MODE": 3}","{}"
+2026-11-26 01:14:41,F upcoming repetition,F1_rep_kings,s1,0..3,H0,-0.6,2.9,5655,"{"REP_UPCOMING": 1}","{}"
+2026-11-26 01:26:23,F upcoming repetition,F2_rep_any,s1,0..3,H0,-5.4,5.1,1686,"{"REP_UPCOMING": 2}","{}"
+2026-11-26 01:51:37,C razoring,C1_razor_qs,s1,0..3,H0,-1.7,3.5,3598,"{"RAZOR_MODE": 1}","{}"
+2026-11-26 02:14:47,C razoring,C2_razor_allnode,s1,0..3,H0,-2.3,3.8,3355,"{"RAZOR_MODE": 2}","{}"
+2026-11-26 02:23:46,C razoring,C3_razor_both,s1,0..3,H0,-8.1,6.1,1332,"{"RAZOR_MODE": 3}","{}"
+2026-11-26 03:20:29,E singular margins,E1_se_ttpv,s1,0..3,H0,-0.3,2.6,8244,"{"SE_TTPV_PCT": 100}","{}"
+2026-11-26 05:11:03,E singular margins,E2_se_pvdouble,s1,0..3,H0,+0.6,1.8,16113,"{"SE_PV_DOUBLE_MARGIN": 70}","{}"
+2026-11-26 06:16:15,D all-node LMR,D1_allnode_sf,s1,0..3,H0,-0.1,2.5,9491,"{"ALLNODE_LMR": 1}","{}"
+2026-11-26 08:36:11,D all-node LMR,D2_allnode_flat,s1,0..3,H0,+0.7,1.7,20150,"{"ALLNODE_LMR": 2}","{}"

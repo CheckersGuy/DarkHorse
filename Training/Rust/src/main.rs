@@ -49,6 +49,7 @@ fn main() -> anyhow::Result<()> {
     //   movegen pshuffle <in> <out>                 (external shuffle of a POL1 policy file)
     //   movegen vrescore <in> <out> <workers> [A,B,C,D] (value net: root value only, same
     //                                                budget and root search; POL1, no children)
+    //   movegen pol2samples <in.pol1> <out.samples> (positions of a POL1 file, labels zeroed)
     //   movegen book <in> <out> <workers> <plies> [min max] [max_positions]
     //                                               opening book: positions <plies> deeper, depth-1
     //                                               score in [min,max] (default -55..55)
@@ -151,6 +152,9 @@ fn main() -> anyhow::Result<()> {
                 let engine_args = ["--book_plies", plies.as_str(), "--book_search_depth", "1",
                                    "--book_min", lo.as_str(), "--book_max", hi.as_str()];
                 Data::create_book(&args[2], &args[3], workers, &engine_args, max, 1)?;
+            }
+            "pol2samples" => {
+                Data::pol1_to_samples(&args[2], &args[3])?;
             }
             "pshuffle" => {
                 Data::shuffle_policy_external(&args[2], &args[3], 64)?;

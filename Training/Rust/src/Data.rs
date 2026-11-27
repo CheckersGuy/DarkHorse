@@ -1450,6 +1450,36 @@ pub fn split_into_random_chunks(input: &str, prefix: &str, chunks: usize, seed: 
     Ok(counts)
 }
 
+/// Extracts the positions of a POL1 file (root + children) into the plain 18-byte sample
+/// format (wp, bp, k, color; mlh/result/value zero), e.g. to rescore the same positions
+/// again with different labels (`movegen vrescore`).
+pub fn pol1_to_samples(input: &str, output: &str) -> std::io::Result<u64> {
+    use std::io::Read;
+    let mut r = BufReader::with_capacity(1 << 22, File::open(input)?);
+    let mut w = BufWriter::with_capacity(1 << 22, File::create(output)?);
+    let mut head = [0u8; 12];
+    r.read_exact(&mut head)?;
+    let magic = u32::from_le_bytes(head[0..4].try_into().unwrap());
+    assert!(magic == 0x504F4C31, "{input} is not a POL1 file");
+    let count = u64::from_le_bytes(head[4..12].try_into().unwrap());
+    let mut rec = [0u8; 19];
+    let mut skip = vec![0u8; 4 * 255];
+    for i in 0..count {
+        r.read_exact(&mut rec)?;
+        let n = rec[18] as usize;
+        r.read_exact(&mut skip[..4 * n])?;
+        let mut out = [0u8; 18];
+        out[..13].copy_from_slice(&rec[..13]); // wp, bp, k, color
+        w.write_all(&out)?;
+        if (i + 1) % 50_000_000 == 0 {
+            println!("pol2samples: {} / {}", i + 1, count);
+        }
+    }
+    w.flush()?;
+    println!("pol2samples done: {} positions written to {}", count, output);
+    Ok(count)
+}
+
 /// External shuffle of a POL1 policy-sample file (variable-length records):
 /// records go to `partitions` random temp files, each partition is shuffled
 /// in RAM and appended to the output (new header with the same count).

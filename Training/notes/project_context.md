@@ -24,7 +24,7 @@ training data and nets. Detailed history, SPRT results and all decisions:
 - Engine: `Checkers/CheckerEngineX/` (main.cpp = CLI, `MainEngine --help` lists every
   option). CMake from the repo root: `cmake . && cmake --build . --target MainEngine
   MainEngine-vnni Train` -> binaries in `cmake-build-debug/`. Bench signature:
-  `MainEngine --bench` -> `bench nodes 1281642` (must stay identical for refactors).
+  `MainEngine --bench` -> `bench nodes 1265231` (must stay identical for refactors).
 - Windows/CheckerBoard: target `Dark` builds `DarkHorse-<ver>-avx2.dll` and
   `DarkHorse-<ver>-vnni.dll` (version in CMakeLists.txt, DARKHORSE_VERSION).
 - Match/SPRT tool: `cmake-build-debug/Train --match ...` (`Train --help`); engines are
@@ -139,6 +139,11 @@ resumes correctly, no duplicates, no train/val overlap, block is a subset of tra
 
 ## Current state (2026-11-25)
 
+
+- **New embedded policy net (2026-11-27):** `policy_500M_40ep.quant` (+ `.perm`), trained 40 epochs on
+  the 500M cloud block, with 38 SPSA-tuned search defaults and POLICY_SCALE_X100 224:
+  verification SPRT vs the previous engine **H1 +6.8 +- 4.5** (3059 games). Bench signature now
+  1265231. The value net is still the old embedded one (new value nets so far ~ -4 Elo).
 - Policy net trained on 200M positions (`Training/Networks/exp_D200_cos_8ep_199.9M_7.quant`,
   8 epochs): int8 val regret 25.60 / tie-aware top1 0.8596, better than 100M with 8
   epochs (26.58) and 100M with 150 epochs (26.25). More data beats more epochs.

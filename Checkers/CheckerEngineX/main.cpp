@@ -29,7 +29,8 @@
 #include <vector>
 INCBIN(mlh_net, "sharing_mlh_25.quant");
 INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "sharing_policy_32.quant");
+INCBIN(policy, "policy_500M_40ep.quant");
+INCBIN(policy_perm, "policy_500M_40ep.perm"); // neuron permutation (sparsity)
 
 static Value search_value(const Position &pos, int time_ms, size_t max_nodes,
                           int forced_left = 8) {
@@ -292,6 +293,7 @@ int main(int argl, const char **argc) {
 
   mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
   network.load_from_array(gnetworkData, gnetworkSize);
+  policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
   policy.load_from_array(gpolicyData, gpolicySize);
 
   CmdParser parser;
@@ -345,6 +347,112 @@ int main(int argl, const char **argc) {
       pos.color = static_cast<int8_t>(rec[12]) == -1 ? BLACK : WHITE;
       std::cout << network.get_raw_eval(pos)[0] << "\n";
     }
+    return 0;
+  }
+  // --value_regret FILE [--value_regret_n N]: move choice of the value net (embedded
+  // or --value_file) on a POL1 file. Only QUIET children count (after the move the
+  // opponent has no capture: the static net is only used on quiet positions, the
+  // search resolves captures first). Per position with >= 2 quiet children the net
+  // evaluates them and "plays" the best-valued one; regret = best quiet-child score -
+  // chosen child score (scores clamped to +-500), value_acc = share with regret <= 10
+  // (same as Experimental.ValueNetwork value_acc / value_regret)
+  if (parser.has_option("value_regret")) {
+    std::ifstream in(parser.as<std::string>("value_regret"), std::ios::binary);
+    uint32_t magic = 0;
+    uint64_t count = 0;
+    in.read(reinterpret_cast<char *>(&magic), 4);
+    in.read(reinterpret_cast<char *>(&count), 8);
+    if (!in || magic != 0x504F4C31u) {
+      std::cerr << "not a policy-sample file" << std::endl;
+      return 1;
+    }
+    const uint64_t limit = parser.has_option("value_regret_n")
+                               ? std::stoull(parser.as<std::string>("value_regret_n"))
+                               : count;
+    uint64_t rows = 0, hits = 0, unmatched = 0;
+    double regret_sum = 0.0;
+    // breakdown by the root label |value|: <=50, 51-200, 201-500, >500
+    std::array<uint64_t, 4> brows{}, bhits{};
+    std::array<double, 4> bregret{};
+    for (uint64_t i = 0; i < count && rows < limit; ++i) {
+      unsigned char rec[18];
+      uint8_t n = 0;
+      in.read(reinterpret_cast<char *>(rec), 18);
+      in.read(reinterpret_cast<char *>(&n), 1);
+      std::vector<unsigned char> ch(4 * n);
+      in.read(reinterpret_cast<char *>(ch.data()), 4 * n);
+      if (!in)
+        break;
+      Position pos;
+      std::memcpy(&pos.WP, rec, 4);
+      std::memcpy(&pos.BP, rec + 4, 4);
+      std::memcpy(&pos.K, rec + 8, 4);
+      pos.color = static_cast<int8_t>(rec[12]) == -1 ? BLACK : WHITE;
+      if (pos.color == BLACK)
+        pos = pos.get_color_flip(); // encodings are from white's view
+      MoveListe liste;
+      get_moves(pos, liste);
+      double best = -1e9, vmax = -1e9, chosen = -1e9;
+      int quiet = 0;
+      std::vector<std::pair<double, double>> vs; // (value, score)
+      for (int c = 0; c < n; ++c) {
+        const int enc = ch[4 * c];
+        const bool capture = ch[4 * c + 1] != 0;
+        int16_t score;
+        std::memcpy(&score, &ch[4 * c + 2], 2);
+        if (capture)
+          continue;
+        int idx = -1;
+        for (int k = 0; k < liste.length(); ++k)
+          if (!liste[k].is_capture() && liste[k].get_move_encoding() == enc)
+            idx = k;
+        if (idx < 0) {
+          ++unmatched;
+          continue;
+        }
+        Position child = pos;
+        child.make_move(liste[idx]);
+        if (child.has_jumps(child.get_color()))
+          continue; // not quiet: the opponent can capture
+        const double v = -network.get_raw_eval(child)[0];
+        const double sc = std::clamp<double>(score, -500, 500);
+        vs.emplace_back(v, sc);
+        best = std::max(best, sc);
+        vmax = std::max(vmax, v);
+        ++quiet;
+      }
+      if (quiet < 2)
+        continue;
+      // ties (equal values) count as a random choice among them: mean score
+      double tsum = 0.0;
+      int tcnt = 0;
+      for (auto &[v, sc] : vs)
+        if (v >= vmax) {
+          tsum += sc;
+          ++tcnt;
+        }
+      chosen = tsum / tcnt;
+      const double r = best - chosen;
+      regret_sum += r;
+      hits += r <= 10.0;
+      ++rows;
+      int16_t root_value;
+      std::memcpy(&root_value, rec + 16, 2);
+      const int av = std::abs((int)root_value);
+      const int band = av <= 50 ? 0 : av <= 200 ? 1 : av <= 500 ? 2 : 3;
+      ++brows[band];
+      bhits[band] += r <= 10.0;
+      bregret[band] += r;
+    }
+    std::cout << "value_regret rows " << rows << " value_acc " << double(hits) / rows
+              << " value_regret " << regret_sum / rows << " unmatched " << unmatched
+              << std::endl;
+    const char *names[4] = {"|root|<=50", "51-200", "201-500", ">500"};
+    for (int b = 0; b < 4; ++b)
+      if (brows[b])
+        std::cout << "  " << names[b] << ": rows " << brows[b] << " value_acc "
+                  << double(bhits[b]) / brows[b] << " value_regret "
+                  << bregret[b] / brows[b] << std::endl;
     return 0;
   }
   // replaces the embedded policy net, e.g. for SPRTs of a newly trained net

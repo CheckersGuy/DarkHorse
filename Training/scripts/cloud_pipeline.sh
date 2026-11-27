@@ -46,6 +46,7 @@ log "pipeline start: $TOTAL positions, $WORKERS workers, chunks of ${CHUNK_M}M, 
 if [ ! -f "$W/rescore/chunks.done" ]; then
   "$S/cloud_generate.sh" "$W/gen.samples" "$WORKERS" "$TOTAL" 2>&1 | tee -a "$LOG"
   [ "${PIPESTATUS[0]}" -eq 0 ] || { log "generation failed"; exit 1; }
+  [ -s "$W/gen.samples" ] || { log "generation produced no positions ($W/gen.samples)"; exit 1; }
 fi
 
 "$S/cloud_rescore.sh" "$W/gen.samples" "$W/rescore" "$WORKERS" "$CHUNK_M" "$BLOCK_CHUNKS" 2>&1 | tee -a "$LOG"

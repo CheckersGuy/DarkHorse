@@ -30,7 +30,7 @@ BRANCH=${BRANCH:-main}
 TOTAL=${TOTAL:-1500000000}                # positions to generate
 WORKERS=${WORKERS:-}                      # default: all hardware threads
 COMPRESS=${COMPRESS-9}                    # zstd level for the ready files ("" = none)
-EXPECT_BENCH=${EXPECT_BENCH-1281642}      # MainEngine --bench node count ("" = no check)
+EXPECT_BENCH=${EXPECT_BENCH-1265231}      # MainEngine --bench node count ("" = no check)
 SELFTEST=${SELFTEST:-1}                   # 1 = small end-to-end test before the real run
 BUILD_JOBS=${BUILD_JOBS:-}                # parallel build jobs (default: all threads)
 NO_CRON=${NO_CRON:-}                      # 1 = do not install the @reboot crontab entry

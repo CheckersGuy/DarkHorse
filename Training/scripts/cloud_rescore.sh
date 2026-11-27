@@ -98,6 +98,7 @@ TRAIN_IN=$IN
 if [ "$VAL_POS" -gt 0 ]; then
   TRAIN_IN=$W/train_input.samples
   if [ ! -f "$W/split.done" ]; then
+    [ -s "$IN" ] || fail "input $IN is missing or empty"
     total=$(( $(stat -c %s "$IN") / 18 ))
     frac=$(python3 -c "print(min(1.0, $VAL_POS / $total))")
     log "splitting off a validation set of about $VAL_POS positions (fraction $frac)"
@@ -114,6 +115,7 @@ fi
 
 # ---- 1. split into random chunks (once)
 if [ ! -f "$W/chunks.done" ]; then
+  [ -s "$TRAIN_IN" ] || fail "input $TRAIN_IN is missing or empty"
   total=$(( $(stat -c %s "$TRAIN_IN") / 18 ))
   per=${CHUNK_POS:-$(( CHUNK_M * 1000000 ))}
   n=$(( (total + per - 1) / per ))
@@ -124,6 +126,8 @@ if [ ! -f "$W/chunks.done" ]; then
   [ "${DELETE_INPUTS:-0}" = 1 ] && [ "$TRAIN_IN" != "$IN" ] && rm -f "$TRAIN_IN"
 fi
 N=$(cat "$W/chunks.done")
+[ "${N:-0}" -ge 1 ] 2>/dev/null ||
+  fail "$W/chunks.done says '$N' chunks (left over from a failed run?); delete $W and start again"
 log "start: $N chunks, $WORKERS workers, early block after $BLOCK chunks"
 
 # ---- 2./3. rescore chunk by chunk, early block once

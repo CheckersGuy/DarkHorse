@@ -46,6 +46,9 @@ inline std::vector<TuneParam> &tune_params() {
       {"PROBCUT_IMP_RED_FP", &PROBCUT_IMP_RED_FP, 0, 3072, 128},
       {"LMR_CARRY_PCT", &LMR_CARRY_PCT, 0, 100, 8},
       {"POLICY_SCALE_X100", &POLICY_SCALE_X100, 50, 500, 15},
+      // net-specific scale: tuned alone per new value net (spsa.py --only), excluded
+      // from normal SPSA runs (spsa.py SCALE_PARAMS)
+      {"VALUE_SCALE_X100", &VALUE_SCALE_X100, 50, 200, 4},
       {"RAZOR_BASE", &RAZOR_BASE, 50, 300, 15},
       {"RAZOR_QUAD", &RAZOR_QUAD, 2, 30, 1.5},
       {"PROBCUT_MARGIN", &prob_cut, 5, 80, 4},

@@ -936,6 +936,51 @@ class ValueNetwork(PolicyNetwork):
         target = torch.sigmoid(ev / self.EVAL_SCALE)
         return (torch.sigmoid(logit) - target).pow(2).mean()
 
+    TIE_TOL = 10.0   # cp: a choice this close to the best child counts as correct
+
+    def training_step(self, batch, batch_idx):
+        # the compiled loss must not see the variable-size child lists (recompiles)
+        if not self._logging_step():
+            batch = batch[:3]
+        return super().training_step(batch, batch_idx)
+
+    @torch.no_grad()
+    def value_choice(self, pos, rows, encs, scores, B):
+        """the value net picks among the quiet children (after the move the opponent has
+        no capture; the static net only sees quiet positions in the search) by
+        evaluating them: regret (cp) vs the best quiet-child score per root with >= 2
+        quiet children, scores clamped to +-500 like the policy metrics"""
+        cpos, cbuck = value_children(pos, rows, encs)
+        quiet = ~white_has_jumps(*cpos.view(-1, 3).unbind(1))
+        cpos, cbuck = cpos.view(-1, 3)[quiet].reshape(-1), cbuck[quiet]
+        rows, scores = rows[quiet], scores[quiet]
+        n = rows.numel()
+        cpos = cpos.view(-1, 3)
+        vals = torch.empty(n, device=pos.device)
+        for s in range(0, n, B):          # chunks of B rows: same shapes as a batch
+            e = min(n, s + B)
+            p = torch.zeros(B, 3, dtype=cpos.dtype, device=pos.device)
+            b = torch.zeros(B, 1, dtype=cbuck.dtype, device=pos.device)
+            p[: e - s] = cpos[s:e]
+            b[: e - s, 0] = cbuck[s:e]
+            logit = self.forward(expand_inputs(p.reshape(-1), B), b,
+                                 bucket_blocks_gpu(b, self.num_buckets)).view(-1)
+            vals[s:e] = logit[: e - s]
+        v = -vals                          # child value from the root mover's view
+        sc = scores.clamp(-500, 500)
+        R = int(pos.numel() // 3)
+        neg = torch.full((R,), -1e9, device=pos.device)
+        cnt = torch.zeros(R, device=pos.device).scatter_add_(0, rows, torch.ones_like(v))
+        vmax = neg.clone().scatter_reduce_(0, rows, v, "amax", include_self=True)
+        best = neg.clone().scatter_reduce_(0, rows, sc, "amax", include_self=True)
+        # ties (equal values) count as a random choice among them: mean score
+        tied = (v >= vmax[rows]).float()
+        tsum = torch.zeros(R, device=pos.device).scatter_add_(0, rows, sc * tied)
+        tcnt = torch.zeros(R, device=pos.device).scatter_add_(0, rows, tied)
+        chosen = tsum / tcnt.clamp_min(1)
+        keep = cnt >= 2
+        return (best - chosen)[keep]
+
     def _shared_step(self, batch, stage):
         logit, ev, x = self._logit(batch)
         n = ev.numel()
@@ -959,6 +1004,14 @@ class ValueNetwork(PolicyNetwork):
                  prog_bar=True, batch_size=n)
         for k, v in stats.items():
             self.log(f"{stage}/{k}", v, on_step=is_train, on_epoch=not is_train, batch_size=n)
+        if len(batch) == 4:
+            regret = self.value_choice(*batch[3], n)
+            if regret.numel():
+                c = regret.numel()
+                self.log(f"{stage}/value_acc", (regret <= self.TIE_TOL).float().mean(),
+                         on_step=is_train, on_epoch=not is_train, batch_size=c)
+                self.log(f"{stage}/value_regret", regret.mean(),
+                         on_step=is_train, on_epoch=not is_train, batch_size=c)
         if not is_train:
             # breakdowns by game phase and by eval band (calibration: bias = mean
             # pred - target in win-probability space; validation only)
@@ -1070,6 +1123,63 @@ class PolicyBatchDataSet(torch.utils.data.IterableDataset):
                 q_mask.reshape(B, 128), blk_rows, blk_bucket, pos)
 
 
+# ---- value-net move choice (value_acc / value_regret) --------------------------------
+# Child positions of the quiet root moves are built on the GPU from the policy move
+# encodings (Move::get_move_encoding: 4*from + dir; dir 0: <<3/<<5 (MASK_L3/L5), 1: <<4,
+# 2: >>4, 3: >>3/>>5 (MASK_R3/R5)), with Position::make_move semantics (white to move,
+# promotion on squares 0-3), then colour-flipped to the side to move (getMirrored =
+# 32-bit reversal) and bucketed like Pos::bucket_index (pext of the black pieces).
+_MASK_L3, _MASK_L5, _MASK_R3, _MASK_R5 = 14737632, 117901063, 117901056, 3772834016
+_PROMO_WHITE = 0xF
+_BUCKET_SQUARES = (6, 9, 10, 13, 14, 17, 18)
+
+
+def _rev32(v):
+    v = ((v >> 1) & 0x55555555) | ((v & 0x55555555) << 1)
+    v = ((v >> 2) & 0x33333333) | ((v & 0x33333333) << 2)
+    v = ((v >> 4) & 0x0F0F0F0F) | ((v & 0x0F0F0F0F) << 4)
+    v = ((v >> 8) & 0x00FF00FF) | ((v & 0x00FF00FF) << 8)
+    return ((v >> 16) & 0xFFFF) | ((v & 0xFFFF) << 16)
+
+
+def value_children(pos, rows, encs):
+    """root bitboards [B*3] (white to move) + child rows/encodings -> child bitboards
+    [n*3] (side to move = white after the flip) and their buckets [n]"""
+    wp, bp, k = pos.view(-1, 3).unbind(1)
+    WP, BP, K = wp[rows], bp[rows], k[rows]
+    f = torch.ones_like(encs) << (encs // 4)
+    d = encs % 4
+    t0 = torch.where((f & _MASK_L3) != 0, f << 3, f << 5)
+    t3 = torch.where((f & _MASK_R3) != 0, f >> 3, f >> 5)
+    t = torch.where(d == 0, t0, torch.where(d == 1, f << 4, torch.where(d == 2, f >> 4, t3)))
+    t = t & 0xFFFFFFFF
+    WP2 = (WP & ~f) | t
+    is_king = (K & f) != 0
+    K2 = torch.where(is_king, (K & ~f) | t, torch.where((t & _PROMO_WHITE) != 0, K | t, K))
+    cw, cb, ck = _rev32(BP), _rev32(WP2), _rev32(K2)
+    bucket = torch.zeros_like(cb)
+    for i, sq in enumerate(_BUCKET_SQUARES):
+        bucket |= ((cb >> sq) & 1) << i
+    return torch.stack([cw, cb, ck], dim=1).reshape(-1), bucket
+
+
+def white_has_jumps(wp, bp, k):
+    """Position::get_jumpers<WHITE>() != 0 on bitboards with white to move (int64)"""
+    nocc = ~(wp | bp) & 0xFFFFFFFF
+    kings = wp & k
+
+    def fwd_black(x):
+        return ((x & _MASK_L3) << 3) | ((x & _MASK_L5) << 5)
+
+    def fwd_white(x):
+        return ((x & _MASK_R3) >> 3) | ((x & _MASK_R5) >> 5)
+    m = fwd_black((nocc << 4) & bp) & wp
+    m |= (fwd_black(nocc) & bp) << 4 & wp
+    m |= fwd_white((nocc >> 4) & bp) & kings
+    m |= ((fwd_white(nocc) & bp) >> 4) & kings
+    return (m & 0xFFFFFFFF) != 0
+
+
 def expand_inputs(pos, B):
     """bitboards [B*3] (wp, bp, k, white to move) -> the 120 piece-square inputs
     (feature layout of AccumulatorState::apply / the Rust fill)"""
@@ -1140,15 +1250,8 @@ class ThreadedBatchLoader:
         self._free, self._ready = queue.Queue(), queue.Queue()
         cap = B * self.CHILD_CAP_PER_SAMPLE
         for _ in range(self.depth + 1):
-            if self.kind == "value":
-                self._free.put({
-                    "pos": torch.empty(B * 3, dtype=torch.int64).pin_memory(),
-                    "evals": torch.empty(B, dtype=torch.float32).pin_memory(),
-                    "buckets": torch.empty(B, dtype=torch.int64).pin_memory(),
-                    "event": None,
-                })
-                continue
-            if self.compact:
+            if self.compact or self.kind == "value":
+                # value batches carry the child lists too (value_acc / value_regret)
                 self._free.put({
                     "pos": torch.empty(B * 3, dtype=torch.int64).pin_memory(),
                     "evals": torch.empty(B, dtype=torch.float32).pin_memory(),
@@ -1180,10 +1283,7 @@ class ThreadedBatchLoader:
                     slot["event"].synchronize()
                 if self.kind == "value" or self.compact:
                     try:
-                        if self.kind == "value":
-                            self.ds.fill_value_into(slot)
-                        else:
-                            slot["n"] = self.ds.fill_compact_into(slot)
+                        slot["n"] = self.ds.fill_compact_into(slot)
                     except StopIteration:
                         ready.put(None)
                         return
@@ -1236,12 +1336,18 @@ class ThreadedBatchLoader:
                 raise item
             slot = item
             if self.kind == "value":
+                n = slot["n"]
                 g = {k: slot[k].to(dev, non_blocking=True) for k in ("pos", "evals", "buckets")}
+                rows, encs, scores = (slot[k][:n].to(dev, non_blocking=True)
+                                      for k in ("child_row", "child_enc", "child_score"))
                 ev = torch.cuda.Event()
                 ev.record()
                 slot["event"] = ev
                 self._free.put(slot)
-                yield (g["evals"].view(B, 1), g["buckets"].view(B, 1), expand_inputs(g["pos"], B))
+                # 4th element: (root bitboards, child rows, encodings, scores) for the
+                # move-choice metrics; the compiled training loss only sees batch[:3]
+                yield (g["evals"].view(B, 1), g["buckets"].view(B, 1), expand_inputs(g["pos"], B),
+                       (g["pos"], rows, encs, scores))
                 continue
             if self.compact:
                 n = slot["n"]

@@ -37,6 +37,8 @@ import time
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BUILD_DIR = os.path.join(ROOT, "cmake-build-debug")   # the match tool runs here
 ENGINE_DIR = os.path.join(ROOT, "Training", "Engines")
+# tuned separately per net (spsa.py --only NAME), never in a normal SPSA run
+SCALE_PARAMS = {"VALUE_SCALE_X100", "POLICY_SCALE_X100"}
 
 FINAL_RE = re.compile(r"^Final: games (\d+)\s+W-L-D (\d+)-(\d+)-(\d+)")
 
@@ -162,7 +164,9 @@ def main():
                 sys.exit(f"unknown parameters in --only: {sorted(unknown)}")
         # c_end 0 (engine) or not selected: listed but kept fixed
         for p in params:
-            p["tune"] = p["c_end"] > 0 and (only is None or p["name"] in only)
+            # net-specific scales are tuned only when named in --only (one 1-parameter
+            # SPSA per new net); normal runs keep them fixed
+            p["tune"] = p["c_end"] > 0 and (p["name"] in only if only else p["name"] not in SCALE_PARAMS)
         print("tuning: " + ", ".join(p["name"] for p in params if p["tune"]))
         k0 = 0
         totals = dict(w=0, l=0, d=0)
