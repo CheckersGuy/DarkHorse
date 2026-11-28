@@ -29,6 +29,9 @@
 #   MOVEGEN=path         movegen binary (default Training/Rust/target/release/movegen)
 #   ENGINE_DIR=dir       directory with the engine as ./MainEngine (default Training/Rust)
 #   NODES_PHASE=A,B,C,D  node budget (default: movegen's default 2500,2500,1500,750)
+#   VALUE_ONLY=1         value-net data: movegen vrescore (root value only, no child
+#                        searches; ~10x faster) instead of movegen rescore. Same POL1
+#                        format, every sample has an empty child list.
 #   DELETE_INPUTS=1      delete each unrescored chunk after it is rescored
 #   DELETE_CHUNKS=1      delete the rescored chunks once train.children.samples is ready
 #   CHUNK_POS=N          chunk size in positions (tests)
@@ -83,8 +86,9 @@ rescore_file() {
   rm -f "$out.tmp"*                               # leftovers of an interrupted run
   want=$(( $(stat -c %s "$src") / 18 ))
   log "$label: rescoring $want positions"
-  ( cd "$ENGINE_DIR" && "$MOVEGEN" rescore "$src" "$out.tmp" "$WORKERS" ${NODES_PHASE:-} ) >> "$LOG" 2>&1 ||
-    fail "$label: movegen rescore failed (rerun the script to retry)"
+  local mode=rescore; [ "${VALUE_ONLY:-0}" = 1 ] && mode=vrescore
+  ( cd "$ENGINE_DIR" && "$MOVEGEN" "$mode" "$src" "$out.tmp" "$WORKERS" ${NODES_PHASE:-} ) >> "$LOG" 2>&1 ||
+    fail "$label: movegen $mode failed (rerun the script to retry)"
   got=$(count_pol1 "$out.tmp")
   # rescore drops a few positions (captures, decided evals): expect >= 90 %
   [ "$got" -ge $(( want * 9 / 10 )) ] || fail "$label: only $got of $want positions rescored"

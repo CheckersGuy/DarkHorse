@@ -64,6 +64,7 @@ fn main() -> anyhow::Result<()> {
     //                                               <=50/51-200/201-400/>400, default all 1)
     //                                               dedup=1 (write each position once)
     //                                               depth=D (default 128)
+    //                                               start=N (first opening; prints next_opening at the end)
     //                                               bloom_fp=P (dedup filter fp, default 1e-3;
     //                                               filter sized max_samples * 1.1)
     raise_open_file_limit();
@@ -135,6 +136,7 @@ fn main() -> anyhow::Result<()> {
                         "dedup" => generator.dedup = val == "1" || val == "true",
                         "depth" => generator.depth = val.parse()?,
                         "bloom_fp" => generator.bloom_fp = val.parse()?,
+                        "start" => generator.start_opening = val.parse()?,
                         other => anyhow::bail!("unknown generate option {other}"),
                     }
                 }

@@ -28,6 +28,7 @@
 # ENGINE_DIR, BOOK, GEN_PIECE_M, NODES_PHASE, VAL_POS, COMPRESS, DELETE_INPUTS,
 # DELETE_CHUNKS, ...) plus
 #   CHUNK_M=N        rescoring chunk size in million positions (default 10)
+#   VALUE_ONLY=1     value-net data (root value only, movegen vrescore, ~10x faster)
 #   BLOCK_CHUNKS=N   chunks in the early block (default 500 / CHUNK_M)
 #   KEEP_GEN=1       keep gen.samples after the chunks were split off
 set -u -o pipefail
@@ -41,7 +42,7 @@ log() { echo "$(date '+%F %T') $*" | tee -a "$LOG"; }
 
 CHUNK_M=${CHUNK_M:-10}
 BLOCK_CHUNKS=${BLOCK_CHUNKS:-$(( 500 / CHUNK_M ))}
-log "pipeline start: $TOTAL positions, $WORKERS workers, chunks of ${CHUNK_M}M, block after $BLOCK_CHUNKS chunks"
+log "pipeline start: $TOTAL positions, $WORKERS workers, chunks of ${CHUNK_M}M, block after $BLOCK_CHUNKS chunks$([ "${VALUE_ONLY:-0}" = 1 ] && echo ", value-only")"
 
 if [ ! -f "$W/rescore/chunks.done" ]; then
   "$S/cloud_generate.sh" "$W/gen.samples" "$WORKERS" "$TOTAL" 2>&1 | tee -a "$LOG"

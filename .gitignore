@@ -995,3 +995,12 @@ launchSettings.json
 # generated opening books (rebuilt by Training/scripts/cloud_generate.sh)
 Training/Positions/tiny_plus*.book
 Training/Positions/*.book.tmp
+
+# local run artefacts (binaries of relabelling runs, progress/state files, SPSA logs)
+Training/vrescore_run/MainEngine
+Training/vrescore_run/movegen
+Training/vrescore_run/*.log
+Training/vrescore_run/run.out
+Training/.progress_state_*
+Training/.rescore_pgid
+Training/spsa*_log.csv

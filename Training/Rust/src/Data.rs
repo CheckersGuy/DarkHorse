@@ -328,6 +328,10 @@ pub struct Generator<'a> {
     /// write each position only once (Bloom filter); otherwise all are written
     /// and deduplicated later (`movegen dedup`)
     pub dedup: bool,
+    /// first opening of this run (index into the book, wraps around); the next unused
+    /// index is printed at the end ("next_opening N") so consecutive runs continue
+    /// through the book instead of all starting at opening 0
+    pub start_opening: usize,
     /// false-positive rate of the run's Bloom filter (unique count / dedup)
     pub bloom_fp: f64,
 }
@@ -1122,6 +1126,7 @@ impl<'a> Generator<'a> {
             sample_bands: None,
             use_nodes: false,
             dedup: false,
+            start_opening: 0,
             bloom_fp: 1e-3,
         }
     }
@@ -1144,7 +1149,7 @@ impl<'a> Generator<'a> {
         let depth = self.depth;
         let mut writer = BufWriter::new(File::create(self.output.clone())?);
         let thread_counter = Arc::new(AtomicUsize::new(0));
-        let opening_counter = Arc::new(Mutex::new(0));
+        let opening_counter = Arc::new(Mutex::new(0usize));
 
         let mut handles = Vec::new();
         let reader = BufReader::with_capacity(1000000, File::open(self.book.clone())?);
@@ -1160,6 +1165,12 @@ impl<'a> Generator<'a> {
             }
         }
 
+        {
+            // continue through the book where the previous run stopped
+            let n = openings.lock().unwrap().len().max(1);
+            *opening_counter.lock().unwrap() = self.start_opening % n;
+            println!("openings: {} in the book, starting at {}", n, self.start_opening % n);
+        }
         let bar = ProgressBar::new(self.max_samples as u64);
         bar.set_style(
         ProgressStyle::with_template(
@@ -1357,6 +1368,7 @@ impl<'a> Generator<'a> {
             unique_count, total_count, written, skipped,
             if self.dedup { " (dedup on)" } else { "" }
         );
+        println!("next_opening {}", *opening_counter.lock().unwrap());
         writer.flush().expect("Could not flush writer");
 
         Ok(())
