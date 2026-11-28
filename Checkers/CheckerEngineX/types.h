@@ -228,29 +228,32 @@ inline std::array<float, 9> LMP_MASS = {
     1.0f - 7 / 10000.0f     // depth 8
 };
 
-inline int SE_MAX_MULTI = 2;       // multi-extensions allowed along one line
-
-inline int FP_MAX_DEPTH = 6;  // only prune at shallow remaining depth
-inline int FP_BASE = 40;      // margin at lmr_depth 0
-inline int FP_SLOPE = 35;     // extra margin per lmr_depth
-inline int FP_MIN_PIECES = 8; // below this, king endgames: eval too unreliable
-constexpr float FP_MIN_MASS = 0.5f; // policy mass that must be searched first
+// search switches under test (0 = old behaviour; SPRT procedure: H1 -> default)
+inline int PC_EXCL_FIX = 1;   // no ProbCut TT store inside singular searches (NR-SPRT H1 +2.5, 2026-11-28)
+inline int LMP1_COUNT = 0;    // > 0: depth-1 quiet nodes without the policy net,
+                              // at most this many moves (cheap ordering)
+inline int TT_CAPTURES = 0;   // TT moves for captures (stored as move-list index)
+// second round (2026-11-28)
+inline int RAZOR_BLEND_W = 0;    // razoring returns (W*eval + (1024-W)*alpha)/1024
+inline int ENDGAME_PIECES = 8;   // ENDGAME_LMR_FP applies below this piece count
+inline int ENDGAME_LMR_FP = 0;   // less LMR in endgames (1/1024 ply)
+inline int FORCING_LMP = 0;      // no LMP for quiet moves that give the opponent a capture
+inline int QS_THREAT_PLIES = 0;  // qsearch threat check also at qs depth >= -this
+inline int PROMO_EXT_FP = 0;     // quiet promotion whose king cannot be taken at once
+inline int TWO_REPLY_EXT_FP = 0; // extension when there are exactly two legal moves
+inline int SE_SUBTREE = 0;       // singular extensions inside singular-search subtrees
 
 inline int SE_MIN_DEPTH = 6;
 inline int SE_MARGIN = 2;         // s_beta = tt_value - SE_MARGIN * depth
 inline int SE_DOUBLE_MARGIN = 23; // same scale as prob_cut
-
-constexpr std::array<int, 9> LMP_COUNT = {0, 5, 7, 9, 13, 15, 18, 18, 18};
 
 inline int prob_cut = 45; // tunable as PROBCUT_MARGIN
 
 inline int asp_wind = 20; // tunable as ASP_WINDOW
 
 constexpr int MAX_ASP = 200;
-constexpr int CORRECTION_SIZE = 512;
 constexpr int MAX_EVAL = 500;
 constexpr uint64_t BLACK_RANDOM = 7985716234ull;
-constexpr uint64_t singular_key = 311234512ull;
 
 using Depth = int;
 using Ply = int;

@@ -87,6 +87,18 @@ inline std::vector<TuneParam> &tune_params() {
       // depth limits: 1000 = unlimited (old behaviour). c_end 0 = listed for
       // --NAME but not tuned by spsa.py; test concrete values with SPRT.
       {"RFP_MAX_DEPTH", &RFP_MAX_DEPTH, 1, 1000, 0},
+      // switches under test (types.h), not tuned by SPSA
+      {"PC_EXCL_FIX", &PC_EXCL_FIX, 0, 1, 0},
+      {"LMP1_COUNT", &LMP1_COUNT, 0, 40, 0},
+      {"TT_CAPTURES", &TT_CAPTURES, 0, 1, 0},
+      {"RAZOR_BLEND_W", &RAZOR_BLEND_W, 0, 1024, 0},
+      {"ENDGAME_PIECES", &ENDGAME_PIECES, 2, 24, 0},
+      {"ENDGAME_LMR_FP", &ENDGAME_LMR_FP, 0, 3072, 0},
+      {"FORCING_LMP", &FORCING_LMP, 0, 1, 0},
+      {"QS_THREAT_PLIES", &QS_THREAT_PLIES, 0, 8, 0},
+      {"PROMO_EXT_FP", &PROMO_EXT_FP, 0, 2048, 0},
+      {"TWO_REPLY_EXT_FP", &TWO_REPLY_EXT_FP, 0, 2048, 0},
+      {"SE_SUBTREE", &SE_SUBTREE, 0, 1, 0},
       {"RAZOR_MAX_DEPTH", &RAZOR_MAX_DEPTH, 1, 1000, 0},
   };
   return params;

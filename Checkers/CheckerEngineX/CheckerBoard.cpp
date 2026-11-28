@@ -3,6 +3,7 @@
 #include "Thread.h"
 #include "registry.h"
 #include "types.h"
+#include "NetPack.h"
 bool engine_initialized = false;
 Board game_board;
 
@@ -14,9 +15,12 @@ int max_db_pieces = 6;
 bool enable_wld = false;
 Position previous;
 std::string db_path;
-INCBIN(mlh_net, "sharing_mlh_25.quant");
-INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "policy_500M_40ep.quant");
+// embedded nets, compressed: .dhn = NetPack (netpack_tool.cpp) of the .quant files of
+// the same name, decoded and verified at startup (NetPack.h)
+INCBIN(mlh_net, "sharing_mlh_25.dhn");
+INCBIN(network, "value2048_1B40.dhn");
+INCBIN(network_perm, "value2048_1B40.perm"); // neuron permutation (sparsity)
+INCBIN(policy, "policy_500M_40ep.dhn");
 INCBIN(policy_perm, "policy_500M_40ep.perm"); // neuron permutation (sparsity)
 extern "C" int getmove(int board[8][8], int color, double maxtime,
                        char str[1024], int *playnow, int info, int moreinfo,
@@ -81,10 +85,11 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       tablebase.cache_size = static_cast<size_t>(db_size_in_mb);
       tablebase.load_table_base(db_path, max_db_pieces);
     }
-    mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
-    network.load_from_array(gnetworkData, gnetworkSize);
+    netpack::load_packed(mlh_net, gmlh_netData, gmlh_netSize);
+    network.load_permutation_from_array(gnetwork_permData, gnetwork_permSize);
+    netpack::load_packed(network, gnetworkData, gnetworkSize);
     policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
-  policy.load_from_array(gpolicyData, gpolicySize);
+    netpack::load_packed(policy, gpolicyData, gpolicySize);
     TT.resize_in_mb(hash_size_in_mb);
     engine_initialized = true;
     num_draw_scores = 0;
@@ -150,7 +155,9 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
       board[col][row] = CB_FREE;
     }
   }
-  if (std::abs(value) >= 700 && isEval(value)) {
+  // only proven results (tablebase / mate scores): heuristic evals reach ~756
+  // (MAX_EVAL + moves-left bonus) and must not end games in CheckerBoard
+  if (std::abs(value) >= TB_WIN_MAX_PLY && isEval(value)) {
     return (value < 0) ? CB_LOSS : CB_WIN;
   }
   return CB_UNKNOWN;

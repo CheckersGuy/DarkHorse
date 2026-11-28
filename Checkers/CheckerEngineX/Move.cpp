@@ -90,8 +90,8 @@ void MoveEncoding::encode_move(Move move) {
 
 MoveEncoding::MoveEncoding(Move m) { encode_move(m); }
 
-Move MoveEncoding::get_move() {
-  if (from_index == 32) {
+Move MoveEncoding::get_move() const {
+  if (from_index >= 32) { // no move, or a capture (stored as a move-list index)
     return Move{};
   }
   Move move;

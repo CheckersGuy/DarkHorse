@@ -12,6 +12,7 @@
 #ifdef _WIN32
 #include "egdb.h"
 #endif
+#include "NetPack.h"
 #include "incbin.h"
 #include "types.h"
 #include <algorithm>
@@ -27,9 +28,12 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-INCBIN(mlh_net, "sharing_mlh_25.quant");
-INCBIN(network, "buckets1024_107.quant");
-INCBIN(policy, "policy_500M_40ep.quant");
+// embedded nets, compressed: .dhn = NetPack (netpack_tool.cpp) of the .quant files of
+// the same name, decoded and verified at startup (NetPack.h)
+INCBIN(mlh_net, "sharing_mlh_25.dhn");
+INCBIN(network, "value2048_1B40.dhn");
+INCBIN(network_perm, "value2048_1B40.perm"); // neuron permutation (sparsity)
+INCBIN(policy, "policy_500M_40ep.dhn");
 INCBIN(policy_perm, "policy_500M_40ep.perm"); // neuron permutation (sparsity)
 
 static Value search_value(const Position &pos, int time_ms, size_t max_nodes,
@@ -289,12 +293,12 @@ int main(int argl, const char **argc) {
 
   // mlh_net.load_permutation_from_array(gmlh_permData, gmlh_permSize);
   //  policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
-  //  network.load_permutation_from_array(gnet_permData, gnet_permSize);
+  network.load_permutation_from_array(gnetwork_permData, gnetwork_permSize);
 
-  mlh_net.load_from_array(gmlh_netData, gmlh_netSize);
-  network.load_from_array(gnetworkData, gnetworkSize);
+  netpack::load_packed(mlh_net, gmlh_netData, gmlh_netSize);
+  netpack::load_packed(network, gnetworkData, gnetworkSize);
   policy.load_permutation_from_array(gpolicy_permData, gpolicy_permSize);
-  policy.load_from_array(gpolicyData, gpolicySize);
+  netpack::load_packed(policy, gpolicyData, gpolicySize);
 
   CmdParser parser;
   parser.parse(argl, argc);
@@ -310,7 +314,7 @@ int main(int argl, const char **argc) {
   // (raw size_t[2*L1], see load_permutation); the result must be bit-exact
   if (parser.has_option("value_perm")) {
     network.load_permutation(parser.as<std::string>("value_perm"));
-    network.load_from_array(gnetworkData, gnetworkSize);
+    netpack::load_packed(network, gnetworkData, gnetworkSize);
   }
   // replaces the embedded value net (same architecture: Network<2048, 32, 32, 1, 128>),
   // e.g. for SPRTs of a newly trained net (Training/train_value.py)

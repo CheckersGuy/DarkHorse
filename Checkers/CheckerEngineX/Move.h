@@ -47,14 +47,25 @@ struct Move {
   friend std::ostream &operator<<(std::ostream &, Move other);
 };
 
+// 1 byte: from square (0..31) + direction (0..3) of a non-capture move; from_index 32
+// = no move; from_index 40..49 = capture, stored as its index (0..39) in the move
+// list of the position (generation order, see MoveListe / get_moves)
 struct MoveEncoding {
-  // How to encode empty moves ?
   MoveEncoding(Move move);
   MoveEncoding() = default;
   uint8_t from_index : 6;
   uint8_t direction : 2;
-  Move get_move();
+  Move get_move() const; // empty for "no move" and for captures
   void encode_move(Move move);
+  static MoveEncoding capture(int index) {
+    MoveEncoding e;
+    e.from_index = (uint8_t)(40 + index / 4);
+    e.direction = (uint8_t)(index % 4);
+    return e;
+  }
+  int capture_index() const { return from_index >= 40 ? (from_index - 40) * 4 + direction : -1; }
+  bool is_none() const { return from_index == 32; }
+  uint8_t raw() const { return (uint8_t)(from_index | (direction << 6)); }
 };
 
 #endif // CHECKERSTEST_MOVE_H

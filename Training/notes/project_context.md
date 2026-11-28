@@ -15,6 +15,12 @@ training data and nets. Detailed history, SPRT results and all decisions:
   and end, no intermediate progress unless asked.
 - Every new net that gets embedded needs its neuron permutation computed and embedded
   too (`Training/scripts/compute_permutation.py`; check bench is bit-exact).
+- The engine embeds the nets COMPRESSED (`<net>.dhn` next to `<net>.quant`, INCBIN in
+  main.cpp + CheckerBoard.cpp): pack a new net with `cmake-build-debug/NetPack pack
+  NET.quant L1 L2 L3 OUT NB NET.dhn` (e.g. value `2048 32 32 1 128`, policy
+  `1024 32 32 128 128`, MLH `128 32 32 1 128`); it verifies the round trip, and the
+  engine checks size + checksum at startup. Codec: `NetPack.h` (static rANS per
+  tensor, ~105 ms single-threaded decode for all three nets, 15.75 MB -> 9.50 MB).
 - Do not kill the owner's own processes. Use they/them for the owner.
 - New search features: behind a switch/parameter (default off, bench bit-exact), SPRT
   20 ms `unbalanced_70_150.book` `--sprt 0 3`; H0 -> remove completely, H1 -> default.
@@ -24,7 +30,7 @@ training data and nets. Detailed history, SPRT results and all decisions:
 - Engine: `Checkers/CheckerEngineX/` (main.cpp = CLI, `MainEngine --help` lists every
   option). CMake from the repo root: `cmake . && cmake --build . --target MainEngine
   MainEngine-vnni Train` -> binaries in `cmake-build-debug/`. Bench signature:
-  `MainEngine --bench` -> `bench nodes 1265231` (must stay identical for refactors).
+  `MainEngine --bench` -> `bench nodes 1291231` (must stay identical for refactors).
 - Windows/CheckerBoard: target `Dark` builds `DarkHorse-<ver>-avx2.dll` and
   `DarkHorse-<ver>-vnni.dll` (version in CMakeLists.txt, DARKHORSE_VERSION).
 - Match/SPRT tool: `cmake-build-debug/Train --match ...` (`Train --help`); engines are
@@ -140,6 +146,10 @@ resumes correctly, no duplicates, no train/val overlap, block is a subset of tra
 ## Current state (2026-11-25)
 
 
+- **New embedded value net (2026-11-28):** `value2048_1B40` (40 epochs on the 1B cloud data,
+  `value2048_1B40.dhn` + `.perm`, permutation 83.1 -> 55.6 non-zero blocks): SPRT vs the old
+  embedded net (`buckets1024_107`) **H1 +2.5 +- 2.0** (15968 games, 20 ms, [0,3]). First new
+  value net that beats the old one. Bench signature now 1291231.
 - **New embedded policy net (2026-11-27):** `policy_500M_40ep.quant` (+ `.perm`), trained 40 epochs on
   the 500M cloud block, with 38 SPSA-tuned search defaults and POLICY_SCALE_X100 224:
   verification SPRT vs the previous engine **H1 +6.8 +- 4.5** (3059 games). Bench signature now

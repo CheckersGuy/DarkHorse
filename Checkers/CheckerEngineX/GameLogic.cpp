@@ -25,7 +25,6 @@ RootDiag root_diag;
 Value last_eval = -SCORE_INFINITE;
 uint64_t total_counter = 0;
 uint64_t diff_counter = 0;
-const bool forced_cap_enabled = true;
 uint64_t counter = 0;
 uint64_t both_counter = 0;
 uint64_t search_start_time = 0ull;
@@ -54,11 +53,6 @@ void egdb_message_callback(char *msg) {
   // std::cout << msg << std::endl;
 }
 #endif
-
-inline bool creates_shot_rt(const Position &pos, const Move &m) {
-  return pos.color == BLACK ? pos.creates_shot<BLACK>(m.from, m.to)
-                            : pos.creates_shot<WHITE>(m.from, m.to);
-}
 
 uint64_t current_nps() {
   const double elapsed_sec =
@@ -477,14 +471,6 @@ std::vector<RootMove> searchValueMultiPV(Board root_board, int numPV, int depth,
     return {root};
   }
 
-  const bool forced = rootList.length() == 1;
-  uint32_t eff_time = time;
-  int eff_depth = depth;
-  if (forced && forced_cap_enabled) { // false in eval-loop/book so those get a
-    eff_time = std::min<uint32_t>(time, 1); // ms
-    eff_depth = std::min(depth, 1);
-  }
-
   const int actualPV = std::min(numPV, rootList.length());
   if (actualPV <= 0) {
     return {};
@@ -550,6 +536,19 @@ std::vector<RootMove> searchValueMultiPV(Board root_board, int numPV, int depth,
   return results;
 }
 
+// TT_CAPTURES: index of a capture move in the generated move list of pos (the TT
+// stores captures this way), -1 if the feature is off or the move is no capture
+static int tt_capture_index(Position pos, const Move &m) {
+  if (!TT_CAPTURES || !m.is_capture())
+    return -1;
+  MoveListe gen;
+  get_moves(pos, gen);
+  for (int i = 0; i < gen.length(); ++i)
+    if (gen[i] == m)
+      return i < 40 ? i : -1;
+  return -1;
+}
+
 namespace Search {
 Depth reduce(bool improving, int move_index, Depth depth, Ply ply, Board &board,
              Move move, bool in_pv, bool cutnode, float move_prob,
@@ -599,6 +598,9 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   // fractional depth carried in from the parent (1/1024 ply); reductions of
   // this node (alpha raise) adjust it, children receive the remainder
   int node_acc = td.ext_acc[ply];
+  // SE_SUBTREE: only the node of a singular verification search is excluded from
+  // singular extensions, not its whole subtree
+  const bool child_sing = SE_SUBTREE ? false : is_sing_search;
 
   if (depth <= 0) {
     return Search::qs<next_type>(td, board, ply, pv, alpha, beta, depth, Move{},
@@ -625,6 +627,16 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   get_moves(board.get_position(), liste);
   if (liste.length() == 0) {
     return loss(ply);
+  }
+  // number of legal moves before the MultiPV / singular-search filters below
+  const int legal_moves = liste.length();
+  // generation order of the moves (TT capture moves are stored as an index into
+  // it); a copy is only needed when a filter changes liste
+  MoveListe gen_copy;
+  const MoveListe *gen_list = &liste;
+  if (TT_CAPTURES && ((is_root && td.num_pv_excluded > 0) || !excluded.is_empty())) {
+    gen_copy = liste;
+    gen_list = &gen_copy;
   }
 
   if constexpr (is_root) {
@@ -679,14 +691,20 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     is_tt_pv = in_pv || (found_hash && info.ttPv);
     td.ttpv_stack[ply] = is_tt_pv;
   }
+  // TT move: a capture is stored as its index in the generated move list
+  // (TT_CAPTURES; the index is checked against the list)
+  Move entry_move = info.tt_move;
+  if (TT_CAPTURES && found_hash && info.tt_capture >= 0 &&
+      info.tt_capture < gen_list->length() && (*gen_list)[info.tt_capture].is_capture())
+    entry_move = (*gen_list)[info.tt_capture];
   // At root we can still use the tt_move for move_ordering
   if (in_pv && found_hash && info.flag != Flag::None && isEval(info.score)) {
-    tt_move = info.tt_move;
+    tt_move = entry_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
   }
   if (excluded.is_empty() && !in_pv && found_hash && info.flag != Flag::None &&
       isEval(info.score)) {
-    tt_move = info.tt_move;
+    tt_move = entry_move;
     tt_value = value_from_tt(info.score, ply, board.get_position());
 
     if (info.depth >= depth && info.flag != Flag::None) {
@@ -730,18 +748,12 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   td.static_evals[static_eval_index] = static_eval;
 
   bool improving = false;
-  bool opponentWorsening = false;
 
   if (isEval(static_eval)) {
     if (isEval(td.static_evals[static_eval_index - 2])) {
       improving = static_eval > td.static_evals[static_eval_index - 2];
     } else if (isEval(td.static_evals[static_eval_index - 4])) {
       improving = static_eval > td.static_evals[static_eval_index - 4];
-    }
-    if (isEval(td.static_evals[static_eval_index - 1])) {
-      opponentWorsening = static_eval > -td.static_evals[static_eval_index - 1];
-    } else if (isEval(td.static_evals[static_eval_index - 3])) {
-      opponentWorsening = static_eval > -td.static_evals[static_eval_index - 3];
     }
   }
 
@@ -797,7 +809,10 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
   if (!in_pv && depth <= RAZOR_MAX_DEPTH && isEval(static_eval) &&
       static_eval + RAZOR_BASE + RAZOR_QUAD * depth * depth <= alpha &&
       !board.get_position().has_jumps()) {
-    return static_eval;
+    // RAZOR_BLEND_W > 0: fail-low value pulled towards alpha (like the RFP blend)
+    return RAZOR_BLEND_W
+               ? (RAZOR_BLEND_W * static_eval + (1024 - RAZOR_BLEND_W) * alpha) / 1024
+               : static_eval;
   }
 
   // a position already above beta counts as improving
@@ -806,6 +821,11 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
   int32_t *out = td.policy_state.out_buffer;
   bool computed = false;
+  // LMP1_COUNT > 0: quiet non-PV nodes at depth 1 skip the policy net; moves are
+  // ordered by a cheap rule (promotions, then moves that do not hand the opponent a
+  // capture) and at most LMP1_COUNT moves are searched
+  const bool lmp1 = LMP1_COUNT > 0 && !in_pv && depth == 1 &&
+                    !liste[0].is_capture() && excluded.is_empty();
 
   if constexpr (is_root) {
     if (!td.root_prev_best.is_empty())
@@ -842,7 +862,6 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
   std::array<float, 40> move_prob{};
   bool have_prob = false;
-  constexpr float PC_MIN_P = 0.01f;
   const Value old_alpha = alpha;
   const Value prob_beta = beta + prob_cut + PROBCUT_IMPROVING * improving;
 
@@ -853,14 +872,15 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
   float searched_mass = 0.0f;
 
-  const bool fp_node =
-      !is_root && !in_pv && excluded.is_empty() && depth <= FP_MAX_DEPTH &&
-      isEval(static_eval) &&
-      !board.get_position().has_jumps() && // quiet for both sides
-      board.get_position().piece_count() >= FP_MIN_PIECES;
-
   for (auto i = 0; i < liste.length(); ++i) {
-    if (i == start_index) {
+    if (i == start_index && lmp1) {
+      const Position &p = board.get_position();
+      liste.sort(p, depth, ply, tt_move, start_index, [&](Move m) {
+        const bool shot = p.color == BLACK ? p.creates_shot<BLACK>(m.from, m.to)
+                                           : p.creates_shot<WHITE>(m.from, m.to);
+        return 2 * (int)m.is_promotion(p.K) - (int)shot;
+      });
+    } else if (i == start_index) {
       liste.sort(board.get_position(), depth, ply, tt_move, start_index,
                  oracle);
 
@@ -884,6 +904,22 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       }
     }
     const Move move = liste[i];
+    // quiet move after which the opponent can capture (the reply is forced):
+    // only needed by FORCING_LMP / PROMO_EXT_FP
+    bool gives_capture = false;
+    if ((FORCING_LMP || PROMO_EXT_FP) && !move.is_capture()) {
+      const Position &p = board.get_position();
+      gives_capture = p.color == BLACK ? p.creates_shot<BLACK>(move.from, move.to)
+                                       : p.creates_shot<WHITE>(move.from, move.to);
+    }
+    if (lmp1 && i >= LMP1_COUNT) {
+      if (FORCING_LMP && gives_capture)
+        ; // forcing moves are not pruned
+      else if (FORCING_LMP)
+        continue;
+      else
+        break; // depth-1 LMP by move count (no policy probabilities here)
+    }
 
     const auto kings = board.get_position().K;
     // extension in 1/1024 ply; `extension` keeps only its sign for the
@@ -896,6 +932,11 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     } else if (move.is_capture() &&
                board.previous().has_jumps(~board.get_mover())) {
       ext_fp = RECAPTURE_EXT_FP;
+    } else if (PROMO_EXT_FP && !move.is_capture() && move.is_promotion(kings) &&
+               !gives_capture) {
+      ext_fp = PROMO_EXT_FP; // quiet promotion, the new king cannot be taken at once
+    } else if (TWO_REPLY_EXT_FP && legal_moves == 2) {
+      ext_fp = TWO_REPLY_EXT_FP; // only two legal moves (blockade / zugzwang-like)
     }
 
     if (!is_root && excluded.is_empty() && !sing_move.is_empty() &&
@@ -922,7 +963,8 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     const int extension = (ext_fp > 0) - (ext_fp < 0);
 
     if (!in_pv && have_prob && i >= 2 && extension == 0 && !move.is_capture() &&
-        depth < LMP_MASS.size() && searched_mass >= LMP_MASS[depth]) {
+        depth < LMP_MASS.size() && searched_mass >= LMP_MASS[depth] &&
+        !(FORCING_LMP && gives_capture)) {
       continue; // note: searched_mass is not updated for skipped moves
     }
 
@@ -936,9 +978,13 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
     if (is_tt_pv && !in_pv) {
       reduction -= LMR_TTPV_FP + (tt_value > alpha ? LMR_TTPV_ALPHA_FP : 0) +
                    (info.depth >= depth ? LMR_TTPV_DEPTH_FP : 0);
-    } else if (cutnode && move != tt_move && !tt_move.is_empty()) {
+    } else if (cutnode && move != tt_move && !tt_move.is_empty() &&
+               !move.is_capture()) { // captures are not reduced (TT_CAPTURES)
       reduction += LMR_CUTNODE_FP;
     }
+    // endgames: less reduction (king endgames need deep tactics, the net is weaker)
+    if (ENDGAME_LMR_FP && board.get_position().piece_count() < ENDGAME_PIECES)
+      reduction -= ENDGAME_LMR_FP;
     // LMR_CARRY_PCT: this percentage of the fractional part of the reduction is not thrown away but
     // carried into the reduced child's depth
     const int lmr_rem = (LMR_CARRY_PCT && reduction > 0 && extension <= 0)
@@ -958,19 +1004,21 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       Depth newDepth = std::max(0, depth + fp_whole(pc_acc));
       td.ext_acc[ply + 1] = pc_acc - fp_whole(pc_acc) * LMR_ONE;
       Value board_val = -qs<NONPV>(td, board, ply + 1, line, -prob_beta,
-                                   -prob_beta + 1, 0, Move{}, is_sing_search);
+                                   -prob_beta + 1, 0, Move{}, child_sing);
 
       if (board_val >= prob_beta) {
         Value value = -Search::search<NONPV>(td, !cutnode, board, ply + 1, line,
                                              -prob_beta, -prob_beta + 1,
-                                             newDepth, Move{}, is_sing_search);
+                                             newDepth, Move{}, child_sing);
 
         if (value >= prob_beta) {
           board.undo_move();
-          TT.store_hash(false, value_to_tt(value, ply, board.get_position()),
-                        value_to_tt(static_eval, ply, board.get_position()),
-                        key, TT_LOWER, newDepth,
-                        (!move.is_capture()) ? move : Move{}, is_tt_pv);
+          if (!PC_EXCL_FIX || excluded.is_empty())
+            TT.store_hash(false, value_to_tt(value, ply, board.get_position()),
+                          value_to_tt(static_eval, ply, board.get_position()),
+                          key, TT_LOWER, newDepth,
+                          (!move.is_capture()) ? move : Move{}, is_tt_pv,
+                          tt_capture_index(board.get_position(), move));
           return !isDecesive(value) ? (value - prob_cut) : value;
         }
       }
@@ -985,24 +1033,24 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
       td.ext_acc[ply + 1] -= lmr_rem;
       val = -Search::search<NONPV>(
           td, true, board, ply + 1, local_pv, -alpha - 1, -alpha,
-          std::max(0, new_depth - reduction), Move{}, is_sing_search);
+          std::max(0, new_depth - reduction), Move{}, child_sing);
       td.ext_acc[ply + 1] += lmr_rem;
 
       if (val > alpha) {
         val = -Search::search<NONPV>(td, !cutnode, board, ply + 1, local_pv,
                                      -alpha - 1, -alpha, new_depth, Move{},
-                                     is_sing_search);
+                                     child_sing);
       }
     } else if (!in_pv || i != 0) {
 
       val = -Search::search<NONPV>(td, !cutnode, board, ply + 1, local_pv,
                                    -alpha - 1, -alpha, new_depth, Move{},
-                                   is_sing_search);
+                                   child_sing);
     }
 
     if (in_pv && (i == 0 || val > alpha)) {
       val = -Search::search<PV>(td, false, board, ply + 1, local_pv, -beta,
-                                -alpha, new_depth, Move{}, is_sing_search);
+                                -alpha, new_depth, Move{}, child_sing);
     }
 
     board.undo_move();
@@ -1088,7 +1136,8 @@ Value search(ThreadData &td, bool cutnode, Board &board, Ply ply, Line &pv,
 
     TT.store_hash(in_pv, tt_value,
                   value_to_tt(static_eval, ply, board.get_position()), key,
-                  flag, depth, store_move, is_tt_pv);
+                  flag, depth, store_move, is_tt_pv,
+                  tt_capture_index(board.get_position(), best_move));
   }
 
   return best_score;
@@ -1142,7 +1191,10 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
       return loss(ply);
     }
 
-    if (depth == 0 && board.get_position().has_jumps(~board.get_mover())) {
+    // opponent threatens a capture, we have none: 1-ply search (QS_THREAT_PLIES:
+    // also after up to this many capture plies inside qsearch)
+    if (depth <= 0 && depth >= -QS_THREAT_PLIES &&
+        board.get_position().has_jumps(~board.get_mover())) {
       return Search::search<next_type>(td, false, board, ply, pv, alpha, beta,
                                        1, Move{}, is_sing_search);
     }
@@ -1160,13 +1212,22 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
     return net_val;
   }
 
-  moves.sort(board.get_position(), depth, ply, Move{}, 0, [&](Move move) {
+  // TT_CAPTURES: the stored best capture goes first (moves is in generation order)
+  int qs_start = 0;
+  if (TT_CAPTURES && found_hash && info.tt_capture >= 0 &&
+      info.tt_capture < moves.length()) {
+    const Move tm = moves[info.tt_capture];
+    moves.move_to_front(0, tm);
+    qs_start = 1;
+  }
+  moves.sort(board.get_position(), depth, ply, Move{}, qs_start, [&](Move move) {
     const uint32_t kings_captured = move.captures & board.get_position().K;
     const uint32_t pawns_captured = move.captures & (~board.get_position().K);
     return (int)(Bits::pop_count(kings_captured) * 14 +
                  Bits::pop_count(pawns_captured) * 10);
   });
   Value old_alpha = alpha;
+  Move qs_best;
   for (int i = 0; i < moves.length(); ++i) {
 
     Move move = moves[i];
@@ -1181,6 +1242,7 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
     if (value > bestValue) {
       bestValue = value;
       if (value > alpha) {
+        qs_best = move;
         pv.concat(move, localPV);
         if (value >= beta)
           break;
@@ -1204,7 +1266,8 @@ Value qs(ThreadData &td, Board &board, Ply ply, Line &pv, Value alpha,
     }
     TT.store_hash(in_pv, tt_value,
                   value_to_tt(static_eval, ply, board.get_position()), key,
-                  flag, 0, Move{}, is_tt_pv);
+                  flag, 0, Move{}, is_tt_pv,
+                  tt_capture_index(board.get_position(), qs_best));
   }
 
   return bestValue;
