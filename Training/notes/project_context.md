@@ -71,6 +71,13 @@ training data and nets. Detailed history, SPRT results and all decisions:
    tiny_plus4 18: 39 %, 20: 44 %, 22: 8 %, 16: 3 % (tiny.book: 20: 47 %, 22: 42 %,
    18: 7 %). Open experiment: a small share of shallower openings (the plies between
    drawbook.book and tiny.book are never sampled).
+   **11-man ballots in the book (2026-11-28, owner):** DarkHorse lost CheckerBoard games
+   against Cake only from 11-man ballots (one man per side removed); such positions are
+   missing in the data. `Training/Positions/ballot11_all.book` = all 144 11-man starts
+   expanded by 6 and 8 plies (`movegen book ... 2 -80 80` four times), 424,389 openings.
+   The local run's `tiny_plus4.book` now contains them evenly after line 2.3M (11.7 % of
+   that part, ~8 % of the run's games); original kept as `tiny_plus4_noballot.book`.
+   Cloud runs build tiny_plus4.book without ballots unless BOOK= points to a mixed book.
 2. **Dedup / split / chunks**: `movegen dedup <in> <out>`,
    `movegen split <in> <train> <val> <frac>`, `movegen chunks <in> <prefix> <n>`.
 3. **Rescore** (labels, POL1 format = root + children):

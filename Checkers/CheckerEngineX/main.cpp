@@ -754,8 +754,14 @@ int main(int argl, const char **argc) {
                          std::cout);
 
     } else {
-      searchValueMultiPV(board, multipv, depth, time, max_nodes, true,
-                         std::cout);
+      // the move that would actually be played (may come from an unfinished
+      // iteration, unlike the last printed one)
+      auto rm = searchValueMultiPV(board, multipv, depth, time, max_nodes, true,
+                                   std::cout);
+      if (!rm.empty())
+        std::cout << "bestmove " << rm[0].move.get_from_index() + 1 << "-"
+                  << rm[0].move.get_to_index() + 1 << " score "
+                  << rm[0].score << std::endl;
     }
 
     return 0;
