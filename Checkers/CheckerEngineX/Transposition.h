@@ -99,6 +99,11 @@ public:
 
   void prefetch(uint64_t key);
 
+  // new game without clearing (clearing a large table costs the first move's time):
+  // all existing entries become maximally old (half the 6-bit age range), so the
+  // replacement overwrites them first; hits on them stay valid (same positions)
+  void age_all() { age_counter = (age_counter + 32) & 63; }
+
   int get_size_in_mb(); // returns size of the table in MB
 };
 

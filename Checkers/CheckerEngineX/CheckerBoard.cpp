@@ -36,8 +36,7 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
 
   if ((info & CB_RESET_MOVES)) {
     game_board = Board(Position::get_start_position());
-    TT.age_counter = 0;
-    TT.clear();
+    TT.age_all(); // no TT.clear(): it would run inside the timed first move
     num_draw_scores = 0;
   }
 
@@ -98,17 +97,17 @@ extern "C" int getmove(int board[8][8], int color, double maxtime,
   auto m = Position::get_move(game_board.get_position(), temp);
 
   if (temp.piece_count() > game_board.get_position().piece_count()) {
-    TT.clear();
+    // new game: age the TT instead of clearing it (as Cake does)
+    TT.age_all();
     game_board = Board(temp);
-    TT.age_counter = 0;
     num_draw_scores = 0;
     last_eval = -INFINITE; // external variable here
   } else if (m.has_value()) {
-    TT.age_counter = TT.age_counter + 1;
+    TT.age_counter = (TT.age_counter + 1) & 63;
     game_board.play_move(m.value());
   } else {
     game_board = Board(temp);
-    TT.age_counter = 0;
+    TT.age_all();
     num_draw_scores = 0;
     last_eval = -INFINITE;
   }
